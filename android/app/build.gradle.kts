@@ -40,7 +40,7 @@ android {
 }
 
 dependencies {
-    implementation("com.google.android.play:integrity:1.3.0")
+    implementation("com.google.android.play:integrity:1.4.0")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
