@@ -14,18 +14,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import dev.keiji.deviceintegrity.ui.main.AppScreen // Updated import
-import dev.keiji.deviceintegrity.ui.main.bottomNavigationItems // Updated import
-import dev.keiji.deviceintegrity.ui.keyattestation.KeyAttestationScreen
-import dev.keiji.deviceintegrity.ui.playintegrity.PlayIntegrityScreen
-import dev.keiji.deviceintegrity.ui.settings.SettingsScreen
+import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationScreen
+import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityScreen
+import dev.keiji.deviceintegrity.ui.main.settings.SettingsScreen
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 
 class MainActivity : ComponentActivity() {

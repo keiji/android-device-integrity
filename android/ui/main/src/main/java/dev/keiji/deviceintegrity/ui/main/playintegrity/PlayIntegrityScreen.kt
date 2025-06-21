@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.settings
+package dev.keiji.deviceintegrity.ui.main.playintegrity
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,8 +11,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
-fun SettingsScreen(
-    viewModel: SettingsViewModel = viewModel()
+fun PlayIntegrityScreen(
+    viewModel: PlayIntegrityViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -20,7 +20,7 @@ fun SettingsScreen(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Text(text = "Settings Screen: ${uiState.sampleSetting}")
-        // TODO: Display actual settings UI
+        Text(text = "Play Integrity Screen")
+        // TODO: Display uiState.isLoading and uiState.result
     }
 }
