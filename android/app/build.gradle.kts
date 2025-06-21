@@ -50,6 +50,8 @@ android {
 }
 
 dependencies {
+    implementation(project(":provider:impl"))
+
     implementation("com.google.android.play:integrity:1.4.0")
 
     implementation(libs.androidx.core.ktx)
@@ -66,6 +68,8 @@ dependencies {
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+
+    implementation(project(":provider:impl"))
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
