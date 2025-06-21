@@ -21,3 +21,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "Device Integrity"
 include(":app")
+include(":ui")
+include(":ui:main")
+include(":ui:theme")

@@ -1,30 +1,20 @@
 plugins {
-    alias(libs.plugins.android.application)
+    id("com.android.library")
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
 android {
-    namespace = "dev.keiji.deviceintegrity"
+    namespace = "dev.keiji.deviceintegrity.ui.main"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "dev.keiji.deviceintegrity"
         minSdk = 23
-        targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
         }
     }
     compileOptions {
@@ -40,8 +30,8 @@ android {
 }
 
 dependencies {
-    implementation(project(":ui:main"))
-    implementation("com.google.android.play:integrity:1.4.0")
+    implementation(project(":ui:theme"))
+    implementation(project(":ui"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -52,13 +42,10 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
-    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.navigation.compose) // AppScreen might use navigation
     implementation(libs.androidx.lifecycle.runtime.compose)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
+    implementation(libs.androidx.lifecycle.viewmodel.compose) // For ViewModel in MainActivity/AppScreen if any
+
+    // Dependencies for MainActivity/AppScreen will be further refined after moving files
+    // and checking their specific imports.
 }

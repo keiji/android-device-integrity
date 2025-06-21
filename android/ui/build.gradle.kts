@@ -1,21 +1,18 @@
 plugins {
-    alias(libs.plugins.android.application)
+    id("com.android.library")
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
 android {
-    namespace = "dev.keiji.deviceintegrity"
+    namespace = "dev.keiji.deviceintegrity.ui"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "dev.keiji.deviceintegrity"
         minSdk = 23
-        targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles("consumer-rules.pro")
     }
 
     buildTypes {
@@ -40,25 +37,28 @@ android {
 }
 
 dependencies {
-    implementation(project(":ui:main"))
-    implementation("com.google.android.play:integrity:1.4.0")
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation(libs.androidx.material.icons.extended)
-    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.material.icons.extended) // Common UI, good to have
+    implementation(libs.androidx.navigation.compose) // For potential internal navigation
     implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose) // For viewModel() delegate
+    implementation(libs.androidx.lifecycle.viewmodel.ktx) // For ViewModel class and viewModelScope
+
+    // Coroutines - check if these are brought transitively or need to be explicit
+    // implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    // implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
 }

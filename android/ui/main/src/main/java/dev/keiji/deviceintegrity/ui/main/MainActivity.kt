@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity
+package dev.keiji.deviceintegrity.ui.main
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -21,8 +21,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import dev.keiji.deviceintegrity.ui.AppScreen
-import dev.keiji.deviceintegrity.ui.bottomNavigationItems
+import dev.keiji.deviceintegrity.ui.main.AppScreen // Updated import
+import dev.keiji.deviceintegrity.ui.main.bottomNavigationItems // Updated import
 import dev.keiji.deviceintegrity.ui.keyattestation.KeyAttestationScreen
 import dev.keiji.deviceintegrity.ui.playintegrity.PlayIntegrityScreen
 import dev.keiji.deviceintegrity.ui.settings.SettingsScreen
