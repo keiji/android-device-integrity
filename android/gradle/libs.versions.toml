@@ -11,8 +11,8 @@ materialIcons = "1.7.8"
 composeBom = "2024.09.00"
 navigationCompose = "2.8.0" # Previous plan's version, will keep for now
 lifecycleRuntimeCompose = "2.9.1"
-hilt = "2.51.1"
-ksp = "2.1.21-2.0.1" # kotlin version - 1.0.x (ksp version)
+hilt = "2.56.2"
+ksp = "2.1.21-2.0.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
