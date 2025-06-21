@@ -1,0 +1,24 @@
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/android" # Gradleプロジェクトのルートを指定
+    schedule:
+      interval: "daily"
+    groups:
+      androidx-compose:
+        patterns:
+          - "androidx.compose.*"
+      androidx:
+        patterns:
+          - "androidx.*"
+        exclude-patterns:
+          - "androidx.compose.*" # compose グループとの重複を避ける
+      android:
+        patterns:
+          - "com.android.*"
+      kotlin:
+        patterns:
+          - "org.jetbrains.kotlin.*"
+      google-play:
+        patterns:
+          - "com.google.android.play*"
