@@ -32,6 +32,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":api"))
     implementation(project(":ui:theme"))
     implementation(project(":provider:contract"))
 
