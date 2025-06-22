@@ -1,0 +1,55 @@
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.hprof
+
+# Gradle
+**/.gradle/
+**/build/
+local.properties
+
+# Captures
+.cxx/
+
+# Keystore files
+*.jks
+*.keystore
+
+# Google services
+google-services.json
+
+# Firebase
+firebase.json
+
+# Crashlytics
+com_crashlytics_export_strings.xml
+
+# Emulators
+.android/avd/
+
+# Log files
+*.log
+
+# Navigation
+nav_graphs/
+
+# Lint
+lint/reports/
+**/lint/intermediates/
+
+# Test related
+**/build/reports/
+**/build/test-results/
+**/build/outputs/androidTest-results/
+**/build/outputs/connected_android_test_additional_output/
+
+# Distribution
+*.apk
+*.aab
+*.ap_
+*.apks
+*.jar
+*.aar
+
+# KSP generated files (if not checked in)
+# Covered by **/build/

@@ -1,7 +1,7 @@
 package dev.keiji.deviceintegrity.di
 
-import dagger.Binds
 import dagger.Module
+import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.keiji.deviceintegrity.AppInfoProviderImpl
@@ -10,11 +10,14 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class AppModule {
+object AppModule { // Changed from abstract class to object
 
-    @Binds
+    // Assuming AppInfoProviderImpl has @Inject constructor or can be provided directly
+    @Provides
     @Singleton
-    abstract fun bindAppInfoProvider(
-        appInfoProviderImpl: AppInfoProviderImpl
-    ): AppInfoProvider
+    fun provideAppInfoProvider(
+        impl: AppInfoProviderImpl
+    ): AppInfoProvider {
+        return impl
+    }
 }

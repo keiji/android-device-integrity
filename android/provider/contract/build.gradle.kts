@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -23,14 +24,17 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11 // appモジュールに合わせる
-        targetCompatibility = JavaVersion.VERSION_11 // appモジュールに合わせる
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "11" // appモジュールに合わせる
+        jvmTarget = "11"
     }
 }
 
 dependencies {
     implementation(libs.timber)
+    api(libs.play.integrity) // Use api since the interface exposes types from this library
+    implementation("javax.inject:javax.inject:1") // For @Qualifier
+    // Removed Hilt compiler: ksp(libs.hilt.compiler)
 }
