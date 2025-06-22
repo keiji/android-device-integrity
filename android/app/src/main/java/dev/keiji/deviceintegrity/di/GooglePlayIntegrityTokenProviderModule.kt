@@ -1,13 +1,13 @@
-package dev.keiji.deviceintegrity.provider.impl.di
+package dev.keiji.deviceintegrity.di
 
 import android.content.Context
-import dev.keiji.deviceintegrity.provider.contract.GooglePlayIntegrityTokenProvider
-import dev.keiji.deviceintegrity.provider.impl.GooglePlayIntegrityTokenProviderImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dev.keiji.deviceintegrity.provider.contract.GooglePlayIntegrityTokenProvider
+import dev.keiji.deviceintegrity.provider.impl.GooglePlayIntegrityTokenProviderImpl
 import javax.inject.Singleton
 
 @Module
