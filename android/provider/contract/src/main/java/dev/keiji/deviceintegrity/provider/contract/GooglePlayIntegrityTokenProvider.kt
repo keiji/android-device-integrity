@@ -3,7 +3,7 @@ package dev.keiji.deviceintegrity.provider.contract
 /**
  * Interface for providing Google Play Integrity tokens.
  */
-interface GoogleIntegrityTokenProvider {
+interface GooglePlayIntegrityTokenProvider {
     /**
      * Retrieves a Google Play Integrity token.
      *
