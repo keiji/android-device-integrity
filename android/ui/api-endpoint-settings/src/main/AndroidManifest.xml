@@ -5,8 +5,7 @@
         <activity
             android:name=".ApiEndpointSettingsActivity"
             android:exported="false"
-            android:label="@string/title_activity_api_endpoint_settings"
-            android:theme="@style/Theme.DeviceIntegrity" />
+            android:label="@string/title_activity_api_endpoint_settings" />
     </application>
 
 </manifest>
