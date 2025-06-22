@@ -2,6 +2,8 @@ plugins {
     id("com.android.library")
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -31,10 +33,12 @@ android {
 
 dependencies {
     implementation(project(":ui:theme"))
+    implementation(project(":provider:contract"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
@@ -45,6 +49,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose) // For ViewModel in MainActivity/AppScreen if any
 
-    // Dependencies for MainActivity/AppScreen will be further refined after moving files
-    // and checking their specific imports.
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
 }
