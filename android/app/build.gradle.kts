@@ -50,6 +50,7 @@ android {
 
 dependencies {
     implementation(project(":ui:main"))
+    implementation(project(":ui:api-endpoint-settings"))
     implementation(project(":provider:impl"))
     implementation(project(":repository:impl"))
 

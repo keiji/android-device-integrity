@@ -10,6 +10,7 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/api" />
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/provider" />
             <option value="$PROJECT_DIR$/provider/contract" />
@@ -18,6 +19,7 @@
             <option value="$PROJECT_DIR$/repository/contract" />
             <option value="$PROJECT_DIR$/repository/impl" />
             <option value="$PROJECT_DIR$/ui" />
+            <option value="$PROJECT_DIR$/ui/api-endpoint-settings" />
             <option value="$PROJECT_DIR$/ui/main" />
             <option value="$PROJECT_DIR$/ui/theme" />
           </set>
