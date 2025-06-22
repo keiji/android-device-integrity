@@ -29,3 +29,4 @@ include(
     ":ui:main",
     ":ui:theme"
 )
+include(":api")
