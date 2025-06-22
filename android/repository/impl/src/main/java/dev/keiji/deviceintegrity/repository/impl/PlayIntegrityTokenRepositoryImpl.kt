@@ -5,17 +5,17 @@ import com.google.android.play.core.integrity.IntegrityManagerFactory
 import com.google.android.play.core.integrity.IntegrityTokenRequest
 import com.google.android.play.core.integrity.StandardIntegrityManager
 import dev.keiji.deviceintegrity.provider.contract.StandardIntegrityTokenProviderProvider
-import dev.keiji.deviceintegrity.repository.contract.GooglePlayIntegrityTokenRepository
+import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityTokenRepository
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 /**
- * Implementation of [GooglePlayIntegrityTokenRepository] that uses the Google Play Integrity API.
+ * Implementation of [PlayIntegrityTokenRepository] that uses the Google Play Integrity API.
  */
-class GooglePlayIntegrityTokenRepositoryImpl @Inject constructor(
+class PlayIntegrityTokenRepositoryImpl @Inject constructor(
     private val context: Context, // Kept for classic requests
     private val standardIntegrityTokenProviderProvider: StandardIntegrityTokenProviderProvider
-) : GooglePlayIntegrityTokenRepository {
+) : PlayIntegrityTokenRepository {
 
     override suspend fun getTokenClassic(nonce: String): String {
         // Create an instance of a manager for classic requests.

@@ -7,20 +7,20 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dev.keiji.deviceintegrity.provider.contract.StandardIntegrityTokenProviderProvider
-import dev.keiji.deviceintegrity.repository.contract.GooglePlayIntegrityTokenRepository
-import dev.keiji.deviceintegrity.repository.impl.GooglePlayIntegrityTokenRepositoryImpl
+import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityTokenRepository
+import dev.keiji.deviceintegrity.repository.impl.PlayIntegrityTokenRepositoryImpl
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object GooglePlayIntegrityTokenRepositoryModule {
+object PlayIntegrityTokenRepositoryModule {
 
     @Provides
     @Singleton
-    fun provideGooglePlayIntegrityTokenRepository(
+    fun providePlayIntegrityTokenRepository(
         @ApplicationContext context: Context, // For classic requests
         standardIntegrityTokenProviderProvider: StandardIntegrityTokenProviderProvider // Provider for standard requests
-    ): GooglePlayIntegrityTokenRepository {
-        return GooglePlayIntegrityTokenRepositoryImpl(context, standardIntegrityTokenProviderProvider)
+    ): PlayIntegrityTokenRepository {
+        return PlayIntegrityTokenRepositoryImpl(context, standardIntegrityTokenProviderProvider)
     }
 }
