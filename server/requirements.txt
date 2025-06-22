@@ -1,0 +1,2 @@
+Flask>=2.0.0,<3.0.0 # Pin Flask to a version range for stability
+gunicorn>=20.0.0,<21.0.0 # Gunicorn is a common WSGI server for GAE Python apps
