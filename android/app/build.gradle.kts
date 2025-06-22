@@ -50,6 +50,7 @@ android {
 
 dependencies {
     implementation(project(":ui:main"))
+    implementation(project(":provider:impl"))
     implementation(project(":repository:impl"))
 
     implementation(libs.androidx.core.ktx)
