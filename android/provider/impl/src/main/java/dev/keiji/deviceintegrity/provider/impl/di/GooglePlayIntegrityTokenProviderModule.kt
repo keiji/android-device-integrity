@@ -1,8 +1,8 @@
 package dev.keiji.deviceintegrity.provider.impl.di
 
 import android.content.Context
-import dev.keiji.deviceintegrity.provider.contract.GoogleIntegrityTokenProvider
-import dev.keiji.deviceintegrity.provider.impl.GoogleIntegrityTokenProviderImpl
+import dev.keiji.deviceintegrity.provider.contract.GooglePlayIntegrityTokenProvider
+import dev.keiji.deviceintegrity.provider.impl.GooglePlayIntegrityTokenProviderImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -12,13 +12,13 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object GoogleIntegrityTokenProviderModule {
+object GooglePlayIntegrityTokenProviderModule {
 
     @Provides
     @Singleton
-    fun provideGoogleIntegrityTokenProvider(
+    fun provideGooglePlayIntegrityTokenProvider(
         @ApplicationContext context: Context
-    ): GoogleIntegrityTokenProvider {
-        return GoogleIntegrityTokenProviderImpl(context)
+    ): GooglePlayIntegrityTokenProvider {
+        return GooglePlayIntegrityTokenProviderImpl(context)
     }
 }
