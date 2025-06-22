@@ -50,8 +50,6 @@ dependencies {
     implementation(libs.timber)
 
     testImplementation(libs.junit)
-    testImplementation("org.mockito:mockito-core:5.12.0")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
 
     implementation("androidx.biometric:biometric-ktx:1.4.0-alpha02")
 }
