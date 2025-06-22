@@ -1,19 +1,19 @@
 package dev.keiji.deviceintegrity.provider.impl
 
 import android.content.Context
-import dev.keiji.deviceintegrity.provider.contract.GoogleIntegrityTokenProvider
+import dev.keiji.deviceintegrity.provider.contract.GooglePlayIntegrityTokenProvider
 import com.google.android.play.core.integrity.IntegrityManagerFactory
 import com.google.android.play.core.integrity.IntegrityTokenRequest
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject // Added for Hilt constructor injection, though Context is provided by Hilt module
 
 /**
- * Implementation of [GoogleIntegrityTokenProvider] that uses the Google Play Integrity API.
+ * Implementation of [GooglePlayIntegrityTokenProvider] that uses the Google Play Integrity API.
  */
-class GoogleIntegrityTokenProviderImpl @Inject constructor( // Mark constructor for Hilt if it's directly injected,
+class GooglePlayIntegrityTokenProviderImpl @Inject constructor( // Mark constructor for Hilt if it's directly injected,
                                                      // but here it will be constructed by a Hilt module.
     private val context: Context
-) : GoogleIntegrityTokenProvider {
+) : GooglePlayIntegrityTokenProvider {
 
     override suspend fun getToken(nonce: String): String {
         // Create an instance of a manager.

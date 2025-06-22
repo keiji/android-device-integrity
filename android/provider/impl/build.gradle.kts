@@ -48,4 +48,6 @@ dependencies {
     ksp("com.google.dagger:hilt-compiler:2.56.2")
 
     implementation(libs.timber)
+
+    testImplementation(libs.junit)
 }

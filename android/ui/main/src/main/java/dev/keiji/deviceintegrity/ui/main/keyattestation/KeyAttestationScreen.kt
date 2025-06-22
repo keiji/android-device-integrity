@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -89,4 +90,10 @@ fun KeyAttestationScreen(
             Text(text = uiState.result)
         }
     }
+}
+
+@Preview
+@Composable
+private fun KeyAttestationScreenPreview() {
+    KeyAttestationScreen()
 }

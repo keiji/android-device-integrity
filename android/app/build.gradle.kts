@@ -43,6 +43,9 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    buildFeatures {
+        buildConfig = true
+    }
 }
 
 dependencies {
@@ -58,8 +61,6 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     implementation(libs.timber)
-
-    implementation(project(":provider:impl"))
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.keiji.deviceintegrity.provider.contract.GoogleIntegrityTokenProvider
+import dev.keiji.deviceintegrity.provider.contract.GooglePlayIntegrityTokenProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,7 +14,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PlayIntegrityViewModel @Inject constructor(
-    private val tokenProvider: GoogleIntegrityTokenProvider
+    private val tokenProvider: GooglePlayIntegrityTokenProvider
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PlayIntegrityUiState())
     val uiState: StateFlow<PlayIntegrityUiState> = _uiState.asStateFlow()
