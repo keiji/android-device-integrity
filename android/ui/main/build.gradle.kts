@@ -33,7 +33,7 @@ android {
 
 dependencies {
     implementation(project(":ui:theme"))
-    implementation(project(":repository:contract"))
+    implementation(project(":provider:contract"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

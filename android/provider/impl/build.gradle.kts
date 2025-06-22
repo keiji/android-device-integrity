@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "dev.keiji.deviceintegrity.repository.impl"
+    namespace = "dev.keiji.deviceintegrity.provider.impl"
     compileSdk = 36
 
     defaultConfig {
@@ -34,7 +34,7 @@ android {
 }
 
 dependencies {
-    api(project(":repository:contract"))
+    api(project(":provider:contract"))
 
     // Play Integrity API
     implementation(libs.play.integrity)
@@ -50,4 +50,6 @@ dependencies {
     implementation(libs.timber)
 
     testImplementation(libs.junit)
+
+    implementation("androidx.biometric:biometric-ktx:1.4.0-alpha02")
 }
