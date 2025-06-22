@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.playintegrity
+package dev.keiji.deviceintegrity.ui.main.playintegrity
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

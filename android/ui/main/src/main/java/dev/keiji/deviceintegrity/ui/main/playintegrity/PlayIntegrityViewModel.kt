@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.playintegrity
+package dev.keiji.deviceintegrity.ui.main.playintegrity
 
 import android.util.Log
 import androidx.lifecycle.ViewModel

@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.playintegrity
+package dev.keiji.deviceintegrity.ui.main.playintegrity
 
 data class PlayIntegrityUiState(
     val isLoading: Boolean = false,

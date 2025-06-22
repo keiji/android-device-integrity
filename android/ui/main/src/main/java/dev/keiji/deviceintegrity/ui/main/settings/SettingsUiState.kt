@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.settings
+package dev.keiji.deviceintegrity.ui.main.settings
 
 data class SettingsUiState(
     val sampleSetting: String = "Initial Value"

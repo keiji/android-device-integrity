@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.settings
+package dev.keiji.deviceintegrity.ui.main.settings
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize

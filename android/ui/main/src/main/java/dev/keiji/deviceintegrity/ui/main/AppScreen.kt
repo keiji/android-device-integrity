@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui
+package dev.keiji.deviceintegrity.ui.main
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Key

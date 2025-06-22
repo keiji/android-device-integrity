@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.keyattestation
+package dev.keiji.deviceintegrity.ui.main.keyattestation
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
