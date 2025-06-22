@@ -32,5 +32,5 @@ android {
 }
 
 dependencies {
-    // Add any necessary dependencies here
+    implementation(libs.timber)
 }

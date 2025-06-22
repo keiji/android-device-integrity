@@ -46,4 +46,6 @@ dependencies {
     // Hilt for Dependency Injection
     implementation("com.google.dagger:hilt-android:2.56.2")
     ksp("com.google.dagger:hilt-compiler:2.56.2")
+
+    implementation(libs.timber)
 }
