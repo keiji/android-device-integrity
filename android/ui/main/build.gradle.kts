@@ -48,6 +48,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose) // AppScreen might use navigation
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose) // For ViewModel in MainActivity/AppScreen if any
+    debugImplementation(libs.androidx.ui.tooling)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
