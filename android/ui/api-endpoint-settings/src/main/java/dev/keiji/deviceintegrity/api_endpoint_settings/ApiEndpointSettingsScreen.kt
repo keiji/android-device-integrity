@@ -1,7 +1,5 @@
 package dev.keiji.deviceintegrity.api_endpoint_settings
 
-package dev.keiji.deviceintegrity.api_endpoint_settings
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
