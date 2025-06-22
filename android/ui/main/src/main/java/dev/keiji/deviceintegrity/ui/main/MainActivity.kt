@@ -31,6 +31,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        timber.log.Timber.d("MainActivity onCreate")
+
         setContent {
             DeviceIntegrityApp()
         }
