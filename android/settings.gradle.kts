@@ -26,6 +26,10 @@ include(
     ":provider:impl"
 )
 include(
+    ":repository:contract",
+    ":repository:impl"
+)
+include(
     ":ui:main",
     ":ui:theme"
 )
