@@ -1,22 +1,24 @@
 package dev.keiji.deviceintegrity.repository.impl
 
 import android.content.Context
-import dev.keiji.deviceintegrity.repository.contract.GooglePlayIntegrityTokenRepository
 import com.google.android.play.core.integrity.IntegrityManagerFactory
 import com.google.android.play.core.integrity.IntegrityTokenRequest
+import com.google.android.play.core.integrity.StandardIntegrityTokenRequest
+import dev.keiji.deviceintegrity.provider.contract.StandardIntegrityManagerProvider
+import dev.keiji.deviceintegrity.repository.contract.GooglePlayIntegrityTokenRepository
 import kotlinx.coroutines.tasks.await
-import javax.inject.Inject // Added for Hilt constructor injection, though Context is provided by Hilt module
+import javax.inject.Inject
 
 /**
  * Implementation of [GooglePlayIntegrityTokenRepository] that uses the Google Play Integrity API.
  */
-class GooglePlayIntegrityTokenRepositoryImpl @Inject constructor( // Mark constructor for Hilt if it's directly injected,
-                                                     // but here it will be constructed by a Hilt module.
-    private val context: Context
+class GooglePlayIntegrityTokenRepositoryImpl @Inject constructor(
+    private val context: Context, // Kept for classic requests
+    private val standardIntegrityManagerProvider: StandardIntegrityManagerProvider
 ) : GooglePlayIntegrityTokenRepository {
 
-    override suspend fun getToken(nonce: String): String {
-        // Create an instance of a manager.
+    override suspend fun getTokenClassic(nonce: String): String {
+        // Create an instance of a manager for classic requests.
         val integrityManager = IntegrityManagerFactory.create(context.applicationContext)
 
         // Request the integrity token by providing a nonce.
@@ -24,12 +26,31 @@ class GooglePlayIntegrityTokenRepositoryImpl @Inject constructor( // Mark constr
             IntegrityTokenRequest.builder()
                 .setNonce(nonce)
                 .build()
-        ).await() // Using kotlinx-coroutines-play-services to await the Task
+        ).await()
 
-        // Check if the token is present, though the API docs suggest it should be.
-        // If token() can return null and the interface expects non-null String,
-        // appropriate error handling or a different return type (String?) would be needed.
-        // For now, assuming token() returns a non-null String as per typical Integrity API usage.
-        return tokenResponse.token() ?: throw IllegalStateException("Integrity token was null")
+        return tokenResponse.token() ?: throw IllegalStateException("Integrity token (classic) was null")
+    }
+
+    // The cloudProjectNumber argument is kept to match the interface definition,
+    // but the StandardIntegrityManager (obtained via provider) is already instantiated with a project number.
+    override suspend fun getTokenStandard(cloudProjectNumber: Long, requestHash: String?): String {
+        // Obtain StandardIntegrityManager via the provider.
+        // The dispatcher is handled internally by the provider.
+        val manager = standardIntegrityManagerProvider.get()
+
+        // Prepare the token request builder.
+        val requestBuilder = StandardIntegrityTokenRequest.builder()
+
+        // Set request hash if provided.
+        requestHash?.let {
+            requestBuilder.setRequestHash(it)
+        }
+
+        // Request the integrity token.
+        val tokenResponse = manager.request(
+            requestBuilder.build()
+        ).await()
+
+        return tokenResponse.token() ?: throw IllegalStateException("Integrity token (standard) was null")
     }
 }

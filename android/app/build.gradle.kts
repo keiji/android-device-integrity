@@ -22,6 +22,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // TODO: Replace 0L with your actual Google Cloud Project Number
+        buildConfigField("Long", "PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER", "0L")
     }
 
     buildTypes {
@@ -51,6 +54,7 @@ android {
 dependencies {
     implementation(project(":ui:main"))
     implementation(project(":provider:impl"))
+    api(project(":provider:contract")) // Changed to api
     implementation(project(":repository:impl"))
 
     implementation(libs.androidx.core.ktx)
