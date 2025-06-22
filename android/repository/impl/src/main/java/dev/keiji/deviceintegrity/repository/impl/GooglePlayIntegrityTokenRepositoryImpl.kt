@@ -3,8 +3,8 @@ package dev.keiji.deviceintegrity.repository.impl
 import android.content.Context
 import com.google.android.play.core.integrity.IntegrityManagerFactory
 import com.google.android.play.core.integrity.IntegrityTokenRequest
-import com.google.android.play.core.integrity.StandardIntegrityTokenRequest
-import dev.keiji.deviceintegrity.provider.contract.StandardIntegrityManagerProvider
+import com.google.android.play.core.integrity.StandardIntegrityManager
+import dev.keiji.deviceintegrity.provider.contract.StandardIntegrityTokenProviderProvider
 import dev.keiji.deviceintegrity.repository.contract.GooglePlayIntegrityTokenRepository
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -14,7 +14,7 @@ import javax.inject.Inject
  */
 class GooglePlayIntegrityTokenRepositoryImpl @Inject constructor(
     private val context: Context, // Kept for classic requests
-    private val standardIntegrityManagerProvider: StandardIntegrityManagerProvider
+    private val standardIntegrityTokenProviderProvider: StandardIntegrityTokenProviderProvider
 ) : GooglePlayIntegrityTokenRepository {
 
     override suspend fun getTokenClassic(nonce: String): String {
@@ -36,10 +36,10 @@ class GooglePlayIntegrityTokenRepositoryImpl @Inject constructor(
     override suspend fun getTokenStandard(cloudProjectNumber: Long, requestHash: String?): String {
         // Obtain StandardIntegrityManager via the provider.
         // The dispatcher is handled internally by the provider.
-        val manager = standardIntegrityManagerProvider.get()
+        val provider = standardIntegrityTokenProviderProvider.get()
 
         // Prepare the token request builder.
-        val requestBuilder = StandardIntegrityTokenRequest.builder()
+        val requestBuilder = StandardIntegrityManager.StandardIntegrityTokenRequest.builder()
 
         // Set request hash if provided.
         requestHash?.let {
@@ -47,7 +47,7 @@ class GooglePlayIntegrityTokenRepositoryImpl @Inject constructor(
         }
 
         // Request the integrity token.
-        val tokenResponse = manager.request(
+        val tokenResponse = provider.request(
             requestBuilder.build()
         ).await()
 

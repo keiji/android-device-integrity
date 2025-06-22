@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
-    // Removed Hilt plugin: alias(libs.plugins.hilt)
 }
 
 android {

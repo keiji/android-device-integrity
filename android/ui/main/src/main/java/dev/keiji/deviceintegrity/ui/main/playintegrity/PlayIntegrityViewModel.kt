@@ -28,7 +28,7 @@ class PlayIntegrityViewModel @Inject constructor(
         _uiState.update { it.copy(isLoading = true, result = "") }
         viewModelScope.launch {
             try {
-                val token = tokenProvider.getToken(nonce)
+                val token = tokenProvider.getTokenClassic(nonce)
                 Log.d("PlayIntegrityViewModel", "Integrity Token: $token")
                 _uiState.update {
                     it.copy(isLoading = false, result = "Token fetched successfully (see Logcat for token)")
