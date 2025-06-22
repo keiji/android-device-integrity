@@ -31,6 +31,7 @@ include(
 )
 include(
     ":ui:main",
-    ":ui:theme"
+    ":ui:theme",
+    ":ui:api-endpoint-settings"
 )
 include(":api")
