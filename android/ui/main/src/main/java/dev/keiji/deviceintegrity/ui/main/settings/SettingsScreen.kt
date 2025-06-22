@@ -1,31 +1,47 @@
 package dev.keiji.deviceintegrity.ui.main.settings
 
+import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.keiji.deviceintegrity.api_endpoint_settings.ApiEndpointSettingsActivity
 
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
-    SettingsContent(uiState = uiState)
+    SettingsContent(
+        uiState = uiState,
+        onNavigateToApiEndpointSettings = {
+            context.startActivity(
+                Intent(context, ApiEndpointSettingsActivity::class.java)
+            )
+        }
+    )
 }
 
 @Composable
 private fun SettingsContent(
-    uiState: SettingsUiState
+    uiState: SettingsUiState,
+    onNavigateToApiEndpointSettings: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -49,6 +65,15 @@ private fun SettingsContent(
             text = "Security Patch Level: ${uiState.securityPatchLevel}",
             style = MaterialTheme.typography.bodyLarge
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = onNavigateToApiEndpointSettings,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("API Endpoint Settings")
+        }
     }
 }
 
@@ -57,5 +82,8 @@ private fun SettingsContent(
 private fun SettingsScreenPreview() {
     // Preview uses a default SettingsUiState which will have empty strings
     // For a more representative preview, you could mock the ViewModel or pass a sample UiState
-    SettingsContent(uiState = SettingsUiState("1.0.0", 1, "13", "2023-08-01"))
+    SettingsContent(
+        uiState = SettingsUiState("1.0.0", 1, "13", "2023-08-01"),
+        onNavigateToApiEndpointSettings = {}
+    )
 }

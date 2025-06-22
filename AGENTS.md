@@ -8,9 +8,9 @@ This document outlines the steps to set up the Android SDK environment required 
     Execute the following commands in your terminal to download and install the Android SDK command-line tools:
     ```bash
     wget -q https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip -O /tmp/tools.zip
-    unzip /tmp/tools.zip -d /tmp/tools
+    unzip -o /tmp/tools.zip -d /tmp/tools
     mkdir -p ~/AndroidSdk/cmdline-tools/latest
-    mv /tmp/tools/cmdline-tools/* ~/AndroidSdk/cmdline-tools/latest
+    mv -f /tmp/tools/cmdline-tools/* ~/AndroidSdk/cmdline-tools/latest
     rm -rf /tmp/tools
     rm /tmp/tools.zip
     ```
