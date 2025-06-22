@@ -1,7 +1,7 @@
-package dev.keiji.deviceintegrity.provider.impl
+package dev.keiji.deviceintegrity.repository.impl
 
 import android.content.Context
-import dev.keiji.deviceintegrity.provider.contract.GooglePlayIntegrityTokenProvider
+import dev.keiji.deviceintegrity.repository.contract.GooglePlayIntegrityTokenProvider
 import com.google.android.play.core.integrity.IntegrityManagerFactory
 import com.google.android.play.core.integrity.IntegrityTokenRequest
 import kotlinx.coroutines.tasks.await

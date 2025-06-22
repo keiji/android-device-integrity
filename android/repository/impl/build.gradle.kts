@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "dev.keiji.deviceintegrity.provider.impl"
+    namespace = "dev.keiji.deviceintegrity.repository.impl"
     compileSdk = 36
 
     defaultConfig {
@@ -34,7 +34,7 @@ android {
 }
 
 dependencies {
-    api(project(":provider:contract"))
+    api(project(":repository:contract"))
 
     // Play Integrity API
     implementation(libs.play.integrity)
@@ -51,5 +51,6 @@ dependencies {
 
     testImplementation(libs.junit)
 
-    implementation("androidx.biometric:biometric-ktx:1.4.0-alpha02")
+    // TODO: 確認 - この依存関係は provider:impl にありましたが、repository:impl にも必要ですか？
+    // implementation("androidx.biometric:biometric-ktx:1.4.0-alpha02")
 }

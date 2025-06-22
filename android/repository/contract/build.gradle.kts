@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "dev.keiji.deviceintegrity.provider.contract"
+    namespace = "dev.keiji.deviceintegrity.repository.contract"
     compileSdk = 36
 
     defaultConfig {
@@ -23,11 +23,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11 // appモジュールに合わせる
-        targetCompatibility = JavaVersion.VERSION_11 // appモジュールに合わせる
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "11" // appモジュールに合わせる
+        jvmTarget = "11"
     }
 }
 

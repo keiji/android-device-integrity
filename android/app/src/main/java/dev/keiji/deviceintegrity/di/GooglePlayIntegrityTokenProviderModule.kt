@@ -6,8 +6,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import dev.keiji.deviceintegrity.provider.contract.GooglePlayIntegrityTokenProvider
-import dev.keiji.deviceintegrity.provider.impl.GooglePlayIntegrityTokenProviderImpl
+import dev.keiji.deviceintegrity.repository.contract.GooglePlayIntegrityTokenProvider
+import dev.keiji.deviceintegrity.repository.impl.GooglePlayIntegrityTokenProviderImpl
 import javax.inject.Singleton
 
 @Module

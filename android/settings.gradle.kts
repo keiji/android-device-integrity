@@ -22,8 +22,8 @@ dependencyResolutionManagement {
 rootProject.name = "Device Integrity"
 include(":app")
 include(
-    ":provider:contract",
-    ":provider:impl"
+    ":repository:contract",
+    ":repository:impl"
 )
 include(
     ":ui:main",
