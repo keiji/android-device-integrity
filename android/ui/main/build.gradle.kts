@@ -34,6 +34,7 @@ android {
 dependencies {
     implementation(project(":api"))
     implementation(project(":ui:theme"))
+    implementation(project(":ui:api-endpoint-settings"))
     implementation(project(":provider:contract"))
     implementation(project(":repository:contract"))
 
