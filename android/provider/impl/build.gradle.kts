@@ -50,4 +50,6 @@ dependencies {
     implementation(libs.timber)
 
     testImplementation(libs.junit)
+
+    implementation("androidx.biometric:biometric-ktx:1.4.0-alpha02")
 }
