@@ -25,12 +25,16 @@ import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationScreen
 import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityScreen
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsScreen
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
+import timber.log.Timber
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        Timber.d("MainActivity onCreate")
+
         setContent {
             DeviceIntegrityApp()
         }

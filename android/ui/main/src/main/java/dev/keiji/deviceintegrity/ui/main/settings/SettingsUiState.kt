@@ -1,6 +1,8 @@
 package dev.keiji.deviceintegrity.ui.main.settings
 
 data class SettingsUiState(
-    val sampleSetting: String = "Initial Value"
-    // TODO: Add actual settings properties
+    val appVersionName: String,
+    val appVersionCode: Long,
+    val osVersion: String,
+    val securityPatchLevel: String
 )
