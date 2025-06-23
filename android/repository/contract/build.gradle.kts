@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "dev.keiji.deviceintegrity.repository.contract"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 23

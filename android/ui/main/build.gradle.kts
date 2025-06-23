@@ -1,5 +1,5 @@
 plugins {
-    id("com.android.library")
+    alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "dev.keiji.deviceintegrity.ui.main"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 23
