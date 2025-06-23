@@ -7,6 +7,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 import java.net.MalformedURLException
 import java.net.URL
@@ -15,9 +16,15 @@ import java.net.URL
 @Composable
 fun ApiEndpointSettingsScreen(
     modifier: Modifier = Modifier,
+    viewModel: ApiEndpointSettingsViewModel = hiltViewModel()
 ) {
-    var text by remember { mutableStateOf("") }
+    val currentApiEndpointUrl by viewModel.apiEndpointUrl.collectAsState()
+    var text by remember(currentApiEndpointUrl) { mutableStateOf(currentApiEndpointUrl ?: "") }
     var errorText by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(currentApiEndpointUrl) {
+        text = currentApiEndpointUrl ?: ""
+    }
 
     Scaffold(
         topBar = {
@@ -70,7 +77,7 @@ fun ApiEndpointSettingsScreen(
                 onClick = {
                     try {
                         URL(text) // Validate URL
-                        // TODO: Implement persistence logic
+                        viewModel.saveApiEndpointUrl(text)
                         errorText = null // Clear error on success
                     } catch (e: MalformedURLException) {
                         errorText = "Invalid URL format"
@@ -89,11 +96,17 @@ fun ApiEndpointSettingsScreen(
 private fun ApiEndpointSettingsScreenPreview() {
     DeviceIntegrityTheme {
         Surface { // Surface is still good for previews of screen content
-            ApiEndpointSettingsScreen()
+            ApiEndpointSettingsScreen(
+                // Provide a mock ViewModel for preview if needed, or use defaults
+            )
         }
     }
 }
 
+// It's generally harder to preview complex states with Hilt ViewModels directly in @Preview.
+// Consider testing these states via UI tests or by creating a preview-specific Composable
+// that accepts all state as parameters.
+/*
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
@@ -169,3 +182,4 @@ private fun ApiEndpointSettingsScreenWithErrorPreview() {
         }
     }
 }
+*/

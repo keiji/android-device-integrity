@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.protobuf) // Added for Protocol Buffers
 }
 
 android {
@@ -31,6 +32,13 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    sourceSets {
+        getByName("main") {
+            proto {
+                srcDir("src/main/proto")
+            }
+        }
+    }
 }
 
 dependencies {
@@ -48,7 +56,36 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 
+    // DataStore
+    implementation(libs.androidx.datastore.core)
+    implementation(libs.androidx.datastore.preferences) // While we use Proto DataStore, this is often a common base
+    implementation(libs.protobuf.kotlin.lite)
+
+
     implementation(libs.timber)
 
     testImplementation(libs.junit)
+    // Robolectric and other test dependencies if needed for this module specifically
+    // For PreferencesRepositoryImplTest, Robolectric is used.
+    // It's often better to have a separate test module or configure it if it's only for a few tests.
+    // For now, assuming it's okay here or managed via AGP test options if not explicitly listed.
+    // testImplementation(libs.robolectric) // Example if you add robolectric to toml
+}
+
+protobuf {
+    protoc {
+        artifact = libs.protobuf.protoc.get().toString() // Updated to use version catalog
+    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.builtins {
+                java {
+                    option("lite")
+                }
+                kotlin {
+                    option("lite")
+                }
+            }
+        }
+    }
 }
