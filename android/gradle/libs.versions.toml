@@ -14,7 +14,7 @@ lifecycleRuntimeCompose = "2.9.1"
 lifecycleViewmodel = "2.9.1"
 playIntegrity = "1.4.0"
 kotlinxCoroutines = "1.7.3"
-retrofit = "2.9.0"
+retrofit = "3.0.0"
 kotlinSerialization = "1.6.3" # kotlinx-serialization-json
 retrofitKotlinxSerializationJson = "1.0.0" # retrofit2-kotlinx-serialization-converter
 
