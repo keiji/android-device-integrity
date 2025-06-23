@@ -4,7 +4,7 @@
     <application>
         <activity
             android:name=".ApiEndpointSettingsActivity"
-            android:exported="true"
+            android:exported="false"
             android:label="@string/title_activity_api_endpoint_settings" />
     </application>
 

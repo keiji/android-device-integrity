@@ -58,7 +58,6 @@ dependencies {
     api(project(":provider:contract")) // Changed to api
     implementation(project(":repository:impl"))
     implementation(project(":ui:nav:impl"))
-    api(project(":ui:nav:contract"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
