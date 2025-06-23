@@ -21,7 +21,7 @@ androidxBiometric = "1.4.0-alpha02"
 javaxInject = "1"
 
 hilt = "2.56.2"
-ksp = "2.1.21-2.0.1"
+ksp = "2.1.21-2.0.2"
 
 timber = "5.0.1"
 
