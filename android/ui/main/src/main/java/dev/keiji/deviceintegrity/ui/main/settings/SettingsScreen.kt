@@ -1,98 +1,148 @@
 package dev.keiji.deviceintegrity.ui.main.settings
 
-import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Api
+import androidx.compose.material.icons.filled.Article
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import dev.keiji.deviceintegrity.ui.nav.contract.ApiEndpointSettingsNavigator
-import dagger.hilt.android.EntryPointAccessors
 
 @Composable
 fun SettingsScreen(
-    viewModel: SettingsViewModel = viewModel()
+    viewModel: SettingsViewModel = viewModel(),
+    onNavigateToOssLicenses: () -> Unit = {},
+    onNavigateToApiSettings: () -> Unit = {},
+    onNavigateToDeveloperInfo: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
+    val scrollState = rememberScrollState()
 
-    val apiEndpointSettingsNavigator = EntryPointAccessors.fromActivity(
-        context as android.app.Activity,
-        MainHiltEntryPoint::class.java
-    ).getApiEndpointSettingsNavigator()
-
-    val settingsLauncher = rememberLauncherForActivityResult(
-        contract = apiEndpointSettingsNavigator.contract(),
-        onResult = { }
-    )
-
-    SettingsContent(
-        uiState = uiState,
-        onNavigateToApiEndpointSettings = {
-            settingsLauncher.launch(Unit)
-        }
-    )
-}
-
-@Composable
-private fun SettingsContent(
-    uiState: SettingsUiState,
-    onNavigateToApiEndpointSettings: () -> Unit
-) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+            .verticalScroll(scrollState)
+            .padding(vertical = 8.dp)
     ) {
-        Text(
-            text = "App Version Name: ${uiState.appVersionName}",
-            style = MaterialTheme.typography.bodyLarge
+        SettingsMenuItem(
+            title = "アプリのバージョン",
+            subtitle = uiState.appVersionName,
         )
-        Text(
-            text = "App Version Code: ${uiState.appVersionCode}",
-            style = MaterialTheme.typography.bodyLarge
+        SettingsMenuItem(
+            title = "OSバージョン",
+            subtitle = uiState.osVersion,
         )
-        Text(
-            text = "OS Version: ${uiState.osVersion}",
-            style = MaterialTheme.typography.bodyLarge
+        SettingsMenuItem(
+            title = "セキュリティパッチ",
+            subtitle = uiState.securityPatchLevel,
         )
-        Text(
-            text = "Security Patch Level: ${uiState.securityPatchLevel}",
-            style = MaterialTheme.typography.bodyLarge
+        SettingsMenuItem(
+            icon = Icons.Default.Article,
+            title = "開発元のURL",
+            onClick = onNavigateToDeveloperInfo
+        )
+        SettingsMenuItem(
+            icon = Icons.Default.Build,
+            title = "オープンソースライセンス",
+            onClick = onNavigateToOssLicenses
+        )
+        SettingsMenuItem(
+            icon = Icons.Default.Api,
+            title = "接続するAPI設定",
+            onClick = onNavigateToApiSettings
+        )
+    }
+}
+
+@Composable
+fun SettingsMenuItem(
+    icon: ImageVector? = null,
+    title: String,
+    subtitle: String? = null,
+    onClick: (() -> Unit)? = null
+) {
+    val modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 16.dp, vertical = 12.dp)
+        .then(
+            if (onClick != null) {
+                Modifier.clickable(onClick = onClick)
+            } else {
+                Modifier
+            }
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = onNavigateToApiEndpointSettings,
-            modifier = Modifier.fillMaxWidth()
+    Surface(
+        modifier = modifier
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start,
+            modifier = Modifier.height(48.dp) // Increased height for menu item
         ) {
-            Text("API Endpoint Settings")
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    modifier = Modifier.padding(end = 16.dp)
+                )
+            }
+            Column {
+                Text(
+                    text = title,
+                    fontSize = 18.sp // Increased font size
+                )
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
-private fun SettingsScreenPreview() {
-    // Preview uses a default SettingsUiState which will have empty strings
-    // For a more representative preview, you could mock the ViewModel or pass a sample UiState
-    SettingsContent(
-        uiState = SettingsUiState("1.0.0", 1, "13", "2023-08-01"),
-        onNavigateToApiEndpointSettings = {}
+fun SettingsMenuItemPreview() {
+    SettingsMenuItem(
+        icon = Icons.Default.Info,
+        title = "アプリのバージョン",
+        subtitle = "1.0.0 (debug)",
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SettingsMenuItemClickablePreview() {
+    SettingsMenuItem(
+        icon = Icons.Default.Info,
+        title = "アプリのバージョン",
+        subtitle = "1.0.0 (debug)",
+        onClick = {},
     )
 }
