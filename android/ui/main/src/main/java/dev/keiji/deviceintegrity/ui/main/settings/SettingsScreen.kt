@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Api
-import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
@@ -59,7 +57,6 @@ fun SettingsScreen(
             subtitle = uiState.securityPatchLevel,
         )
         SettingsMenuItem(
-            icon = Icons.Default.Article,
             title = "開発元のURL",
             onClick = onNavigateToDeveloperInfo
         )
@@ -69,7 +66,6 @@ fun SettingsScreen(
             onClick = onNavigateToOssLicenses
         )
         SettingsMenuItem(
-            icon = Icons.Default.Api,
             title = "接続するAPI設定",
             onClick = onNavigateToApiSettings
         )

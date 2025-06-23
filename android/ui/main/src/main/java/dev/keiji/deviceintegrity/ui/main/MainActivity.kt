@@ -53,7 +53,12 @@ fun DeviceIntegrityApp() {
                     val currentDestination = navBackStackEntry?.destination
                     bottomNavigationItems.forEach { screen ->
                         NavigationBarItem(
-                            icon = { Icon(screen.icon, contentDescription = screen.label) },
+                            icon = {
+                                Icon(
+                                    painter = androidx.compose.ui.res.painterResource(id = screen.icon),
+                                    contentDescription = screen.label
+                                )
+                            },
                             label = { Text(screen.label) },
                             selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                             onClick = {
