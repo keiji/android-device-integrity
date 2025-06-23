@@ -1,0 +1,27 @@
+name: OpenAPI Lint
+
+on:
+  push:
+    paths:
+      - 'server/openapi.yaml'
+  pull_request:
+    paths:
+      - 'server/openapi.yaml'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18' # Spectralの実行にはNode.jsが必要
+
+      - name: Install Spectral
+        run: npm install -g @stoplight/spectral-cli
+
+      - name: Run Spectral lint
+        run: spectral lint server/openapi.yaml
