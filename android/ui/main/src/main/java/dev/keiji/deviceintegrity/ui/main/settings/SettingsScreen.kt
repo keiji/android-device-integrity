@@ -1,6 +1,6 @@
 package dev.keiji.deviceintegrity.ui.main.settings
 
-import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -19,7 +19,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import dev.keiji.deviceintegrity.api_endpoint_settings.ApiEndpointSettingsActivity
+import dev.keiji.deviceintegrity.ui.nav.contract.ApiEndpointSettingsNavigator
+import dagger.hilt.android.EntryPointAccessors
 
 @Composable
 fun SettingsScreen(
@@ -28,12 +29,20 @@ fun SettingsScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
+    val apiEndpointSettingsNavigator = EntryPointAccessors.fromActivity(
+        context as android.app.Activity,
+        MainHiltEntryPoint::class.java
+    ).getApiEndpointSettingsNavigator()
+
+    val settingsLauncher = rememberLauncherForActivityResult(
+        contract = apiEndpointSettingsNavigator.contract(),
+        onResult = { }
+    )
+
     SettingsContent(
         uiState = uiState,
         onNavigateToApiEndpointSettings = {
-            context.startActivity(
-                Intent(context, ApiEndpointSettingsActivity::class.java)
-            )
+            settingsLauncher.launch(Unit)
         }
     )
 }

@@ -37,6 +37,7 @@ dependencies {
     implementation(project(":ui:api-endpoint-settings"))
     implementation(project(":provider:contract"))
     implementation(project(":repository:contract"))
+    implementation(project(":ui:nav:contract"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

@@ -21,6 +21,9 @@
             <option value="$PROJECT_DIR$/ui" />
             <option value="$PROJECT_DIR$/ui/api-endpoint-settings" />
             <option value="$PROJECT_DIR$/ui/main" />
+            <option value="$PROJECT_DIR$/ui/nav" />
+            <option value="$PROJECT_DIR$/ui/nav/contract" />
+            <option value="$PROJECT_DIR$/ui/nav/impl" />
             <option value="$PROJECT_DIR$/ui/theme" />
           </set>
         </option>
