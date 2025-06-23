@@ -25,6 +25,11 @@ ksp = "2.1.21-2.0.2"
 
 timber = "5.0.1"
 
+# SDK Versions
+androidCompileSdk = "36"
+androidMinSdk = "23"
+androidTargetSdk = "36"
+
 [libraries]
 androidx-biometric-ktx = { group = "androidx.biometric", name = "biometric-ktx", version.ref = "androidxBiometric" }
 javax-inject = { group = "javax.inject", name = "javax.inject", version.ref = "javaxInject"}
