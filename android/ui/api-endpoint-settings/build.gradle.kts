@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "dev.keiji.deviceintegrity.api_endpoint_settings"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 21
