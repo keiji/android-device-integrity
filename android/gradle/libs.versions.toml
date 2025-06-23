@@ -19,7 +19,7 @@ kotlinSerialization = "1.6.3" # kotlinx-serialization-json
 retrofitKotlinxSerializationJson = "1.0.0" # retrofit2-kotlinx-serialization-converter
 
 hilt = "2.56.2"
-ksp = "2.1.21-2.0.1"
+ksp = "2.1.21-2.0.2"
 
 timber = "5.0.1"
 
