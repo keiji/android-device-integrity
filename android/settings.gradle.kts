@@ -21,3 +21,19 @@ dependencyResolutionManagement {
 
 rootProject.name = "Device Integrity"
 include(":app")
+include(
+    ":provider:contract",
+    ":provider:impl"
+)
+include(
+    ":repository:contract",
+    ":repository:impl"
+)
+include(
+    ":ui:main",
+    ":ui:theme",
+    ":ui:api-endpoint-settings",
+    ":ui:nav:contract",
+    ":ui:nav:impl"
+)
+include(":api")

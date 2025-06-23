@@ -1,15 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="GradleMigrationSettings" migrationVersion="1" />
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
         <option name="testRunner" value="CHOOSE_PER_TEST" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="gradleJvm" value="#GRADLE_LOCAL_JAVA_HOME" />
+        <option name="gradleJvm" value="jbr-21" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/api" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/provider" />
+            <option value="$PROJECT_DIR$/provider/contract" />
+            <option value="$PROJECT_DIR$/provider/impl" />
+            <option value="$PROJECT_DIR$/repository" />
+            <option value="$PROJECT_DIR$/repository/contract" />
+            <option value="$PROJECT_DIR$/repository/impl" />
+            <option value="$PROJECT_DIR$/ui" />
+            <option value="$PROJECT_DIR$/ui/api-endpoint-settings" />
+            <option value="$PROJECT_DIR$/ui/main" />
+            <option value="$PROJECT_DIR$/ui/nav" />
+            <option value="$PROJECT_DIR$/ui/nav/contract" />
+            <option value="$PROJECT_DIR$/ui/nav/impl" />
+            <option value="$PROJECT_DIR$/ui/theme" />
           </set>
         </option>
       </GradleProjectSettings>
