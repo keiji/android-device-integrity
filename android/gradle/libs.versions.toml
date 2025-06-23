@@ -23,6 +23,11 @@ ksp = "2.1.21-2.0.1"
 
 timber = "5.0.1"
 
+# SDK Versions
+androidCompileSdk = "36"
+androidMinSdk = "23"
+androidTargetSdk = "36"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

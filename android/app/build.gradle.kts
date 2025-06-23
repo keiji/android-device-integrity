@@ -12,12 +12,12 @@ val commitHash = providers.exec {
 
 android {
     namespace = "dev.keiji.deviceintegrity"
-    compileSdk = 36
+    compileSdk = libs.versions.androidCompileSdk.get().toInt()
 
     defaultConfig {
         applicationId = "dev.keiji.deviceintegrity"
-        minSdk = 23
-        targetSdk = 36
+        minSdk = libs.versions.androidMinSdk.get().toInt()
+        targetSdk = libs.versions.androidTargetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
 
