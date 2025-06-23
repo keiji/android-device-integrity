@@ -12,12 +12,12 @@ val commitHash = providers.exec {
 
 android {
     namespace = "dev.keiji.deviceintegrity"
-    compileSdk = 35
+    compileSdk = libs.versions.androidCompileSdk.get().toInt()
 
     defaultConfig {
         applicationId = "dev.keiji.deviceintegrity"
-        minSdk = 23
-        targetSdk = 35
+        minSdk = libs.versions.androidMinSdk.get().toInt()
+        targetSdk = libs.versions.androidTargetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
 
@@ -57,6 +57,7 @@ dependencies {
     implementation(project(":provider:impl"))
     api(project(":provider:contract")) // Changed to api
     implementation(project(":repository:impl"))
+    implementation(project(":ui:nav:impl"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

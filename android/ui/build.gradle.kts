@@ -6,10 +6,10 @@ plugins {
 
 android {
     namespace = "dev.keiji.deviceintegrity.ui"
-    compileSdk = 36
+    compileSdk = libs.versions.androidCompileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 23
+        minSdk = libs.versions.androidMinSdk.get().toInt()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -49,9 +49,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose) // For viewModel() delegate
     implementation(libs.androidx.lifecycle.viewmodel.ktx) // For ViewModel class and viewModelScope
 
-    // Coroutines - check if these are brought transitively or need to be explicit
-    // implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    // implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    // Coroutines
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.android)
 
 
     testImplementation(libs.junit)

@@ -5,8 +5,11 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 
 interface PlayIntegrityTokenVerifyApi {
-    @POST("/play-integrity/nonce")
+    @POST("/play-integrity/classic/nonce")
     suspend fun getNonce(@Body request: NonceRequest): NonceResponse
+
+    @POST("/play-integrity/classic/verify")
+    suspend fun verifyToken(@Body request: VerifyTokenRequest): VerifyTokenResponse
 }
 
 @Serializable
@@ -17,5 +20,17 @@ data class NonceRequest(
 @Serializable
 data class NonceResponse(
     val nonce: String,
-    val ttl: Long
+    // TODO: Check actual response field name for TTL or generated_datetime
+    val generated_datetime: Long
+)
+
+@Serializable
+data class VerifyTokenRequest(
+    val token: String
+)
+
+@Serializable
+data class VerifyTokenResponse(
+    // TODO: Define based on actual server response for verification
+    val status: String
 )

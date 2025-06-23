@@ -8,10 +8,10 @@ plugins {
 
 android {
     namespace = "dev.keiji.deviceintegrity.ui.main"
-    compileSdk = 35
+    compileSdk = libs.versions.androidCompileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 23
+        minSdk = libs.versions.androidMinSdk.get().toInt()
     }
 
     buildTypes {
@@ -37,6 +37,7 @@ dependencies {
     implementation(project(":ui:api-endpoint-settings"))
     implementation(project(":provider:contract"))
     implementation(project(":repository:contract"))
+    implementation(project(":ui:nav:contract"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

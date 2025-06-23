@@ -40,10 +40,10 @@ def generate_and_store_nonce():
 
     return encoded_nonce, generated_datetime_ms
 
-@app.route('/play-integrity/nonce', methods=['GET'])
+@app.route('/play-integrity/classic/nonce', methods=['POST'])
 def create_nonce_endpoint():
     """
-    Handles GET requests to /play-integrity/nonce.
+    Handles POST requests to /play-integrity/classic/nonce.
     Generates a nonce, saves it to Datastore, and returns it as JSON.
     """
     try:
@@ -59,10 +59,10 @@ def create_nonce_endpoint():
         app.logger.error(f"Error generating nonce: {e}")
         return jsonify({"error": "Failed to generate nonce"}), 500
 
-@app.route('/play-integrity/verify', methods=['POST'])
+@app.route('/play-integrity/classic/verify', methods=['POST'])
 def verify_integrity():
     """
-    Handles POST requests to /play-integrity/verify.
+    Handles POST requests to /play-integrity/classic/verify.
     For now, it just returns a simple string.
     """
     # In a real application, you would:
