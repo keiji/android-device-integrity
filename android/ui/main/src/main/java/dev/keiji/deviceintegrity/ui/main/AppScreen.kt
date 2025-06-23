@@ -1,7 +1,6 @@
 package dev.keiji.deviceintegrity.ui.main
 
 import androidx.annotation.DrawableRes
-import dev.keiji.deviceintegrity.app.R
 
 sealed class AppScreen(
     val route: String,
