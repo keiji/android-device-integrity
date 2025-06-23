@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "dev.keiji.deviceintegrity.provider.impl"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 23
@@ -52,5 +52,5 @@ dependencies {
 
     testImplementation(libs.junit)
 
-    implementation("androidx.biometric:biometric-ktx:1.4.0-alpha02")
+    implementation(libs.androidx.biometric.ktx)
 }

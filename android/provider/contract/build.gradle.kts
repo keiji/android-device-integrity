@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "dev.keiji.deviceintegrity.provider.contract"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 23
@@ -35,6 +35,6 @@ android {
 dependencies {
     implementation(libs.timber)
     api(libs.play.integrity) // Use api since the interface exposes types from this library
-    implementation("javax.inject:javax.inject:1") // For @Qualifier
+    implementation(libs.javax.inject) // For @Qualifier
     // Removed Hilt compiler: ksp(libs.hilt.compiler)
 }
