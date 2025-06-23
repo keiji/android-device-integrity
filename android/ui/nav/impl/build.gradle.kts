@@ -5,10 +5,10 @@ plugins {
 
 android {
     namespace = "dev.keiji.deviceintegrity.ui.nav.impl"
-    compileSdk = 35
+    compileSdk = libs.versions.androidCompileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 21
+        minSdk = libs.versions.androidMinSdk.get().toInt()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
