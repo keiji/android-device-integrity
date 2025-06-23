@@ -6,10 +6,10 @@ plugins {
 
 android {
     namespace = "dev.keiji.deviceintegrity.ui.theme"
-    compileSdk = 35
+    compileSdk = libs.versions.androidCompileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 23
+        minSdk = libs.versions.androidMinSdk.get().toInt()
     }
 
     buildTypes {
