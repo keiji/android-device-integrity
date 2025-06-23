@@ -15,7 +15,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.io.File
 
 @ExperimentalCoroutinesApi
 @RunWith(RobolectricTestRunner::class)
@@ -29,7 +28,7 @@ class PreferencesRepositoryImplTest {
     private val Context.testUserPreferencesStore: DataStore<UserPreferences> by dataStore(
         fileName = "test_user_prefs.pb",
         serializer = UserPreferencesSerializer,
-        produceFile = { File(ApplicationProvider.getApplicationContext<Context>().filesDir, "datastore/test_user_prefs.pb") }
+        produceMigrations = { context -> emptyList() }
     )
 
     @Before

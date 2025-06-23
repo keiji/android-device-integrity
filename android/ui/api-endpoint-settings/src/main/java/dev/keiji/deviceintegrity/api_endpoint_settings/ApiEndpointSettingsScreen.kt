@@ -7,7 +7,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 import java.net.MalformedURLException
 import java.net.URL
@@ -16,7 +16,7 @@ import java.net.URL
 @Composable
 fun ApiEndpointSettingsScreen(
     modifier: Modifier = Modifier,
-    viewModel: ApiEndpointSettingsViewModel = hiltViewModel()
+    viewModel: ApiEndpointSettingsViewModel = viewModel()
 ) {
     val currentApiEndpointUrl by viewModel.apiEndpointUrl.collectAsState()
     var text by remember(currentApiEndpointUrl) { mutableStateOf(currentApiEndpointUrl ?: "") }

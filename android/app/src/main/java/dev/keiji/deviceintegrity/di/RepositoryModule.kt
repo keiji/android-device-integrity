@@ -18,7 +18,5 @@ object RepositoryModule {
     @Provides
     fun providePreferencesRepository(
         @ApplicationContext context: Context
-    ): PreferencesRepository {
-        return PreferencesRepositoryImpl(context)
-    }
+    ): PreferencesRepository = PreferencesRepositoryImpl(context)
 }

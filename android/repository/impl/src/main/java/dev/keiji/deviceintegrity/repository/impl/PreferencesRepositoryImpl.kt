@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.map
 import java.io.InputStream
 import java.io.OutputStream
 import javax.inject.Inject
-import javax.inject.Singleton
 
 // Made public for testing, or consider an internal constructor for testing module
 val Context.userPreferencesStore: DataStore<UserPreferences> by dataStore(
@@ -35,13 +34,10 @@ object UserPreferencesSerializer : Serializer<UserPreferences> {
     override suspend fun writeTo(t: UserPreferences, output: OutputStream) = t.writeTo(output)
 }
 
-@Singleton // Ensure Hilt provides this as a singleton
 class PreferencesRepositoryImpl @Inject internal constructor( // internal constructor for testing
     private val dataStore: DataStore<UserPreferences>
 ) : PreferencesRepository {
 
-    // Overloaded constructor for Hilt to use ApplicationContext
-    @Inject
     constructor(context: Context) : this(context.userPreferencesStore)
 
     override val apiEndpointUrl: Flow<String?> = dataStore.data
