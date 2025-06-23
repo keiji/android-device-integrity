@@ -3,6 +3,9 @@ import base64
 from datetime import datetime, timezone
 from flask import Flask, request, jsonify
 from google.cloud import datastore
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+import google.auth
 
 # Initialize Flask app
 # GAE expects the Flask app object to be named 'app' by default.
@@ -10,6 +13,9 @@ app = Flask(__name__)
 
 # Initialize Datastore client
 datastore_client = datastore.Client()
+
+# Configuration for Play Integrity API
+PLAY_INTEGRITY_PACKAGE_NAME = "dev.keiji.deviceintegrity"
 
 def generate_and_store_nonce():
     """Generates a cryptographically secure nonce, stores it in Datastore, and returns it."""
@@ -63,15 +69,95 @@ def create_nonce_endpoint():
 def verify_integrity():
     """
     Handles POST requests to /play-integrity/classic/verify.
-    For now, it just returns a simple string.
+    It expects a JSON payload with 'nonce' and 'token'.
+    It calls the Google Play Integrity API to decode the token and verifies the nonce.
+    Returns the JSON response from the Play Integrity API.
     """
-    # In a real application, you would:
-    # 1. Get the integrity token from the request body (e.g., request.get_json())
-    # 2. Call the Google Play Integrity API to verify the token.
-    # 3. Based on the verification result, return an appropriate response.
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Missing JSON payload"}), 400
 
-    # For this initial setup, we just return a placeholder string.
-    return "Hello Integrity"
+        client_nonce = data.get('nonce')
+        integrity_token = data.get('token')
+
+        if not client_nonce:
+            return jsonify({"error": "Missing 'nonce' in request"}), 400
+        if not integrity_token:
+            return jsonify({"error": "Missing 'token' in request"}), 400
+
+        # https://developer.android.com/google/play/integrity/verdict#retrieve-interpret
+        #
+        # Authenticate using Application Default Credentials
+        # This is the recommended approach for services running on Google Cloud.
+        # Ensure the service account has the "Play Integrity API User" role.
+        credentials, project = google.auth.default(
+            scopes=['https://www.googleapis.com/auth/playintegrity']
+        )
+
+        playintegrity = build('playintegrity', 'v1', credentials=credentials, cache_discovery=False)
+
+        # Call the Play Integrity API
+        # https://developers.google.com/android-publisher/api-ref/rest/v3/applications.playintegrity/decodeIntegrityToken
+        # The method name in the google-api-python-client might not exactly match the REST API path.
+        # It's usually something like `applications().playintegrity().decodeIntegrityToken()`
+        # or `playintegrity.decodeIntegrityToken()` if the service is built for playintegrity directly.
+        # For this specific API (playintegrity.googleapis.com), the method structure is:
+        # service.decodeIntegrityToken(packageName=..., body={integrityToken: ...})
+        # The actual method provided by the client library is playintegrity.decodeIntegrityToken
+
+        request_body = {'integrity_token': integrity_token} # Field name is integrity_token
+
+        # Corrected API call according to typical client library structure for this API
+        api_response = playintegrity.decodeIntegrityToken(
+            packageName=PLAY_INTEGRITY_PACKAGE_NAME,
+            body=request_body
+        ).execute()
+
+
+        # IMPORTANT: Verify the nonce from the API response matches the client_nonce
+        # The nonce is part of the tokenPayload, which is a JSON string within the response.
+        # It needs to be parsed.
+        # However, the google-api-python-client might parse tokenPayload automatically
+        # if the discovery document specifies it as an object.
+        # Let's assume api_response['tokenPayloadExternal'] or similar holds the parsed payload.
+        # The exact field name can be checked from API documentation or by inspecting a live response.
+        # According to documentation: response body includes "tokenPayloadExternal"
+        # which contains requestDetails.nonce
+
+        token_payload = api_response.get('tokenPayloadExternal', {})
+        request_details = token_payload.get('requestDetails', {})
+        api_nonce = request_details.get('nonce')
+
+        if not api_nonce:
+            app.logger.error("Nonce not found in Play Integrity API response.")
+            # Even if nonce is missing in API response, we might still want to return the API response
+            # for the client to inspect, but flag an error.
+            # Or, treat as a verification failure. For now, let's be strict.
+            return jsonify({
+                "error": "Nonce missing in Play Integrity API response payload",
+                "play_integrity_response": api_response
+            }), 500 # Or 400 if client should retry with a valid token
+
+        if api_nonce != client_nonce:
+            app.logger.error(f"Nonce mismatch. Client: {client_nonce}, API: {api_nonce}")
+            return jsonify({
+                "error": "Nonce mismatch",
+                "client_nonce": client_nonce,
+                "api_nonce": api_nonce,
+                "play_integrity_response": api_response
+            }), 400 # Bad request due to nonce mismatch
+
+        # If nonce matches, return the full API response
+        return jsonify(api_response), 200
+
+    except google.auth.exceptions.DefaultCredentialsError as e:
+        app.logger.error(f"Google Cloud Credentials error: {e}")
+        return jsonify({"error": "Server authentication configuration error"}), 500
+    except Exception as e:
+        app.logger.error(f"Error verifying integrity token: {e}")
+        # Consider what information is safe to return to the client
+        return jsonify({"error": "Failed to verify integrity token"}), 500
 
 # This is the entry point for GAE when using 'script: auto' or a gunicorn entrypoint.
 # It's also useful for local development.
