@@ -57,6 +57,7 @@ androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", ve
 
 play-integrity = { group = "com.google.android.play", name = "integrity", version.ref = "playIntegrity"}
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines"}
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinxCoroutines"}
 kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "kotlinxCoroutines"}
 
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
