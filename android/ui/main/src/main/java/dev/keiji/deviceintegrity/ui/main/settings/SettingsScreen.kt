@@ -76,24 +76,23 @@ fun SettingsMenuItem(
     subtitle: String? = null,
     onClick: (() -> Unit)? = null
 ) {
-    val modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 16.dp, vertical = 12.dp)
-        .then(
-            if (onClick != null) {
-                Modifier.clickable(onClick = onClick)
-            } else {
-                Modifier
-            }
-        )
+    val clickableModifier = if (onClick != null) {
+        Modifier.clickable(onClick = onClick)
+    } else {
+        Modifier
+    }
 
     Surface(
-        modifier = modifier
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(clickableModifier)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start,
-            modifier = Modifier.height(48.dp) // Increased height for menu item
+            modifier = Modifier
+                .height(48.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             if (icon != null) {
                 Icon(
