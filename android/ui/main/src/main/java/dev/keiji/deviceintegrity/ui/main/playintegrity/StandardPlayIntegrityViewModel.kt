@@ -20,37 +20,73 @@ class StandardPlayIntegrityViewModel @Inject constructor(
     val uiState: StateFlow<StandardPlayIntegrityUiState> = _uiState.asStateFlow()
 
     fun updateContentBinding(newContent: String) {
-        _uiState.update { it.copy(contentBinding = newContent) }
+        _uiState.update {
+            it.copy(contentBinding = newContent)
+        }
     }
 
     fun fetchIntegrityToken() {
         val currentContent = _uiState.value.contentBinding
-        // Standard API might allow empty contentBinding, so we don't check for isBlank here
-        // unless specific requirements state otherwise.
+        // Standard API might allow empty contentBinding for token request,
+        // but the calculated property isRequestTokenButtonEnabled handles UI enablement.
+        // We proceed with fetching if the button was somehow clicked despite being disabled by UI.
 
-        _uiState.update { it.copy(isLoading = true, result = "") }
+        _uiState.update {
+            it.copy(
+                isLoading = true,
+                status = "Fetching token..."
+            )
+        }
         viewModelScope.launch {
             try {
-                // Pass a dummy cloudProjectNumber (e.g., 0L) as it's managed by the provider.
-                // Pass currentContent as the requestHash.
                 val token = tokenProvider.getTokenStandard(
                     cloudProjectNumber = 0L, // Dummy value, managed by provider
                     requestHash = currentContent
                 )
                 Log.d("StandardPlayIntegrityVM", "Integrity Token (Standard): $token")
                 _uiState.update {
-                    it.copy(isLoading = false, result = "Token fetched successfully (Standard API, see Logcat for token)")
+                    it.copy(
+                        isLoading = false,
+                        integrityToken = token,
+                        status = "Token fetched successfully (Standard API, see Logcat for token)"
+                    )
                 }
             } catch (e: Exception) {
                 Log.e("StandardPlayIntegrityVM", "Error fetching integrity token (Standard)", e)
-                _uiState.update { it.copy(isLoading = false, result = "Error (Standard): ${e.message}") }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        status = "Error (Standard): ${e.message}"
+                    )
+                }
             }
         }
     }
 
     fun verifyToken() {
-        // TODO: Implement token verification logic
-        Log.d("StandardPlayIntegrityVM", "verifyToken() called. Token: ${_uiState.value.result}") // Assuming token is in result for now
-        _uiState.update { it.copy(result = it.result + "\nVerification requested (Not yet implemented).") }
+        val token = _uiState.value.integrityToken
+        if (token.isBlank()) {
+            _uiState.update {
+                it.copy(status = "Token not available for verification.")
+            }
+            return
+        }
+        _uiState.update {
+            it.copy(
+                isLoading = true,
+                status = "Verifying token..."
+            )
+        }
+        // TODO: Implement token verification logic (async)
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(1000) // Simulate network call
+            Log.d("StandardPlayIntegrityVM", "verifyToken() called. Token: $token")
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    status = it.status + "\nVerification requested (Not yet implemented)."
+                )
+            }
+        }
     }
 }

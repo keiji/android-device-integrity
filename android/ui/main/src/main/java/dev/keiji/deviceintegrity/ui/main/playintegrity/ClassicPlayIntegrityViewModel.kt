@@ -19,6 +19,20 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ClassicPlayIntegrityUiState())
     val uiState: StateFlow<ClassicPlayIntegrityUiState> = _uiState.asStateFlow()
 
+    fun fetchNonce() {
+        // Simulate fetching nonce
+        val newNonce = "fetched-nonce-${System.currentTimeMillis()}"
+        _uiState.update {
+            it.copy(
+                nonce = newNonce,
+                isLoading = false, // Assuming nonce fetching is quick or UI updates after
+                status = "Nonce fetched: $newNonce"
+            )
+        }
+    }
+
+    // This function might not be strictly needed if nonce is only fetched, not manually updated.
+    // Kept for potential future use or if direct nonce input is re-enabled.
     fun updateNonce(newNonce: String) {
         _uiState.update { it.copy(nonce = newNonce) }
     }
@@ -26,34 +40,69 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
     fun fetchIntegrityToken() {
         val currentNonce = _uiState.value.nonce
         if (currentNonce.isBlank()) {
-            _uiState.update { it.copy(isLoading = false, result = "Nonce cannot be empty.") }
+            _uiState.update {
+                it.copy(
+                    isLoading = false, // Ensure isLoading is false if we return early
+                    status = "Nonce cannot be empty."
+                )
+            }
             return
         }
 
-        _uiState.update { it.copy(isLoading = true, result = "") }
+        _uiState.update {
+            it.copy(
+                isLoading = true,
+                status = "Fetching token..."
+            )
+        }
         viewModelScope.launch {
             try {
-                // TODO: In the original ViewModel, `getTokenClassic` was used.
-                // We need to confirm if this is the correct method for the "Classic" tab,
-                // or if there's a specific "standard" method to be called for the other tab later.
-                // For now, let's assume `getTokenClassic` is appropriate here.
                 val token = tokenProvider.getTokenClassic(currentNonce)
                 Log.d("ClassicPlayIntegrityVM", "Integrity Token: $token")
                 _uiState.update {
-                    it.copy(isLoading = false, result = "Token fetched successfully (see Logcat for token)")
-                    // For security reasons, do not display the raw token in the UI in a real app.
-                    // This is just for testing. A real app would send it to a backend server.
+                    it.copy(
+                        isLoading = false,
+                        integrityToken = token,
+                        status = "Token fetched successfully (see Logcat for token)"
+                    )
                 }
             } catch (e: Exception) {
                 Log.e("ClassicPlayIntegrityVM", "Error fetching integrity token", e)
-                _uiState.update { it.copy(isLoading = false, result = "Error: ${e.message}") }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        status = "Error: ${e.message}"
+                    )
+                }
             }
         }
     }
 
     fun verifyToken() {
-        // TODO: Implement token verification logic
-        Log.d("ClassicPlayIntegrityVM", "verifyToken() called. Token: ${_uiState.value.result}") // Assuming token is in result for now
-        _uiState.update { it.copy(result = it.result + "\nVerification requested (Not yet implemented).") }
+        val token = _uiState.value.integrityToken
+        if (token.isBlank()) {
+            _uiState.update {
+                it.copy(status = "Token not available for verification.")
+            }
+            return
+        }
+        _uiState.update {
+            it.copy(
+                isLoading = true,
+                status = "Verifying token..."
+            )
+        }
+        // TODO: Implement token verification logic (async)
+        // For now, simulate a delay and result
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(1000) // Simulate network call
+            Log.d("ClassicPlayIntegrityVM", "verifyToken() called. Token: $token")
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    status = it.status + "\nVerification requested (Not yet implemented)."
+                )
+            }
+        }
     }
 }
