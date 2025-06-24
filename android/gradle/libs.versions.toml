@@ -15,6 +15,7 @@ composeBom = "2025.06.01"
 navigationCompose = "2.9.0" # Previous plan's version, will keep for now
 lifecycleRuntimeCompose = "2.9.1"
 lifecycleViewmodel = "2.9.1"
+hiltNavigationCompose = "1.2.0"
 playIntegrity = "1.4.0"
 kotlinxCoroutines = "1.10.2"
 datastore = "1.1.7" # Added DataStore
@@ -61,6 +62,7 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycleRuntimeCompose" }
 androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodel" }
 androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodel" }
+androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activityKtx" }
 androidx-test-core-ktx = { group = "androidx.test", name = "core-ktx", version.ref = "testCoreKtx" }
 

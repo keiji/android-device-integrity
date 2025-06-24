@@ -13,23 +13,20 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+// import androidx.compose.runtime.mutableStateOf // No longer needed for nonce
+// import androidx.compose.runtime.remember // No longer needed for nonce
+// import androidx.compose.runtime.setValue // No longer needed for nonce
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun PlayIntegrityScreen(
-    viewModel: PlayIntegrityViewModel = viewModel()
+    uiState: PlayIntegrityUiState,
+    onNonceChange: (String) -> Unit,
+    onRequestToken: () -> Unit,
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var nonce by remember { mutableStateOf("my-test-nonce") } // Default nonce for testing
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -42,8 +39,8 @@ fun PlayIntegrityScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = nonce,
-            onValueChange = { nonce = it },
+            value = uiState.nonce, // Use nonce from uiState
+            onValueChange = { onNonceChange(it) }, // Use callback
             label = { Text("Nonce") },
             modifier = Modifier.fillMaxWidth()
         )
@@ -51,7 +48,7 @@ fun PlayIntegrityScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = { viewModel.fetchIntegrityToken(nonce) },
+            onClick = { onRequestToken() }, // Use callback
             enabled = !uiState.isLoading,
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -71,5 +68,13 @@ fun PlayIntegrityScreen(
 @Preview
 @Composable
 private fun PlayIntegrityScreenPreview() {
-    PlayIntegrityScreen()
+    PlayIntegrityScreen(
+        uiState = PlayIntegrityUiState(
+            nonce = "preview-nonce",
+            isLoading = false,
+            result = "Preview result text."
+        ),
+        onNonceChange = {},
+        onRequestToken = {}
+    )
 }

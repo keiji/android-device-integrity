@@ -19,8 +19,13 @@ class PlayIntegrityViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(PlayIntegrityUiState())
     val uiState: StateFlow<PlayIntegrityUiState> = _uiState.asStateFlow()
 
-    fun fetchIntegrityToken(nonce: String) {
-        if (nonce.isBlank()) {
+    fun updateNonce(newNonce: String) {
+        _uiState.update { it.copy(nonce = newNonce) }
+    }
+
+    fun fetchIntegrityToken() {
+        val currentNonce = _uiState.value.nonce
+        if (currentNonce.isBlank()) {
             _uiState.update { it.copy(isLoading = false, result = "Nonce cannot be empty.") }
             return
         }
@@ -28,7 +33,7 @@ class PlayIntegrityViewModel @Inject constructor(
         _uiState.update { it.copy(isLoading = true, result = "") }
         viewModelScope.launch {
             try {
-                val token = tokenProvider.getTokenClassic(nonce)
+                val token = tokenProvider.getTokenClassic(currentNonce)
                 Log.d("PlayIntegrityViewModel", "Integrity Token: $token")
                 _uiState.update {
                     it.copy(isLoading = false, result = "Token fetched successfully (see Logcat for token)")
