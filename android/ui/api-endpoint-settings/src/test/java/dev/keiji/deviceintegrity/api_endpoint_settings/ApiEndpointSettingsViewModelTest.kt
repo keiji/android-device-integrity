@@ -65,8 +65,8 @@ class ApiEndpointSettingsViewModelTest {
 
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Assuming blank URLs are trimmed and saved as empty strings by the ViewModel's save logic
-        verify(mockPreferencesRepository).savePlayIntegrityVerifyApiEndpointUrl("  ")
+        // ViewModel saves "" if original string is blank (e.g., "  ")
+        verify(mockPreferencesRepository).savePlayIntegrityVerifyApiEndpointUrl("")
         verify(mockPreferencesRepository).saveKeyAttestationVerifyApiEndpointUrl("")
     }
 
