@@ -4,10 +4,12 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'server/openapi.yaml'
+      - 'server/play_integrity/openapi.yaml'
+      - 'server/key_attestation/openapi.yaml'
   pull_request:
     paths:
-      - 'server/openapi.yaml'
+      - 'server/play_integrity/openapi.yaml'
+      - 'server/key_attestation/openapi.yaml'
 
 jobs:
   lint:
@@ -24,6 +26,10 @@ jobs:
       - name: Install Spectral
         run: npm install -g @stoplight/spectral-cli
 
-      - name: Run Spectral lint
-        working-directory: ./server
-        run: spectral lint openapi.yaml
+      - name: Run Spectral lint for Play Integrity
+        working-directory: ./server/play_integrity
+        run: spectral lint openapi.yaml --ruleset ../.spectral.yaml
+
+      - name: Run Spectral lint for Key Attestation
+        working-directory: ./server/key_attestation
+        run: spectral lint openapi.yaml --ruleset ../.spectral.yaml

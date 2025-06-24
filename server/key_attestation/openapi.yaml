@@ -1,0 +1,55 @@
+openapi: 3.0.0
+info:
+  title: Key Attestation API Service
+  version: v1
+  description: |-
+    Provides endpoints for Key Attestation operations.
+    Currently includes a simple placeholder endpoint.
+  contact:
+    name: API Support
+    url: http://www.example.com/support
+    email: support@example.com
+
+tags:
+  - name: KeyAttestation
+    description: Operations related to Key Attestation.
+
+servers:
+  - url: http://localhost:8080 # Replace with your actual server URL in production. This might be a different port or service for Key Attestation.
+    description: Development server
+
+paths:
+  /key-attestation/:
+    get:
+      summary: Key Attestation Hello World
+      description: Returns a simple greeting from the Key Attestation service. This is a placeholder and will be updated with actual Key Attestation logic.
+      operationId: getKeyAttestationHello
+      tags:
+        - KeyAttestation
+      responses:
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Hello World from Key Attestation!"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: A message describing the error.
+          example: "An error occurred" # Generic error for key attestation
+  securitySchemes: {}
