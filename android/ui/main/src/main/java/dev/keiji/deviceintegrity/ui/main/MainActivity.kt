@@ -33,11 +33,18 @@ import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationViewModel
 import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationUiEvent
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsViewModel
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.keiji.deviceintegrity.ui.nav.contract.ApiEndpointSettingsNavigator
 import timber.log.Timber
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var apiEndpointSettingsNavigator: ApiEndpointSettingsNavigator
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -45,13 +52,15 @@ class MainActivity : ComponentActivity() {
         Timber.d("MainActivity onCreate")
 
         setContent {
-            DeviceIntegrityApp()
+            DeviceIntegrityApp(apiEndpointSettingsNavigator = apiEndpointSettingsNavigator)
         }
     }
 }
 
 @Composable
-fun DeviceIntegrityApp() {
+fun DeviceIntegrityApp(
+    apiEndpointSettingsNavigator: ApiEndpointSettingsNavigator
+) {
     DeviceIntegrityTheme {
         val navController = rememberNavController()
         Scaffold(
@@ -118,11 +127,15 @@ fun DeviceIntegrityApp() {
                     val viewModel: SettingsViewModel = hiltViewModel()
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-                    // TODO: Implement actual navigation logic
+                    val apiSettingsLauncher = rememberLauncherForActivityResult(
+                        contract = apiEndpointSettingsNavigator.contract(),
+                        onResult = { /* No result is expected, but can handle if needed */ }
+                    )
+
                     SettingsScreen(
                         uiState = uiState,
                         onNavigateToOssLicenses = { Timber.d("Navigate to OSS Licenses") },
-                        onNavigateToApiSettings = { Timber.d("Navigate to API Settings") },
+                        onNavigateToApiSettings = { apiSettingsLauncher.launch(Unit) },
                         onNavigateToDeveloperInfo = { Timber.d("Navigate to Developer Info") }
                     )
                 }
