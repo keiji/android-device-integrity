@@ -33,6 +33,7 @@ android {
 
 dependencies {
     implementation(project(":api"))
+    implementation(project(":ui"))
     implementation(project(":ui:theme"))
     implementation(project(":ui:api-endpoint-settings"))
     implementation(project(":provider:contract"))
@@ -51,6 +52,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose) // AppScreen might use navigation
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose) // For ViewModel in MainActivity/AppScreen if any
+    implementation(libs.androidx.hilt.navigation.compose)
     debugImplementation(libs.androidx.ui.tooling)
 
     implementation(libs.hilt.android)

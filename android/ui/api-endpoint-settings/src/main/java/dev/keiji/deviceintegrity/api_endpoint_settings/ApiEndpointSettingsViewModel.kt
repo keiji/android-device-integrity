@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.net.MalformedURLException
 import java.net.URL
 import javax.inject.Inject
@@ -58,6 +59,7 @@ class ApiEndpointSettingsViewModel @Inject constructor(
     }
 
     fun saveApiEndpoint() {
+        println("saveApiEndpoint called")
         val urlToSave = _uiState.value.editingUrl
 
         _uiState.update { it.copy(isLoading = true, errorMessage = null, saveSuccess = false) }
@@ -67,7 +69,12 @@ class ApiEndpointSettingsViewModel @Inject constructor(
                 // Validate URL format
                 URL(urlToSave) // This will throw MalformedURLException if invalid
 
+                println("saveApiEndpointUrl start")
+
                 preferencesRepository.saveApiEndpointUrl(urlToSave)
+
+                println("saveApiEndpointUrl end")
+
                 _uiState.update {
                     it.copy(
                         isLoading = false,

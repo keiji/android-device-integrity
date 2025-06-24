@@ -23,7 +23,7 @@ class ApiEndpointSettingsViewModelTest {
     private lateinit var viewModel: ApiEndpointSettingsViewModel
     private lateinit var mockPreferencesRepository: PreferencesRepository
 
-    private val apiEndpointUrlFlow = MutableStateFlow<String?>("ull")
+    private val apiEndpointUrlFlow = MutableStateFlow<String?>(null)
 
     @Before
     fun setup() {
@@ -42,8 +42,9 @@ class ApiEndpointSettingsViewModelTest {
 
     @Test
     fun `saveApiEndpointUrl calls repository to save URL`() = runTest {
-        val testUrl = "https.newurl.com"
-        viewModel.saveApiEndpointUrl(testUrl)
+        val testUrl = "https://newurl.com"
+        viewModel.updateEditingUrl(testUrl)
+        viewModel.saveApiEndpoint()
         testDispatcher.scheduler.advanceUntilIdle() // Ensure coroutine launched by saveApiEndpointUrl completes
         verify(mockPreferencesRepository).saveApiEndpointUrl(testUrl)
     }

@@ -39,6 +39,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":ui"))
     implementation(project(":ui:theme"))
     implementation(project(":repository:contract"))
 
@@ -54,6 +55,8 @@ dependencies {
     // ViewModel
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
+
+    implementation(libs.androidx.hilt.navigation.compose)
 
     // Hilt for Dependency Injection
     implementation(libs.hilt.android)

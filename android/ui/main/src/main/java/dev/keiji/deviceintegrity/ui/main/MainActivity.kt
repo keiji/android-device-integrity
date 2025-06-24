@@ -27,13 +27,13 @@ import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityViewModel
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsScreen
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsStateWithLifecycle
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationViewModel
 import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationUiEvent
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsViewModel
 import android.widget.Toast
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import timber.log.Timber
 
 @AndroidEntryPoint
