@@ -40,8 +40,9 @@ class ApiEndpointSettingsActivity : ComponentActivity() {
 
                     ApiEndpointSettingsScreen(
                         uiState = uiState,
-                        onEditingUrlChange = viewModel::updateEditingUrl,
-                        onSaveClick = viewModel::saveApiEndpoint
+                        onEditingPlayIntegrityUrlChange = viewModel::updateEditingPlayIntegrityUrl,
+                        onEditingKeyAttestationUrlChange = viewModel::updateEditingKeyAttestationUrl,
+                        onSaveClick = viewModel::saveApiEndpoints
                     )
                 }
             }
