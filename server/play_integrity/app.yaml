@@ -1,4 +1,5 @@
 runtime: python39 # Specifies Python 3.9 runtime
+service: play-integrity
 
 handlers:
 - url: /play-integrity/classic/verify # Clarified path for existing classic verify
