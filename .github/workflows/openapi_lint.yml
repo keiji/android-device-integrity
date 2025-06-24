@@ -2,6 +2,7 @@ name: OpenAPI Lint
 
 on:
   push:
+    branches: [ "main" ]
     paths:
       - 'server/openapi.yaml'
   pull_request:

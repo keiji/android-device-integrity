@@ -1,8 +1,16 @@
 runtime: python39 # Specifies Python 3.9 runtime
 
 handlers:
-- url: /play-integrity/verify
-  script: auto # GAE will automatically find the Flask app
+- url: /play-integrity/classic/verify # Clarified path for existing classic verify
+  script: auto
+  secure: always
+
+- url: /play-integrity/classic/nonce # Added route for existing classic nonce
+  script: auto
+  secure: always
+
+- url: /play-integrity/standard/verify # New route for standard verify
+  script: auto
   secure: always
 
 # Optional: Specify entrypoint if not using default (main.app)
