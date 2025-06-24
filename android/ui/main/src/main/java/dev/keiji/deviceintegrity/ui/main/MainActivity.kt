@@ -90,14 +90,8 @@ fun DeviceIntegrityApp() {
                 modifier = Modifier.padding(innerPadding)
             ) {
                 composable(AppScreen.PlayIntegrity.route) {
-                    val viewModel: PlayIntegrityViewModel = hiltViewModel()
-                    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-                    PlayIntegrityScreen(
-                        uiState = uiState,
-                        onNonceChange = viewModel::updateNonce,
-                        onRequestToken = viewModel::fetchIntegrityToken
-                    )
+                    // PlayIntegrityScreen now handles its own ViewModels internally
+                    PlayIntegrityScreen()
                 }
                 composable(AppScreen.KeyAttestation.route) {
                     val viewModel: KeyAttestationViewModel = hiltViewModel()
