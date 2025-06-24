@@ -45,7 +45,8 @@ fun PlayIntegrityScreen(
                 ClassicPlayIntegrityContent(
                     uiState = classicUiState,
                     onNonceChange = { classicViewModel.updateNonce(it) },
-                    onRequestToken = { classicViewModel.fetchIntegrityToken() }
+                    onRequestToken = { classicViewModel.fetchIntegrityToken() },
+                    onRequestVerify = { classicViewModel.verifyToken() }
                 )
             }
 
@@ -53,7 +54,8 @@ fun PlayIntegrityScreen(
                 StandardPlayIntegrityContent(
                     uiState = standardUiState,
                     onContentBindingChange = { standardViewModel.updateContentBinding(it) },
-                    onRequestToken = { standardViewModel.fetchIntegrityToken() }
+                    onRequestToken = { standardViewModel.fetchIntegrityToken() },
+                    onRequestVerify = { standardViewModel.verifyToken() }
                 )
             }
         }
@@ -85,7 +87,8 @@ private fun PlayIntegrityScreenPreview_ClassicSelected() {
                 result = "Preview Classic Content"
             ),
             onNonceChange = {},
-            onRequestToken = {}
+            onRequestToken = {},
+            onRequestVerify = {}
         )
     }
 }
@@ -112,7 +115,8 @@ private fun PlayIntegrityScreenPreview_StandardSelected() {
                 result = "Preview Standard Content"
             ),
             onContentBindingChange = {},
-            onRequestToken = {}
+            onRequestToken = {},
+            onRequestVerify = {}
         )
     }
 }
