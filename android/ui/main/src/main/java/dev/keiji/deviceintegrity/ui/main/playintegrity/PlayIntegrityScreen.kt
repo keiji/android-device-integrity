@@ -1,80 +1,118 @@
 package dev.keiji.deviceintegrity.ui.main.playintegrity
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-// import androidx.compose.runtime.mutableStateOf // No longer needed for nonce
-// import androidx.compose.runtime.remember // No longer needed for nonce
-// import androidx.compose.runtime.setValue // No longer needed for nonce
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+
+enum class PlayIntegrityTab {
+    Classic, Standard
+}
 
 @Composable
 fun PlayIntegrityScreen(
-    uiState: PlayIntegrityUiState,
-    onNonceChange: (String) -> Unit,
-    onRequestToken: () -> Unit,
+    modifier: Modifier = Modifier,
+    classicViewModel: ClassicPlayIntegrityViewModel = hiltViewModel(),
+    standardViewModel: StandardPlayIntegrityViewModel = hiltViewModel(),
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(text = "Play Integrity Token Requester")
+    var selectedTab by remember { mutableStateOf(PlayIntegrityTab.Classic) }
+    val classicUiState by classicViewModel.uiState.collectAsState()
+    val standardUiState by standardViewModel.uiState.collectAsState()
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = uiState.nonce, // Use nonce from uiState
-            onValueChange = { onNonceChange(it) }, // Use callback
-            label = { Text("Nonce") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = { onRequestToken() }, // Use callback
-            enabled = !uiState.isLoading,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(text = "Request Integrity Token")
+    Column(modifier = modifier.fillMaxSize()) {
+        TabRow(selectedTabIndex = selectedTab.ordinal) {
+            PlayIntegrityTab.entries.forEach { tab ->
+                Tab(
+                    selected = selectedTab == tab,
+                    onClick = { selectedTab = tab },
+                    text = { Text(tab.name) }
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        when (selectedTab) {
+            PlayIntegrityTab.Classic -> {
+                ClassicPlayIntegrityContent(
+                    uiState = classicUiState,
+                    onNonceChange = { classicViewModel.updateNonce(it) },
+                    onRequestToken = { classicViewModel.fetchIntegrityToken() }
+                )
+            }
 
-        if (uiState.isLoading) {
-            CircularProgressIndicator()
-        } else {
-            Text(text = uiState.result)
+            PlayIntegrityTab.Standard -> {
+                StandardPlayIntegrityContent(
+                    uiState = standardUiState,
+                    onContentBindingChange = { standardViewModel.updateContentBinding(it) },
+                    onRequestToken = { standardViewModel.fetchIntegrityToken() }
+                )
+            }
         }
     }
 }
 
 @Preview
 @Composable
-private fun PlayIntegrityScreenPreview() {
-    PlayIntegrityScreen(
-        uiState = PlayIntegrityUiState(
-            nonce = "preview-nonce",
-            isLoading = false,
-            result = "Preview result text."
-        ),
-        onNonceChange = {},
-        onRequestToken = {}
-    )
+private fun PlayIntegrityScreenPreview_ClassicSelected() {
+    // This preview will be basic as ViewModels are hard to mock directly in Preview
+    // without significant extra setup. It will show the tab structure.
+    var selectedTab by remember { mutableStateOf(PlayIntegrityTab.Classic) }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        TabRow(selectedTabIndex = selectedTab.ordinal) {
+            PlayIntegrityTab.entries.forEach { tab ->
+                Tab(
+                    selected = selectedTab == tab,
+                    onClick = { selectedTab = tab },
+                    text = { Text(tab.name) }
+                )
+            }
+        }
+        // For preview, we can show one of the contents directly or a placeholder
+        ClassicPlayIntegrityContent(
+            uiState = ClassicPlayIntegrityUiState(
+                nonce = "preview-nonce",
+                isLoading = false,
+                result = "Preview Classic Content"
+            ),
+            onNonceChange = {},
+            onRequestToken = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PlayIntegrityScreenPreview_StandardSelected() {
+    var selectedTab by remember { mutableStateOf(PlayIntegrityTab.Standard) }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        TabRow(selectedTabIndex = selectedTab.ordinal) {
+            PlayIntegrityTab.entries.forEach { tab ->
+                Tab(
+                    selected = selectedTab == tab,
+                    onClick = { selectedTab = tab },
+                    text = { Text(tab.name) }
+                )
+            }
+        }
+        StandardPlayIntegrityContent(
+            uiState = StandardPlayIntegrityUiState(
+                contentBinding = "preview-content",
+                isLoading = false,
+                result = "Preview Standard Content"
+            ),
+            onContentBindingChange = {},
+            onRequestToken = {}
+        )
+    }
 }
