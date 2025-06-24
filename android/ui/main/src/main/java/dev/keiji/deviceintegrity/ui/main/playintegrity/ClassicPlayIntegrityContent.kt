@@ -22,6 +22,7 @@ fun ClassicPlayIntegrityContent(
     uiState: ClassicPlayIntegrityUiState,
     onNonceChange: (String) -> Unit,
     onRequestToken: () -> Unit,
+    onRequestVerify: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -29,27 +30,36 @@ fun ClassicPlayIntegrityContent(
             .fillMaxSize()
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Top
     ) {
-        Text(text = "Play Integrity Token Requester (Classic)") // Title updated for clarity
-
-        Spacer(modifier = Modifier.height(16.dp))
-
+        Text(text = "Step 1. サーバーからNonceを取得")
         OutlinedTextField(
             value = uiState.nonce,
             onValueChange = { onNonceChange(it) },
             label = { Text("Nonce") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = false
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        Text(text = "Step 2. トークンを取得")
         Button(
             onClick = { onRequestToken() },
             enabled = !uiState.isLoading,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(text = "Request Integrity Token")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(text = "Step 3. トークンを検証")
+        Button(
+            onClick = { onRequestVerify() },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = "Request Verify Token")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -72,6 +82,7 @@ private fun ClassicPlayIntegrityContentPreview() {
             result = "Preview result text for Classic."
         ),
         onNonceChange = {},
-        onRequestToken = {}
+        onRequestToken = {},
+        onRequestVerify = {}
     )
 }
