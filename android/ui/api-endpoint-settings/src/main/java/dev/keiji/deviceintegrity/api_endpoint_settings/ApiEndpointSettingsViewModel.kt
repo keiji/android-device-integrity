@@ -3,16 +3,15 @@ package dev.keiji.deviceintegrity.api_endpoint_settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.keiji.deviceintegrity.api_endpoint_settings.validation.ValidationConstants
 import dev.keiji.deviceintegrity.repository.contract.PreferencesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import java.net.MalformedURLException
 import java.net.URL
 import javax.inject.Inject
@@ -47,14 +46,14 @@ class ApiEndpointSettingsViewModel @Inject constructor(
     }
 
     fun updateEditingUrl(newUrl: String) {
-        // Basic filtering for typical URL characters could be done here if desired,
-        // but full validation is better upon save.
-        _uiState.update {
-            it.copy(
-                editingUrl = newUrl,
-                errorMessage = null, // Clear error when user types
-                saveSuccess = false // Reset save success if user starts editing again
-            )
+        if (newUrl.all { it.isLetterOrDigit() || it in ValidationConstants.ALLOWED_URL_CHARACTERS }) {
+            _uiState.update {
+                it.copy(
+                    editingUrl = newUrl,
+                    errorMessage = null, // Clear error when user types
+                    saveSuccess = false // Reset save success if user starts editing again
+                )
+            }
         }
     }
 
