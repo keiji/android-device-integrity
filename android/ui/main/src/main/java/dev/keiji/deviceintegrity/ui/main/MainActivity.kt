@@ -22,8 +22,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationScreen
+import dev.keiji.deviceintegrity.ui.main.playintegrity.ClassicPlayIntegrityViewModel
 import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityScreen
-import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityViewModel
+import dev.keiji.deviceintegrity.ui.main.playintegrity.StandardPlayIntegrityViewModel
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsScreen
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 import androidx.compose.runtime.LaunchedEffect
@@ -99,8 +100,21 @@ fun DeviceIntegrityApp(
                 modifier = Modifier.padding(innerPadding)
             ) {
                 composable(AppScreen.PlayIntegrity.route) {
-                    // PlayIntegrityScreen now handles its own ViewModels internally
-                    PlayIntegrityScreen()
+                    val classicViewModel: ClassicPlayIntegrityViewModel = hiltViewModel()
+                    val standardViewModel: StandardPlayIntegrityViewModel = hiltViewModel()
+                    val classicUiState by classicViewModel.uiState.collectAsStateWithLifecycle()
+                    val standardUiState by standardViewModel.uiState.collectAsStateWithLifecycle()
+
+                    PlayIntegrityScreen(
+                        classicUiState = classicUiState,
+                        standardUiState = standardUiState,
+                        onClassicFetchNonce = { classicViewModel.fetchNonce() },
+                        onClassicRequestToken = { classicViewModel.fetchIntegrityToken() },
+                        onClassicRequestVerify = { classicViewModel.verifyToken() },
+                        onStandardContentBindingChange = { standardViewModel.updateContentBinding(it) },
+                        onStandardRequestToken = { standardViewModel.fetchIntegrityToken() },
+                        onStandardRequestVerify = { standardViewModel.verifyToken() }
+                    )
                 }
                 composable(AppScreen.KeyAttestation.route) {
                     val viewModel: KeyAttestationViewModel = hiltViewModel()
