@@ -22,6 +22,7 @@ fun StandardPlayIntegrityContent(
     uiState: StandardPlayIntegrityUiState,
     onContentBindingChange: (String) -> Unit,
     onRequestToken: () -> Unit,
+    onRequestVerify: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -29,27 +30,37 @@ fun StandardPlayIntegrityContent(
             .fillMaxSize()
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Top
     ) {
-        Text(text = "Play Integrity Token Requester (Standard)") // Title updated
-
-        Spacer(modifier = Modifier.height(16.dp))
-
+        Text(text = "Step 1. 検証に使うコンテンツを設定")
         OutlinedTextField(
             value = uiState.contentBinding,
             onValueChange = { onContentBindingChange(it) },
-            label = { Text("Content Binding (requestHash)") }, // Label updated
-            modifier = Modifier.fillMaxWidth()
+            label = { Text("Content") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = false,
+            maxLines = 5
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        Text(text = "Step 2. トークンを取得")
         Button(
             onClick = { onRequestToken() },
             enabled = !uiState.isLoading,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(text = "Request Integrity Token")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(text = "Step 3. トークンを検証")
+        Button(
+            onClick = { onRequestVerify() },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = "Request Verify Token")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -72,6 +83,7 @@ private fun StandardPlayIntegrityContentPreview() {
             result = "Preview result text for Standard."
         ),
         onContentBindingChange = {},
-        onRequestToken = {}
+        onRequestToken = {},
+        onRequestVerify = {}
     )
 }

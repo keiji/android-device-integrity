@@ -50,4 +50,10 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
             }
         }
     }
+
+    fun verifyToken() {
+        // TODO: Implement token verification logic
+        Log.d("ClassicPlayIntegrityVM", "verifyToken() called. Token: ${_uiState.value.result}") // Assuming token is in result for now
+        _uiState.update { it.copy(result = it.result + "\nVerification requested (Not yet implemented).") }
+    }
 }
