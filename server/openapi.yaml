@@ -5,6 +5,14 @@ info:
   description: |-
     A server that provides endpoints for interacting with the Google Play Integrity API.
     It allows clients to request a nonce and verify device integrity tokens.
+  contact:
+    name: API Support
+    url: http://www.example.com/support
+    email: support@example.com
+
+tags:
+  - name: PlayIntegrityClassic
+    description: Operations related to the classic Play Integrity API requests.
 
 servers:
   # Added by default, this entry is required by many tools.
