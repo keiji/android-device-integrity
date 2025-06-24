@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.keiji.deviceintegrity.api_endpoint_settings.validation.ValidationConstants
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 import java.net.MalformedURLException
 import java.net.URL
@@ -54,7 +55,7 @@ fun ApiEndpointSettingsScreen(
                 value = text,
                 onValueChange = { newText ->
                     // Allow only URL-safe characters
-                    if (newText.all { it.isLetterOrDigit() || it in ":/?#[]@!$&'()*+,;=-_.~%" }) {
+                    if (newText.all { it.isLetterOrDigit() || it in ValidationConstants.ALLOWED_URL_CHARACTERS }) {
                         text = newText
                         errorText = null // Clear error when user types
                     }
@@ -80,7 +81,7 @@ fun ApiEndpointSettingsScreen(
                         viewModel.saveApiEndpointUrl(text)
                         errorText = null // Clear error on success
                     } catch (e: MalformedURLException) {
-                        errorText = "Invalid URL format"
+                        errorText = ValidationConstants.INVALID_URL_FORMAT_ERROR_MESSAGE
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
