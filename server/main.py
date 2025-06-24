@@ -167,3 +167,95 @@ if __name__ == '__main__':
     # and GAE uses the PORT environment variable.
     import os
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)), debug=True)
+
+# === Play Integrity Standard API Endpoint ===
+
+@app.route('/play-integrity/standard/verify', methods=['POST'])
+def verify_integrity_standard():
+    """
+    Handles POST requests to /play-integrity/standard/verify.
+    It expects a JSON payload with 'nonce' (optional but recommended) and 'token'.
+    It calls the Google Play Integrity API (Standard) to decode the token and verifies the nonce if provided.
+    Returns the JSON response from the Play Integrity API.
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Missing JSON payload"}), 400
+
+        # Nonce can be optional for Standard API if not used for replay protection,
+        # but highly recommended. We will expect it like in the classic version.
+        client_nonce = data.get('nonce')
+        integrity_token = data.get('token')
+
+        if not integrity_token:
+            return jsonify({"error": "Missing 'token' in request"}), 400
+
+        # If client_nonce is expected, enforce its presence
+        if not client_nonce:
+            # If we decide nonce is mandatory for our server implementation
+            return jsonify({"error": "Missing 'nonce' in request"}), 400
+
+
+        # Authenticate using Application Default Credentials
+        credentials, project_id = google.auth.default(
+            scopes=['https://www.googleapis.com/auth/playintegrity']
+        )
+
+        # The project_id obtained here is the Project ID string, not the Project Number.
+        # For Standard API, the Play Integrity API documentation implies that the
+        # authentication (service account) should be linked to the Cloud Project in Play Console.
+        # The API endpoint itself does not take project_number as a path parameter in the client library.
+        # The client library call `playintegrity.decodeIntegrityToken` should work if the
+        # service account has the "Play Integrity API User" role on the correct project.
+
+        playintegrity = build('playintegrity', 'v1', credentials=credentials, cache_discovery=False)
+
+        request_body = {'integrity_token': integrity_token}
+
+        # Call the Play Integrity API
+        # The method is the same as for the classic API for the client library.
+        # The distinction for "Standard" vs "Classic" is more about what features
+        # you use from the verdict and how you interpret it, rather than a different API method.
+        # However, the backend might behave differently based on project configuration
+        # (e.g. if Standard Integrity is enabled and configured for the GCP project).
+        api_response = playintegrity.decodeIntegrityToken(
+            packageName=PLAY_INTEGRITY_PACKAGE_NAME, # This must be the package name of your app
+            body=request_body
+        ).execute()
+
+        # Verify the nonce from the API response matches the client_nonce
+        token_payload = api_response.get('tokenPayloadExternal', {})
+        request_details_payload = token_payload.get('requestDetails', {})
+
+        # In Standard API, the nonce might be in requestDetails.nonce or directly in requestDetails
+        # For compatibility and based on typical structure, checking requestDetails.nonce
+        api_nonce = request_details_payload.get('nonce')
+
+        if not api_nonce:
+            app.logger.warning("Nonce not found in Play Integrity API response payload for standard verify.")
+            # Depending on policy, this could be an error or just a warning if nonce is optional.
+            # Given we are requiring client_nonce, we should treat a missing api_nonce as an issue.
+            return jsonify({
+                "error": "Nonce missing in Play Integrity API response payload (standard)",
+                "play_integrity_response": api_response
+            }), 400 # Or 500 if server-side issue is suspected
+
+        if client_nonce and api_nonce != client_nonce: # Ensure client_nonce was provided
+            app.logger.error(f"Nonce mismatch (standard). Client: {client_nonce}, API: {api_nonce}")
+            return jsonify({
+                "error": "Nonce mismatch (standard)",
+                "client_nonce": client_nonce,
+                "api_nonce": api_nonce,
+                "play_integrity_response": api_response
+            }), 400 # Bad request due to nonce mismatch
+
+        # If nonce matches (or if nonce was not required and not provided), return the full API response
+        return jsonify(api_response), 200
+
+    except google.auth.exceptions.DefaultCredentialsError as e:
+        app.logger.error(f"Google Cloud Credentials error (standard): {e}")
+        return jsonify({"error": "Server authentication configuration error (standard)"}), 500
+    except Exception as e:
+        app.logger.error(f"Error verifying integrity token (standard): {e}")
+        return jsonify({"error": f"Failed to verify integrity token (standard): {str(e)}"}), 500

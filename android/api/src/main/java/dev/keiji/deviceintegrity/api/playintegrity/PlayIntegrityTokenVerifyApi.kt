@@ -11,7 +11,37 @@ interface PlayIntegrityTokenVerifyApi {
 
     @POST("/play-integrity/classic/verify")
     suspend fun verifyToken(@Body request: VerifyTokenRequest): VerifyTokenResponse
+
+    @POST("/play-integrity/standard/verify")
+    suspend fun verifyTokenStandard(@Body request: StandardVerifyRequest): StandardVerifyResponse
 }
+
+// Request for Standard API (similar to VerifyTokenRequest but for the new endpoint)
+@Serializable
+data class StandardVerifyRequest(
+    @SerialName("token") val token: String,
+    @SerialName("nonce") val nonce: String
+)
+
+// Response for Standard API verification
+// This models the direct response from the Play Integrity API as returned by our /standard/verify endpoint
+@Serializable
+data class StandardVerifyResponse(
+    @SerialName("tokenPayloadExternal") val tokenPayloadExternal: TokenPayloadExternal
+)
+
+// This is the wrapper for the actual integrity verdict, as per Google's documentation
+// and our server's /standard/verify endpoint structure.
+// The nested classes (RequestDetails, AppIntegrity, etc.) are reused from below.
+@Serializable
+data class TokenPayloadExternal(
+    @SerialName("requestDetails") val requestDetails: RequestDetails? = null,
+    @SerialName("appIntegrity") val appIntegrity: AppIntegrity? = null,
+    @SerialName("deviceIntegrity") val deviceIntegrity: DeviceIntegrity? = null,
+    @SerialName("accountDetails") val accountDetails: AccountDetails? = null,
+    @SerialName("environmentDetails") val environmentDetails: EnvironmentDetails? = null
+)
+
 
 @Serializable
 data class NonceRequest(

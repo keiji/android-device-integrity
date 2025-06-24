@@ -207,3 +207,184 @@ components:
           type: object
           description: The full response from the Play Integrity API, included for debugging.
   securitySchemes: {} # No security schemes defined for now, but can be added later (e.g., API Key, OAuth2)
+
+  /play-integrity/standard/verify:
+    post:
+      summary: Verify Integrity Token (Standard)
+      description: |-
+        Verifies an integrity token obtained from the client against the Google Play Integrity API (Standard tier).
+        The request must include the nonce that was originally provided to the client and the
+        integrity token itself. The Standard API may provide more detailed device and app integrity information.
+      operationId: verifyIntegrityTokenStandard
+      tags:
+        - PlayIntegrityStandard
+      requestBody:
+        description: JSON payload containing the nonce and the integrity token.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - nonce
+                - token
+              properties:
+                nonce:
+                  type: string
+                  description: The nonce that was previously obtained (e.g., from /play-integrity/classic/nonce).
+                  example: "aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890-_"
+                token:
+                  type: string
+                  description: The integrity token received from the client (from Play Integrity API using Standard request).
+                  example: "long.standard.integrity.token.string.from.client"
+      responses:
+        '200':
+          description: Integrity token verified successfully using Standard API features. The response is the direct JSON output from the Google Play Integrity API.
+          content:
+            application/json:
+              schema:
+                # The Play Integrity API response structure for Standard tier.
+                # Refer to official Google documentation for the most up-to-date structure.
+                # https://developer.android.com/google/play/integrity/verdict#decrypted-verdict
+                # This schema is similar to classic but may contain additional fields or different enums.
+                type: object
+                properties:
+                  tokenPayloadExternal:
+                    type: object
+                    description: Contains the decoded integrity verdict.
+                    properties:
+                      requestDetails:
+                        type: object
+                        properties:
+                          requestPackageName:
+                            type: string
+                            example: "dev.keiji.deviceintegrity"
+                          nonce:
+                            type: string
+                            example: "aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890-_"
+                          timestampMillis:
+                            type: string
+                            format: int64
+                            example: "1678886400123"
+                          # Standard API might include cloudProjectNumber if specifically requested/configured
+                          # cloudProjectNumber:
+                          #   type: string
+                          #   format: int64
+                          #   example: "123456789012"
+                      appIntegrity:
+                        type: object
+                        properties:
+                          appRecognitionVerdict:
+                            type: string
+                            # Examples: "PLAY_RECOGNIZED", "UNRECOGNIZED_VERSION", "UNEVALUATED"
+                            example: "PLAY_RECOGNIZED"
+                          packageName:
+                            type: string
+                            example: "dev.keiji.deviceintegrity"
+                          certificateSha256Digest:
+                            type: array
+                            items:
+                              type: string
+                            example: ["sha256_cert_digest"]
+                          versionCode:
+                            type: string
+                            example: "123"
+                      deviceIntegrity:
+                        type: object
+                        properties:
+                          deviceRecognitionVerdict: # In Standard, this can be a single string or array
+                            type: array # Or string, check documentation
+                            items:
+                              type: string
+                            # Examples: ["MEETS_DEVICE_INTEGRITY"], ["MEETS_BASIC_INTEGRITY", "MEETS_STRONG_INTEGRITY"]
+                            # Or single string like "MEETS_VIRTUAL_INTEGRITY"
+                            example: ["MEETS_DEVICE_INTEGRITY"]
+                          # Standard API may include more granular device integrity fields
+                          # recentDeviceActivity:
+                          #   type: object
+                          #   properties:
+                          #     deviceActivityLevel:
+                          #       type: string
+                          #       example: "LEVEL_1" # (example enum)
+                      accountDetails:
+                        type: object
+                        properties:
+                          appLicensingVerdict:
+                            type: string
+                            # Examples: "LICENSED", "UNLICENSED", "UNEVALUATED"
+                            example: "LICENSED"
+                      environmentDetails: # Optional, depending on SDK version and enabled features
+                        type: object
+                        properties:
+                          playProtectVerdict:
+                             type: string
+                             # Examples: "NO_ISSUES", "NO_DATA", "MEDIUM_RISK", "HIGH_RISK", "POSSIBLY_HARMFUL_APP_DETECTED"
+                             example: "NO_ISSUES"
+                          # Standard API might provide more here, e.g. playServicesVersion, etc.
+                example:
+                  tokenPayloadExternal:
+                    requestDetails:
+                      requestPackageName: "dev.keiji.deviceintegrity"
+                      nonce: "aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890-_"
+                      timestampMillis: "1678886400123"
+                    appIntegrity:
+                      appRecognitionVerdict: "PLAY_RECOGNIZED"
+                      packageName: "dev.keiji.deviceintegrity"
+                      certificateSha256Digest: ["sha256_cert_digest"]
+                      versionCode: "123"
+                    deviceIntegrity:
+                      # Example with array, actual structure depends on device state
+                      deviceRecognitionVerdict: ["MEETS_DEVICE_INTEGRITY"]
+                    accountDetails:
+                      appLicensingVerdict: "LICENSED"
+                    environmentDetails:
+                      playProtectVerdict: "NO_ISSUES"
+        '400':
+          description: Bad request. Missing payload, 'nonce'/'token', or nonce mismatch.
+          content:
+            application/json:
+              schema:
+                oneOf: # Can be one of the existing error types
+                  - $ref: '#/components/schemas/ErrorResponse'
+                  - $ref: '#/components/schemas/NonceMismatchErrorResponse'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: A message describing the error.
+          example: "Failed to generate nonce"
+    NonceMismatchErrorResponse:
+      type: object
+      required:
+        - error
+        - client_nonce
+        - api_nonce
+      properties:
+        error:
+          type: string
+          description: A message indicating a nonce mismatch.
+          example: "Nonce mismatch"
+        client_nonce:
+          type: string
+          description: The nonce provided by the client.
+          example: "client_provided_nonce"
+        api_nonce:
+          type: string
+          description: The nonce found in the Play Integrity API response.
+          example: "api_response_nonce"
+        play_integrity_response: # Optional, included if server decides to send it
+          type: object
+          description: The full response from the Play Integrity API, included for debugging.
+  securitySchemes: {} # No security schemes defined for now, but can be added later (e.g., API Key, OAuth2)
