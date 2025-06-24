@@ -23,8 +23,17 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationScreen
 import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityScreen
+import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityViewModel
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsScreen
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsStateWithLifecycle
+import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
+import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationViewModel
+import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationUiEvent
+import dev.keiji.deviceintegrity.ui.main.settings.SettingsViewModel
+import android.widget.Toast
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -80,9 +89,49 @@ fun DeviceIntegrityApp() {
                 startDestination = AppScreen.PlayIntegrity.route,
                 modifier = Modifier.padding(innerPadding)
             ) {
-                composable(AppScreen.PlayIntegrity.route) { PlayIntegrityScreen() }
-                composable(AppScreen.KeyAttestation.route) { KeyAttestationScreen() }
-                composable(AppScreen.Settings.route) { SettingsScreen() }
+                composable(AppScreen.PlayIntegrity.route) {
+                    val viewModel: PlayIntegrityViewModel = hiltViewModel()
+                    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+                    PlayIntegrityScreen(
+                        uiState = uiState,
+                        onNonceChange = viewModel::updateNonce,
+                        onRequestToken = viewModel::fetchIntegrityToken
+                    )
+                }
+                composable(AppScreen.KeyAttestation.route) {
+                    val viewModel: KeyAttestationViewModel = hiltViewModel()
+                    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+                    val context = LocalContext.current
+
+                    LaunchedEffect(viewModel.eventFlow) {
+                        viewModel.eventFlow.collect { event ->
+                            when (event) {
+                                is KeyAttestationUiEvent.ShowToast -> {
+                                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    }
+
+                    KeyAttestationScreen(
+                        uiState = uiState,
+                        onNonceChange = viewModel::updateNonce,
+                        onSubmit = viewModel::submit
+                    )
+                }
+                composable(AppScreen.Settings.route) {
+                    val viewModel: SettingsViewModel = hiltViewModel()
+                    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+                    // TODO: Implement actual navigation logic
+                    SettingsScreen(
+                        uiState = uiState,
+                        onNavigateToOssLicenses = { Timber.d("Navigate to OSS Licenses") },
+                        onNavigateToApiSettings = { Timber.d("Navigate to API Settings") },
+                        onNavigateToDeveloperInfo = { Timber.d("Navigate to Developer Info") }
+                    )
+                }
             }
         }
     }

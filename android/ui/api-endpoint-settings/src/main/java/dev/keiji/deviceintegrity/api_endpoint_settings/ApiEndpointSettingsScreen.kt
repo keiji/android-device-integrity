@@ -7,25 +7,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
-import java.net.MalformedURLException
-import java.net.URL
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ApiEndpointSettingsScreen(
     modifier: Modifier = Modifier,
-    viewModel: ApiEndpointSettingsViewModel = viewModel()
+    uiState: ApiEndpointSettingsUiState,
+    onEditingUrlChange: (String) -> Unit,
+    onSaveClick: () -> Unit,
 ) {
-    val currentApiEndpointUrl by viewModel.apiEndpointUrl.collectAsState()
-    var text by remember(currentApiEndpointUrl) { mutableStateOf(currentApiEndpointUrl ?: "") }
-    var errorText by remember { mutableStateOf<String?>(null) }
-
-    LaunchedEffect(currentApiEndpointUrl) {
-        text = currentApiEndpointUrl ?: ""
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -40,8 +31,8 @@ fun ApiEndpointSettingsScreen(
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .padding(innerPadding) // Apply innerPadding from Scaffold
-                .padding(16.dp), // Additional padding for content
+                .padding(innerPadding)
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -51,38 +42,36 @@ fun ApiEndpointSettingsScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedTextField(
-                value = text,
+                value = uiState.editingUrl,
                 onValueChange = { newText ->
-                    // Allow only URL-safe characters
-                    if (newText.all { it.isLetterOrDigit() || it in ":/?#[]@!$&'()*+,;=-_.~%" }) {
-                        text = newText
-                        errorText = null // Clear error when user types
-                    }
+                    // Basic filtering for typical URL characters (Screen can do minimal, ViewModel does full validation)
+                    // if (newText.all { it.isLetterOrDigit() || it in ":/?#[]@!$&'()*+,;=-_.~%" }) {
+                    onEditingUrlChange(newText)
+                    // }
                 },
                 label = { Text("Enter URL") },
                 singleLine = true,
-                isError = errorText != null,
+                isError = uiState.errorMessage != null,
                 modifier = Modifier.fillMaxWidth()
             )
-            if (errorText != null) {
+            if (uiState.errorMessage != null) {
                 Text(
-                    text = errorText!!,
+                    text = uiState.errorMessage,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(start = 16.dp)
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
+
+            if (uiState.isLoading) {
+                CircularProgressIndicator()
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
             Button(
-                onClick = {
-                    try {
-                        URL(text) // Validate URL
-                        viewModel.saveApiEndpointUrl(text)
-                        errorText = null // Clear error on success
-                    } catch (e: MalformedURLException) {
-                        errorText = "Invalid URL format"
-                    }
-                },
+                onClick = { onSaveClick() },
+                enabled = !uiState.isLoading,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Save")
@@ -95,91 +84,58 @@ fun ApiEndpointSettingsScreen(
 @Composable
 private fun ApiEndpointSettingsScreenPreview() {
     DeviceIntegrityTheme {
-        Surface { // Surface is still good for previews of screen content
+        Surface {
             ApiEndpointSettingsScreen(
-                // Provide a mock ViewModel for preview if needed, or use defaults
+                uiState = ApiEndpointSettingsUiState(
+                    currentUrl = "https://example.com/api",
+                    editingUrl = "https://example.com/api/edit",
+                    errorMessage = null,
+                    isLoading = false,
+                    saveSuccess = false
+                ),
+                onEditingUrlChange = {},
+                onSaveClick = {}
             )
         }
     }
 }
 
-// It's generally harder to preview complex states with Hilt ViewModels directly in @Preview.
-// Consider testing these states via UI tests or by creating a preview-specific Composable
-// that accepts all state as parameters.
-/*
-@OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
 private fun ApiEndpointSettingsScreenWithErrorPreview() {
     DeviceIntegrityTheme {
         Surface {
-            // Replicating the state for error preview within the Scaffold structure
-            var text by remember { mutableStateOf("invalid url") }
-            var errorText by remember { mutableStateOf<String?>("Invalid URL format") }
-
-            Scaffold(
-                topBar = {
-                    TopAppBar(
-                        title = { Text("API Endpoint Settings") },
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            titleContentColor = MaterialTheme.colorScheme.primary,
-                        )
-                    )
-                }
-            ) { innerPadding ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = "API Endpoint URL",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = text,
-                        onValueChange = { newText ->
-                            if (newText.all { it.isLetterOrDigit() || it in ":/?#[]@!$&'()*+,;=-_.~%" }) {
-                                text = newText
-                                errorText = null
-                            }
-                        },
-                        label = { Text("Enter URL") },
-                        singleLine = true,
-                        isError = errorText != null,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    if (errorText != null) {
-                        Text(
-                            text = errorText!!,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(start = 16.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = {
-                            try {
-                                URL(text)
-                                errorText = null
-                                // TODO: Implement persistence logic
-                            } catch (e: MalformedURLException) {
-                                errorText = "Invalid URL format"
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Save")
-                    }
-                }
-            }
+            ApiEndpointSettingsScreen(
+                uiState = ApiEndpointSettingsUiState(
+                    currentUrl = "https://example.com/api",
+                    editingUrl = "invalid url",
+                    errorMessage = "Invalid URL format",
+                    isLoading = false,
+                    saveSuccess = false
+                ),
+                onEditingUrlChange = {},
+                onSaveClick = {}
+            )
         }
     }
 }
-*/
+
+@Preview(showBackground = true)
+@Composable
+private fun ApiEndpointSettingsScreenLoadingPreview() {
+    DeviceIntegrityTheme {
+        Surface {
+            ApiEndpointSettingsScreen(
+                uiState = ApiEndpointSettingsUiState(
+                    currentUrl = "https://example.com/api",
+                    editingUrl = "https://example.com/api/loading",
+                    errorMessage = null,
+                    isLoading = true,
+                    saveSuccess = false
+                ),
+                onEditingUrlChange = {},
+                onSaveClick = {}
+            )
+        }
+    }
+}

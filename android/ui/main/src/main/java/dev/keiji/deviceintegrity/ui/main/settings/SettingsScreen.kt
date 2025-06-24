@@ -25,17 +25,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun SettingsScreen(
-    viewModel: SettingsViewModel = viewModel(),
+    uiState: SettingsUiState,
     onNavigateToOssLicenses: () -> Unit = {},
     onNavigateToApiSettings: () -> Unit = {},
     onNavigateToDeveloperInfo: () -> Unit = {},
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
 
     Column(
@@ -140,5 +137,21 @@ fun SettingsMenuItemClickablePreview() {
         title = "アプリのバージョン",
         subtitle = "1.0.0 (debug)",
         onClick = {},
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SettingsScreenPreview() {
+    SettingsScreen(
+        uiState = SettingsUiState(
+            appVersionName = "1.0.0-preview",
+            appVersionCode = 10000,
+            osVersion = "13 (Preview)",
+            securityPatchLevel = "2023-03-05"
+        ),
+        onNavigateToOssLicenses = {},
+        onNavigateToApiSettings = {},
+        onNavigateToDeveloperInfo = {}
     )
 }

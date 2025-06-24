@@ -22,27 +22,13 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun KeyAttestationScreen(
-    viewModel: KeyAttestationViewModel = viewModel()
+    uiState: KeyAttestationUiState,
+    onNonceChange: (String) -> Unit,
+    onSubmit: () -> Unit,
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-
-    LaunchedEffect(Unit) {
-        viewModel.eventFlow.collectLatest { event ->
-            when (event) {
-                is KeyAttestationUiEvent.ShowToast -> {
-                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -56,7 +42,7 @@ fun KeyAttestationScreen(
 
         OutlinedTextField(
             value = uiState.nonce,
-            onValueChange = { viewModel.updateNonce(it) },
+            onValueChange = { onNonceChange(it) }, // Use callback
             label = { Text("Nonce (Hex)") },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(
@@ -65,21 +51,17 @@ fun KeyAttestationScreen(
                 keyboardType = KeyboardType.Ascii
             ),
             singleLine = true,
-            // Input validation for hex characters and length is handled in ViewModel,
-            // but we can add a visual transformation or basic filter if needed here.
-            // For now, relying on ViewModel's validation.
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = { viewModel.submit() },
+            onClick = { onSubmit() }, // Use callback
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(text = "送信")
         }
 
-        // TODO: Display uiState.isLoading and uiState.result (e.g., attestation result)
         if (uiState.isLoading) {
             Spacer(modifier = Modifier.height(16.dp))
             Text("Loading...")
@@ -95,5 +77,13 @@ fun KeyAttestationScreen(
 @Preview
 @Composable
 private fun KeyAttestationScreenPreview() {
-    KeyAttestationScreen()
+    KeyAttestationScreen(
+        uiState = KeyAttestationUiState(
+            nonce = "PREVIEW_NONCE_12345",
+            isLoading = true,
+            result = "Previewing result text..."
+        ),
+        onNonceChange = { System.out.println("Preview: Nonce changed to $it") },
+        onSubmit = { System.out.println("Preview: Submit clicked") }
+    )
 }
