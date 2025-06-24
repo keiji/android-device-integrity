@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun ClassicPlayIntegrityContent(
     uiState: ClassicPlayIntegrityUiState,
-    onNonceChange: (String) -> Unit,
+    onFetchNonce: () -> Unit,
     onRequestToken: () -> Unit,
     onRequestVerify: () -> Unit,
     modifier: Modifier = Modifier
@@ -29,24 +29,27 @@ fun ClassicPlayIntegrityContent(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.Start, // Align labels to the left
         verticalArrangement = Arrangement.Top
     ) {
         Text(text = "Step 1. サーバーからNonceを取得")
-        OutlinedTextField(
-            value = uiState.nonce,
-            onValueChange = { onNonceChange(it) },
-            label = { Text("Nonce") },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = false
-        )
+        Button(
+            onClick = { onFetchNonce() },
+            enabled = uiState.isFetchNonceButtonEnabled,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = "Fetch Nonce")
+        }
+        if (uiState.nonce.isNotEmpty()) {
+            Text(text = "Nonce: ${uiState.nonce}")
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(text = "Step 2. トークンを取得")
         Button(
             onClick = { onRequestToken() },
-            enabled = !uiState.isLoading,
+            enabled = uiState.isRequestTokenButtonEnabled,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(text = "Request Integrity Token")
@@ -57,17 +60,20 @@ fun ClassicPlayIntegrityContent(
         Text(text = "Step 3. トークンを検証")
         Button(
             onClick = { onRequestVerify() },
+            enabled = uiState.isVerifyTokenButtonEnabled,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(text = "Request Verify Token")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+        Divider() // Add a divider
+        Spacer(modifier = Modifier.height(16.dp))
 
         if (uiState.isLoading) {
-            CircularProgressIndicator()
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
         } else {
-            Text(text = uiState.result)
+            Text(text = uiState.status) // Display status text
         }
     }
 }
@@ -78,10 +84,13 @@ private fun ClassicPlayIntegrityContentPreview() {
     ClassicPlayIntegrityContent(
         uiState = ClassicPlayIntegrityUiState(
             nonce = "preview-nonce",
+            integrityToken = "preview-token",
             isLoading = false,
-            result = "Preview result text for Classic."
+            status = "Preview status text for Classic."
+            // isFetchNonceButtonEnabled, isRequestTokenButtonEnabled,
+            // and isVerifyTokenButtonEnabled are now calculated properties
         ),
-        onNonceChange = {},
+        onFetchNonce = {},
         onRequestToken = {},
         onRequestVerify = {}
     )

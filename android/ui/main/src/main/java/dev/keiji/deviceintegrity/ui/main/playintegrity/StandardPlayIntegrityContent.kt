@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,7 +30,7 @@ fun StandardPlayIntegrityContent(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.Start, // Align labels to the left
         verticalArrangement = Arrangement.Top
     ) {
         Text(text = "Step 1. 検証に使うコンテンツを設定")
@@ -47,7 +48,7 @@ fun StandardPlayIntegrityContent(
         Text(text = "Step 2. トークンを取得")
         Button(
             onClick = { onRequestToken() },
-            enabled = !uiState.isLoading,
+            enabled = uiState.isRequestTokenButtonEnabled,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(text = "Request Integrity Token")
@@ -58,17 +59,20 @@ fun StandardPlayIntegrityContent(
         Text(text = "Step 3. トークンを検証")
         Button(
             onClick = { onRequestVerify() },
+            enabled = uiState.isVerifyTokenButtonEnabled,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(text = "Request Verify Token")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+        Divider() // Add a divider
+        Spacer(modifier = Modifier.height(16.dp))
 
         if (uiState.isLoading) {
-            CircularProgressIndicator()
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
         } else {
-            Text(text = uiState.result)
+            Text(text = uiState.status) // Display status text
         }
     }
 }
@@ -79,8 +83,10 @@ private fun StandardPlayIntegrityContentPreview() {
     StandardPlayIntegrityContent(
         uiState = StandardPlayIntegrityUiState(
             contentBinding = "preview-content-binding",
-            isLoading = true, // Changed to true for variety in preview
-            result = "Preview result text for Standard."
+            integrityToken = "preview-token",
+            isLoading = false,
+            status = "Preview status text for Standard."
+            // isRequestTokenButtonEnabled and isVerifyTokenButtonEnabled are now calculated properties
         ),
         onContentBindingChange = {},
         onRequestToken = {},

@@ -44,7 +44,7 @@ fun PlayIntegrityScreen(
             PlayIntegrityTab.Classic -> {
                 ClassicPlayIntegrityContent(
                     uiState = classicUiState,
-                    onNonceChange = { classicViewModel.updateNonce(it) },
+                    onFetchNonce = { classicViewModel.fetchNonce() },
                     onRequestToken = { classicViewModel.fetchIntegrityToken() },
                     onRequestVerify = { classicViewModel.verifyToken() }
                 )
@@ -83,10 +83,12 @@ private fun PlayIntegrityScreenPreview_ClassicSelected() {
         ClassicPlayIntegrityContent(
             uiState = ClassicPlayIntegrityUiState(
                 nonce = "preview-nonce",
+                integrityToken = "preview-token",
                 isLoading = false,
-                result = "Preview Classic Content"
+                status = "Preview result text for Classic."
+                // Button enabled states are now calculated properties
             ),
-            onNonceChange = {},
+            onFetchNonce = {},
             onRequestToken = {},
             onRequestVerify = {}
         )
@@ -111,8 +113,10 @@ private fun PlayIntegrityScreenPreview_StandardSelected() {
         StandardPlayIntegrityContent(
             uiState = StandardPlayIntegrityUiState(
                 contentBinding = "preview-content",
+                integrityToken = "preview-token",
                 isLoading = false,
-                result = "Preview Standard Content"
+                status = "Preview Standard Content"
+                // Button enabled states are now calculated properties
             ),
             onContentBindingChange = {},
             onRequestToken = {},
