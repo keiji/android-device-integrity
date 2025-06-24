@@ -40,10 +40,104 @@ This specification details the request and response schemas, parameters, and sta
 
 ## Setup and Running
 
-(Instructions for setting up and running the server, e.g., Python version, dependencies, environment variables, GAE deployment, would go here. This is a placeholder as the current task is focused on OpenAPI documentation.)
+This server contains two Google App Engine (GAE) applications: `key_attestation` and `play_integrity`.
 
-Refer to `main.py` for the Flask application code and `app.yaml` for Google App Engine configuration.
-Make sure `requirements.txt` lists all necessary Python dependencies.
+### Prerequisites
+
+*   [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) installed and initialized.
+*   Python 3.9 or later.
+*   `pip` for installing Python dependencies.
+
+### Deployment to App Engine
+
+Each application needs to be deployed separately.
+
+1.  **Install Dependencies:**
+    Before deploying, ensure you have installed the necessary dependencies for each application. Navigate to the respective application's directory and run:
+    ```bash
+    # For key_attestation
+    cd server/key_attestation
+    pip install -r requirements.txt -t lib # Installs dependencies into the 'lib' folder
+
+    # For play_integrity
+    cd server/play_integrity
+    pip install -r requirements.txt -t lib # Installs dependencies into the 'lib' folder
+    ```
+    *Note: App Engine's Python 3 runtime automatically looks for dependencies in a `lib` directory. If you are using a different deployment method or runtime, adjust accordingly.*
+
+2.  **Deploy each application:**
+    Use the `gcloud app deploy` command, specifying the `app.yaml` file for each service.
+
+    *   **Deploying `key_attestation` service:**
+        Navigate to the `server/key_attestation` directory:
+        ```bash
+        cd server/key_attestation
+        gcloud app deploy app.yaml
+        ```
+        Alternatively, from the repository root:
+        ```bash
+        gcloud app deploy server/key_attestation/app.yaml
+        ```
+
+    *   **Deploying `play_integrity` service:**
+        Navigate to the `server/play_integrity` directory:
+        ```bash
+        cd server/play_integrity
+        gcloud app deploy app.yaml
+        ```
+        Alternatively, from the repository root:
+        ```bash
+        gcloud app deploy server/play_integrity/app.yaml
+        ```
+
+    *   **Project and Region:**
+        If this is the first time deploying to your Google Cloud project, you might be prompted to choose a region for your App Engine application.
+        You can also specify the project ID with the `--project` flag:
+        ```bash
+        gcloud app deploy app.yaml --project YOUR_PROJECT_ID
+        ```
+
+3.  **Accessing the services:**
+    Once deployed, the services will be accessible via URLs like:
+    *   `https://key-attestation-dot-YOUR_PROJECT_ID.REGION_ID.r.appspot.com`
+    *   `https://play-integrity-dot-YOUR_PROJECT_ID.REGION_ID.r.appspot.com`
+
+    Replace `YOUR_PROJECT_ID` with your Google Cloud project ID and `REGION_ID` with the region you selected (e.g., `uc.r` for us-central). You can find the URLs in the output of the `gcloud app deploy` command or in the Google Cloud Console under App Engine services.
+
+### Local Development (Optional)
+
+For local testing, you can run each Flask application directly.
+
+1.  **Install dependencies** (if not already done for deployment):
+    ```bash
+    # For key_attestation
+    cd server/key_attestation
+    pip install -r requirements.txt
+
+    # For play_integrity
+    cd server/play_integrity
+    pip install -r requirements.txt
+    ```
+
+2.  **Run the Flask development server:**
+    *   **For `key_attestation`:**
+        ```bash
+        cd server/key_attestation
+        flask run -p 8081 # Or any other available port
+        ```
+        The `key_attestation` service will be available at `http://localhost:8081`.
+
+    *   **For `play_integrity`:**
+        ```bash
+        cd server/play_integrity
+        flask run -p 8082 # Or any other available port
+        ```
+        The `play_integrity` service will be available at `http://localhost:8082`.
+
+    *Note: Ensure that the `app` variable in `key_attestation.py` and `play_integrity.py` is correctly named if you are using `flask run`. The `entrypoint` in `app.yaml` uses `gunicorn` which might have different expectations for the application variable name (e.g., `key_attestation:app` means it looks for an `app` instance in `key_attestation.py`).*
+
+Refer to `key_attestation/key_attestation.py` and `play_integrity/play_integrity.py` for the Flask application code, and their respective `app.yaml` files for Google App Engine configuration.
+Make sure `requirements.txt` in each application directory lists all necessary Python dependencies.
 ```
 ## AGENTS.md
 
