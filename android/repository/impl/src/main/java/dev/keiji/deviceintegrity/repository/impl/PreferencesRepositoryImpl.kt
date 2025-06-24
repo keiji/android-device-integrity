@@ -40,18 +40,37 @@ class PreferencesRepositoryImpl @Inject internal constructor( // internal constr
 
     constructor(context: Context) : this(context.userPreferencesStore)
 
-    override val apiEndpointUrl: Flow<String?> = dataStore.data
+    override val playIntegrityVerifyApiEndpointUrl: Flow<String?> = dataStore.data
         .map { preferences ->
-            if (preferences.apiEndpointUrl.isNullOrEmpty()) {
+            if (preferences.playIntegrityVerifyApiEndpointUrl.isNullOrEmpty()) {
                 null
             } else {
-                preferences.apiEndpointUrl
+                preferences.playIntegrityVerifyApiEndpointUrl
             }
         }
 
-    override suspend fun saveApiEndpointUrl(url: String) {
+    override val keyAttestationVerifyApiEndpointUrl: Flow<String?> = dataStore.data
+        .map { preferences ->
+            if (preferences.keyAttestationVerifyApiEndpointUrl.isNullOrEmpty()) {
+                null
+            } else {
+                preferences.keyAttestationVerifyApiEndpointUrl
+            }
+        }
+
+    override suspend fun savePlayIntegrityVerifyApiEndpointUrl(url: String) {
         dataStore.updateData { preferences ->
-            preferences.toBuilder().setApiEndpointUrl(url).build()
+            preferences.toBuilder()
+                .setPlayIntegrityVerifyApiEndpointUrl(url)
+                .build()
+        }
+    }
+
+    override suspend fun saveKeyAttestationVerifyApiEndpointUrl(url: String) {
+        dataStore.updateData { preferences ->
+            preferences.toBuilder()
+                .setKeyAttestationVerifyApiEndpointUrl(url)
+                .build()
         }
     }
 }

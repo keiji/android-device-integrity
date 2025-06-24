@@ -29,7 +29,8 @@ import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 fun ApiEndpointSettingsScreen(
     modifier: Modifier = Modifier,
     uiState: ApiEndpointSettingsUiState,
-    onEditingUrlChange: (String) -> Unit,
+    onEditingPlayIntegrityUrlChange: (String) -> Unit,
+    onEditingKeyAttestationUrlChange: (String) -> Unit,
     onSaveClick: () -> Unit,
 ) {
     Scaffold(
@@ -48,24 +49,44 @@ fun ApiEndpointSettingsScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            // horizontalAlignment = Alignment.CenterHorizontally, // Remove to align left
+            verticalArrangement = Arrangement.Top // Changed from Center to Top
         ) {
             Text(
-                text = "API Endpoint URL",
-                style = MaterialTheme.typography.titleMedium
+                text = "Play Integrity APIを検証するサーバー",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.fillMaxWidth() // Align text to the start
             )
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedTextField(
-                value = uiState.editingUrl,
+                value = uiState.editingPlayIntegrityUrl,
                 onValueChange = { newText ->
-                    onEditingUrlChange(newText)
+                    onEditingPlayIntegrityUrlChange(newText)
                 },
-                label = { Text("Enter URL") },
+                // label = { Text("Enter URL") }, // Removed as per requirement
                 singleLine = true,
-                isError = uiState.errorMessage != null,
+                isError = uiState.errorMessage != null, // Assuming single error message for now
                 modifier = Modifier.fillMaxWidth()
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Key Attestationを検証するサーバー",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.fillMaxWidth() // Align text to the start
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = uiState.editingKeyAttestationUrl,
+                onValueChange = { newText ->
+                    onEditingKeyAttestationUrlChange(newText)
+                },
+                singleLine = true,
+                isError = uiState.errorMessage != null, // Assuming single error message for now
+                modifier = Modifier.fillMaxWidth()
+            )
+
             if (uiState.errorMessage != null) {
                 Text(
                     text = uiState.errorMessage,
@@ -99,13 +120,16 @@ private fun ApiEndpointSettingsScreenPreview() {
         Surface {
             ApiEndpointSettingsScreen(
                 uiState = ApiEndpointSettingsUiState(
-                    currentUrl = "https://example.com/api",
-                    editingUrl = "https://example.com/api/edit",
+                    currentPlayIntegrityUrl = "https://example.com/api/play",
+                    editingPlayIntegrityUrl = "https://example.com/api/play/edit",
+                    currentKeyAttestationUrl = "https://example.com/api/key",
+                    editingKeyAttestationUrl = "https://example.com/api/key/edit",
                     errorMessage = null,
                     isLoading = false,
                     saveSuccess = false
                 ),
-                onEditingUrlChange = {},
+                onEditingPlayIntegrityUrlChange = {},
+                onEditingKeyAttestationUrlChange = {},
                 onSaveClick = {}
             )
         }
@@ -119,13 +143,16 @@ private fun ApiEndpointSettingsScreenWithErrorPreview() {
         Surface {
             ApiEndpointSettingsScreen(
                 uiState = ApiEndpointSettingsUiState(
-                    currentUrl = "https://example.com/api",
-                    editingUrl = "invalid url",
+                    currentPlayIntegrityUrl = "https://example.com/api/play",
+                    editingPlayIntegrityUrl = "invalid url",
+                    currentKeyAttestationUrl = "https://example.com/api/key",
+                    editingKeyAttestationUrl = "invalid url",
                     errorMessage = "Invalid URL format",
                     isLoading = false,
                     saveSuccess = false
                 ),
-                onEditingUrlChange = {},
+                onEditingPlayIntegrityUrlChange = {},
+                onEditingKeyAttestationUrlChange = {},
                 onSaveClick = {}
             )
         }
@@ -139,13 +166,16 @@ private fun ApiEndpointSettingsScreenLoadingPreview() {
         Surface {
             ApiEndpointSettingsScreen(
                 uiState = ApiEndpointSettingsUiState(
-                    currentUrl = "https://example.com/api",
-                    editingUrl = "https://example.com/api/loading",
+                    currentPlayIntegrityUrl = "https://example.com/api/play",
+                    editingPlayIntegrityUrl = "https://example.com/api/play/loading",
+                    currentKeyAttestationUrl = "https://example.com/api/key",
+                    editingKeyAttestationUrl = "https://example.com/api/key/loading",
                     errorMessage = null,
                     isLoading = true,
                     saveSuccess = false
                 ),
-                onEditingUrlChange = {},
+                onEditingPlayIntegrityUrlChange = {},
+                onEditingKeyAttestationUrlChange = {},
                 onSaveClick = {}
             )
         }
