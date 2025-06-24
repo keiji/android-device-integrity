@@ -24,4 +24,5 @@ jobs:
         run: npm install -g @stoplight/spectral-cli
 
       - name: Run Spectral lint
-        run: spectral lint server/openapi.yaml
+        working-directory: ./server
+        run: spectral lint openapi.yaml
