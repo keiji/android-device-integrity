@@ -12,6 +12,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
+import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
@@ -89,5 +90,62 @@ class ApiEndpointSettingsViewModelTest {
         assert(newViewModel.uiState.value.editingPlayIntegrityUrl == initialPlayUrl)
         assert(newViewModel.uiState.value.currentKeyAttestationUrl == initialKeyUrl)
         assert(newViewModel.uiState.value.editingKeyAttestationUrl == initialKeyUrl)
+    }
+
+    @Test
+    fun `saveApiEndpoints sets error message for invalid Play Integrity URL`() = runTest {
+        val invalidPlayUrl = "invalid-url"
+        val validKeyUrl = "https://key.example.com"
+
+        viewModel.updateEditingPlayIntegrityUrl(invalidPlayUrl)
+        viewModel.updateEditingKeyAttestationUrl(validKeyUrl)
+        viewModel.saveApiEndpoints()
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assert(state.errorMessage == "Invalid format for Play Integrity URL")
+        assert(!state.isLoading)
+        assert(!state.saveSuccess)
+        verify(mockPreferencesRepository, never()).savePlayIntegrityVerifyApiEndpointUrl(invalidPlayUrl)
+        verify(mockPreferencesRepository, never()).saveKeyAttestationVerifyApiEndpointUrl(validKeyUrl)
+    }
+
+    @Test
+    fun `saveApiEndpoints sets error message for invalid Key Attestation URL`() = runTest {
+        val validPlayUrl = "https://play.example.com"
+        val invalidKeyUrl = "invalid-url"
+
+        viewModel.updateEditingPlayIntegrityUrl(validPlayUrl)
+        viewModel.updateEditingKeyAttestationUrl(invalidKeyUrl)
+        viewModel.saveApiEndpoints()
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assert(state.errorMessage == "Invalid format for Key Attestation URL")
+        assert(!state.isLoading)
+        assert(!state.saveSuccess)
+        verify(mockPreferencesRepository, never()).savePlayIntegrityVerifyApiEndpointUrl(validPlayUrl)
+        verify(mockPreferencesRepository, never()).saveKeyAttestationVerifyApiEndpointUrl(invalidKeyUrl)
+    }
+
+    @Test
+    fun `saveApiEndpoints sets error message for both invalid URLs`() = runTest {
+        val invalidPlayUrl = "invalid-play-url"
+        val invalidKeyUrl = "invalid-key-url"
+
+        viewModel.updateEditingPlayIntegrityUrl(invalidPlayUrl)
+        viewModel.updateEditingKeyAttestationUrl(invalidKeyUrl)
+        viewModel.saveApiEndpoints()
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assert(state.errorMessage == "Invalid format for both URLs")
+        assert(!state.isLoading)
+        assert(!state.saveSuccess)
+        verify(mockPreferencesRepository, never()).savePlayIntegrityVerifyApiEndpointUrl(invalidPlayUrl)
+        verify(mockPreferencesRepository, never()).saveKeyAttestationVerifyApiEndpointUrl(invalidKeyUrl)
     }
 }
