@@ -19,7 +19,7 @@ import retrofit2.Retrofit
 import javax.inject.Inject
 
 @HiltAndroidTest
-@Config(manifest = Config.NONE) // Robolectric specific: no need for a real manifest in this unit test for DI.
+@Config(application = dagger.hilt.android.testing.HiltTestApplication::class)
 @RunWith(RobolectricTestRunner::class) // To enable Android framework classes if Hilt needs them for context etc.
 class NetworkModuleTest {
 
