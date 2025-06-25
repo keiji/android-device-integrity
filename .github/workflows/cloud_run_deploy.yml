@@ -6,9 +6,9 @@ on:
       - deploy/cloudrun
 
 env:
-  GCP_PROJECT_ID: ${{{{ secrets.GCP_PROJECT_ID }}}}
-  GCP_CLOUD_RUN_REGION: ${{{{ secrets.GCP_CLOUD_RUN_REGION }}}}
-  GCP_SA_KEY: ${{{{ secrets.GCP_SA_KEY }}}}
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_CLOUD_RUN_REGION: ${{ secrets.GCP_CLOUD_RUN_REGION }}
+  GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
   IMAGE_REGISTRY_HOST: gcr.io # Or your Artifact Registry host if preferred
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{{{ env.GCP_SA_KEY }}}}
+          credentials_json: ${{ env.GCP_SA_KEY }}
 
   deploy_key_attestation:
     name: Deploy KeyAttestationVerify
@@ -38,31 +38,31 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{{{ env.GCP_SA_KEY }}}}
+          credentials_json: ${{ env.GCP_SA_KEY }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure Docker
-        run: gcloud auth configure-docker ${{{{ env.IMAGE_REGISTRY_HOST }}}} --quiet
+        run: gcloud auth configure-docker ${{ env.IMAGE_REGISTRY_HOST }} --quiet
 
       - name: Build Docker image
         run: |
           docker build \
-            --tag "${{{{ env.IMAGE_REGISTRY_HOST }}}}/${{{{ env.GCP_PROJECT_ID }}}}/keyattestationverify:${{{{ github.sha }}}}" \
+            --tag "${{ env.IMAGE_REGISTRY_HOST }}/${{ env.GCP_PROJECT_ID }}/keyattestationverify:${{ github.sha }}" \
             ./server/key_attestation
         working-directory: ./
 
       - name: Push Docker image
-        run: docker push "${{{{ env.IMAGE_REGISTRY_HOST }}}}/${{{{ env.GCP_PROJECT_ID }}}}/keyattestationverify:${{{{ github.sha }}}}"
+        run: docker push "${{ env.IMAGE_REGISTRY_HOST }}/${{ env.GCP_PROJECT_ID }}/keyattestationverify:${{ github.sha }}"
 
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy key-attestation-verify \
-            --image "${{{{ env.IMAGE_REGISTRY_HOST }}}}/${{{{ env.GCP_PROJECT_ID }}}}/keyattestationverify:${{{{ github.sha }}}}" \
+            --image "${{ env.IMAGE_REGISTRY_HOST }}/${{ env.GCP_PROJECT_ID }}/keyattestationverify:${{ github.sha }}" \
             --platform managed \
-            --region "${{{{ env.GCP_CLOUD_RUN_REGION }}}}" \
-            --project "${{{{ env.GCP_PROJECT_ID }}}}" \
+            --region "${{ env.GCP_CLOUD_RUN_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
             --allow-unauthenticated \
             --quiet
 
@@ -78,30 +78,30 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{{{ env.GCP_SA_KEY }}}}
+          credentials_json: ${{ env.GCP_SA_KEY }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure Docker
-        run: gcloud auth configure-docker ${{{{ env.IMAGE_REGISTRY_HOST }}}} --quiet
+        run: gcloud auth configure-docker ${{ env.IMAGE_REGISTRY_HOST }} --quiet
 
       - name: Build Docker image
         run: |
           docker build \
-            --tag "${{{{ env.IMAGE_REGISTRY_HOST }}}}/${{{{ env.GCP_PROJECT_ID }}}}/playintegrityverify:${{{{ github.sha }}}}" \
+            --tag "${{ env.IMAGE_REGISTRY_HOST }}/${{ env.GCP_PROJECT_ID }}/playintegrityverify:${{ github.sha }}" \
             ./server/play_integrity
         working-directory: ./
 
       - name: Push Docker image
-        run: docker push "${{{{ env.IMAGE_REGISTRY_HOST }}}}/${{{{ env.GCP_PROJECT_ID }}}}/playintegrityverify:${{{{ github.sha }}}}"
+        run: docker push "${{ env.IMAGE_REGISTRY_HOST }}/${{ env.GCP_PROJECT_ID }}/playintegrityverify:${{ github.sha }}"
 
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy play-integrity-verify \
-            --image "${{{{ env.IMAGE_REGISTRY_HOST }}}}/${{{{ env.GCP_PROJECT_ID }}}}/playintegrityverify:${{{{ github.sha }}}}" \
+            --image "${{ env.IMAGE_REGISTRY_HOST }}/${{ env.GCP_PROJECT_ID }}/playintegrityverify:${{ github.sha }}" \
             --platform managed \
-            --region "${{{{ env.GCP_CLOUD_RUN_REGION }}}}" \
-            --project "${{{{ env.GCP_PROJECT_ID }}}}" \
+            --region "${{ env.GCP_CLOUD_RUN_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
             --allow-unauthenticated \
             --quiet
