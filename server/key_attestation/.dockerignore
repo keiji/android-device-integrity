@@ -1,0 +1,31 @@
+# Git files
+.git
+.gitignore
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# IDE and editor files
+.idea/
+*.swp
+*.swo
+
+# App Engine specific files
+app.yaml
+lib/
+
+# Other
+.DS_Store
+Dockerfile
+README.md
+tests/
+requirements-dev.txt
+docker-compose.yml

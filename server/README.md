@@ -104,6 +104,88 @@ Each application needs to be deployed separately.
 
     Replace `YOUR_PROJECT_ID` with your Google Cloud project ID and `REGION_ID` with the region you selected (e.g., `uc.r` for us-central). You can find the URLs in the output of the `gcloud app deploy` command or in the Google Cloud Console under App Engine services.
 
+### Deployment to Cloud Run
+
+Each application (`key_attestation` and `play_integrity`) needs to be containerized and deployed to Cloud Run separately. Ensure you have Docker installed and the Google Cloud SDK configured.
+
+1.  **Build and Push Docker Image:**
+    For each application, navigate to its directory (e.g., `server/key_attestation` or `server/play_integrity`) and build the Docker image. Then, tag it and push it to a container registry like Google Artifact Registry or Google Container Registry (GCR).
+
+    Replace `YOUR_PROJECT_ID`, `YOUR_REGION` (e.g., `us-central1`), `YOUR_ARTIFACT_REPO` (if using Artifact Registry), and `SERVICE_NAME` (`key-attestation` or `play-integrity`) with your specific values.
+
+    *   **Using Google Artifact Registry:**
+        ```bash
+        # Build the image
+        docker build -t key-attestation-image . # Or play-integrity-image
+
+        # Tag the image
+        docker tag key-attestation-image YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/YOUR_ARTIFACT_REPO/key-attestation-image:latest
+        # Or for play-integrity:
+        # docker tag play-integrity-image YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/YOUR_ARTIFACT_REPO/play-integrity-image:latest
+
+        # Push the image
+        docker push YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/YOUR_ARTIFACT_REPO/key-attestation-image:latest
+        # Or for play-integrity:
+        # docker push YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/YOUR_ARTIFACT_REPO/play-integrity-image:latest
+        ```
+        *Make sure your Artifact Registry repository is created and configured.*
+
+    *   **Using Google Container Registry (GCR) (Legacy):**
+        ```bash
+        # Build the image
+        docker build -t gcr.io/YOUR_PROJECT_ID/key-attestation-image:latest . # Or play-integrity-image
+
+        # Push the image
+        gcloud auth configure-docker # If you haven't already
+        docker push gcr.io/YOUR_PROJECT_ID/key-attestation-image:latest
+        # Or for play-integrity:
+        # docker push gcr.io/YOUR_PROJECT_ID/play-integrity-image:latest
+        ```
+
+    *   **Alternatively, using Cloud Build:**
+        You can submit the build directly to Cloud Build, which will also push the image to Artifact Registry or GCR.
+        From the application directory (e.g., `server/key_attestation`):
+        ```bash
+        # For Artifact Registry
+        gcloud builds submit --tag YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/YOUR_ARTIFACT_REPO/SERVICE_NAME:latest .
+
+        # For GCR
+        gcloud builds submit --tag gcr.io/YOUR_PROJECT_ID/SERVICE_NAME:latest .
+        ```
+
+2.  **Deploy to Cloud Run:**
+    Use the `gcloud run deploy` command to deploy each service.
+
+    *   **Deploying `key-attestation` service:**
+        ```bash
+        gcloud run deploy key-attestation-service \
+            --image YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/YOUR_ARTIFACT_REPO/key-attestation-image:latest \ # Or gcr.io/YOUR_PROJECT_ID/key-attestation-image:latest
+            --platform managed \
+            --region YOUR_DEPLOY_REGION \ # e.g., us-central1
+            --project YOUR_PROJECT_ID \
+            --allow-unauthenticated # If the service needs to be publicly accessible
+            # Add other flags as needed, e.g., --service-account, --set-env-vars
+        ```
+
+    *   **Deploying `play-integrity` service:**
+        ```bash
+        gcloud run deploy play-integrity-service \
+            --image YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/YOUR_ARTIFACT_REPO/play-integrity-image:latest \ # Or gcr.io/YOUR_PROJECT_ID/play-integrity-image:latest
+            --platform managed \
+            --region YOUR_DEPLOY_REGION \ # e.g., us-central1
+            --project YOUR_PROJECT_ID \
+            --allow-unauthenticated # If the service needs to be publicly accessible
+            # Add other flags as needed.
+            # For Datastore access, ensure the runtime service account (default or custom)
+            # has 'Cloud Datastore User' role or equivalent permissions.
+        ```
+
+3.  **Accessing the Cloud Run services:**
+    Once deployed, `gcloud run deploy` will output the URL for each service. It will typically be in the format:
+    `https://SERVICE_NAME-UNIQUE_HASH-REGION_CODE.a.run.app`
+
+    You can also find the URLs in the Google Cloud Console under Cloud Run.
+
 ### Local Development (Optional)
 
 For local testing, you can run each Flask application directly.
