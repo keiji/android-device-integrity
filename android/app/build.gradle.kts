@@ -72,6 +72,10 @@ dependencies {
     implementation(libs.retrofit.converter.kotlinx.serialization)
 
     testImplementation(libs.junit)
+    testImplementation(libs.hilt.android.testing)
+    kspTest(libs.hilt.compiler)
+    testImplementation(libs.robolectric)
+
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }
