@@ -31,6 +31,7 @@ paths:
       operationId: createNonce
       tags:
         - PlayIntegrityClassic
+      # Removed requestBody as it's not needed for this endpoint
       responses:
         '200':
           description: Nonce created successfully.
@@ -38,13 +39,16 @@ paths:
             application/json:
               schema:
                 type: object
+                required: # Added required for nonce and generated_datetime
+                  - nonce
+                  - generated_datetime
                 properties:
                   nonce:
                     type: string
                     description: The base64 URL-safe encoded nonce.
                     example: "aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890-_"
                   generated_datetime:
-                    type: integer
+                    type: integer # Kept as integer, format int64 is correct for epoch milliseconds
                     format: int64
                     description: The server time in epoch milliseconds when the nonce was generated.
                     example: 1678886400000
@@ -91,78 +95,11 @@ paths:
             application/json:
               schema:
                 type: object
+                required: # Added required for tokenPayloadExternal
+                  - tokenPayloadExternal
                 properties:
                   tokenPayloadExternal:
-                    type: object
-                    description: Contains the decoded integrity verdict.
-                    properties:
-                      requestDetails:
-                        type: object
-                        properties:
-                          requestPackageName:
-                            type: string
-                            example: "dev.keiji.deviceintegrity"
-                          nonce:
-                            type: string
-                            example: "aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890-_"
-                          timestampMillis:
-                            type: string
-                            format: int64
-                            example: "1678886400123"
-                      appIntegrity:
-                        type: object
-                        properties:
-                          appRecognitionVerdict:
-                            type: string
-                            example: "PLAY_RECOGNIZED"
-                          packageName:
-                            type: string
-                            example: "dev.keiji.deviceintegrity"
-                          certificateSha256Digest:
-                            type: array
-                            items:
-                              type: string
-                            example: ["sha256_cert_digest"]
-                          versionCode:
-                            type: string
-                            example: "123"
-                      deviceIntegrity:
-                        type: object
-                        properties:
-                          deviceRecognitionVerdict:
-                            type: array
-                            items:
-                              type: string
-                            example: ["MEETS_DEVICE_INTEGRITY"]
-                      accountDetails:
-                        type: object
-                        properties:
-                          appLicensingVerdict:
-                            type: string
-                            example: "LICENSED"
-                      environmentDetails: # Optional, depending on SDK version and enabled features
-                        type: object
-                        properties:
-                          playProtectVerdict:
-                             type: string
-                             example: "NO_ISSUES"
-                example:
-                  tokenPayloadExternal:
-                    requestDetails:
-                      requestPackageName: "dev.keiji.deviceintegrity"
-                      nonce: "aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890-_"
-                      timestampMillis: "1678886400123"
-                    appIntegrity:
-                      appRecognitionVerdict: "PLAY_RECOGNIZED"
-                      packageName: "dev.keiji.deviceintegrity"
-                      certificateSha256Digest: ["sha256_cert_digest"]
-                      versionCode: "123"
-                    deviceIntegrity:
-                      deviceRecognitionVerdict: ["MEETS_DEVICE_INTEGRITY"]
-                    accountDetails:
-                      appLicensingVerdict: "LICENSED"
-                    environmentDetails:
-                      playProtectVerdict: "NO_ISSUES"
+                    $ref: '#/components/schemas/TokenPayloadExternal' # Referenced common schema
         '400':
           description: Bad request. This can be due to a missing JSON payload, missing 'nonce' or 'token' in the request, or a nonce mismatch.
           content:
@@ -214,78 +151,11 @@ paths:
             application/json:
               schema:
                 type: object
+                required: # Added required for tokenPayloadExternal
+                  - tokenPayloadExternal
                 properties:
                   tokenPayloadExternal:
-                    type: object
-                    description: Contains the decoded integrity verdict.
-                    properties:
-                      requestDetails:
-                        type: object
-                        properties:
-                          requestPackageName:
-                            type: string
-                            example: "dev.keiji.deviceintegrity"
-                          nonce:
-                            type: string
-                            example: "aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890-_"
-                          timestampMillis:
-                            type: string
-                            format: int64
-                            example: "1678886400123"
-                      appIntegrity:
-                        type: object
-                        properties:
-                          appRecognitionVerdict:
-                            type: string
-                            example: "PLAY_RECOGNIZED"
-                          packageName:
-                            type: string
-                            example: "dev.keiji.deviceintegrity"
-                          certificateSha256Digest:
-                            type: array
-                            items:
-                              type: string
-                            example: ["sha256_cert_digest"]
-                          versionCode:
-                            type: string
-                            example: "123"
-                      deviceIntegrity:
-                        type: object
-                        properties:
-                          deviceRecognitionVerdict: # In Standard, this can be a single string or array
-                            type: array # Or string, check documentation
-                            items:
-                              type: string
-                            example: ["MEETS_DEVICE_INTEGRITY"]
-                      accountDetails:
-                        type: object
-                        properties:
-                          appLicensingVerdict:
-                            type: string
-                            example: "LICENSED"
-                      environmentDetails: # Optional, depending on SDK version and enabled features
-                        type: object
-                        properties:
-                          playProtectVerdict:
-                             type: string
-                             example: "NO_ISSUES"
-                example:
-                  tokenPayloadExternal:
-                    requestDetails:
-                      requestPackageName: "dev.keiji.deviceintegrity"
-                      nonce: "aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890-_"
-                      timestampMillis: "1678886400123"
-                    appIntegrity:
-                      appRecognitionVerdict: "PLAY_RECOGNIZED"
-                      packageName: "dev.keiji.deviceintegrity"
-                      certificateSha256Digest: ["sha256_cert_digest"]
-                      versionCode: "123"
-                    deviceIntegrity:
-                      deviceRecognitionVerdict: ["MEETS_DEVICE_INTEGRITY"]
-                    accountDetails:
-                      appLicensingVerdict: "LICENSED"
-                    environmentDetails:
-                      playProtectVerdict: "NO_ISSUES"
+                    $ref: '#/components/schemas/TokenPayloadExternal' # Referenced common schema
         '400':
           description: Bad request. Missing payload, 'nonce'/'token', or nonce mismatch.
           content:
@@ -303,6 +173,128 @@ paths:
 
 components:
   schemas:
+    TokenPayloadExternal: # Defined common TokenPayloadExternal schema
+      type: object
+      description: Contains the decoded integrity verdict from Google Play Integrity API.
+      # Required fields based on typical Play Integrity responses and examples.
+      # Server should ensure these are present if it's a successful decoding.
+      required:
+        - requestDetails
+        - appIntegrity
+        - deviceIntegrity
+        - accountDetails
+      properties:
+        requestDetails:
+          type: object
+          required: # Common required fields for requestDetails
+            - requestPackageName
+            - nonce
+            - timestampMillis
+          properties:
+            requestPackageName:
+              type: string
+              example: "dev.keiji.deviceintegrity"
+            nonce: # Nonce is present in classic, requestHash in standard.
+                    # Making nonce required here as it's common, standard might use requestHash instead/additionally.
+              type: string
+              example: "aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890-_"
+            requestHash: # More common in Standard API
+              type: string
+              nullable: true # Allow null if not present (e.g. in Classic)
+              example: "request_hash_example_for_standard"
+            timestampMillis:
+              type: integer # Changed to integer
+              format: int64
+              description: Timestamp in epoch milliseconds.
+              example: 1678886400123
+        appIntegrity:
+          type: object
+          required: # Common required fields for appIntegrity
+            - appRecognitionVerdict
+            - packageName
+            - certificateSha256Digest
+            - versionCode
+          properties:
+            appRecognitionVerdict:
+              type: string
+              example: "PLAY_RECOGNIZED"
+            packageName:
+              type: string
+              example: "dev.keiji.deviceintegrity"
+            certificateSha256Digest:
+              type: array
+              items:
+                type: string
+              example: ["sha256_cert_digest"]
+            versionCode:
+              type: integer # Changed to integer
+              description: Application version code.
+              example: 123
+        deviceIntegrity:
+          type: object
+          required: # deviceRecognitionVerdict is key
+            - deviceRecognitionVerdict
+          properties:
+            deviceRecognitionVerdict:
+              type: array
+              items:
+                type: string
+              example: ["MEETS_DEVICE_INTEGRITY"]
+            deviceAttributes: # Standard API, optional
+              type: object
+              nullable: true
+              properties:
+                sdkVersion:
+                  type: string # Kept as string, as actual API might send it as such
+                  example: "30"
+            recentDeviceActivity: # Standard API, optional
+              type: object
+              nullable: true
+              properties:
+                deviceActivityLevel:
+                  type: string
+                  example: "LEVEL_2"
+        accountDetails:
+          type: object
+          required: # appLicensingVerdict is key
+            - appLicensingVerdict
+          properties:
+            appLicensingVerdict:
+              type: string
+              example: "LICENSED"
+        environmentDetails: # Optional, more common in Standard API
+          type: object
+          nullable: true
+          properties:
+            playProtectVerdict:
+              type: string
+              example: "NO_ISSUES"
+            appAccessRiskVerdict: # Standard API, optional
+              type: object
+              nullable: true
+              properties:
+                appsDetected:
+                  type: array
+                  items:
+                    type: string
+                  example: ["com.example.someapp"]
+      example:
+        requestDetails:
+          requestPackageName: "dev.keiji.deviceintegrity"
+          nonce: "aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890-_"
+          timestampMillis: 1678886400123
+        appIntegrity:
+          appRecognitionVerdict: "PLAY_RECOGNIZED"
+          packageName: "dev.keiji.deviceintegrity"
+          certificateSha256Digest: ["sha256_cert_digest"]
+          versionCode: 123
+        deviceIntegrity:
+          deviceRecognitionVerdict: ["MEETS_DEVICE_INTEGRITY"]
+        accountDetails:
+          appLicensingVerdict: "LICENSED"
+        environmentDetails:
+          playProtectVerdict: "NO_ISSUES"
+
     ErrorResponse:
       type: object
       required:
@@ -332,6 +324,5 @@ components:
           description: The nonce found in the Play Integrity API response.
           example: "api_response_nonce"
         play_integrity_response: # Optional, included if server decides to send it
-          type: object
-          description: The full response from the Play Integrity API, included for debugging.
+          $ref: '#/components/schemas/TokenPayloadExternal' # Referenced common schema
   securitySchemes: {}
