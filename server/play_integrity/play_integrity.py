@@ -1,6 +1,6 @@
 import os
 import base64
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from flask import Flask, request, jsonify
 from google.cloud import datastore
 from google.oauth2 import service_account
@@ -8,7 +8,6 @@ from googleapiclient.discovery import build
 import google.auth
 
 # Initialize Flask app
-# GAE expects the Flask app object to be named 'app' by default.
 app = Flask(__name__)
 
 # Initialize Datastore client
@@ -17,54 +16,92 @@ datastore_client = datastore.Client()
 # Configuration for Play Integrity API
 PLAY_INTEGRITY_PACKAGE_NAME = "dev.keiji.deviceintegrity"
 
-def generate_and_store_nonce():
-    """Generates a cryptographically secure nonce, stores it in Datastore, and returns it."""
-    # Generate 24 cryptographically secure random bytes
+# Nonce configuration
+NONCE_EXPIRY_MINUTES = 10
+NONCE_KIND = "NonceSession" # Datastore kind for storing nonce per session
+
+def generate_and_store_nonce_with_session(session_id):
+    """
+    Generates a cryptographically secure nonce, associates it with a session_id,
+    stores it in Datastore, and returns it.
+    If an entity for the session_id already exists, it's overwritten.
+    """
     raw_nonce = os.urandom(24)
+    encoded_nonce = base64.urlsafe_b64encode(raw_nonce).decode('utf-8').rstrip('=')
 
-    # Base64 encode the nonce
-    encoded_nonce = base64.urlsafe_b64encode(raw_nonce).decode('utf-8').rstrip('=') # Use urlsafe and remove padding
-
-    # Get current time in epoch milliseconds
-    # Using timezone.utc to ensure it's a UTC timestamp
     now = datetime.now(timezone.utc)
     generated_datetime_ms = int(now.timestamp() * 1000)
+    expiry_datetime = now + timedelta(minutes=NONCE_EXPIRY_MINUTES)
 
-    # Create a new Datastore entity
-    kind = "Nonce"
-    # Create a unique name/key for the entity if needed, or let Datastore generate an ID
-    # For simplicity, we'll let Datastore generate a numeric ID.
-    nonce_entity = datastore.Entity(key=datastore_client.key(kind))
-    nonce_entity.update({
+    # Create or update the Datastore entity for the given session_id
+    # Using session_id as the key name for the entity for easy lookup and overwrite.
+    key = datastore_client.key(NONCE_KIND, session_id)
+    entity = datastore.Entity(key=key)
+    entity.update({
         'nonce': encoded_nonce,
-        'generated_datetime': generated_datetime_ms,
-        'created_at': now # Store the full datetime object as well for easier querying/sorting if needed
+        'generated_datetime': generated_datetime_ms, # Stored as integer (epoch ms)
+        'expiry_datetime': expiry_datetime, # Stored as datetime object
+        'session_id': session_id # Also store session_id for potential queries, though it's in the key
     })
 
-    # Save the entity to Datastore
-    datastore_client.put(nonce_entity)
+    datastore_client.put(entity)
+    app.logger.info(f"Stored/Updated nonce for session_id: {session_id}")
+
+    # Periodically clean up expired nonces
+    cleanup_expired_nonces()
 
     return encoded_nonce, generated_datetime_ms
+
+def cleanup_expired_nonces():
+    """Removes expired nonce entities from Datastore."""
+    try:
+        now = datetime.now(timezone.utc)
+        query = datastore_client.query(kind=NONCE_KIND)
+        query.add_filter('expiry_datetime', '<', now)
+
+        expired_entities = list(query.fetch()) # Fetch all expired entities
+
+        if expired_entities:
+            keys_to_delete = [entity.key for entity in expired_entities]
+            datastore_client.delete_multi(keys_to_delete)
+            app.logger.info(f"Cleaned up {len(keys_to_delete)} expired nonce entities from Datastore.")
+        else:
+            app.logger.info("No expired nonce entities found in Datastore to cleanup.")
+
+    except Exception as e:
+        # Log the error, but don't let cleanup failure break the main functionality
+        app.logger.error(f"Error during Datastore cleanup of expired nonces: {e}")
+
 
 @app.route('/play-integrity/classic/nonce', methods=['POST'])
 def create_nonce_endpoint():
     """
     Handles POST requests to /play-integrity/classic/nonce.
-    Generates a nonce, saves it to Datastore, and returns it as JSON.
+    Expects a 'session_id' in the JSON payload.
+    Generates a nonce, associates it with the session_id in Datastore, and returns it.
     """
     try:
-        nonce, generated_datetime = generate_and_store_nonce()
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Missing JSON payload"}), 400
+
+        session_id = data.get('session_id')
+        if not session_id:
+            return jsonify({"error": "Missing 'session_id' in request"}), 400
+        if not isinstance(session_id, str) or not session_id.strip():
+            return jsonify({"error": "'session_id' must be a non-empty string"}), 400
+
+        nonce, generated_datetime = generate_and_store_nonce_with_session(session_id)
         response = {
             "nonce": nonce,
             "generated_datetime": generated_datetime
         }
         return jsonify(response), 200
     except Exception as e:
-        # Log the error for debugging
-        # In a production app, you might want more sophisticated error handling
-        app.logger.error(f"Error generating nonce: {e}")
-        return jsonify({"error": "Failed to generate nonce"}), 500
+        app.logger.error(f"Error in create_nonce_endpoint: {e}")
+        return jsonify({"error": "Failed to process nonce request"}), 500
 
+# --- verify_integrity endpoint ---
 @app.route('/play-integrity/classic/verify', methods=['POST'])
 def verify_integrity():
     """
@@ -80,50 +117,42 @@ def verify_integrity():
 
         client_nonce = data.get('nonce')
         integrity_token = data.get('token')
+        # session_id = data.get('session_id') # Optional: client could send session_id for server-side nonce validation
 
         if not client_nonce:
             return jsonify({"error": "Missing 'nonce' in request"}), 400
         if not integrity_token:
             return jsonify({"error": "Missing 'token' in request"}), 400
 
-        # https://developer.android.com/google/play/integrity/verdict#retrieve-interpret
-        #
-        # Authenticate using Application Default Credentials
-        # This is the recommended approach for services running on Google Cloud.
-        # Ensure the service account has the "Play Integrity API User" role.
+        # Optional: Server-side validation of client_nonce against Datastore using session_id
+        # if session_id:
+        #     key = datastore_client.key(NONCE_KIND, session_id)
+        #     entity = datastore_client.get(key)
+        #     if not entity:
+        #         app.logger.warning(f"Session not found or nonce expired for session_id: {session_id} during verify.")
+        #         return jsonify({"error": "Session not found or nonce expired"}), 400 # Consider if 400 or specific error
+        #     if entity['nonce'] != client_nonce:
+        #         app.logger.warning(f"Nonce mismatch for session_id: {session_id}. Client: {client_nonce}, Stored: {entity['nonce']}")
+        #         return jsonify({"error": "Nonce does not match for session"}), 400
+        #     if entity['expiry_datetime'] < datetime.now(timezone.utc):
+        #         app.logger.warning(f"Nonce expired for session_id: {session_id}.")
+        #         # Potentially delete here if expired, or let cleanup handle it
+        #         return jsonify({"error": "Nonce expired for session"}), 400
+        #     # If valid, proceed. Consider deleting the nonce after successful token verification by Google.
+        # else:
+        #     app.logger.info("No session_id provided for server-side nonce validation during verify. Proceeding with API nonce check.")
+        #     pass
+
+
         credentials, project = google.auth.default(
             scopes=['https://www.googleapis.com/auth/playintegrity']
         )
-
         playintegrity = build('playintegrity', 'v1', credentials=credentials, cache_discovery=False)
-
-        # Call the Play Integrity API
-        # https://developers.google.com/android-publisher/api-ref/rest/v3/applications.playintegrity/decodeIntegrityToken
-        # The method name in the google-api-python-client might not exactly match the REST API path.
-        # It's usually something like `applications().playintegrity().decodeIntegrityToken()`
-        # or `playintegrity.decodeIntegrityToken()` if the service is built for playintegrity directly.
-        # For this specific API (playintegrity.googleapis.com), the method structure is:
-        # service.decodeIntegrityToken(packageName=..., body={integrityToken: ...})
-        # The actual method provided by the client library is playintegrity.decodeIntegrityToken
-
-        request_body = {'integrity_token': integrity_token} # Field name is integrity_token
-
-        # Corrected API call according to typical client library structure for this API
+        request_body = {'integrity_token': integrity_token}
         api_response = playintegrity.decodeIntegrityToken(
             packageName=PLAY_INTEGRITY_PACKAGE_NAME,
             body=request_body
         ).execute()
-
-
-        # IMPORTANT: Verify the nonce from the API response matches the client_nonce
-        # The nonce is part of the tokenPayload, which is a JSON string within the response.
-        # It needs to be parsed.
-        # However, the google-api-python-client might parse tokenPayload automatically
-        # if the discovery document specifies it as an object.
-        # Let's assume api_response['tokenPayloadExternal'] or similar holds the parsed payload.
-        # The exact field name can be checked from API documentation or by inspecting a live response.
-        # According to documentation: response body includes "tokenPayloadExternal"
-        # which contains requestDetails.nonce
 
         token_payload = api_response.get('tokenPayloadExternal', {})
         request_details = token_payload.get('requestDetails', {})
@@ -131,24 +160,52 @@ def verify_integrity():
 
         if not api_nonce:
             app.logger.error("Nonce not found in Play Integrity API response.")
-            # Even if nonce is missing in API response, we might still want to return the API response
-            # for the client to inspect, but flag an error.
-            # Or, treat as a verification failure. For now, let's be strict.
             return jsonify({
                 "error": "Nonce missing in Play Integrity API response payload",
                 "play_integrity_response": api_response
-            }), 500 # Or 400 if client should retry with a valid token
+            }), 500 # Or 400, as it implies an issue with the token or its processing
 
         if api_nonce != client_nonce:
-            app.logger.error(f"Nonce mismatch. Client: {client_nonce}, API: {api_nonce}")
-            return jsonify({
-                "error": "Nonce mismatch",
-                "client_nonce": client_nonce,
-                "api_nonce": api_nonce,
-                "play_integrity_response": api_response
-            }), 400 # Bad request due to nonce mismatch
+            try:
+                # Canonicalize both nonces before comparing to handle potential encoding differences (e.g. padding)
+                decoded_api_nonce = base64.urlsafe_b64decode(api_nonce.encode('utf-8') + b'==') # Add padding for robust decoding
+                re_encoded_api_nonce = base64.urlsafe_b64encode(decoded_api_nonce).decode('utf-8').rstrip('=')
 
-        # If nonce matches, return the full API response
+                decoded_client_nonce = base64.urlsafe_b64decode(client_nonce.encode('utf-8') + b'==')
+                re_encoded_client_nonce = base64.urlsafe_b64encode(decoded_client_nonce).decode('utf-8').rstrip('=')
+
+                if re_encoded_api_nonce == re_encoded_client_nonce:
+                    app.logger.info(f"Nonce comparison passed after canonicalization. Original API: {api_nonce}, Client: {client_nonce}")
+                    pass
+                else:
+                    app.logger.error(f"Nonce mismatch after canonicalization. Client: {client_nonce} (canonical: {re_encoded_client_nonce}), API: {api_nonce} (canonical: {re_encoded_api_nonce})")
+                    return jsonify({
+                        "error": "Nonce mismatch",
+                        "client_nonce": client_nonce,
+                        "api_nonce": api_nonce,
+                        "play_integrity_response": api_response # Include for debugging
+                    }), 400
+            except Exception as e:
+                app.logger.error(f"Error during nonce canonicalization: {e}. Client: {client_nonce}, API: {api_nonce}")
+                # Fallback to simple mismatch if canonicalization fails for some reason
+                return jsonify({
+                    "error": "Nonce mismatch (canonicalization failed)",
+                    "client_nonce": client_nonce,
+                    "api_nonce": api_nonce,
+                    "play_integrity_response": api_response
+                }), 400
+
+        # If nonce matches (client_nonce vs api_nonce)
+        # AND if server-side validation using session_id was done and passed:
+        # Consider deleting the nonce from Datastore here to prevent reuse.
+        # if session_id and 'entity' in locals() and entity: # Check if 'entity' was fetched and valid
+        #    try:
+        #        datastore_client.delete(key) # key would be datastore_client.key(NONCE_KIND, session_id)
+        #        app.logger.info(f"Nonce for session {session_id} used and deleted from Datastore after successful verification.")
+        #    except Exception as e:
+        #        app.logger.error(f"Failed to delete used nonce for session {session_id} from Datastore: {e}")
+
+
         return jsonify(api_response), 200
 
     except google.auth.exceptions.DefaultCredentialsError as e:
@@ -156,101 +213,81 @@ def verify_integrity():
         return jsonify({"error": "Server authentication configuration error"}), 500
     except Exception as e:
         app.logger.error(f"Error verifying integrity token: {e}")
-        # Consider what information is safe to return to the client
         return jsonify({"error": "Failed to verify integrity token"}), 500
 
-# This is the entry point for GAE when using 'script: auto' or a gunicorn entrypoint.
-# It's also useful for local development.
-if __name__ == '__main__':
-    # This is used when running locally. GAE runs the app via a WSGI server.
-    # The host must be 0.0.0.0 to be accessible from outside the container (if running in Docker locally)
-    # and GAE uses the PORT environment variable.
-    import os
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)), debug=True)
-
-# === Play Integrity Standard API Endpoint ===
-
+# --- verify_integrity_standard endpoint ---
 @app.route('/play-integrity/standard/verify', methods=['POST'])
 def verify_integrity_standard():
-    """
-    Handles POST requests to /play-integrity/standard/verify.
-    It expects a JSON payload with 'nonce' (optional but recommended) and 'token'.
-    It calls the Google Play Integrity API (Standard) to decode the token and verifies the nonce if provided.
-    Returns the JSON response from the Play Integrity API.
-    """
+    # This function requires similar nonce handling (canonicalization, optional server-side session validation)
+    # as the classic verify endpoint.
     try:
         data = request.get_json()
         if not data:
             return jsonify({"error": "Missing JSON payload"}), 400
 
-        # Nonce can be optional for Standard API if not used for replay protection,
-        # but highly recommended. We will expect it like in the classic version.
         client_nonce = data.get('nonce')
         integrity_token = data.get('token')
+        # session_id = data.get('session_id') # Optional for server-side validation
 
         if not integrity_token:
             return jsonify({"error": "Missing 'token' in request"}), 400
-
-        # If client_nonce is expected, enforce its presence
         if not client_nonce:
-            # If we decide nonce is mandatory for our server implementation
             return jsonify({"error": "Missing 'nonce' in request"}), 400
 
+        # Optional: Server-side validation of client_nonce against Datastore using session_id
+        # (Similar logic as in the classic verify endpoint)
 
-        # Authenticate using Application Default Credentials
         credentials, project_id = google.auth.default(
             scopes=['https://www.googleapis.com/auth/playintegrity']
         )
-
-        # The project_id obtained here is the Project ID string, not the Project Number.
-        # For Standard API, the Play Integrity API documentation implies that the
-        # authentication (service account) should be linked to the Cloud Project in Play Console.
-        # The API endpoint itself does not take project_number as a path parameter in the client library.
-        # The client library call `playintegrity.decodeIntegrityToken` should work if the
-        # service account has the "Play Integrity API User" role on the correct project.
-
         playintegrity = build('playintegrity', 'v1', credentials=credentials, cache_discovery=False)
-
         request_body = {'integrity_token': integrity_token}
-
-        # Call the Play Integrity API
-        # The method is the same as for the classic API for the client library.
-        # The distinction for "Standard" vs "Classic" is more about what features
-        # you use from the verdict and how you interpret it, rather than a different API method.
-        # However, the backend might behave differently based on project configuration
-        # (e.g. if Standard Integrity is enabled and configured for the GCP project).
         api_response = playintegrity.decodeIntegrityToken(
-            packageName=PLAY_INTEGRITY_PACKAGE_NAME, # This must be the package name of your app
+            packageName=PLAY_INTEGRITY_PACKAGE_NAME,
             body=request_body
         ).execute()
 
-        # Verify the nonce from the API response matches the client_nonce
         token_payload = api_response.get('tokenPayloadExternal', {})
         request_details_payload = token_payload.get('requestDetails', {})
-
-        # In Standard API, the nonce might be in requestDetails.nonce or directly in requestDetails
-        # For compatibility and based on typical structure, checking requestDetails.nonce
         api_nonce = request_details_payload.get('nonce')
 
         if not api_nonce:
             app.logger.warning("Nonce not found in Play Integrity API response payload for standard verify.")
-            # Depending on policy, this could be an error or just a warning if nonce is optional.
-            # Given we are requiring client_nonce, we should treat a missing api_nonce as an issue.
             return jsonify({
                 "error": "Nonce missing in Play Integrity API response payload (standard)",
                 "play_integrity_response": api_response
-            }), 400 # Or 500 if server-side issue is suspected
+            }), 400 # Or 500
 
-        if client_nonce and api_nonce != client_nonce: # Ensure client_nonce was provided
-            app.logger.error(f"Nonce mismatch (standard). Client: {client_nonce}, API: {api_nonce}")
-            return jsonify({
-                "error": "Nonce mismatch (standard)",
-                "client_nonce": client_nonce,
-                "api_nonce": api_nonce,
-                "play_integrity_response": api_response
-            }), 400 # Bad request due to nonce mismatch
+        if client_nonce and api_nonce != client_nonce:
+            try:
+                decoded_api_nonce = base64.urlsafe_b64decode(api_nonce.encode('utf-8') + b'==')
+                re_encoded_api_nonce = base64.urlsafe_b64encode(decoded_api_nonce).decode('utf-8').rstrip('=')
 
-        # If nonce matches (or if nonce was not required and not provided), return the full API response
+                decoded_client_nonce = base64.urlsafe_b64decode(client_nonce.encode('utf-8') + b'==')
+                re_encoded_client_nonce = base64.urlsafe_b64encode(decoded_client_nonce).decode('utf-8').rstrip('=')
+
+                if re_encoded_api_nonce == re_encoded_client_nonce:
+                    app.logger.info(f"Nonce mismatch (standard) resolved after canonicalization. Original API: {api_nonce}, Client: {client_nonce}")
+                    pass
+                else:
+                    app.logger.error(f"Nonce mismatch (standard) after canonicalization. Client: {client_nonce} (canonical: {re_encoded_client_nonce}), API: {api_nonce} (canonical: {re_encoded_api_nonce})")
+                    return jsonify({
+                        "error": "Nonce mismatch (standard)",
+                        "client_nonce": client_nonce,
+                        "api_nonce": api_nonce,
+                        "play_integrity_response": api_response
+                    }), 400
+            except Exception as e:
+                app.logger.error(f"Error during nonce canonicalization (standard): {e}. Client: {client_nonce}, API: {api_nonce}")
+                return jsonify({
+                    "error": "Nonce mismatch (canonicalization failed, standard)",
+                    "client_nonce": client_nonce,
+                    "api_nonce": api_nonce,
+                    "play_integrity_response": api_response
+                }), 400
+
+        # Optional: If server-side validation using session_id was done, delete nonce from Datastore.
+
         return jsonify(api_response), 200
 
     except google.auth.exceptions.DefaultCredentialsError as e:
@@ -259,3 +296,8 @@ def verify_integrity_standard():
     except Exception as e:
         app.logger.error(f"Error verifying integrity token (standard): {e}")
         return jsonify({"error": f"Failed to verify integrity token (standard): {str(e)}"}), 500
+
+
+if __name__ == '__main__':
+    import os
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)), debug=True)

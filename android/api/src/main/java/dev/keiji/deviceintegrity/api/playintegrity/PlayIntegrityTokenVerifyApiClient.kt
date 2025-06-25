@@ -7,7 +7,7 @@ import retrofit2.http.POST
 
 interface PlayIntegrityTokenVerifyApiClient { // Renamed interface
     @POST("/play-integrity/classic/nonce")
-    suspend fun getNonce(): NonceResponse // Removed @Body request: NonceRequest
+    suspend fun getNonce(@Body request: CreateNonceRequest): NonceResponse // Added @Body and CreateNonceRequest
 
     @POST("/play-integrity/classic/verify")
     suspend fun verifyToken(@Body request: VerifyTokenRequest): VerifyTokenResponse
@@ -15,6 +15,12 @@ interface PlayIntegrityTokenVerifyApiClient { // Renamed interface
     @POST("/play-integrity/standard/verify")
     suspend fun verifyTokenStandard(@Body request: StandardVerifyRequest): StandardVerifyResponse
 }
+
+// Request for creating a nonce
+@Serializable
+data class CreateNonceRequest(
+    @SerialName("session_id") val sessionId: String
+)
 
 // Request for Standard API (similar to VerifyTokenRequest but for the new endpoint)
 @Serializable

@@ -31,7 +31,20 @@ paths:
       operationId: createNonce
       tags:
         - PlayIntegrityClassic
-      # Removed requestBody as it's not needed for this endpoint
+      requestBody:
+        description: JSON payload containing the session ID.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - session_id
+              properties:
+                session_id:
+                  type: string
+                  description: The session ID to associate with the nonce.
+                  example: "session_abc123"
       responses:
         '200':
           description: Nonce created successfully.

@@ -58,14 +58,18 @@ dependencies {
     api(project(":provider:contract")) // Changed to api
     implementation(project(":repository:impl"))
     implementation(project(":ui:nav:impl"))
+    implementation(project(":api"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 
     implementation(libs.timber)
+    implementation(libs.retrofit.core)
+    implementation(libs.retrofit.converter.kotlinx.serialization)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
