@@ -324,6 +324,6 @@ components:
           description: The nonce found in the Play Integrity API response.
           example: "api_response_nonce"
         play_integrity_response: # Optional, included if server decides to send it
-          $ref: '#/components/schemas/TokenPayloadExternal' # Referenced common schema
           description: The full response from the Play Integrity API, included for debugging.
+          $ref: '#/components/schemas/TokenPayloadExternal' # Referenced common schema
   securitySchemes: {}
