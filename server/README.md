@@ -40,144 +40,116 @@ This specification details the request and response schemas, parameters, and sta
 
 ## Setup and Running
 
-This server contains two Google App Engine (GAE) applications: `key_attestation` and `play_integrity`.
+This server contains two Python Flask applications, `key_attestation` and `play_integrity`, designed to be deployed as services on Google Cloud Run.
 
 ### Prerequisites
 
 *   [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) installed and initialized.
 *   Python 3.9 or later.
 *   `pip` for installing Python dependencies.
-
-### Deployment to App Engine
-
-Each application needs to be deployed separately.
-
-1.  **Install Dependencies:**
-    Before deploying, ensure you have installed the necessary dependencies for each application. Navigate to the respective application's directory and run:
-    ```bash
-    # For key_attestation
-    cd server/key_attestation
-    pip install -r requirements.txt -t lib # Installs dependencies into the 'lib' folder
-
-    # For play_integrity
-    cd server/play_integrity
-    pip install -r requirements.txt -t lib # Installs dependencies into the 'lib' folder
-    ```
-    *Note: App Engine's Python 3 runtime automatically looks for dependencies in a `lib` directory. If you are using a different deployment method or runtime, adjust accordingly.*
-
-2.  **Deploy each application:**
-    Use the `gcloud app deploy` command, specifying the `app.yaml` file for each service.
-
-    *   **Deploying `key_attestation` service:**
-        Navigate to the `server/key_attestation` directory:
-        ```bash
-        cd server/key_attestation
-        gcloud app deploy app.yaml
-        ```
-        Alternatively, from the repository root:
-        ```bash
-        gcloud app deploy server/key_attestation/app.yaml
-        ```
-
-    *   **Deploying `play_integrity` service:**
-        Navigate to the `server/play_integrity` directory:
-        ```bash
-        cd server/play_integrity
-        gcloud app deploy app.yaml
-        ```
-        Alternatively, from the repository root:
-        ```bash
-        gcloud app deploy server/play_integrity/app.yaml
-        ```
-
-    *   **Project and Region:**
-        If this is the first time deploying to your Google Cloud project, you might be prompted to choose a region for your App Engine application.
-        You can also specify the project ID with the `--project` flag:
-        ```bash
-        gcloud app deploy app.yaml --project YOUR_PROJECT_ID
-        ```
-
-3.  **Accessing the services:**
-    Once deployed, the services will be accessible via URLs like:
-    *   `https://key-attestation-dot-YOUR_PROJECT_ID.REGION_ID.r.appspot.com`
-    *   `https://play-integrity-dot-YOUR_PROJECT_ID.REGION_ID.r.appspot.com`
-
-    Replace `YOUR_PROJECT_ID` with your Google Cloud project ID and `REGION_ID` with the region you selected (e.g., `uc.r` for us-central). You can find the URLs in the output of the `gcloud app deploy` command or in the Google Cloud Console under App Engine services.
+*   [Docker](https://docs.docker.com/get-docker/) installed.
 
 ### Deployment to Cloud Run
 
-Each application (`key_attestation` and `play_integrity`) needs to be containerized and deployed to Cloud Run separately. Ensure you have Docker installed and the Google Cloud SDK configured.
+There are two primary ways to deploy these applications to Cloud Run:
+
+#### 1. Automated Deployment with GitHub Actions
+
+This repository is configured with a GitHub Actions workflow (`.github/workflows/cloud_run_deploy.yml`) that automatically builds and deploys the `key_attestation` and `play_integrity` applications to Cloud Run when changes are pushed to the `deploy/cloudrun` branch.
+
+**Service Names on Cloud Run:**
+*   `key_attestation` will be deployed as `key-attestation-verify`.
+*   `play_integrity` will be deployed as `play-integrity-verify`.
+
+**Setup for Automated Deployment:**
+
+To enable this automated workflow, you need to configure the following secrets in your GitHub repository settings (Settings > Secrets and variables > Actions):
+
+*   `GCP_PROJECT_ID`: Your Google Cloud Project ID.
+*   `GCP_CLOUD_RUN_REGION`: The Google Cloud region where you want to deploy the services (e.g., `us-central1`).
+*   `GCP_SA_KEY`: The JSON key for a Google Cloud service account. This service account needs permissions to:
+    *   Push to Google Container Registry (or Artifact Registry).
+    *   Deploy to Cloud Run (e.g., "Cloud Run Admin" role).
+    *   Act as a service account (e.g., "Service Account User" role if the Cloud Run services run under a specific identity).
+
+Once these secrets are set up, any push to the `deploy/cloudrun` branch will trigger the workflow and deploy the services.
+
+#### 2. Manual Deployment to Cloud Run
+
+Each application (`key_attestation` and `play_integrity`) can also be containerized and deployed to Cloud Run manually. Ensure you have Docker installed and the Google Cloud SDK configured.
+
+**Steps:**
 
 1.  **Build and Push Docker Image:**
     For each application, navigate to its directory (e.g., `server/key_attestation` or `server/play_integrity`) and build the Docker image. Then, tag it and push it to a container registry like Google Artifact Registry or Google Container Registry (GCR).
 
-    Replace `YOUR_PROJECT_ID`, `YOUR_REGION` (e.g., `us-central1`), `YOUR_ARTIFACT_REPO` (if using Artifact Registry), and `SERVICE_NAME` (`key-attestation` or `play-integrity`) with your specific values.
+    Replace `YOUR_PROJECT_ID`, `YOUR_REGION` (e.g., `us-central1`), `YOUR_ARTIFACT_REPO` (if using Artifact Registry), and `SERVICE_NAME` (`keyattestationverify` or `playintegrityverify`) with your specific values.
 
     *   **Using Google Artifact Registry:**
         ```bash
-        # Build the image
-        docker build -t key-attestation-image . # Or play-integrity-image
+        # Navigate to the application directory, e.g., server/key_attestation
+        cd server/key_attestation
+
+        # Build the image (replace 'keyattestationverify-image' as needed)
+        docker build -t keyattestationverify-image .
 
         # Tag the image
-        docker tag key-attestation-image YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/YOUR_ARTIFACT_REPO/key-attestation-image:latest
-        # Or for play-integrity:
-        # docker tag play-integrity-image YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/YOUR_ARTIFACT_REPO/play-integrity-image:latest
+        docker tag keyattestationverify-image YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/YOUR_ARTIFACT_REPO/keyattestationverify-image:latest
 
         # Push the image
-        docker push YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/YOUR_ARTIFACT_REPO/key-attestation-image:latest
-        # Or for play-integrity:
-        # docker push YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/YOUR_ARTIFACT_REPO/play-integrity-image:latest
+        docker push YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/YOUR_ARTIFACT_REPO/keyattestationverify-image:latest
         ```
+        *Repeat for `server/play_integrity`, changing names accordingly.*
         *Make sure your Artifact Registry repository is created and configured.*
 
     *   **Using Google Container Registry (GCR) (Legacy):**
         ```bash
-        # Build the image
-        docker build -t gcr.io/YOUR_PROJECT_ID/key-attestation-image:latest . # Or play-integrity-image
+        # Navigate to the application directory, e.g., server/key_attestation
+        cd server/key_attestation
+
+        # Build the image (replace 'keyattestationverify' as needed)
+        docker build -t gcr.io/YOUR_PROJECT_ID/keyattestationverify:latest .
 
         # Push the image
         gcloud auth configure-docker # If you haven't already
-        docker push gcr.io/YOUR_PROJECT_ID/key-attestation-image:latest
-        # Or for play-integrity:
-        # docker push gcr.io/YOUR_PROJECT_ID/play-integrity-image:latest
+        docker push gcr.io/YOUR_PROJECT_ID/keyattestationverify:latest
         ```
+        *Repeat for `server/play_integrity`, changing names accordingly.*
 
     *   **Alternatively, using Cloud Build:**
         You can submit the build directly to Cloud Build, which will also push the image to Artifact Registry or GCR.
         From the application directory (e.g., `server/key_attestation`):
         ```bash
-        # For Artifact Registry
+        # For Artifact Registry (replace SERVICE_NAME with keyattestationverify or playintegrityverify)
         gcloud builds submit --tag YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/YOUR_ARTIFACT_REPO/SERVICE_NAME:latest .
 
-        # For GCR
+        # For GCR (replace SERVICE_NAME with keyattestationverify or playintegrityverify)
         gcloud builds submit --tag gcr.io/YOUR_PROJECT_ID/SERVICE_NAME:latest .
         ```
 
 2.  **Deploy to Cloud Run:**
-    Use the `gcloud run deploy` command to deploy each service.
+    Use the `gcloud run deploy` command to deploy each service. The service names used by the GitHub Action are `key-attestation-verify` and `play-integrity-verify`.
 
-    *   **Deploying `key-attestation` service:**
+    *   **Deploying `key-attestation-verify` service:**
         ```bash
-        gcloud run deploy key-attestation-service \
-            --image YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/YOUR_ARTIFACT_REPO/key-attestation-image:latest \ # Or gcr.io/YOUR_PROJECT_ID/key-attestation-image:latest
+        gcloud run deploy key-attestation-verify \
+            --image YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/YOUR_ARTIFACT_REPO/keyattestationverify-image:latest \ # Or gcr.io/YOUR_PROJECT_ID/keyattestationverify:latest
             --platform managed \
-            --region YOUR_DEPLOY_REGION \ # e.g., us-central1
+            --region YOUR_DEPLOY_REGION \ # e.g., us-central1, should match GCP_CLOUD_RUN_REGION
             --project YOUR_PROJECT_ID \
             --allow-unauthenticated # If the service needs to be publicly accessible
             # Add other flags as needed, e.g., --service-account, --set-env-vars
         ```
 
-    *   **Deploying `play-integrity` service:**
+    *   **Deploying `play-integrity-verify` service:**
         ```bash
-        gcloud run deploy play-integrity-service \
-            --image YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/YOUR_ARTIFACT_REPO/play-integrity-image:latest \ # Or gcr.io/YOUR_PROJECT_ID/play-integrity-image:latest
+        gcloud run deploy play-integrity-verify \
+            --image YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/YOUR_ARTIFACT_REPO/playintegrityverify-image:latest \ # Or gcr.io/YOUR_PROJECT_ID/playintegrityverify:latest
             --platform managed \
-            --region YOUR_DEPLOY_REGION \ # e.g., us-central1
+            --region YOUR_DEPLOY_REGION \ # e.g., us-central1, should match GCP_CLOUD_RUN_REGION
             --project YOUR_PROJECT_ID \
             --allow-unauthenticated # If the service needs to be publicly accessible
             # Add other flags as needed.
-            # For Datastore access, ensure the runtime service account (default or custom)
-            # has 'Cloud Datastore User' role or equivalent permissions.
         ```
 
 3.  **Accessing the Cloud Run services:**
@@ -190,7 +162,7 @@ Each application (`key_attestation` and `play_integrity`) needs to be containeri
 
 For local testing, you can run each Flask application directly.
 
-1.  **Install dependencies** (if not already done for deployment):
+1.  **Install dependencies:**
     ```bash
     # For key_attestation
     cd server/key_attestation
@@ -216,9 +188,9 @@ For local testing, you can run each Flask application directly.
         ```
         The `play_integrity` service will be available at `http://localhost:8082`.
 
-    *Note: Ensure that the `app` variable in `key_attestation.py` and `play_integrity.py` is correctly named if you are using `flask run`. The `entrypoint` in `app.yaml` uses `gunicorn` which might have different expectations for the application variable name (e.g., `key_attestation:app` means it looks for an `app` instance in `key_attestation.py`).*
+    *Note: Ensure that the `app` variable in `key_attestation.py` and `play_integrity.py` is correctly named if you are using `flask run`.*
 
-Refer to `key_attestation/key_attestation.py` and `play_integrity/play_integrity.py` for the Flask application code, and their respective `app.yaml` files for Google App Engine configuration.
+Refer to `key_attestation/key_attestation.py` and `play_integrity/play_integrity.py` for the Flask application code.
 Make sure `requirements.txt` in each application directory lists all necessary Python dependencies.
 ```
 ## AGENTS.md
