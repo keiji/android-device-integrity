@@ -25,6 +25,8 @@ android {
 
         // TODO: Replace 0L with your actual Google Cloud Project Number
         buildConfigField("Long", "PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER", "0L")
+        buildConfigField("String", "PLAY_INTEGRITY_BASE_URL", "\"https://playintegrity.googleapis.com/\"")
+        buildConfigField("String", "KEY_ATTESTATION_BASE_URL", "\"https://keyattestation.googleapis.com/\"")
     }
 
     buildTypes {

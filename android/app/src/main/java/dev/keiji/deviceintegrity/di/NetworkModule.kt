@@ -11,14 +11,12 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
+import dev.keiji.deviceintegrity.BuildConfig
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-
-    private const val PLAY_INTEGRITY_BASE_URL = "https://playintegrity.googleapis.com/"
-    private const val KEY_ATTESTATION_BASE_URL = "https://keyattestation.googleapis.com/"
 
     @Provides
     @Singleton
@@ -33,7 +31,7 @@ object NetworkModule {
     fun providePlayIntegrityRetrofit(okHttpClient: OkHttpClient): Retrofit {
         val json = Json { ignoreUnknownKeys = true }
         return Retrofit.Builder()
-            .baseUrl(PLAY_INTEGRITY_BASE_URL)
+            .baseUrl(BuildConfig.PLAY_INTEGRITY_BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
@@ -45,7 +43,7 @@ object NetworkModule {
     fun provideKeyAttestationRetrofit(okHttpClient: OkHttpClient): Retrofit {
         val json = Json { ignoreUnknownKeys = true }
         return Retrofit.Builder()
-            .baseUrl(KEY_ATTESTATION_BASE_URL)
+            .baseUrl(BuildConfig.KEY_ATTESTATION_BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
