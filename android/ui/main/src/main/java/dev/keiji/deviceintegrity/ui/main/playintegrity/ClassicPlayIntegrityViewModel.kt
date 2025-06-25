@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.keiji.deviceintegrity.api.playintegrity.CreateNonceRequest // Import
-import dev.keiji.deviceintegrity.api.playintegrity.PlayIntegrityTokenVerifyApi // Import
+import dev.keiji.deviceintegrity.api.playintegrity.PlayIntegrityTokenVerifyApiClient // Import
 import dev.keiji.deviceintegrity.api.playintegrity.VerifyTokenRequest
 import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityTokenRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +19,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ClassicPlayIntegrityViewModel @Inject constructor(
     private val tokenProvider: PlayIntegrityTokenRepository,
-    private val playIntegrityTokenVerifyApi: PlayIntegrityTokenVerifyApi // Inject API
+    private val playIntegrityTokenVerifyApi: PlayIntegrityTokenVerifyApiClient // Inject API
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ClassicPlayIntegrityUiState())
     val uiState: StateFlow<ClassicPlayIntegrityUiState> = _uiState.asStateFlow()

@@ -87,6 +87,7 @@ robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "
 
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
+hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testing", version.ref = "hilt" }
 
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 
