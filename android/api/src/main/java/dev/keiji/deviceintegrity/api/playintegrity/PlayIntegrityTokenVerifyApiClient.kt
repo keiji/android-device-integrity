@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 import retrofit2.http.Body
 import retrofit2.http.POST
 
-interface PlayIntegrityTokenVerifyApi {
+interface PlayIntegrityTokenVerifyApiClient { // Renamed interface
     @POST("/play-integrity/classic/nonce")
     suspend fun getNonce(): NonceResponse // Removed @Body request: NonceRequest
 
