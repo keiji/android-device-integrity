@@ -1,0 +1,68 @@
+name: Deploy GAE Applications
+
+on:
+  push:
+    branches:
+      - deploy/gae # デプロイを実行したいブランチ名
+    paths:
+      - 'server/**' # serverディレクトリ以下のファイル変更時のみ
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write' # Workload Identity Federation に必要
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }} # 例: projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider
+        service_account: ${{ secrets.KEY_ATTESTATION_SA_EMAIL }} # まずkey-attestation用SAで認証 (どちらでも良い)
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+    - name: Deploy Key Attestation App
+      run: |-
+        echo "Deploying Key Attestation App..."
+        gcloud app deploy server/key_attestation/app.yaml --project=${{ secrets.GCP_PROJECT_ID }} --quiet --service-account=${{ secrets.KEY_ATTESTATION_SA_EMAIL }}
+
+    - name: Deploy Play Integrity App
+      # play-integrityアプリのデプロイには、対応するサービスアカウントで再度認証するか、
+      # もしkey-attestation用SAにplay-integrityアプリへのデプロイ権限もあればそのまま使える。
+      # ここでは、それぞれのアプリに対応するSAを使用することを想定し、再度認証ステップを入れることも考えられるが、
+      # gcloud app deployコマンドに --service-account フラグで指定することで、対象のSAを利用できる。
+      # ただし、最初の google-github-actions/auth で認証したSAが、これからデプロイするアプリのプロジェクトに対する権限を持っている必要がある。
+      # より厳密には、各アプリのデプロイ前に、対応するSAで `google-github-actions/auth` を実行するのが望ましい。
+      # 今回は簡略化のため、最初の認証で得た権限で両方デプロイできる前提とするか、
+      # --service-accountフラグで明示的に指定する。
+      #
+      # Workload Identity Federationでは、GitHub ActionsのOIDCトークンをGoogleのSAに紐付ける。
+      # そのため、`google-github-actions/auth` で指定する `service_account` は、
+      # OIDCトークンと紐付けられたSAである必要がある。
+      #
+      # 1. 共通のSA（例えば cicd-deployer@...）を google-github-actions/auth で使用し、
+      #    そのSAに両方のGAEアプリ（key-attestation, play-integrity）へのデプロイ権限を付与する。
+      # 2. 各アプリ専用のSA（KEY_ATTESTATION_SA_EMAIL, PLAY_INTEGRITY_SA_EMAIL）を
+      #    Workload Identity FederationでOIDCトークンに紐付け、
+      #    各デプロイステップの直前に google-github-actions/auth を再度実行する。
+      #
+      # ここでは、各gcloud deployコマンドに --service-account を指定する方法を取る。
+      # この場合、`google-github-actions/auth` で認証したSAは、
+      # 他のSAを借用(impersonate)できる権限(roles/iam.serviceAccountTokenCreator)が
+      # 必要になる場合がある。
+      #
+      # もっともシンプルなのは、`google-github-actions/auth`で認証するSAに、
+      # 両方のGAEサービスへのデプロイ権限を持たせることです。
+      # ここではその前提で進め、`--service-account` フラグで各アプリのデプロイに使用するSAを明示します。
+      # このSAはWorkload Identity FederationでGitHub Actionsの実行ロールに紐付けられている必要があります。
+      run: |-
+        echo "Deploying Play Integrity App..."
+        gcloud app deploy server/play_integrity/app.yaml --project=${{ secrets.GCP_PROJECT_ID }} --quiet --service-account=${{ secrets.PLAY_INTEGRITY_SA_EMAIL }}
