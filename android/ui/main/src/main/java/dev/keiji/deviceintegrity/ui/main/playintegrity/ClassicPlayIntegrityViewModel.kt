@@ -7,7 +7,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.keiji.deviceintegrity.api.playintegrity.CreateNonceRequest // Import
 import dev.keiji.deviceintegrity.api.playintegrity.PlayIntegrityTokenVerifyApiClient // Import
 import dev.keiji.deviceintegrity.api.playintegrity.VerifyTokenRequest
-import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityTokenRepository
+import dev.keiji.deviceintegrity.repository.contract.ClassicPlayIntegrityTokenRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,7 +18,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ClassicPlayIntegrityViewModel @Inject constructor(
-    private val tokenProvider: PlayIntegrityTokenRepository,
+    private val classicPlayIntegrityTokenRepository: ClassicPlayIntegrityTokenRepository,
     private val playIntegrityTokenVerifyApi: PlayIntegrityTokenVerifyApiClient // Inject API
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ClassicPlayIntegrityUiState())
@@ -81,7 +81,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
         }
         viewModelScope.launch {
             try {
-                val token = tokenProvider.getTokenClassic(currentNonce)
+                val token = classicPlayIntegrityTokenRepository.getToken(currentNonce)
                 Log.d("ClassicPlayIntegrityVM", "Integrity Token: $token")
                 _uiState.update {
                     it.copy(

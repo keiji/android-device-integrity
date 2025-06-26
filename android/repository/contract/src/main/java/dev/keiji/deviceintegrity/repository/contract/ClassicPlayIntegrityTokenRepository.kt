@@ -1,9 +1,9 @@
 package dev.keiji.deviceintegrity.repository.contract
 
 /**
- * Interface for providing Google Play Integrity tokens.
+ * Interface for providing Google Play Integrity tokens using the classic request.
  */
-interface PlayIntegrityTokenRepository {
+interface ClassicPlayIntegrityTokenRepository {
     /**
      * Retrieves a Google Play Integrity token using the classic request.
      *
@@ -15,15 +15,5 @@ interface PlayIntegrityTokenRepository {
      *                   type will depend on the underlying cause (e.g., network issues,
      *                   Play Services not available, Integrity API errors).
      */
-    suspend fun getTokenClassic(nonceBase64: String): String
-
-    /**
-     * Retrieves a Google Play Integrity token using the standard request.
-     *
-     * @param cloudProjectNumber The Google Cloud project number.
-     * @param requestHash Optional. A hash of the request that the server is making to your app.
-     * @return The integrity token as a String.
-     * @throws Exception if there is an issue retrieving the token.
-     */
-    suspend fun getTokenStandard(cloudProjectNumber: Long, requestHash: String?): String
+    suspend fun getToken(nonceBase64: String): String
 }
