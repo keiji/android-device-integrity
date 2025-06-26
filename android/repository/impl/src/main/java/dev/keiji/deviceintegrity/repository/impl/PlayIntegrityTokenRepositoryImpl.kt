@@ -17,14 +17,22 @@ class PlayIntegrityTokenRepositoryImpl @Inject constructor(
     private val standardIntegrityTokenProviderProvider: StandardIntegrityTokenProviderProvider
 ) : PlayIntegrityTokenRepository {
 
-    override suspend fun getTokenClassic(nonce: String): String {
+    /**
+     * Retrieves a classic integrity token.
+     *
+     * @param nonceBase64 The nonce to bind the integrity token to.
+     *                    It must be Base64 encoded in web-safe no-wrap form.
+     * @return The integrity token.
+     * @throws IllegalStateException If the integrity token is null.
+     */
+    override suspend fun getTokenClassic(nonceBase64: String): String {
         // Create an instance of a manager for classic requests.
         val integrityManager = IntegrityManagerFactory.create(context.applicationContext)
 
         // Request the integrity token by providing a nonce.
         val tokenResponse = integrityManager.requestIntegrityToken(
             IntegrityTokenRequest.builder()
-                .setNonce(nonce)
+                .setNonce(nonceBase64)
                 .build()
         ).await()
 
