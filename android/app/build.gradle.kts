@@ -1,4 +1,5 @@
 import org.gradle.util.internal.GUtil
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -7,12 +8,11 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-val playIntegrityProperties = java.util.Properties()
 val playIntegrityPropertiesFile = project.file("play-integrity.properties")
-if (playIntegrityPropertiesFile.exists()) {
-    // GUtil.loadProperties returns a Properties object, so we assign it directly
-    val loadedProps = GUtil.loadProperties(playIntegrityPropertiesFile)
-    playIntegrityProperties.putAll(loadedProps)
+val playIntegrityProperties: Properties = if (playIntegrityPropertiesFile.exists()) {
+    GUtil.loadProperties(playIntegrityPropertiesFile)
+} else {
+    Properties()
 }
 
 // https://docs.gradle.org/8.2/userguide/configuration_cache.html#config_cache:requirements:external_processes
