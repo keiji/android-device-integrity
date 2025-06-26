@@ -1,4 +1,5 @@
 import org.gradle.util.internal.GUtil
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -7,18 +8,13 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-import java.util.Properties
-
 // Load version properties
 val versionPropertiesFile = rootProject.file("android/version.properties")
 val versionProps = if (versionPropertiesFile.exists()) {
     GUtil.loadProperties(versionPropertiesFile)
 } else {
     println("Warning: version.properties not found. Using default version values.")
-    Properties().apply {
-        setProperty("versionCode", "1")
-        setProperty("versionName", "1.0.0")
-    }
+    Properties() // Empty Properties object
 }
 
 // https://docs.gradle.org/8.2/userguide/configuration_cache.html#config_cache:requirements:external_processes
