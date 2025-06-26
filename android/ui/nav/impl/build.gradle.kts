@@ -33,7 +33,7 @@ android {
 }
 
 dependencies {
-    api(project(":ui:nav:contract"))
+    implementation(project(":ui:nav:contract"))
     implementation(project(":ui:api-endpoint-settings"))
 
     implementation(libs.androidx.activity.ktx)

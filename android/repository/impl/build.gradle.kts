@@ -35,8 +35,8 @@ android {
 }
 
 dependencies {
-    api(project(":repository:contract"))
-    api(project(":provider:contract")) // Changed to api
+    implementation(project(":repository:contract"))
+    implementation(project(":provider:contract"))
 
     // Play Integrity API
     implementation(libs.play.integrity)
