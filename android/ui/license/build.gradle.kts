@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         minSdk = libs.versions.androidMinSdk.get().toInt()
-        targetSdk = libs.versions.androidTargetSdk.get().toInt() // Warning for targetSdk is noted, will keep as is.
+        targetSdk = libs.versions.androidTargetSdk.get().toInt()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -28,14 +28,13 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlin { // Replacing kotlinOptions with jvmToolchain
+    kotlin {
         jvmToolchain(11)
     }
     buildFeatures {
         compose = true
     }
     composeOptions {
-        // kotlinCompilerExtensionVersion line is intentionally removed
     }
 }
 
