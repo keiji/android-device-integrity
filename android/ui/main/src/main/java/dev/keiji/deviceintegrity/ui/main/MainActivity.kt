@@ -37,7 +37,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.keiji.deviceintegrity.ui.nav.contract.ApiEndpointSettingsNavigator
-import dev.keiji.deviceintegrity.ui.license.nav.LicenseNavigation
+import dev.keiji.deviceintegrity.ui.nav.contract.LicenseNavigator // Updated import
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
     lateinit var apiEndpointSettingsNavigator: ApiEndpointSettingsNavigator
 
     @Inject
-    lateinit var licenseNavigation: LicenseNavigation
+    lateinit var licenseNavigator: LicenseNavigator // Updated type and name
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             DeviceIntegrityApp(
                 apiEndpointSettingsNavigator = apiEndpointSettingsNavigator,
-                licenseNavigation = licenseNavigation
+                licenseNavigator = licenseNavigator // Updated instance name
             )
         }
     }
@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun DeviceIntegrityApp(
     apiEndpointSettingsNavigator: ApiEndpointSettingsNavigator,
-    licenseNavigation: LicenseNavigation
+    licenseNavigator: LicenseNavigator // Updated parameter type and name
 ) {
     DeviceIntegrityTheme {
         val navController = rememberNavController()
@@ -157,7 +157,9 @@ fun DeviceIntegrityApp(
                     val context = LocalContext.current
                     SettingsScreen(
                         uiState = uiState,
-                        onNavigateToOssLicenses = { licenseNavigation.navigateToLicense(context) },
+                        onNavigateToOssLicenses = {
+                            context.startActivity(licenseNavigator.newIntent(context)) // Updated instance name
+                        },
                         onNavigateToApiSettings = { apiSettingsLauncher.launch(Unit) },
                         onNavigateToDeveloperInfo = { Timber.d("Navigate to Developer Info") }
                     )

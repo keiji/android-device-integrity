@@ -6,8 +6,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.keiji.deviceintegrity.ui.nav.contract.ApiEndpointSettingsNavigator
 import dev.keiji.deviceintegrity.ui.nav.impl.ApiEndpointSettingsNavigatorImpl
-import dev.keiji.deviceintegrity.ui.license.nav.LicenseNavigation
-import dev.keiji.deviceintegrity.ui.license.nav.LicenseNavigationImpl
+import dev.keiji.deviceintegrity.ui.nav.contract.LicenseNavigator // Updated import
+import dev.keiji.deviceintegrity.ui.nav.impl.LicenseNavigatorImpl // Updated import
 import javax.inject.Singleton
 
 @Module
@@ -22,7 +22,7 @@ object NavigationModule {
 
     @Singleton
     @Provides
-    fun provideLicenseNavigation(): LicenseNavigation {
-        return LicenseNavigationImpl()
+    fun provideLicenseNavigator(): LicenseNavigator { // Updated return type and method name
+        return LicenseNavigatorImpl() // Updated instantiation
     }
 }
