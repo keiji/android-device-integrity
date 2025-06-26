@@ -1,14 +1,11 @@
+import org.gradle.util.internal.GUtil
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
 }
-
-import java.io.File
-import java.io.FileInputStream
-import org.gradle.util.internal.GUtil
-import java.util.Properties
 
 // https://docs.gradle.org/8.2/userguide/configuration_cache.html#config_cache:requirements:external_processes
 val commitHash = providers.exec {
