@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityTokenRepository
+import dev.keiji.deviceintegrity.repository.contract.StandardPlayIntegrityTokenRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,7 +14,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class StandardPlayIntegrityViewModel @Inject constructor(
-    private val tokenProvider: PlayIntegrityTokenRepository
+    private val standardPlayIntegrityTokenRepository: StandardPlayIntegrityTokenRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(StandardPlayIntegrityUiState())
     val uiState: StateFlow<StandardPlayIntegrityUiState> = _uiState.asStateFlow()
@@ -39,10 +39,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
         }
         viewModelScope.launch {
             try {
-                val token = tokenProvider.getTokenStandard(
-                    cloudProjectNumber = 0L, // Dummy value, managed by provider
-                    requestHash = currentContent
-                )
+                val token = standardPlayIntegrityTokenRepository.getToken(currentContent)
                 Log.d("StandardPlayIntegrityVM", "Integrity Token (Standard): $token")
                 _uiState.update {
                     it.copy(
