@@ -1,3 +1,5 @@
+import org.gradle.util.internal.GUtil
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -13,6 +15,33 @@ val commitHash = providers.exec {
 android {
     namespace = "dev.keiji.deviceintegrity"
     compileSdk = libs.versions.androidCompileSdk.get().toInt()
+
+    signingConfigs {
+        getByName("debug") {
+            storeFile = rootProject.file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+        create("release") {
+            val keystorePropertiesFile = rootProject.file("keystore.properties")
+            if (keystorePropertiesFile.exists()) {
+                println("Info: Using keystore.properties for release signing.")
+                val keystoreProperties = GUtil.loadProperties(keystorePropertiesFile)
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            } else {
+                println("Warning: keystore.properties not found. Falling back to debug.keystore for release build.")
+                // Fallback to debug keystore if keystore.properties is not found
+                storeFile = signingConfigs.getByName("debug").storeFile
+                storePassword = signingConfigs.getByName("debug").storePassword
+                keyAlias = signingConfigs.getByName("debug").keyAlias
+                keyPassword = signingConfigs.getByName("debug").keyPassword
+            }
+        }
+    }
 
     defaultConfig {
         applicationId = "dev.keiji.deviceintegrity"
@@ -31,11 +60,12 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             versionNameSuffix = "-$commitHash"
