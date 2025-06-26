@@ -6,6 +6,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.keiji.deviceintegrity.ui.nav.contract.ApiEndpointSettingsNavigator
 import dev.keiji.deviceintegrity.ui.nav.impl.ApiEndpointSettingsNavigatorImpl
+import dev.keiji.deviceintegrity.ui.nav.contract.LicenseNavigator
+import dev.keiji.deviceintegrity.ui.nav.impl.LicenseNavigatorImpl
 import javax.inject.Singleton
 
 @Module
@@ -16,5 +18,11 @@ object NavigationModule {
     @Provides
     fun provideApiEndpointSettingsNavigator(): ApiEndpointSettingsNavigator {
         return ApiEndpointSettingsNavigatorImpl()
+    }
+
+    @Singleton
+    @Provides
+    fun provideLicenseNavigator(): LicenseNavigator {
+        return LicenseNavigatorImpl()
     }
 }
