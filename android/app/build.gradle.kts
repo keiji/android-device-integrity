@@ -1,10 +1,18 @@
 import org.gradle.util.internal.GUtil
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+}
+
+val playIntegrityPropertiesFile = project.file("play-integrity.properties")
+val playIntegrityProperties: Properties = if (playIntegrityPropertiesFile.exists()) {
+    GUtil.loadProperties(playIntegrityPropertiesFile)
+} else {
+    Properties()
 }
 
 // https://docs.gradle.org/8.2/userguide/configuration_cache.html#config_cache:requirements:external_processes
@@ -53,9 +61,9 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // TODO: Replace 0L with your actual Google Cloud Project Number
-        buildConfigField("Long", "PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER", "0L")
-        buildConfigField("String", "PLAY_INTEGRITY_BASE_URL", "\"https://playintegrity.googleapis.com/\"")
-        buildConfigField("String", "KEY_ATTESTATION_BASE_URL", "\"https://keyattestation.googleapis.com/\"")
+        buildConfigField("Long", "PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER", playIntegrityProperties.getProperty("PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER", "0L"))
+        buildConfigField("String", "PLAY_INTEGRITY_BASE_URL", "\"${playIntegrityProperties.getProperty("PLAY_INTEGRITY_BASE_URL", "http://localhost/")}\"")
+        buildConfigField("String", "KEY_ATTESTATION_BASE_URL", "\"${playIntegrityProperties.getProperty("KEY_ATTESTATION_BASE_URL", "http://localhost/")}\"")
     }
 
     buildTypes {
