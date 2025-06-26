@@ -35,7 +35,7 @@ android {
 }
 
 dependencies {
-    implementation(project(":repository:contract"))
+    api(project(":repository:contract"))
     implementation(project(":provider:contract"))
 
     // Play Integrity API
