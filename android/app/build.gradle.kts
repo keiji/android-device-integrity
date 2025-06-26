@@ -7,6 +7,8 @@ plugins {
 
 import java.io.File
 import java.io.FileInputStream
+import org.gradle.util.internal.GUtil
+import java.util.Properties
 
 // https://docs.gradle.org/8.2/userguide/configuration_cache.html#config_cache:requirements:external_processes
 val commitHash = providers.exec {
@@ -18,24 +20,28 @@ android {
     compileSdk = libs.versions.androidCompileSdk.get().toInt()
 
     signingConfigs {
+        getByName("debug") {
+            storeFile = rootProject.file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
         create("release") {
             val keystorePropertiesFile = rootProject.file("keystore.properties")
             if (keystorePropertiesFile.exists()) {
-                val props = mutableMapOf<String, String>()
-                keystorePropertiesFile.forEachLine { line ->
-                    val parts = line.split("=", limit = 2)
-                    if (parts.size == 2) {
-                        props[parts[0].trim()] = parts[1].trim()
-                    }
-                }
-                storeFile = props["storeFile"]?.let { file(it) }
-                storePassword = props["storePassword"]
-                keyAlias = props["keyAlias"]
-                keyPassword = props["keyPassword"]
+                println("Info: Using keystore.properties for release signing.")
+                val keystoreProperties = GUtil.loadProperties(keystorePropertiesFile)
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
             } else {
-                // Fallback to debug signing if keystore.properties is not found
-                // This is useful for CI environments or developers who don't need to sign release builds
-                println("Warning: keystore.properties not found. Using debug signing for release build.")
+                println("Warning: keystore.properties not found. Falling back to debug.keystore for release build.")
+                // Fallback to debug keystore if keystore.properties is not found
+                storeFile = signingConfigs.getByName("debug").storeFile
+                storePassword = signingConfigs.getByName("debug").storePassword
+                keyAlias = signingConfigs.getByName("debug").keyAlias
+                keyPassword = signingConfigs.getByName("debug").keyPassword
             }
         }
     }
