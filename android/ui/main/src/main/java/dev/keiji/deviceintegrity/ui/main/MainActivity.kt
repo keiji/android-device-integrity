@@ -37,7 +37,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.keiji.deviceintegrity.ui.nav.contract.ApiEndpointSettingsNavigator
-import dev.keiji.deviceintegrity.ui.nav.contract.LicenseNavigator // Updated import
+import dev.keiji.deviceintegrity.ui.nav.contract.LicenseNavigator
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
     lateinit var apiEndpointSettingsNavigator: ApiEndpointSettingsNavigator
 
     @Inject
-    lateinit var licenseNavigator: LicenseNavigator // Updated type and name
+    lateinit var licenseNavigator: LicenseNavigator
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             DeviceIntegrityApp(
                 apiEndpointSettingsNavigator = apiEndpointSettingsNavigator,
-                licenseNavigator = licenseNavigator // Updated instance name
+                licenseNavigator = licenseNavigator
             )
         }
     }
@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun DeviceIntegrityApp(
     apiEndpointSettingsNavigator: ApiEndpointSettingsNavigator,
-    licenseNavigator: LicenseNavigator // Updated parameter type and name
+    licenseNavigator: LicenseNavigator
 ) {
     DeviceIntegrityTheme {
         val navController = rememberNavController()
@@ -158,7 +158,7 @@ fun DeviceIntegrityApp(
                     SettingsScreen(
                         uiState = uiState,
                         onNavigateToOssLicenses = {
-                            context.startActivity(licenseNavigator.newIntent(context)) // Updated instance name
+                            context.startActivity(licenseNavigator.newIntent(context))
                         },
                         onNavigateToApiSettings = { apiSettingsLauncher.launch(Unit) },
                         onNavigateToDeveloperInfo = { Timber.d("Navigate to Developer Info") }
