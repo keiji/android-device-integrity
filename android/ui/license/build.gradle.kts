@@ -55,7 +55,6 @@ dependencies {
     // Other UI modules if needed
     implementation(project(":ui:theme"))
     implementation(project(":ui:nav:contract"))
-    // implementation(libs.javax.inject) // Removed as Impl moved to :ui:nav:impl
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

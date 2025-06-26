@@ -6,7 +6,6 @@
         <activity
             android:name=".LicenseActivity"
             android:exported="false"
-            android:label="@string/open_source_licenses"
-            android:theme="@style/Theme.DeviceIntegrity" />
+            android:label="@string/open_source_licenses" />
     </application>
 </manifest>
