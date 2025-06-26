@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         minSdk = libs.versions.androidMinSdk.get().toInt()
-        targetSdk = libs.versions.androidTargetSdk.get().toInt()
+        targetSdk = libs.versions.androidTargetSdk.get().toInt() // Warning for targetSdk is noted, will keep as is.
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -28,14 +28,14 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
+    kotlin { // Replacing kotlinOptions with jvmToolchain
+        jvmToolchain(11)
     }
     buildFeatures {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.androidxComposeCompiler.get()
+        // kotlinCompilerExtensionVersion line is intentionally removed
     }
 }
 
@@ -51,10 +51,6 @@ dependencies {
 
     // Navigation
     implementation(libs.androidx.navigation.compose)
-
-    // Hilt for DI (optional for this module, but good practice)
-    // implementation(libs.hilt.android)
-    // ksp(libs.hilt.compiler)
 
     // Other UI modules if needed
     implementation(project(":ui:theme"))
