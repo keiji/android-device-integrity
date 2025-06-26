@@ -6,7 +6,9 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.keiji.deviceintegrity.AppInfoProviderImpl
+import dev.keiji.deviceintegrity.BuildConfig
 import dev.keiji.deviceintegrity.provider.contract.AppInfoProvider
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
@@ -20,4 +22,14 @@ object AppModule {
     ): AppInfoProvider {
         return impl
     }
+
+    @Provides
+    @Named("PlayIntegrityBaseUrl")
+    @Singleton
+    fun providePlayIntegrityBaseUrl(): String = BuildConfig.PLAY_INTEGRITY_BASE_URL
+
+    @Provides
+    @Named("KeyAttestationBaseUrl")
+    @Singleton
+    fun provideKeyAttestationBaseUrl(): String = BuildConfig.KEY_ATTESTATION_BASE_URL
 }
