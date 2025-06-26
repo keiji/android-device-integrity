@@ -34,8 +34,7 @@ android {
 }
 
 dependencies {
-    api(project(":provider:contract"))
-    // compileOnly(project(":app")) // Removed compileOnly dependency to :app
+    implementation(project(":provider:contract"))
 
     // Play Integrity API
     implementation(libs.play.integrity)

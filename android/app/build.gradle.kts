@@ -87,7 +87,7 @@ dependencies {
     implementation(project(":ui:main"))
     implementation(project(":ui:api-endpoint-settings"))
     implementation(project(":provider:impl"))
-    api(project(":provider:contract")) // Changed to api
+    implementation(project(":provider:contract"))
     implementation(project(":repository:impl"))
     implementation(project(":ui:nav:impl"))
     implementation(project(":api"))
