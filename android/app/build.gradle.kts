@@ -7,13 +7,18 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+import java.util.Properties
+
 // Load version properties
 val versionPropertiesFile = rootProject.file("android/version.properties")
-val versionProps = java.util.Properties()
-if (versionPropertiesFile.exists()) {
-    versionPropertiesFile.inputStream().use { versionProps.load(it) }
+val versionProps = if (versionPropertiesFile.exists()) {
+    GUtil.loadProperties(versionPropertiesFile)
 } else {
-    throw GradleException("Could not read version.properties!")
+    println("Warning: version.properties not found. Using default version values.")
+    Properties().apply {
+        setProperty("versionCode", "1")
+        setProperty("versionName", "1.0.0")
+    }
 }
 
 // https://docs.gradle.org/8.2/userguide/configuration_cache.html#config_cache:requirements:external_processes
@@ -56,8 +61,8 @@ android {
         applicationId = "dev.keiji.deviceintegrity"
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
-        versionCode = versionProps.getProperty("versionCode").toInt()
-        versionName = versionProps.getProperty("versionName")
+        versionCode = versionProps.getProperty("versionCode", "1").toInt()
+        versionName = versionProps.getProperty("versionName", "1.0.0")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
