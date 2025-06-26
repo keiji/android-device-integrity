@@ -5,6 +5,9 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+import java.io.File
+import java.io.FileInputStream
+
 // https://docs.gradle.org/8.2/userguide/configuration_cache.html#config_cache:requirements:external_processes
 val commitHash = providers.exec {
     commandLine("git", "rev-parse", "--short", "HEAD")
@@ -13,6 +16,29 @@ val commitHash = providers.exec {
 android {
     namespace = "dev.keiji.deviceintegrity"
     compileSdk = libs.versions.androidCompileSdk.get().toInt()
+
+    signingConfigs {
+        create("release") {
+            val keystorePropertiesFile = rootProject.file("keystore.properties")
+            if (keystorePropertiesFile.exists()) {
+                val props = mutableMapOf<String, String>()
+                keystorePropertiesFile.forEachLine { line ->
+                    val parts = line.split("=", limit = 2)
+                    if (parts.size == 2) {
+                        props[parts[0].trim()] = parts[1].trim()
+                    }
+                }
+                storeFile = props["storeFile"]?.let { file(it) }
+                storePassword = props["storePassword"]
+                keyAlias = props["keyAlias"]
+                keyPassword = props["keyPassword"]
+            } else {
+                // Fallback to debug signing if keystore.properties is not found
+                // This is useful for CI environments or developers who don't need to sign release builds
+                println("Warning: keystore.properties not found. Using debug signing for release build.")
+            }
+        }
+    }
 
     defaultConfig {
         applicationId = "dev.keiji.deviceintegrity"
@@ -31,11 +57,12 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             versionNameSuffix = "-$commitHash"
