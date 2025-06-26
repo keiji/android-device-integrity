@@ -7,6 +7,15 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+// Load version properties
+val versionPropertiesFile = rootProject.file("android/version.properties")
+val versionProps = java.util.Properties()
+if (versionPropertiesFile.exists()) {
+    versionPropertiesFile.inputStream().use { versionProps.load(it) }
+} else {
+    throw GradleException("Could not read version.properties!")
+}
+
 // https://docs.gradle.org/8.2/userguide/configuration_cache.html#config_cache:requirements:external_processes
 val commitHash = providers.exec {
     commandLine("git", "rev-parse", "--short", "HEAD")
@@ -47,8 +56,8 @@ android {
         applicationId = "dev.keiji.deviceintegrity"
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = versionProps.getProperty("versionCode").toInt()
+        versionName = versionProps.getProperty("versionName")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
