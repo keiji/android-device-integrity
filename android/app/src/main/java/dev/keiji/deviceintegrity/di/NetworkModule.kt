@@ -11,7 +11,9 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
-import dev.keiji.deviceintegrity.BuildConfig
+import dev.keiji.deviceintegrity.repository.contract.PreferencesRepository
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import javax.inject.Singleton
 
 @Module
@@ -28,10 +30,14 @@ object NetworkModule {
     @Provides
     @Singleton
     @PlayIntegrity
-    fun providePlayIntegrityRetrofit(okHttpClient: OkHttpClient): Retrofit {
+    fun providePlayIntegrityRetrofit(
+        okHttpClient: OkHttpClient,
+        preferencesRepository: PreferencesRepository
+    ): Retrofit {
         val json = Json { ignoreUnknownKeys = true }
+        val baseUrl = runBlocking { preferencesRepository.playIntegrityVerifyApiEndpointUrl.first() }
         return Retrofit.Builder()
-            .baseUrl(BuildConfig.PLAY_INTEGRITY_BASE_URL)
+            .baseUrl(baseUrl)
             .client(okHttpClient)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
@@ -40,10 +46,14 @@ object NetworkModule {
     @Provides
     @Singleton
     @KeyAttestation
-    fun provideKeyAttestationRetrofit(okHttpClient: OkHttpClient): Retrofit {
+    fun provideKeyAttestationRetrofit(
+        okHttpClient: OkHttpClient,
+        preferencesRepository: PreferencesRepository
+    ): Retrofit {
         val json = Json { ignoreUnknownKeys = true }
+        val baseUrl = runBlocking { preferencesRepository.keyAttestationVerifyApiEndpointUrl.first() }
         return Retrofit.Builder()
-            .baseUrl(BuildConfig.KEY_ATTESTATION_BASE_URL)
+            .baseUrl(baseUrl)
             .client(okHttpClient)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()

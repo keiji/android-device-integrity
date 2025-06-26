@@ -2,10 +2,13 @@ package dev.keiji.deviceintegrity.repository.impl
 
 import android.content.Context
 import androidx.datastore.core.CorruptionException
+import android.content.Context
+import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import androidx.datastore.dataStore
 import com.google.protobuf.InvalidProtocolBufferException
+import dev.keiji.deviceintegrity.BuildConfig
 import dev.keiji.deviceintegrity.repository.contract.PreferencesRepository
 import dev.keiji.deviceintegrity.repository.impl.pb.UserPreferences
 import kotlinx.coroutines.flow.Flow
@@ -13,6 +16,7 @@ import kotlinx.coroutines.flow.map
 import java.io.InputStream
 import java.io.OutputStream
 import javax.inject.Inject
+import dagger.hilt.android.qualifiers.ApplicationContext
 
 // Made public for testing, or consider an internal constructor for testing module
 val Context.userPreferencesStore: DataStore<UserPreferences> by dataStore(
@@ -25,7 +29,9 @@ object UserPreferencesSerializer : Serializer<UserPreferences> {
 
     override suspend fun readFrom(input: InputStream): UserPreferences {
         try {
-            return UserPreferences.parseFrom(input)
+            val parsed = UserPreferences.parseFrom(input)
+            // Ensure that default values are applied if fields are missing
+            return defaultValue.toBuilder().mergeFrom(parsed).build()
         } catch (exception: InvalidProtocolBufferException) {
             throw CorruptionException("Cannot read proto.", exception)
         }
@@ -34,28 +40,21 @@ object UserPreferencesSerializer : Serializer<UserPreferences> {
     override suspend fun writeTo(t: UserPreferences, output: OutputStream) = t.writeTo(output)
 }
 
-class PreferencesRepositoryImpl @Inject internal constructor( // internal constructor for testing
+class PreferencesRepositoryImpl @Inject internal constructor(
+    @ApplicationContext private val context: Context, // Inject ApplicationContext
     private val dataStore: DataStore<UserPreferences>
 ) : PreferencesRepository {
 
-    constructor(context: Context) : this(context.userPreferencesStore)
+    // constructor(context: Context) : this(context, context.userPreferencesStore) // Hilt will provide dependencies
 
-    override val playIntegrityVerifyApiEndpointUrl: Flow<String?> = dataStore.data
+    override val playIntegrityVerifyApiEndpointUrl: Flow<String> = dataStore.data
         .map { preferences ->
-            if (preferences.playIntegrityVerifyApiEndpointUrl.isNullOrEmpty()) {
-                null
-            } else {
-                preferences.playIntegrityVerifyApiEndpointUrl
-            }
+            preferences.playIntegrityVerifyApiEndpointUrl.ifEmpty { BuildConfig.PLAY_INTEGRITY_BASE_URL }
         }
 
-    override val keyAttestationVerifyApiEndpointUrl: Flow<String?> = dataStore.data
+    override val keyAttestationVerifyApiEndpointUrl: Flow<String> = dataStore.data
         .map { preferences ->
-            if (preferences.keyAttestationVerifyApiEndpointUrl.isNullOrEmpty()) {
-                null
-            } else {
-                preferences.keyAttestationVerifyApiEndpointUrl
-            }
+            preferences.keyAttestationVerifyApiEndpointUrl.ifEmpty { BuildConfig.KEY_ATTESTATION_BASE_URL }
         }
 
     override suspend fun savePlayIntegrityVerifyApiEndpointUrl(url: String) {
