@@ -66,6 +66,7 @@ android {
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
+            versionNameSuffix = "-$commitHash"
         }
         debug {
             versionNameSuffix = "-$commitHash"
