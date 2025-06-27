@@ -30,7 +30,6 @@ class StandardPlayIntegrityViewModel @Inject constructor(
             it.copy(
                 contentBinding = newContent,
                 requestHashValue = ""
-                // requestHashVisible is now computed
             )
         }
     }
@@ -58,7 +57,6 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 isLoading = true,
                 status = "Fetching token...",
                 requestHashValue = "" // Reset before attempting to fetch
-                // requestHashVisible is now computed
             )
         }
         viewModelScope.launch {
@@ -72,7 +70,6 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                         status = "Token fetched successfully (Standard API, see Logcat for token)",
                         errorMessages = emptyList(),
                         requestHashValue = if (currentContent.isNotEmpty()) encodedHash else ""
-                        // requestHashVisible is now computed
                     )
                 }
             } catch (e: Exception) {
@@ -83,7 +80,6 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                         status = "Error fetching integrity token (Standard).",
                         errorMessages = listOfNotNull(e.message),
                         requestHashValue = ""
-                        // requestHashVisible is now computed
                     )
                 }
             }
