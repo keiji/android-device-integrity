@@ -148,4 +148,54 @@ class ApiEndpointSettingsViewModelTest {
         verify(mockPreferencesRepository, never()).savePlayIntegrityVerifyApiEndpointUrl(invalidPlayUrl)
         verify(mockPreferencesRepository, never()).saveKeyAttestationVerifyApiEndpointUrl(invalidKeyUrl)
     }
+
+    @Test
+    fun `updateEditingPlayIntegrityUrl updates UI state`() {
+        val newUrl = "https://play.example.com"
+        viewModel.updateEditingPlayIntegrityUrl(newUrl)
+        assert(viewModel.uiState.value.editingPlayIntegrityUrl == newUrl)
+        assert(viewModel.uiState.value.errorMessage == null)
+        assert(!viewModel.uiState.value.saveSuccess)
+    }
+
+    @Test
+    fun `updateEditingPlayIntegrityUrl ignores invalid characters`() {
+        val initialUrl = viewModel.uiState.value.editingPlayIntegrityUrl
+        val newUrlWithInvalidChar = "https://play.example.com<>"
+        viewModel.updateEditingPlayIntegrityUrl(newUrlWithInvalidChar)
+        assert(viewModel.uiState.value.editingPlayIntegrityUrl == initialUrl)
+    }
+
+    @Test
+    fun `updateEditingKeyAttestationUrl updates UI state`() {
+        val newUrl = "https://key.example.com"
+        viewModel.updateEditingKeyAttestationUrl(newUrl)
+        assert(viewModel.uiState.value.editingKeyAttestationUrl == newUrl)
+        assert(viewModel.uiState.value.errorMessage == null)
+        assert(!viewModel.uiState.value.saveSuccess)
+    }
+
+    @Test
+    fun `updateEditingKeyAttestationUrl ignores invalid characters`() {
+        val initialUrl = viewModel.uiState.value.editingKeyAttestationUrl
+        val newUrlWithInvalidChar = "https://key.example.com<>"
+        viewModel.updateEditingKeyAttestationUrl(newUrlWithInvalidChar)
+        assert(viewModel.uiState.value.editingKeyAttestationUrl == initialUrl)
+    }
+
+    @Test
+    fun `resetSaveSuccess updates UI state`() = runTest {
+        // Simulate a successful save
+        val playUrl = "https://play.valid.com"
+        val keyUrl = "https://key.valid.com"
+        viewModel.updateEditingPlayIntegrityUrl(playUrl)
+        viewModel.updateEditingKeyAttestationUrl(keyUrl)
+        viewModel.saveApiEndpoints()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assert(viewModel.uiState.value.saveSuccess) // Ensure it was true
+
+        viewModel.resetSaveSuccess()
+        assert(!viewModel.uiState.value.saveSuccess)
+    }
 }
