@@ -22,3 +22,8 @@ updates:
       google-play:
         patterns:
           - "com.google.android.play*"
+
+  - package-ecosystem: "pip" # Pythonのパッケージマネージャー
+    directory: "/server" # requirements.txt があるディレクトリ
+    schedule:
+      interval: "daily"
