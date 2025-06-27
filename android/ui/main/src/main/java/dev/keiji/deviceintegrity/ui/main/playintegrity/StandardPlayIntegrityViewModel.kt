@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.security.MessageDigest
+import android.util.Base64
 import javax.inject.Inject
 
 @HiltViewModel
@@ -25,7 +27,10 @@ class StandardPlayIntegrityViewModel @Inject constructor(
 
     fun updateContentBinding(newContent: String) {
         _uiState.update {
-            it.copy(contentBinding = newContent)
+            it.copy(
+                contentBinding = newContent,
+                requestHashValue = ""
+            )
         }
     }
 
@@ -35,10 +40,23 @@ class StandardPlayIntegrityViewModel @Inject constructor(
         // but the calculated property isRequestTokenButtonEnabled handles UI enablement.
         // We proceed with fetching if the button was somehow clicked despite being disabled by UI.
 
+        var encodedHash = ""
+        if (currentContent.isNotEmpty()) {
+            try {
+                val digest = MessageDigest.getInstance("SHA-256")
+                val hashBytes = digest.digest(currentContent.toByteArray(Charsets.UTF_8))
+                encodedHash = Base64.encodeToString(hashBytes, Base64.NO_WRAP)
+            } catch (e: Exception) {
+                Log.e("StandardPlayIntegrityVM", "Error generating SHA-256 hash", e)
+                // Handle hash generation failure if necessary, though unlikely with SHA-256
+            }
+        }
+
         _uiState.update {
             it.copy(
                 isLoading = true,
-                status = "Fetching token..."
+                status = "Fetching token...",
+                requestHashValue = "" // Reset before attempting to fetch
             )
         }
         viewModelScope.launch {
@@ -50,7 +68,8 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                         isLoading = false,
                         integrityToken = token,
                         status = "Token fetched successfully (Standard API, see Logcat for token)",
-                        errorMessages = emptyList()
+                        errorMessages = emptyList(),
+                        requestHashValue = if (currentContent.isNotEmpty()) encodedHash else ""
                     )
                 }
             } catch (e: Exception) {
@@ -59,7 +78,8 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                     it.copy(
                         isLoading = false,
                         status = "Error fetching integrity token (Standard).",
-                        errorMessages = listOfNotNull(e.message)
+                        errorMessages = listOfNotNull(e.message),
+                        requestHashValue = ""
                     )
                 }
             }

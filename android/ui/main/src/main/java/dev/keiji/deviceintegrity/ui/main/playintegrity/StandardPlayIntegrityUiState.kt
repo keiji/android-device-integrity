@@ -8,8 +8,12 @@ data class StandardPlayIntegrityUiState(
     val isLoading: Boolean = false,
     val status: String = "",
     val standardVerifyResponse: StandardVerifyResponse? = null,
-    val errorMessages: List<String> = emptyList()
+    val errorMessages: List<String> = emptyList(),
+    val requestHashValue: String = ""
 ) {
+    val requestHashVisible: Boolean
+        get() = requestHashValue.isNotEmpty()
+
     val isRequestTokenButtonEnabled: Boolean
         get() = !isLoading && contentBinding.isNotEmpty() && errorMessages.isEmpty()
 
