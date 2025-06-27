@@ -16,7 +16,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
-import dev.keiji.deviceintegrity.ui.main.R // Corrected R class import for ui:main module
+import dev.keiji.deviceintegrity.ui.main.R
 import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal
 
 @Composable
