@@ -71,8 +71,12 @@ fun StandardPlayIntegrityContent(
 
         if (uiState.isLoading) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+        } else if (uiState.errorMessages.isNotEmpty()) {
+            Text(text = "Error: ${uiState.errorMessages.joinToString("\n")}")
+        } else if (uiState.standardVerifyResponse != null) {
+            DisplayTokenResponse(uiState.standardVerifyResponse.tokenPayloadExternal) // Re-use the same display logic
         } else {
-            Text(text = uiState.status) // Display status text
+            Text(text = uiState.status) // Fallback status
         }
     }
 }
@@ -85,8 +89,37 @@ private fun StandardPlayIntegrityContentPreview() {
             contentBinding = "preview-content-binding",
             integrityToken = "preview-token",
             isLoading = false,
-            status = "Preview status text for Standard."
-            // isRequestTokenButtonEnabled and isVerifyTokenButtonEnabled are now calculated properties
+            status = "Preview status text for Standard.",
+            standardVerifyResponse = dev.keiji.deviceintegrity.api.playintegrity.StandardVerifyResponse(
+                tokenPayloadExternal = dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal(
+                    requestDetails = dev.keiji.deviceintegrity.api.playintegrity.RequestDetails(
+                        requestPackageName = "dev.keiji.preview.standard",
+                        nonce = "preview-nonce-from-client", // Standard API uses client-generated nonce in requestDetails
+                        requestHash = "preview-request-hash-standard",
+                        timestampMillis = System.currentTimeMillis()
+                    ),
+                    appIntegrity = dev.keiji.deviceintegrity.api.playintegrity.AppIntegrity(
+                        appRecognitionVerdict = "MEETS_DEVICE_INTEGRITY",
+                        packageName = "dev.keiji.preview.standard",
+                        certificateSha256Digest = listOf("cert_std_1", "cert_std_2"),
+                        versionCode = 456
+                    ),
+                    deviceIntegrity = dev.keiji.deviceintegrity.api.playintegrity.DeviceIntegrity(
+                        deviceRecognitionVerdict = listOf("MEETS_DEVICE_INTEGRITY", "MEETS_STRONG_INTEGRITY"),
+                        deviceAttributes = dev.keiji.deviceintegrity.api.playintegrity.DeviceAttributes(sdkVersion = 31),
+                        recentDeviceActivity = dev.keiji.deviceintegrity.api.playintegrity.RecentDeviceActivity(deviceActivityLevel = "LEVEL_2")
+                    ),
+                    accountDetails = dev.keiji.deviceintegrity.api.playintegrity.AccountDetails(
+                        appLicensingVerdict = "LICENSED"
+                    ),
+                    environmentDetails = dev.keiji.deviceintegrity.api.playintegrity.EnvironmentDetails(
+                        appAccessRiskVerdict = dev.keiji.deviceintegrity.api.playintegrity.AppAccessRiskVerdict(
+                            appsDetected = listOf("std_app1", "std_app2")
+                        ),
+                        playProtectVerdict = "NO_ISSUES"
+                    )
+                )
+            )
         ),
         onContentBindingChange = {},
         onRequestToken = {},
