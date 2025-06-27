@@ -8,10 +8,19 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+val versionPropertiesFile = rootProject.file("android/version.properties")
+val versionProps = if (versionPropertiesFile.exists()) {
+    GUtil.loadProperties(versionPropertiesFile)
+} else {
+    println("Warning: version.properties not found. Using default version values.")
+    Properties() // Empty Properties object
+}
+
 val playIntegrityPropertiesFile = project.file("play-integrity.properties")
 val playIntegrityProperties: Properties = if (playIntegrityPropertiesFile.exists()) {
     GUtil.loadProperties(playIntegrityPropertiesFile)
 } else {
+    println("Warning: play-integrity.properties not found. Using default playIntegrity values.")
     Properties()
 }
 
@@ -55,8 +64,8 @@ android {
         applicationId = "dev.keiji.deviceintegrity"
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = versionProps.getProperty("versionCode", "1").toInt()
+        versionName = versionProps.getProperty("versionName", "1.0.0")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
