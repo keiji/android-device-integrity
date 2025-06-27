@@ -62,6 +62,11 @@ fun StandardPlayIntegrityContent(
             Text(text = "Request Integrity Token")
         }
 
+        if (uiState.requestHashVisible) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = "requestHash: ${uiState.requestHashValue}")
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(text = "Step 3. トークンを検証")
