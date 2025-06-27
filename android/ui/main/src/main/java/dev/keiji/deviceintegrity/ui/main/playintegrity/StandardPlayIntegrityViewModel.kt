@@ -32,6 +32,8 @@ class StandardPlayIntegrityViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(StandardPlayIntegrityUiState())
     val uiState: StateFlow<StandardPlayIntegrityUiState> = _uiState.asStateFlow()
 
+    private var currentSessionId: String = ""
+
     fun updateContentBinding(newContent: String) {
         _uiState.update {
             it.copy(
@@ -47,13 +49,13 @@ class StandardPlayIntegrityViewModel @Inject constructor(
         // but the calculated property isRequestTokenButtonEnabled handles UI enablement.
         // We proceed with fetching if the button was somehow clicked despite being disabled by UI.
 
-        val sessionId = UUID.randomUUID().toString()
+        currentSessionId = UUID.randomUUID().toString() // Store in ViewModel field
         var encodedHash = ""
-        // contentBinding might be empty, but we still need to include sessionId in the hash if we were to create one.
+        // contentBinding might be empty, but we still need to include currentSessionId in the hash if we were to create one.
         // However, the original logic only created a hash if currentContent was not empty.
         // For consistency with the requirement "sessionId + contentBinding", we'll prepare the string for hashing.
         // The actual decision to *use* the hash (i.e., pass it to getToken) depends on whether contentBinding is empty.
-        val stringToHash = sessionId + currentContent
+        val stringToHash = currentSessionId + currentContent
 
         if (stringToHash.isNotEmpty()) { // Or simply if currentContent.isNotEmpty() if requestHash is only for non-empty contentBinding
             try {
@@ -72,8 +74,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
             it.copy(
                 isLoading = true,
                 status = "Fetching token...",
-                requestHashValue = "", // Reset before attempting to fetch
-                sessionId = sessionId // Store the generated sessionId
+                requestHashValue = "" // Reset before attempting to fetch
             )
         }
         viewModelScope.launch {
@@ -120,7 +121,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
     fun verifyToken() {
         val currentUiState = _uiState.value
         val token = currentUiState.integrityToken
-        val sessionId = currentUiState.sessionId
+        // val sessionId = currentUiState.sessionId // Removed: Use ViewModel's currentSessionId field
 
         if (token.isBlank()) {
             _uiState.update {
@@ -132,7 +133,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
             return
         }
 
-        if (sessionId.isBlank()) {
+        if (currentSessionId.isBlank()) { // Use ViewModel's currentSessionId field
             // This case should ideally not happen if fetchIntegrityToken was successful
             _uiState.update {
                 it.copy(
@@ -180,7 +181,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
 
                 val request = StandardVerifyRequest(
                     token = token,
-                    sessionId = sessionId,
+                    sessionId = currentSessionId, // Use ViewModel's currentSessionId field
                     contentBinding = contentBindingForVerification,
                     deviceInfo = deviceInfo,
                     securityInfo = securityInfo
