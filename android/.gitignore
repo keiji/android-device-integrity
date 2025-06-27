@@ -15,3 +15,4 @@
 local.properties
 keystore.properties
 version.properties
+server-endpoint.properties
