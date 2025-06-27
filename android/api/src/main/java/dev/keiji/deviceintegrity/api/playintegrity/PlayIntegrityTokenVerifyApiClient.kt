@@ -26,7 +26,9 @@ data class CreateNonceRequest(
 @Serializable
 data class StandardVerifyRequest(
     @SerialName("token") val token: String,
-    @SerialName("contentBinding") val contentBinding: String
+    @SerialName("contentBinding") val contentBinding: String,
+    @SerialName("device_info") val deviceInfo: DeviceInfo,
+    @SerialName("security_info") val securityInfo: SecurityInfo
 )
 
 // Response for Standard API verification
@@ -60,7 +62,9 @@ data class NonceResponse(
 @Serializable
 data class VerifyTokenRequest(
     val token: String,
-    @SerialName("session_id") val sessionId: String
+    @SerialName("session_id") val sessionId: String,
+    @SerialName("device_info") val deviceInfo: DeviceInfo,
+    @SerialName("security_info") val securityInfo: SecurityInfo
 )
 
 // Response for Classic API verification.

@@ -224,19 +224,27 @@ def verify_integrity():
             payload_entity = datastore.Entity(key=payload_key)
             now = datetime.now(timezone.utc)
 
-            # Create a new dictionary for payload_data, excluding 'token' and 'session_id'
-            payload_to_store = {k: v for k, v in data.items() if k not in ['token', 'session_id']}
+            # Create a new dictionary for payload_data.
+            # We explicitly include device_info and security_info if they exist.
+            # Other unexpected top-level keys from the client will also be included if not in the exclusion list.
+            excluded_keys = {'token', 'session_id'}
+            payload_to_store = {k: v for k, v in data.items() if k not in excluded_keys}
+
+            # Ensure device_info and security_info are dictionaries if they exist, or default to empty dict.
+            # This helps prevent errors if they are missing or not in the expected format.
+            payload_to_store['device_info'] = data.get('device_info', {})
+            payload_to_store['security_info'] = data.get('security_info', {})
 
             payload_entity.update({
                 'session_id': session_id,
-                'payload_data': payload_to_store, # Storing the rest of the request body
+                'payload_data': payload_to_store,
                 'created_at': now,
                 'verification_type': "classic"
             })
             datastore_client.put(payload_entity)
-            app.logger.info(f"Successfully stored verified payload for session_id: {session_id}. Stored data: {payload_to_store}")
+            app.logger.info(f"Successfully stored verified payload for session_id: {session_id}. Stored payload_data: {payload_to_store}")
         except Exception as e:
-            app.logger.error(f"Failed to store verified payload for session_id {session_id}: {e}")
+            app.logger.error(f"Failed to store verified payload for session_id {session_id}: {e}. Data received: {data}")
             # Depending on policy, this could be a critical error or just logged.
             # For now, we'll log and still return the original API response if nonce verification was successful.
             # If storing payload is critical, you might want to return an error here:
@@ -322,19 +330,24 @@ def verify_integrity_standard():
             payload_entity = datastore.Entity(key=payload_key)
             now = datetime.now(timezone.utc)
 
-            # Create a new dictionary for payload_data, excluding 'token', 'contentBinding', and 'session_id'
-            payload_to_store = {k: v for k, v in data.items() if k not in ['token', 'contentBinding', 'session_id']}
+            # Create a new dictionary for payload_data.
+            # We explicitly include device_info and security_info if they exist.
+            excluded_keys = {'token', 'contentBinding', 'session_id'}
+            payload_to_store = {k: v for k, v in data.items() if k not in excluded_keys}
+
+            payload_to_store['device_info'] = data.get('device_info', {})
+            payload_to_store['security_info'] = data.get('security_info', {})
 
             payload_entity.update({
                 'session_id': session_id,
-                'payload_data': payload_to_store, # Storing the rest of the request body
+                'payload_data': payload_to_store,
                 'created_at': now,
                 'verification_type': "standard"
             })
             datastore_client.put(payload_entity)
-            app.logger.info(f"Successfully stored verified payload for session_id: {session_id} (standard). Stored data: {payload_to_store}")
+            app.logger.info(f"Successfully stored verified payload for session_id: {session_id} (standard). Stored payload_data: {payload_to_store}")
         except Exception as e:
-            app.logger.error(f"Failed to store verified payload for session_id {session_id} (standard): {e}")
+            app.logger.error(f"Failed to store verified payload for session_id {session_id} (standard): {e}. Data received: {data}")
             # Depending on policy, this could be a critical error or just logged.
             # For now, we'll log and still return the original API response if requestHash verification was successful.
             # If storing payload is critical, you might want to return an error here:
