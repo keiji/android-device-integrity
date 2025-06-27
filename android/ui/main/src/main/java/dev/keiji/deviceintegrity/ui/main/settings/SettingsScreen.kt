@@ -32,6 +32,8 @@ fun SettingsScreen(
     onNavigateToOssLicenses: () -> Unit = {},
     onNavigateToApiSettings: () -> Unit = {},
     onNavigateToDeveloperInfo: () -> Unit = {},
+    onNavigateToTermsOfService: () -> Unit = {},
+    onNavigateToPrivacyPolicy: () -> Unit = {},
 ) {
     val scrollState = rememberScrollState()
 
@@ -54,8 +56,16 @@ fun SettingsScreen(
             subtitle = uiState.securityPatchLevel,
         )
         SettingsMenuItem(
-            title = "開発元のURL",
+            title = "アプリについて",
             onClick = onNavigateToDeveloperInfo
+        )
+        SettingsMenuItem(
+            title = "利用規約",
+            onClick = onNavigateToTermsOfService
+        )
+        SettingsMenuItem(
+            title = "プライバシーポリシー",
+            onClick = onNavigateToPrivacyPolicy
         )
         SettingsMenuItem(
             icon = Icons.Default.Build,
@@ -151,6 +161,8 @@ fun SettingsScreenPreview() {
         ),
         onNavigateToOssLicenses = {},
         onNavigateToApiSettings = {},
-        onNavigateToDeveloperInfo = {}
+        onNavigateToDeveloperInfo = {},
+        onNavigateToTermsOfService = {},
+        onNavigateToPrivacyPolicy = {}
     )
 }

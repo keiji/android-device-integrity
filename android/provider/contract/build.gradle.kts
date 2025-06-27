@@ -37,4 +37,6 @@ dependencies {
     api(libs.play.integrity) // Use api since the interface exposes types from this library
     implementation(libs.javax.inject) // For @Qualifier
     // Removed Hilt compiler: ksp(libs.hilt.compiler)
+
+    api(libs.hilt.android)
 }
