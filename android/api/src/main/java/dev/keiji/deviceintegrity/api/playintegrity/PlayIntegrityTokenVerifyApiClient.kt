@@ -26,6 +26,7 @@ data class CreateNonceRequest(
 @Serializable
 data class StandardVerifyRequest(
     @SerialName("token") val token: String,
+    @SerialName("session_id") val sessionId: String,
     @SerialName("contentBinding") val contentBinding: String,
     @SerialName("device_info") val deviceInfo: DeviceInfo,
     @SerialName("security_info") val securityInfo: SecurityInfo
