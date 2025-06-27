@@ -26,7 +26,7 @@ data class CreateNonceRequest(
 @Serializable
 data class StandardVerifyRequest(
     @SerialName("token") val token: String,
-    @SerialName("requestHash") val requestHash: String // Changed from nonce to requestHash
+    @SerialName("contentBinding") val contentBinding: String // Changed from requestHash to contentBinding
 )
 
 // Response for Standard API verification

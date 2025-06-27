@@ -146,13 +146,13 @@ paths:
             schema:
               type: object
               required:
-                - requestHash
+                - contentBinding # Changed from requestHash
                 - token
               properties:
-                requestHash:
+                contentBinding: # Changed from requestHash
                   type: string
-                  description: The request hash provided by the client app.
-                  example: "client_generated_request_hash"
+                  description: The original content string from the client app, which will be hashed by the server.
+                  example: "some_content_to_be_hashed_by_server"
                 token:
                   type: string
                   description: The integrity token received from the client (from Play Integrity API using Standard request).
@@ -323,16 +323,16 @@ components:
       properties:
         error:
           type: string
-          description: A message indicating a mismatch (e.g., nonce or requestHash).
-          example: "requestHash mismatch"
+          description: A message indicating a mismatch (e.g., nonce, or server-hashed contentBinding vs. API's requestHash).
+          example: "Server contentBinding hash mismatch"
         client_provided_value:
           type: string
-          description: The value (e.g. nonce or requestHash) provided by the client.
-          example: "client_provided_value_example"
+          description: The value provided by the client (e.g. nonce, or the server-generated hash of contentBinding).
+          example: "server_hashed_content_binding_example"
         api_provided_value:
           type: string
-          description: The value (e.g. nonce or requestHash) found in the Play Integrity API response.
-          example: "api_response_value_example"
+          description: The value found in the Play Integrity API response (e.g. nonce from API, or requestHash from API).
+          example: "api_response_request_hash_example"
         play_integrity_response:
           $ref: '#/components/schemas/TokenPayloadExternal'
   securitySchemes: {}

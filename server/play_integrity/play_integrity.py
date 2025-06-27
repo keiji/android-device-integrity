@@ -6,6 +6,7 @@ from google.cloud import datastore
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 import google.auth
+import hashlib
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -220,17 +221,22 @@ def verify_integrity_standard():
         if not data:
             return jsonify({"error": "Missing JSON payload"}), 400
 
-        client_request_hash = data.get('requestHash') # Changed from nonce to requestHash
+        client_content_binding = data.get('contentBinding') # Changed from requestHash to contentBinding
         integrity_token = data.get('token')
         # session_id = data.get('session_id') # Optional for server-side validation
 
         if not integrity_token:
             return jsonify({"error": "Missing 'token' in request"}), 400
-        if not client_request_hash: # Changed from client_nonce to client_request_hash
-            return jsonify({"error": "Missing 'requestHash' in request"}), 400
+        if not client_content_binding: # Changed from client_request_hash to client_content_binding
+            return jsonify({"error": "Missing 'contentBinding' in request"}), 400 # Changed message
 
-        # Optional: Server-side validation of client_request_hash against Datastore using session_id
-        # (Similar logic as in the classic verify endpoint)
+        # Hash and Base64URL encode the client_content_binding
+        try:
+            hashed_content_binding_bytes = hashlib.sha256(client_content_binding.encode('utf-8')).digest()
+            server_generated_hash = base64.urlsafe_b64encode(hashed_content_binding_bytes).decode('utf-8').rstrip('=')
+        except Exception as e:
+            app.logger.error(f"Error hashing/encoding contentBinding: {e}")
+            return jsonify({"error": "Failed to process contentBinding"}), 500
 
         credentials, project_id = google.auth.default(
             scopes=['https://www.googleapis.com/auth/playintegrity']
@@ -244,24 +250,21 @@ def verify_integrity_standard():
 
         token_payload = api_response.get('tokenPayloadExternal', {})
         request_details_payload = token_payload.get('requestDetails', {})
-        api_request_hash = request_details_payload.get('requestHash') # Changed from nonce to requestHash
+        api_request_hash = request_details_payload.get('requestHash')
 
-        if not api_request_hash: # Changed from api_nonce to api_request_hash
+        if not api_request_hash:
             app.logger.warning("requestHash not found in Play Integrity API response payload for standard verify.")
             return jsonify({
-                "error": "requestHash missing in Play Integrity API response payload (standard)", # Changed message
+                "error": "requestHash missing in Play Integrity API response payload (standard)",
                 "play_integrity_response": api_response
             }), 400 # Or 500
 
-        # Compare client_request_hash with api_request_hash
-        # Assuming requestHash does not need the same canonicalization as nonce.
-        # If it does, similar decoding/re-encoding logic would be needed here.
-        if client_request_hash != api_request_hash:
-            app.logger.error(f"requestHash mismatch (standard). Client: {client_request_hash}, API: {api_request_hash}")
+        if server_generated_hash != api_request_hash:
+            app.logger.error(f"Server contentBinding hash mismatch. Server generated: {server_generated_hash}, API: {api_request_hash}. Original client contentBinding: {client_content_binding}")
             return jsonify({
-                "error": "requestHash mismatch (standard)", # Changed message
-                "client_request_hash": client_request_hash, # Changed field name
-                "api_request_hash": api_request_hash,       # Changed field name
+                "error": "Server contentBinding hash mismatch", # Changed message
+                "client_provided_value": server_generated_hash, # server-generated hash from client's contentBinding
+                "api_provided_value": api_request_hash,       # requestHash from API response
                 "play_integrity_response": api_response
             }), 400
 

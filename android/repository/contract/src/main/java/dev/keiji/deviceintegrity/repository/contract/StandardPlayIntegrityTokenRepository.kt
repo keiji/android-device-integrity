@@ -7,9 +7,11 @@ interface StandardPlayIntegrityTokenRepository {
     /**
      * Retrieves a Google Play Integrity token using the standard request.
      *
-     * @param requestHash Optional. A hash of the request that the server is making to your app.
+     * @param contentToBind Optional. The original content string that will be hashed (SHA-256 then Base64URL)
+     *                      and set as the request hash for the Play Integrity API call.
+     *                      This same original content string should be sent to your server as 'contentBinding'.
      * @return The integrity token as a String.
      * @throws Exception if there is an issue retrieving the token.
      */
-    suspend fun getToken(requestHash: String?): String
+    suspend fun getToken(contentToBind: String?): String // Changed parameter name
 }
