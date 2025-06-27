@@ -1,7 +1,5 @@
 package dev.keiji.deviceintegrity.ui.main.playintegrity
 
-package dev.keiji.deviceintegrity.ui.main.playintegrity
-
 import dev.keiji.deviceintegrity.api.playintegrity.StandardVerifyResponse
 
 data class StandardPlayIntegrityUiState(
