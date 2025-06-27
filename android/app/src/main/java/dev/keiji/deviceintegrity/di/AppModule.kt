@@ -7,8 +7,12 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.keiji.deviceintegrity.AppInfoProviderImpl
 import dev.keiji.deviceintegrity.provider.contract.AppInfoProvider
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
+import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.provider.impl.DeviceInfoProviderImpl
+import dev.keiji.deviceintegrity.provider.impl.DeviceSecurityStateProviderImpl
 import javax.inject.Singleton
 
 @Module
@@ -27,5 +31,13 @@ object AppModule {
     @Singleton
     fun provideDeviceInfoProvider(): DeviceInfoProvider {
         return DeviceInfoProviderImpl()
+    }
+
+    @Provides
+    @Singleton
+    fun provideDeviceSecurityStateProvider(
+        @ApplicationContext context: Context
+    ): DeviceSecurityStateProvider {
+        return DeviceSecurityStateProviderImpl(context)
     }
 }

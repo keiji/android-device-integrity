@@ -7,6 +7,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.keiji.deviceintegrity.api.playintegrity.PlayIntegrityTokenVerifyApiClient
 import dev.keiji.deviceintegrity.api.playintegrity.StandardVerifyRequest
 import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal
+import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
+import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.repository.contract.StandardPlayIntegrityTokenRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +20,9 @@ import javax.inject.Inject
 @HiltViewModel
 class StandardPlayIntegrityViewModel @Inject constructor(
     private val standardPlayIntegrityTokenRepository: StandardPlayIntegrityTokenRepository,
-    private val playIntegrityTokenVerifyApiClient: PlayIntegrityTokenVerifyApiClient
+    private val playIntegrityTokenVerifyApiClient: PlayIntegrityTokenVerifyApiClient,
+    private val deviceInfoProvider: DeviceInfoProvider,
+    private val deviceSecurityStateProvider: DeviceSecurityStateProvider
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(StandardPlayIntegrityUiState())
     val uiState: StateFlow<StandardPlayIntegrityUiState> = _uiState.asStateFlow()
@@ -88,9 +92,43 @@ class StandardPlayIntegrityViewModel @Inject constructor(
 
         val contentBindingForVerification = _uiState.value.contentBinding
 
+import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
+import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo
+
+// ... (other imports)
+
+// ... (class definition)
+
         viewModelScope.launch {
             try {
-                val request = StandardVerifyRequest(token = token, contentBinding = contentBindingForVerification)
+                val deviceInfo = DeviceInfo(
+                    brand = deviceInfoProvider.BRAND,
+                    model = deviceInfoProvider.MODEL,
+                    device = deviceInfoProvider.DEVICE,
+                    product = deviceInfoProvider.PRODUCT,
+                    manufacturer = deviceInfoProvider.MANUFACTURER,
+                    hardware = deviceInfoProvider.HARDWARE,
+                    board = deviceInfoProvider.BOARD,
+                    bootloader = deviceInfoProvider.BOOTLOADER,
+                    versionRelease = deviceInfoProvider.VERSION_RELEASE,
+                    sdkInt = deviceInfoProvider.SDK_INT,
+                    fingerprint = deviceInfoProvider.FINGERPRINT,
+                    securityPatch = deviceInfoProvider.SECURITY_PATCH
+                )
+
+                val securityInfo = SecurityInfo(
+                    isDeviceLockEnabled = deviceSecurityStateProvider.isDeviceLockEnabled,
+                    isBiometricsEnabled = deviceSecurityStateProvider.isBiometricsEnabled,
+                    hasClass3Authenticator = deviceSecurityStateProvider.hasClass3Authenticator,
+                    hasStrongbox = deviceSecurityStateProvider.hasStrongBox
+                )
+
+                val request = StandardVerifyRequest(
+                    token = token,
+                    contentBinding = contentBindingForVerification,
+                    deviceInfo = deviceInfo,
+                    securityInfo = securityInfo
+                )
                 val response = playIntegrityTokenVerifyApiClient.verifyTokenStandard(request)
 
                 Log.d("StandardPlayIntegrityVM", "Verification Response: ${response.tokenPayloadExternal}")
