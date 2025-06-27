@@ -4,6 +4,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.keiji.deviceintegrity.api.playintegrity.PlayIntegrityTokenVerifyApiClient
+import dev.keiji.deviceintegrity.api.playintegrity.StandardVerifyRequest
+import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal
 import dev.keiji.deviceintegrity.repository.contract.StandardPlayIntegrityTokenRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +17,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class StandardPlayIntegrityViewModel @Inject constructor(
-    private val standardPlayIntegrityTokenRepository: StandardPlayIntegrityTokenRepository
+    private val standardPlayIntegrityTokenRepository: StandardPlayIntegrityTokenRepository,
+    private val playIntegrityTokenVerifyApiClient: PlayIntegrityTokenVerifyApiClient
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(StandardPlayIntegrityUiState())
     val uiState: StateFlow<StandardPlayIntegrityUiState> = _uiState.asStateFlow()
@@ -74,16 +78,65 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 status = "Verifying token..."
             )
         }
-        // TODO: Implement token verification logic (async)
+
+        val contentBindingForVerification = _uiState.value.contentBinding // Use the same contentBinding
+
         viewModelScope.launch {
-            kotlinx.coroutines.delay(1000) // Simulate network call
-            Log.d("StandardPlayIntegrityVM", "verifyToken() called. Token: $token")
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    status = it.status + "\nVerification requested (Not yet implemented)."
-                )
+            try {
+                val request = StandardVerifyRequest(token = token, nonce = contentBindingForVerification)
+                val response = playIntegrityTokenVerifyApiClient.verifyTokenStandard(request)
+
+                Log.d("StandardPlayIntegrityVM", "Verification Response: ${response.tokenPayloadExternal}")
+
+                val verificationStatus = formatTokenPayload(response.tokenPayloadExternal)
+
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        status = "Server Verification Successful:\n$verificationStatus"
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e("StandardPlayIntegrityVM", "Error verifying token with server", e)
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        status = "Error verifying token with server: ${e.message}"
+                    )
+                }
             }
         }
+    }
+
+    private fun formatTokenPayload(payload: TokenPayloadExternal?): String {
+        if (payload == null) return "No payload data received."
+
+        val requestDetailsStr = payload.requestDetails?.let { rd ->
+            "Request: pkg=${rd.requestPackageName}, nonce='${rd.nonce}', hash='${rd.requestHash}', timestamp=${rd.timestampMillis}"
+        } ?: "Request Details: N/A"
+
+        val appIntegrityStr = payload.appIntegrity?.let { ai ->
+            "App Integrity: verdict=${ai.appRecognitionVerdict}, pkg=${ai.packageName}, certs=${ai.certificateSha256Digest?.joinToString()?.take(20)}..., versionCode=${ai.versionCode}"
+        } ?: "App Integrity: N/A"
+
+        val deviceIntegrityStr = payload.deviceIntegrity?.let { di ->
+            "Device Integrity: verdict=${di.deviceRecognitionVerdict?.joinToString()}, attributes=${di.deviceAttributes}, recentActivity=${di.recentDeviceActivity}"
+        } ?: "Device Integrity: N/A"
+
+        val accountDetailsStr = payload.accountDetails?.let { ad ->
+            "Account Details: licensing=${ad.appLicensingVerdict}"
+        } ?: "Account Details: N/A"
+
+        val environmentDetailsStr = payload.environmentDetails?.let { ed ->
+            "Environment Details: playProtect=${ed.playProtectVerdict}, appAccessRisk=${ed.appAccessRiskVerdict?.appsDetected?.joinToString()}"
+        } ?: "Environment Details: N/A"
+
+        return """
+            $requestDetailsStr
+            $appIntegrityStr
+            $deviceIntegrityStr
+            $accountDetailsStr
+            $environmentDetailsStr
+        """.trimIndent()
     }
 }
