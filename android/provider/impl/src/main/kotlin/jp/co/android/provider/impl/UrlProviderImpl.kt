@@ -1,9 +1,9 @@
-package jp.co.android.provider.impl
+package dev.keiji.deviceintegrity.provider.impl
 
 import android.content.Context
 import androidx.annotation.StringRes
 import dagger.hilt.android.qualifiers.ApplicationContext
-import jp.co.android.provider.contract.UrlProvider
+import dev.keiji.deviceintegrity.provider.contract.UrlProvider
 import javax.inject.Inject
 
 class UrlProviderImpl @Inject constructor(

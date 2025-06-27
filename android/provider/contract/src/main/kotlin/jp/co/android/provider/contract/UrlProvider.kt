@@ -1,4 +1,4 @@
-package jp.co.android.provider.contract
+package dev.keiji.deviceintegrity.provider.contract
 
 interface UrlProvider {
     val termsOfServiceUrl: String
