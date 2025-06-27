@@ -3,7 +3,9 @@ name: Deploy to Cloud Run
 on:
   push:
     branches:
-      - deploy/cloudrun
+      - main
+    paths:
+      - 'server/**'
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
