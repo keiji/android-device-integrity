@@ -10,9 +10,13 @@ This document outlines the steps for AI coding agents to set up the Android SDK 
 Before proceeding with the Android SDK setup, ensure the following are installed and configured:
 
 *   **Java Development Kit (JDK):**
-    *   A specific JDK version is required. Please check the project's `build.gradle` files (e.g., `android/build.gradle` or `android/app/build.gradle`) for `sourceCompatibility` and `targetCompatibility` or the `jvmTarget` in Kotlin options to determine the compatible JDK version. (Example: JDK 17)
-    *   Ensure the `JAVA_HOME` environment variable is set correctly to your JDK installation path.
+    *   **Project JDK Version:** A specific JDK version is required for compiling the project's Java/Kotlin source code. Please check the project's `build.gradle.kts` files (e.g., `android/app/build.gradle.kts`) for `sourceCompatibility` and `targetCompatibility` under `compileOptions`, or the `jvmTarget` in `kotlinOptions`. For this project, it is typically **JDK 11**.
+    *   Ensure the `JAVA_HOME` environment variable is set correctly to this JDK installation path (e.g., JDK 11).
     *   Verify installation: `java -version`
+    *   **Android Gradle Plugin (AGP) JDK Version:** The Android Gradle Plugin itself may require a newer JDK version to run (e.g., JDK 17). If you encounter errors like "Android Gradle plugin requires Java X to run", you will need to configure Gradle to use that specific JDK version for its daemon.
+        *   Set `org.gradle.java.home=/path/to/jdk-X` (replace X with the required version, e.g., `/usr/lib/jvm/java-17-openjdk-amd64`) in the `android/gradle.properties` file.
+        *   `JAVA_HOME` should still point to the project's compilation JDK (e.g., JDK 11).
+    *   **SDK Manager JDK Version:** The `sdkmanager` tool itself might also require a newer JDK (e.g., JDK 17). If you see `UnsupportedClassVersionError` when running `sdkmanager`, temporarily set `JAVA_HOME` to JDK 17+ for `sdkmanager` execution, then revert it.
 
 ## 2. Android SDK Setup Instructions
 
@@ -44,7 +48,9 @@ Follow these steps precisely to set up the Android SDK.
     ```bash
     sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.1"
     ```
-    *   **Note for AI Agents:** If you encounter issues with these specific versions (e.g., "Package ... not available"), it might indicate the versions need updating. Check the `android/app/build.gradle` file for `compileSdk` and `buildToolsVersion` directives for the correct versions to install.
+    *   **Note for AI Agents:**
+        *   If you encounter issues with these specific versions (e.g., "Package ... not available"), it might indicate the versions need updating. Check the `android/app/build.gradle.kts` file for `compileSdk` (often defined in `libs.versions.toml`) and `buildToolsVersion` directives for the correct versions to install.
+        *   `sdkmanager` might require a newer JDK (e.g., JDK 17) to run. If you encounter `UnsupportedClassVersionError`, temporarily switch your `JAVA_HOME` to JDK 17+ for this command and then switch back to the project's JDK (e.g., JDK 11).
 
 4.  **Accept SDK Licenses:**
     *   Accept all SDK licenses by running:
@@ -57,13 +63,16 @@ Follow these steps precisely to set up the Android SDK.
     *   This file tells the Android Gradle Plugin where to find the SDK.
     *   Create a file named `local.properties` in the `android` directory of your project with the following content:
     ```properties
-    sdk.dir=$HOME/AndroidSdk
+    sdk.dir=/path/to/your/AndroidSdk
     ```
-    *   You can create this file with the following command from the repository root:
+    *   You can create this file with the following command from the repository root. AI Agents should replace `$HOME` with the actual absolute path to their home directory (e.g., `/home/agent/AndroidSdk` or use `$(eval echo ~$USER)/AndroidSdk` if the shell supports it).
     ```bash
-    echo "sdk.dir=\$HOME/AndroidSdk" > android/local.properties
+    # For AI Agents, resolve $HOME to an absolute path:
+    echo "sdk.dir=$(eval echo ~$USER)/AndroidSdk" > android/local.properties
+    # Alternatively, if $HOME is already correctly set for the agent's user:
+    # echo "sdk.dir=\$HOME/AndroidSdk" > android/local.properties
     ```
-    *   **Note for AI Agents:** Ensure this command is run from the *repository root*, not within the `android` directory itself, for the path to be correct.
+    *   **Note for AI Agents:** Ensure this command is run from the *repository root*. Using an absolute path for `sdk.dir` is generally more robust. If you still see warnings like "SDK location not found" related to `local.properties` during the build, but the build succeeds, it's likely `ANDROID_HOME` environment variable is correctly pointing to the SDK.
 
 ## 3. Building the Project
 
@@ -100,12 +109,14 @@ Follow these steps precisely to set up the Android SDK.
 ## 4. Troubleshooting Common Issues
 
 *   **`SDK location not found. Define location with sdk.dir in the local.properties file or with an ANDROID_HOME environment variable.`**
-    *   Ensure `android/local.properties` exists and `sdk.dir` points to the correct SDK path (e.g., `$HOME/AndroidSdk`).
-    *   Verify `ANDROID_HOME` environment variable is set correctly and exported in your current session.
+    *   Ensure `android/local.properties` exists and `sdk.dir` points to the correct SDK path (e.g., `/home/agent/AndroidSdk`). Using an absolute path is recommended.
+    *   Verify `ANDROID_HOME` environment variable is set correctly and exported in your current session. This is often the primary way Gradle finds the SDK.
 *   **`java.lang.UnsupportedClassVersionError` or issues related to JDK version:**
-    *   Check the required JDK version (see Section 1).
-    *   Ensure `JAVA_HOME` points to the correct JDK installation.
-    *   You might have multiple JDKs installed; ensure the correct one is active. Use `java -version` and `javac -version` to verify.
+    *   **During `sdkmanager` execution:** This tool might require a newer JDK (e.g., JDK 17+) than the project's compilation JDK. See Section 2.3 Note.
+    *   **During Gradle build (`./gradlew`):**
+        *   If the error message indicates "Android Gradle plugin requires Java X to run", set `org.gradle.java.home=/path/to/jdk-X` in `android/gradle.properties`. Ensure `JAVA_HOME` still points to the JDK version specified for project compilation (e.g., JDK 11). See Section 1 Prerequisites.
+        *   If the error relates to source compilation, ensure `JAVA_HOME` points to the correct JDK version specified in `sourceCompatibility` / `jvmTarget` (e.g., JDK 11).
+    *   Verify `java -version` and `javac -version` reflect the intended active JDK for the task at hand.
 *   **`sdkmanager: command not found` or `aapt: command not found`:**
     *   The `PATH` environment variable is likely not configured correctly to include SDK tools. Refer to Section 2.2.
     *   Ensure you have reloaded your shell configuration or opened a new terminal after modifying environment variables.
