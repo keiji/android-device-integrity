@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -15,8 +13,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import dev.keiji.deviceintegrity.R // Assuming R class is in this package
 import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal
 
 @Composable
@@ -37,7 +37,6 @@ fun StatusDisplayArea(
                 text = "Error: ${errorMessages.joinToString("\n")}",
                 modifier = Modifier.align(Alignment.TopStart)
             )
-            // No copy button for errors for now, could be added if needed
         } else if (tokenPayload != null) {
             DisplayTokenResponse(tokenPayload)
             IconButton(
@@ -47,19 +46,19 @@ fun StatusDisplayArea(
                 },
                 modifier = Modifier.align(Alignment.TopEnd)
             ) {
-                Icon(Icons.Filled.ContentCopy, contentDescription = "Copy")
+                    Icon(painterResource(id = R.drawable.ic_content_copy), contentDescription = "Copy")
             }
         } else {
             Text(
                 text = statusText,
                 modifier = Modifier.align(Alignment.TopStart)
             )
-            if (statusText.isNotEmpty()) { // Show copy button only if there's status text
+            if (statusText.isNotEmpty()) {
                 IconButton(
                     onClick = { clipboardManager.setText(AnnotatedString(statusText)) },
                     modifier = Modifier.align(Alignment.TopEnd)
                 ) {
-                    Icon(Icons.Filled.ContentCopy, contentDescription = "Copy")
+                        Icon(painterResource(id = R.drawable.ic_content_copy), contentDescription = "Copy")
                 }
             }
         }
