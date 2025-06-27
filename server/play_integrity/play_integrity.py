@@ -21,6 +21,16 @@ PLAY_INTEGRITY_PACKAGE_NAME = "dev.keiji.deviceintegrity"
 NONCE_EXPIRY_MINUTES = 10
 NONCE_KIND = "NonceSession" # Datastore kind for storing nonce per session
 
+# Verified Payload configuration
+VERIFIED_PAYLOAD_KIND = "VerifiedSessionPayload"
+# This Kind stores the payload received from the client after successful Play Integrity verification.
+# Entity Key: session_id (string)
+# Properties:
+#   - session_id (string): The session ID.
+#   - payload_data (dict): The client's request JSON, excluding keys used for Play Integrity verification (e.g., 'token', 'session_id', 'contentBinding').
+#   - created_at (datetime): Timestamp of when this entity was created (UTC).
+#   - verification_type (string): "classic" or "standard".
+
 def generate_and_store_nonce_with_session(session_id):
     """
     Generates a cryptographically secure nonce, associates it with a session_id,
@@ -208,6 +218,30 @@ def verify_integrity():
             app.logger.error(f"Failed to delete used nonce for session_id {session_id} from Datastore: {e}")
             # Continue returning success even if delete fails, but log the error.
 
+        # Store the verified payload
+        try:
+            payload_key = datastore_client.key(VERIFIED_PAYLOAD_KIND, session_id)
+            payload_entity = datastore.Entity(key=payload_key)
+            now = datetime.now(timezone.utc)
+
+            # Create a new dictionary for payload_data, excluding 'token' and 'session_id'
+            payload_to_store = {k: v for k, v in data.items() if k not in ['token', 'session_id']}
+
+            payload_entity.update({
+                'session_id': session_id,
+                'payload_data': payload_to_store, # Storing the rest of the request body
+                'created_at': now,
+                'verification_type': "classic"
+            })
+            datastore_client.put(payload_entity)
+            app.logger.info(f"Successfully stored verified payload for session_id: {session_id}. Stored data: {payload_to_store}")
+        except Exception as e:
+            app.logger.error(f"Failed to store verified payload for session_id {session_id}: {e}")
+            # Depending on policy, this could be a critical error or just logged.
+            # For now, we'll log and still return the original API response if nonce verification was successful.
+            # If storing payload is critical, you might want to return an error here:
+            # return jsonify({"error": "Failed to store verified payload", "details": str(e)}), 500
+
         return jsonify(api_response), 200
 
     except google.auth.exceptions.DefaultCredentialsError as e:
@@ -229,12 +263,16 @@ def verify_integrity_standard():
 
         client_content_binding = data.get('contentBinding')
         integrity_token = data.get('token')
-        # session_id = data.get('session_id') # Optional for server-side validation
+        session_id = data.get('session_id') # Activated: session_id is now required
 
         if not integrity_token:
             return jsonify({"error": "Missing 'token' in request"}), 400
         if not client_content_binding:
             return jsonify({"error": "Missing 'contentBinding' in request"}), 400
+        if not session_id: # Added: Check for session_id
+            return jsonify({"error": "Missing 'session_id' in request"}), 400
+        if not isinstance(session_id, str) or not session_id.strip(): # Added: Validate session_id
+            return jsonify({"error": "'session_id' must be a non-empty string"}), 400
 
         # Hash and Base64URL encode the client_content_binding
         try:
@@ -274,7 +312,33 @@ def verify_integrity_standard():
                 "play_integrity_response": api_response
             }), 400
 
-        # Optional: If server-side validation using session_id was done, delete nonce from Datastore.
+        # Optional: If server-side validation using session_id was done (e.g. for a one-time use token tied to this session_id),
+        # you might delete a corresponding nonce here.
+        # For this task, we are focusing on storing the payload associated with the session_id.
+
+        # Store the verified payload
+        try:
+            payload_key = datastore_client.key(VERIFIED_PAYLOAD_KIND, session_id)
+            payload_entity = datastore.Entity(key=payload_key)
+            now = datetime.now(timezone.utc)
+
+            # Create a new dictionary for payload_data, excluding 'token', 'contentBinding', and 'session_id'
+            payload_to_store = {k: v for k, v in data.items() if k not in ['token', 'contentBinding', 'session_id']}
+
+            payload_entity.update({
+                'session_id': session_id,
+                'payload_data': payload_to_store, # Storing the rest of the request body
+                'created_at': now,
+                'verification_type': "standard"
+            })
+            datastore_client.put(payload_entity)
+            app.logger.info(f"Successfully stored verified payload for session_id: {session_id} (standard). Stored data: {payload_to_store}")
+        except Exception as e:
+            app.logger.error(f"Failed to store verified payload for session_id {session_id} (standard): {e}")
+            # Depending on policy, this could be a critical error or just logged.
+            # For now, we'll log and still return the original API response if requestHash verification was successful.
+            # If storing payload is critical, you might want to return an error here:
+            # return jsonify({"error": "Failed to store verified payload (standard)", "details": str(e)}), 500
 
         return jsonify(api_response), 200
 
