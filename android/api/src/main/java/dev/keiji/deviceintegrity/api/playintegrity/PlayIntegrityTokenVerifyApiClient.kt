@@ -5,9 +5,9 @@ import kotlinx.serialization.Serializable
 import retrofit2.http.Body
 import retrofit2.http.POST
 
-interface PlayIntegrityTokenVerifyApiClient { // Renamed interface
+interface PlayIntegrityTokenVerifyApiClient {
     @POST("/play-integrity/classic/nonce")
-    suspend fun getNonce(@Body request: CreateNonceRequest): NonceResponse // Added @Body and CreateNonceRequest
+    suspend fun getNonce(@Body request: CreateNonceRequest): NonceResponse
 
     @POST("/play-integrity/classic/verify")
     suspend fun verifyToken(@Body request: VerifyTokenRequest): VerifyTokenResponse
@@ -50,8 +50,6 @@ data class TokenPayloadExternal(
     @SerialName("accountDetails") val accountDetails: AccountDetails?,
     @SerialName("environmentDetails") val environmentDetails: EnvironmentDetails? = null // EnvironmentDetails is often optional
 )
-
-// NonceRequest data class is removed as it's not needed.
 
 @Serializable
 data class NonceResponse(
