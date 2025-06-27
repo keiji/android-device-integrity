@@ -10,6 +10,8 @@ import dev.keiji.deviceintegrity.api.playintegrity.VerifyTokenRequest
 import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.repository.contract.ClassicPlayIntegrityTokenRepository
+import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo // Added
+import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo // Added
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -133,13 +135,6 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 verifyTokenResponse = null
             )
         }
-
-import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
-import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo
-
-// ... (other imports)
-
-// ... (class definition)
 
         viewModelScope.launch {
             try {

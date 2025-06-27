@@ -10,6 +10,8 @@ import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal
 import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.repository.contract.StandardPlayIntegrityTokenRepository
+import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo // Added
+import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo // Added
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -91,13 +93,6 @@ class StandardPlayIntegrityViewModel @Inject constructor(
         }
 
         val contentBindingForVerification = _uiState.value.contentBinding
-
-import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
-import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo
-
-// ... (other imports)
-
-// ... (class definition)
 
         viewModelScope.launch {
             try {
