@@ -77,7 +77,7 @@ data class VerifyTokenResponse(
 data class RequestDetails(
     val requestPackageName: String?,
     val nonce: String?,
-    val requestHash: String,
+    val requestHash: String? = null,
     @SerialName("timestampMillis") val timestampMillis: Long?
 )
 
