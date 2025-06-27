@@ -8,7 +8,7 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-val versionPropertiesFile = rootProject.file("android/version.properties")
+val versionPropertiesFile = rootProject.file("version.properties")
 val versionProps = if (versionPropertiesFile.exists()) {
     GUtil.loadProperties(versionPropertiesFile)
 } else {
