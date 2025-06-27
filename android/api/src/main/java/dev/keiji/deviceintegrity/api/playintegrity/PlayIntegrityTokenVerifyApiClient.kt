@@ -98,7 +98,7 @@ data class DeviceIntegrity(
 
 @Serializable
 data class DeviceAttributes( // Standard API only
-    val sdkVersion: String? // String in docs, but represents an Int (API level)
+    val sdkVersion: Int? // String in docs, but represents an Int (API level)
     // It might be better to keep as String if server sends it as String, or use a custom serializer.
     // For now, keeping as String? to match original cautious typing.
 )
