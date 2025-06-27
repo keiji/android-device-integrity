@@ -106,8 +106,9 @@ def create_nonce_endpoint():
 def verify_integrity():
     """
     Handles POST requests to /play-integrity/classic/verify.
-    It expects a JSON payload with 'nonce' and 'token'.
-    It calls the Google Play Integrity API to decode the token and verifies the nonce.
+    It expects a JSON payload with 'session_id' and 'token'.
+    It retrieves the nonce associated with 'session_id' from Datastore,
+    calls the Google Play Integrity API to decode the token, and verifies the nonce.
     Returns the JSON response from the Play Integrity API.
     """
     try:
@@ -115,34 +116,41 @@ def verify_integrity():
         if not data:
             return jsonify({"error": "Missing JSON payload"}), 400
 
-        client_nonce = data.get('nonce')
+        session_id = data.get('session_id')
         integrity_token = data.get('token')
-        # session_id = data.get('session_id') # Optional: client could send session_id for server-side nonce validation
 
-        if not client_nonce:
-            return jsonify({"error": "Missing 'nonce' in request"}), 400
+        if not session_id:
+            return jsonify({"error": "Missing 'session_id' in request"}), 400
+        if not isinstance(session_id, str) or not session_id.strip():
+            return jsonify({"error": "'session_id' must be a non-empty string"}), 400
         if not integrity_token:
             return jsonify({"error": "Missing 'token' in request"}), 400
 
-        # Optional: Server-side validation of client_nonce against Datastore using session_id
-        # if session_id:
-        #     key = datastore_client.key(NONCE_KIND, session_id)
-        #     entity = datastore_client.get(key)
-        #     if not entity:
-        #         app.logger.warning(f"Session not found or nonce expired for session_id: {session_id} during verify.")
-        #         return jsonify({"error": "Session not found or nonce expired"}), 400 # Consider if 400 or specific error
-        #     if entity['nonce'] != client_nonce:
-        #         app.logger.warning(f"Nonce mismatch for session_id: {session_id}. Client: {client_nonce}, Stored: {entity['nonce']}")
-        #         return jsonify({"error": "Nonce does not match for session"}), 400
-        #     if entity['expiry_datetime'] < datetime.now(timezone.utc):
-        #         app.logger.warning(f"Nonce expired for session_id: {session_id}.")
-        #         # Potentially delete here if expired, or let cleanup handle it
-        #         return jsonify({"error": "Nonce expired for session"}), 400
-        #     # If valid, proceed. Consider deleting the nonce after successful token verification by Google.
-        # else:
-        #     app.logger.info("No session_id provided for server-side nonce validation during verify. Proceeding with API nonce check.")
-        #     pass
+        # Retrieve nonce from Datastore using session_id
+        key = datastore_client.key(NONCE_KIND, session_id)
+        entity = datastore_client.get(key)
 
+        if not entity:
+            app.logger.warning(f"No nonce found for session_id: {session_id}")
+            return jsonify({"error": "Invalid session_id: Session ID not found or nonce expired."}), 400
+
+        stored_nonce = entity.get('nonce')
+        expiry_datetime = entity.get('expiry_datetime')
+
+        if not stored_nonce: # Should not happen if entity exists and was created by generate_and_store_nonce_with_session
+            app.logger.error(f"Nonce value missing in Datastore entity for session_id: {session_id}")
+            return jsonify({"error": "Internal server error: Failed to retrieve nonce details."}), 500
+
+        if expiry_datetime and expiry_datetime < datetime.now(timezone.utc):
+            app.logger.warning(f"Nonce for session_id: {session_id} has expired.")
+            # Consider deleting the expired nonce here or let cleanup_expired_nonces handle it.
+            # If we delete here, ensure it's done safely.
+            try:
+                datastore_client.delete(key)
+                app.logger.info(f"Deleted expired nonce for session_id: {session_id} during verification.")
+            except Exception as e:
+                app.logger.error(f"Failed to delete expired nonce for session_id {session_id}: {e}")
+            return jsonify({"error": "Invalid session_id: Nonce for session has expired."}), 400
 
         credentials, project = google.auth.default(
             scopes=['https://www.googleapis.com/auth/playintegrity']
@@ -159,52 +167,39 @@ def verify_integrity():
         api_nonce = request_details.get('nonce')
 
         if not api_nonce:
-            app.logger.error("Nonce not found in Play Integrity API response.")
-            return jsonify({
-                "error": "Nonce missing in Play Integrity API response payload",
-                "play_integrity_response": api_response
-            }), 500 # Or 400, as it implies an issue with the token or its processing
+            app.logger.error("Nonce not found in Play Integrity API response. Full API response: %s", api_response)
+            return jsonify({"error": "Nonce missing in API response: Nonce not found in Play Integrity API response payload."}), 500 # Or 400
 
-        if api_nonce != client_nonce:
-            try:
-                # Canonicalize both nonces before comparing to handle potential encoding differences (e.g. padding)
-                decoded_api_nonce = base64.urlsafe_b64decode(api_nonce.encode('utf-8') + b'==') # Add padding for robust decoding
-                re_encoded_api_nonce = base64.urlsafe_b64encode(decoded_api_nonce).decode('utf-8').rstrip('=')
+        # Canonicalize both nonces before comparing
+        re_encoded_api_nonce = None
+        re_encoded_stored_nonce = None
+        try:
+            # API nonce might not have padding, stored nonce should be correctly padded or not require it if generated via urlsafe_b64encode().rstrip('=')
+            # Ensure consistent comparison by decoding and re-encoding.
+            decoded_api_nonce = base64.urlsafe_b64decode(api_nonce.encode('utf-8') + b'==') # Add padding for robust decoding
+            re_encoded_api_nonce = base64.urlsafe_b64encode(decoded_api_nonce).decode('utf-8').rstrip('=')
 
-                decoded_client_nonce = base64.urlsafe_b64decode(client_nonce.encode('utf-8') + b'==')
-                re_encoded_client_nonce = base64.urlsafe_b64encode(decoded_client_nonce).decode('utf-8').rstrip('=')
+            decoded_stored_nonce = base64.urlsafe_b64decode(stored_nonce.encode('utf-8') + b'==')
+            re_encoded_stored_nonce = base64.urlsafe_b64encode(decoded_stored_nonce).decode('utf-8').rstrip('=')
+        except Exception as e:
+            app.logger.error(f"Error during nonce canonicalization for session {session_id}: {e}. API nonce: {api_nonce}, Stored nonce: {stored_nonce}")
+            # If canonicalization fails, proceed with direct comparison, but log it.
+            pass
 
-                if re_encoded_api_nonce == re_encoded_client_nonce:
-                    app.logger.info(f"Nonce comparison passed after canonicalization. Original API: {api_nonce}, Client: {client_nonce}")
-                    pass
-                else:
-                    app.logger.error(f"Nonce mismatch after canonicalization. Client: {client_nonce} (canonical: {re_encoded_client_nonce}), API: {api_nonce} (canonical: {re_encoded_api_nonce})")
-                    return jsonify({
-                        "error": "Nonce mismatch",
-                        "client_nonce": client_nonce,
-                        "api_nonce": api_nonce,
-                        "play_integrity_response": api_response # Include for debugging
-                    }), 400
-            except Exception as e:
-                app.logger.error(f"Error during nonce canonicalization: {e}. Client: {client_nonce}, API: {api_nonce}")
-                # Fallback to simple mismatch if canonicalization fails for some reason
-                return jsonify({
-                    "error": "Nonce mismatch (canonicalization failed)",
-                    "client_nonce": client_nonce,
-                    "api_nonce": api_nonce,
-                    "play_integrity_response": api_response
-                }), 400
+        final_api_nonce_to_compare = re_encoded_api_nonce if re_encoded_api_nonce else api_nonce
+        final_stored_nonce_to_compare = re_encoded_stored_nonce if re_encoded_stored_nonce else stored_nonce
 
-        # If nonce matches (client_nonce vs api_nonce)
-        # AND if server-side validation using session_id was done and passed:
-        # Consider deleting the nonce from Datastore here to prevent reuse.
-        # if session_id and 'entity' in locals() and entity: # Check if 'entity' was fetched and valid
-        #    try:
-        #        datastore_client.delete(key) # key would be datastore_client.key(NONCE_KIND, session_id)
-        #        app.logger.info(f"Nonce for session {session_id} used and deleted from Datastore after successful verification.")
-        #    except Exception as e:
-        #        app.logger.error(f"Failed to delete used nonce for session {session_id} from Datastore: {e}")
+        if final_api_nonce_to_compare != final_stored_nonce_to_compare:
+            app.logger.error(f"Nonce mismatch for session_id: {session_id}. Stored: {final_stored_nonce_to_compare} (Original: {stored_nonce}), API: {final_api_nonce_to_compare} (Original: {api_nonce}). Full API response: {api_response}")
+            return jsonify({"error": "Nonce mismatch: The nonce from the token does not match the expected nonce for the session."}), 400
 
+        # Nonce matches. Delete the nonce from Datastore to prevent reuse.
+        try:
+            datastore_client.delete(key)
+            app.logger.info(f"Nonce for session_id: {session_id} used and deleted from Datastore.")
+        except Exception as e:
+            app.logger.error(f"Failed to delete used nonce for session_id {session_id} from Datastore: {e}")
+            # Continue returning success even if delete fails, but log the error.
 
         return jsonify(api_response), 200
 

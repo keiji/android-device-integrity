@@ -62,7 +62,7 @@ data class NonceResponse(
 @Serializable
 data class VerifyTokenRequest(
     val token: String,
-    val nonce: String
+    @SerialName("session_id") val sessionId: String
 )
 
 // Response for Classic API verification.
