@@ -29,10 +29,10 @@ class StandardPlayIntegrityTokenRepositoryImpl @Inject constructor(
         // The ViewModel's Base64 encoding uses NO_WRAP. The SDK example might use NO_PADDING as well.
         // Let's stick to NO_WRAP as used in ViewModel for now. If issues arise, check SDK requirements for Base64 flags.
         // The original code used: Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
-        // ViewModel used: Base64.NO_WRAP. This needs to be consistent.
+        // ViewModel used: Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING. This is now consistent.
         // For now, assume requestHash is correctly formatted by the caller.
-        requestHash?.takeIf { it.isNotEmpty() }?.let { hash ->
-            requestBuilder.setRequestHash(hash)
+        if (!requestHash.isNullOrEmpty()) {
+            requestBuilder.setRequestHash(requestHash)
         }
 
         // Request the integrity token.
