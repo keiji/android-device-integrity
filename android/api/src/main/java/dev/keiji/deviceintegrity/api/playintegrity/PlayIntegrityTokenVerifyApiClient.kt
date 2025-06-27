@@ -26,7 +26,7 @@ data class CreateNonceRequest(
 @Serializable
 data class StandardVerifyRequest(
     @SerialName("token") val token: String,
-    @SerialName("nonce") val nonce: String
+    @SerialName("contentBinding") val contentBinding: String
 )
 
 // Response for Standard API verification
@@ -54,7 +54,7 @@ data class TokenPayloadExternal(
 @Serializable
 data class NonceResponse(
     val nonce: String,
-    @SerialName("generated_datetime") val generatedDatetime: Long // Field name matches OpenAPI, type is Long
+    @SerialName("generated_datetime") val generatedDatetime: Long
 )
 
 @Serializable
@@ -76,9 +76,9 @@ data class VerifyTokenResponse(
 @Serializable
 data class RequestDetails(
     val requestPackageName: String?,
-    val nonce: String?, // For classic requests
-    val requestHash: String? = null, // For standard requests - often null in classic
-    @SerialName("timestampMillis") val timestampMillis: Long? // Changed to Long?
+    val nonce: String?,
+    val requestHash: String,
+    @SerialName("timestampMillis") val timestampMillis: Long?
 )
 
 @Serializable
@@ -86,25 +86,23 @@ data class AppIntegrity(
     val appRecognitionVerdict: String?,
     val packageName: String?,
     val certificateSha256Digest: List<String>?,
-    @SerialName("versionCode") val versionCode: Long? // Changed to Long? (or Int? if appropriate)
+    @SerialName("versionCode") val versionCode: Long?
 )
 
 @Serializable
 data class DeviceIntegrity(
     val deviceRecognitionVerdict: List<String>?,
-    val deviceAttributes: DeviceAttributes? = null, // Standard API only
-    val recentDeviceActivity: RecentDeviceActivity? = null // Standard API only
+    val deviceAttributes: DeviceAttributes? = null,
+    val recentDeviceActivity: RecentDeviceActivity? = null
 )
 
 @Serializable
-data class DeviceAttributes( // Standard API only
-    val sdkVersion: Int? // String in docs, but represents an Int (API level)
-    // It might be better to keep as String if server sends it as String, or use a custom serializer.
-    // For now, keeping as String? to match original cautious typing.
+data class DeviceAttributes(
+    val sdkVersion: Int?
 )
 
 @Serializable
-data class RecentDeviceActivity( // Standard API only
+data class RecentDeviceActivity(
     val deviceActivityLevel: String?
 )
 
@@ -114,13 +112,13 @@ data class AccountDetails(
 )
 
 @Serializable
-data class EnvironmentDetails( // Optional in classic, more common in standard
-    val appAccessRiskVerdict: AppAccessRiskVerdict? = null, // Standard API only
+data class EnvironmentDetails(
+    val appAccessRiskVerdict: AppAccessRiskVerdict? = null,
     val playProtectVerdict: String?
 )
 
 @Serializable
-data class AppAccessRiskVerdict( // Standard API only
+data class AppAccessRiskVerdict(
     val appsDetected: List<String>? = null
 )
 
@@ -134,21 +132,7 @@ data class ApiErrorResponse(
 @Serializable
 data class NonceMismatchErrorResponse(
     val error: String,
-    @SerialName("client_nonce") val clientNonce: String,
-    @SerialName("api_nonce") val apiNonce: String,
-    // As per OpenAPI, this should be an object, mapping to TokenPayloadExternal
+    @SerialName("client_provided_value") val clientProvidedValue: String,
+    @SerialName("api_provided_value") val apiProvidedValue: String,
     @SerialName("play_integrity_response") val playIntegrityResponse: TokenPayloadExternal? = null
 )
-
-// Note:
-// 1. Nullability of fields in TokenPayloadExternal and its nested classes:
-//    The current OpenAPI definition for /classic/verify response doesn't explicitly mark all sub-fields
-//    within tokenPayloadExternal as required. It's safer to keep them nullable for now or
-//    verify against actual server responses for classic requests. Standard requests might provide more fields.
-//    The example in OpenAPI suggests many fields are present.
-// 2. `versionCode` changed to `Long?`. If it can exceed Int.MAX_VALUE, Long is safer. Otherwise Int is fine.
-// 3. `timestampMillis` changed to `Long?`.
-// 4. `DeviceAttributes`, `RecentDeviceActivity`, `AppAccessRiskVerdict` are typically part of Standard API responses.
-//    They are kept nullable here. If classic API *never* returns them, they could be removed from
-//    general TokenPayloadExternal if we had separate models for classic and standard, but sharing is common.
-//    The current OpenAPI also includes them in the example for classic, so keeping them.

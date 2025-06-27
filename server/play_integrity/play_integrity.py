@@ -6,6 +6,7 @@ from google.cloud import datastore
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 import google.auth
+import hashlib
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -220,17 +221,22 @@ def verify_integrity_standard():
         if not data:
             return jsonify({"error": "Missing JSON payload"}), 400
 
-        client_nonce = data.get('nonce')
+        client_content_binding = data.get('contentBinding')
         integrity_token = data.get('token')
         # session_id = data.get('session_id') # Optional for server-side validation
 
         if not integrity_token:
             return jsonify({"error": "Missing 'token' in request"}), 400
-        if not client_nonce:
-            return jsonify({"error": "Missing 'nonce' in request"}), 400
+        if not client_content_binding:
+            return jsonify({"error": "Missing 'contentBinding' in request"}), 400
 
-        # Optional: Server-side validation of client_nonce against Datastore using session_id
-        # (Similar logic as in the classic verify endpoint)
+        # Hash and Base64URL encode the client_content_binding
+        try:
+            hashed_content_binding_bytes = hashlib.sha256(client_content_binding.encode('utf-8')).digest()
+            server_generated_hash = base64.urlsafe_b64encode(hashed_content_binding_bytes).decode('utf-8').rstrip('=')
+        except Exception as e:
+            app.logger.error(f"Error hashing/encoding contentBinding: {e}")
+            return jsonify({"error": "Failed to process contentBinding"}), 500
 
         credentials, project_id = google.auth.default(
             scopes=['https://www.googleapis.com/auth/playintegrity']
@@ -244,42 +250,23 @@ def verify_integrity_standard():
 
         token_payload = api_response.get('tokenPayloadExternal', {})
         request_details_payload = token_payload.get('requestDetails', {})
-        api_nonce = request_details_payload.get('nonce')
+        api_request_hash = request_details_payload.get('requestHash')
 
-        if not api_nonce:
-            app.logger.warning("Nonce not found in Play Integrity API response payload for standard verify.")
+        if not api_request_hash:
+            app.logger.warning("requestHash not found in Play Integrity API response payload for standard verify.")
             return jsonify({
-                "error": "Nonce missing in Play Integrity API response payload (standard)",
+                "error": "requestHash missing in Play Integrity API response payload (standard)",
                 "play_integrity_response": api_response
             }), 400 # Or 500
 
-        if client_nonce and api_nonce != client_nonce:
-            try:
-                decoded_api_nonce = base64.urlsafe_b64decode(api_nonce.encode('utf-8') + b'==')
-                re_encoded_api_nonce = base64.urlsafe_b64encode(decoded_api_nonce).decode('utf-8').rstrip('=')
-
-                decoded_client_nonce = base64.urlsafe_b64decode(client_nonce.encode('utf-8') + b'==')
-                re_encoded_client_nonce = base64.urlsafe_b64encode(decoded_client_nonce).decode('utf-8').rstrip('=')
-
-                if re_encoded_api_nonce == re_encoded_client_nonce:
-                    app.logger.info(f"Nonce mismatch (standard) resolved after canonicalization. Original API: {api_nonce}, Client: {client_nonce}")
-                    pass
-                else:
-                    app.logger.error(f"Nonce mismatch (standard) after canonicalization. Client: {client_nonce} (canonical: {re_encoded_client_nonce}), API: {api_nonce} (canonical: {re_encoded_api_nonce})")
-                    return jsonify({
-                        "error": "Nonce mismatch (standard)",
-                        "client_nonce": client_nonce,
-                        "api_nonce": api_nonce,
-                        "play_integrity_response": api_response
-                    }), 400
-            except Exception as e:
-                app.logger.error(f"Error during nonce canonicalization (standard): {e}. Client: {client_nonce}, API: {api_nonce}")
-                return jsonify({
-                    "error": "Nonce mismatch (canonicalization failed, standard)",
-                    "client_nonce": client_nonce,
-                    "api_nonce": api_nonce,
-                    "play_integrity_response": api_response
-                }), 400
+        if server_generated_hash != api_request_hash:
+            app.logger.error(f"Server contentBinding hash mismatch. Server generated: {server_generated_hash}, API: {api_request_hash}. Original client contentBinding: {client_content_binding}")
+            return jsonify({
+                "error": "Server contentBinding hash mismatch",
+                "client_provided_value": server_generated_hash,
+                "api_provided_value": api_request_hash,
+                "play_integrity_response": api_response
+            }), 400
 
         # Optional: If server-side validation using session_id was done, delete nonce from Datastore.
 

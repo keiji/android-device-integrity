@@ -83,7 +83,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                val request = StandardVerifyRequest(token = token, nonce = contentBindingForVerification)
+                val request = StandardVerifyRequest(token = token, contentBinding = contentBindingForVerification)
                 val response = playIntegrityTokenVerifyApiClient.verifyTokenStandard(request)
 
                 Log.d("StandardPlayIntegrityVM", "Verification Response: ${response.tokenPayloadExternal}")

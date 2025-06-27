@@ -17,7 +17,7 @@ tags:
     description: Operations related to the standard Play Integrity API requests.
 
 servers:
-  - url: http://localhost:8080 # Replace with your actual server URL in production
+  - url: http://localhost:8080
     description: Development server
 
 paths:
@@ -52,7 +52,7 @@ paths:
             application/json:
               schema:
                 type: object
-                required: # Added required for nonce and generated_datetime
+                required:
                   - nonce
                   - generated_datetime
                 properties:
@@ -61,7 +61,7 @@ paths:
                     description: The base64 URL-safe encoded nonce.
                     example: "aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890-_"
                   generated_datetime:
-                    type: integer # Kept as integer, format int64 is correct for epoch milliseconds
+                    type: integer
                     format: int64
                     description: The server time in epoch milliseconds when the nonce was generated.
                     example: 1678886400000
@@ -108,11 +108,11 @@ paths:
             application/json:
               schema:
                 type: object
-                required: # Added required for tokenPayloadExternal
+                required:
                   - tokenPayloadExternal
                 properties:
                   tokenPayloadExternal:
-                    $ref: '#/components/schemas/TokenPayloadExternal' # Referenced common schema
+                    $ref: '#/components/schemas/TokenPayloadExternal'
         '400':
           description: Bad request. This can be due to a missing JSON payload, missing 'nonce' or 'token' in the request, or a nonce mismatch.
           content:
@@ -146,13 +146,13 @@ paths:
             schema:
               type: object
               required:
-                - nonce
+                - contentBinding # Changed from requestHash
                 - token
               properties:
-                nonce:
+                contentBinding: # Changed from requestHash
                   type: string
-                  description: The nonce that was previously obtained (e.g., from /play-integrity/classic/nonce).
-                  example: "aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890-_"
+                  description: The original content string from the client app, which will be hashed by the server.
+                  example: "some_content_to_be_hashed_by_server"
                 token:
                   type: string
                   description: The integrity token received from the client (from Play Integrity API using Standard request).
@@ -164,11 +164,11 @@ paths:
             application/json:
               schema:
                 type: object
-                required: # Added required for tokenPayloadExternal
+                required:
                   - tokenPayloadExternal
                 properties:
                   tokenPayloadExternal:
-                    $ref: '#/components/schemas/TokenPayloadExternal' # Referenced common schema
+                    $ref: '#/components/schemas/TokenPayloadExternal'
         '400':
           description: Bad request. Missing payload, 'nonce'/'token', or nonce mismatch.
           content:
@@ -186,11 +186,9 @@ paths:
 
 components:
   schemas:
-    TokenPayloadExternal: # Defined common TokenPayloadExternal schema
+    TokenPayloadExternal:
       type: object
       description: Contains the decoded integrity verdict from Google Play Integrity API.
-      # Required fields based on typical Play Integrity responses and examples.
-      # Server should ensure these are present if it's a successful decoding.
       required:
         - requestDetails
         - appIntegrity
@@ -199,7 +197,7 @@ components:
       properties:
         requestDetails:
           type: object
-          required: # Common required fields for requestDetails
+          required:
             - requestPackageName
             - nonce
             - timestampMillis
@@ -207,22 +205,21 @@ components:
             requestPackageName:
               type: string
               example: "dev.keiji.deviceintegrity"
-            nonce: # Nonce is present in classic, requestHash in standard.
-                    # Making nonce required here as it's common, standard might use requestHash instead/additionally.
+            nonce:
               type: string
+              nullable: true
               example: "aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890-_"
-            requestHash: # More common in Standard API
+            requestHash:
               type: string
-              nullable: true # Allow null if not present (e.g. in Classic)
               example: "request_hash_example_for_standard"
             timestampMillis:
-              type: integer # Changed to integer
+              type: integer
               format: int64
               description: Timestamp in epoch milliseconds.
               example: 1678886400123
         appIntegrity:
           type: object
-          required: # Common required fields for appIntegrity
+          required:
             - appRecognitionVerdict
             - packageName
             - certificateSha256Digest
@@ -240,12 +237,12 @@ components:
                 type: string
               example: ["sha256_cert_digest"]
             versionCode:
-              type: integer # Changed to integer
+              type: integer
               description: Application version code.
               example: 123
         deviceIntegrity:
           type: object
-          required: # deviceRecognitionVerdict is key
+          required:
             - deviceRecognitionVerdict
           properties:
             deviceRecognitionVerdict:
@@ -253,14 +250,14 @@ components:
               items:
                 type: string
               example: ["MEETS_DEVICE_INTEGRITY"]
-            deviceAttributes: # Standard API, optional
+            deviceAttributes:
               type: object
               nullable: true
               properties:
                 sdkVersion:
-                  type: string # Kept as string, as actual API might send it as such
+                  type: string
                   example: "30"
-            recentDeviceActivity: # Standard API, optional
+            recentDeviceActivity:
               type: object
               nullable: true
               properties:
@@ -269,20 +266,20 @@ components:
                   example: "LEVEL_2"
         accountDetails:
           type: object
-          required: # appLicensingVerdict is key
+          required:
             - appLicensingVerdict
           properties:
             appLicensingVerdict:
               type: string
               example: "LICENSED"
-        environmentDetails: # Optional, more common in Standard API
+        environmentDetails:
           type: object
           nullable: true
           properties:
             playProtectVerdict:
               type: string
               example: "NO_ISSUES"
-            appAccessRiskVerdict: # Standard API, optional
+            appAccessRiskVerdict:
               type: object
               nullable: true
               properties:
@@ -321,21 +318,21 @@ components:
       type: object
       required:
         - error
-        - client_nonce
-        - api_nonce
+        - client_provided_value
+        - api_provided_value
       properties:
         error:
           type: string
-          description: A message indicating a nonce mismatch.
-          example: "Nonce mismatch"
-        client_nonce:
+          description: A message indicating a mismatch (e.g., nonce, or server-hashed contentBinding vs. API's requestHash).
+          example: "Server contentBinding hash mismatch"
+        client_provided_value:
           type: string
-          description: The nonce provided by the client.
-          example: "client_provided_nonce"
-        api_nonce:
+          description: The value provided by the client (e.g. nonce, or the server-generated hash of contentBinding).
+          example: "server_hashed_content_binding_example"
+        api_provided_value:
           type: string
-          description: The nonce found in the Play Integrity API response.
-          example: "api_response_nonce"
-        play_integrity_response: # Optional, included if server decides to send it
-          $ref: '#/components/schemas/TokenPayloadExternal' # Referenced common schema
+          description: The value found in the Play Integrity API response (e.g. nonce from API, or requestHash from API).
+          example: "api_response_request_hash_example"
+        play_integrity_response:
+          $ref: '#/components/schemas/TokenPayloadExternal'
   securitySchemes: {}
