@@ -17,7 +17,7 @@ tags:
     description: Operations related to the standard Play Integrity API requests.
 
 servers:
-  - url: http://localhost:8080 # Replace with your actual server URL in production
+  - url: http://localhost:8080
     description: Development server
 
 paths:
@@ -52,7 +52,7 @@ paths:
             application/json:
               schema:
                 type: object
-                required: # Added required for nonce and generated_datetime
+                required:
                   - nonce
                   - generated_datetime
                 properties:
@@ -61,7 +61,7 @@ paths:
                     description: The base64 URL-safe encoded nonce.
                     example: "aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890-_"
                   generated_datetime:
-                    type: integer # Kept as integer, format int64 is correct for epoch milliseconds
+                    type: integer
                     format: int64
                     description: The server time in epoch milliseconds when the nonce was generated.
                     example: 1678886400000
@@ -108,11 +108,11 @@ paths:
             application/json:
               schema:
                 type: object
-                required: # Added required for tokenPayloadExternal
+                required:
                   - tokenPayloadExternal
                 properties:
                   tokenPayloadExternal:
-                    $ref: '#/components/schemas/TokenPayloadExternal' # Referenced common schema
+                    $ref: '#/components/schemas/TokenPayloadExternal'
         '400':
           description: Bad request. This can be due to a missing JSON payload, missing 'nonce' or 'token' in the request, or a nonce mismatch.
           content:
@@ -146,10 +146,10 @@ paths:
             schema:
               type: object
               required:
-                - requestHash # Changed from nonce
+                - requestHash
                 - token
               properties:
-                requestHash: # Changed from nonce
+                requestHash:
                   type: string
                   description: The request hash provided by the client app.
                   example: "client_generated_request_hash"
@@ -164,11 +164,11 @@ paths:
             application/json:
               schema:
                 type: object
-                required: # Added required for tokenPayloadExternal
+                required:
                   - tokenPayloadExternal
                 properties:
                   tokenPayloadExternal:
-                    $ref: '#/components/schemas/TokenPayloadExternal' # Referenced common schema
+                    $ref: '#/components/schemas/TokenPayloadExternal'
         '400':
           description: Bad request. Missing payload, 'nonce'/'token', or nonce mismatch.
           content:
@@ -186,11 +186,9 @@ paths:
 
 components:
   schemas:
-    TokenPayloadExternal: # Defined common TokenPayloadExternal schema
+    TokenPayloadExternal:
       type: object
       description: Contains the decoded integrity verdict from Google Play Integrity API.
-      # Required fields based on typical Play Integrity responses and examples.
-      # Server should ensure these are present if it's a successful decoding.
       required:
         - requestDetails
         - appIntegrity
@@ -199,7 +197,7 @@ components:
       properties:
         requestDetails:
           type: object
-          required: # Common required fields for requestDetails
+          required:
             - requestPackageName
             - nonce
             - timestampMillis
@@ -207,13 +205,12 @@ components:
             requestPackageName:
               type: string
               example: "dev.keiji.deviceintegrity"
-            nonce: # Nonce is present in classic, requestHash in standard.
+            nonce:
               type: string
-              nullable: true # Nonce may not be present in standard API responses focusing on requestHash
+              nullable: true
               example: "aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890-_"
-            requestHash: # More common in Standard API
+            requestHash:
               type: string
-              # nullable: true # Assuming requestHash will be present in Standard API responses
               example: "request_hash_example_for_standard"
             timestampMillis:
               type: integer
@@ -222,7 +219,7 @@ components:
               example: 1678886400123
         appIntegrity:
           type: object
-          required: # Common required fields for appIntegrity
+          required:
             - appRecognitionVerdict
             - packageName
             - certificateSha256Digest
@@ -240,12 +237,12 @@ components:
                 type: string
               example: ["sha256_cert_digest"]
             versionCode:
-              type: integer # Changed to integer
+              type: integer
               description: Application version code.
               example: 123
         deviceIntegrity:
           type: object
-          required: # deviceRecognitionVerdict is key
+          required:
             - deviceRecognitionVerdict
           properties:
             deviceRecognitionVerdict:
@@ -253,14 +250,14 @@ components:
               items:
                 type: string
               example: ["MEETS_DEVICE_INTEGRITY"]
-            deviceAttributes: # Standard API, optional
+            deviceAttributes:
               type: object
               nullable: true
               properties:
                 sdkVersion:
-                  type: string # Kept as string, as actual API might send it as such
+                  type: string
                   example: "30"
-            recentDeviceActivity: # Standard API, optional
+            recentDeviceActivity:
               type: object
               nullable: true
               properties:
@@ -269,20 +266,20 @@ components:
                   example: "LEVEL_2"
         accountDetails:
           type: object
-          required: # appLicensingVerdict is key
+          required:
             - appLicensingVerdict
           properties:
             appLicensingVerdict:
               type: string
               example: "LICENSED"
-        environmentDetails: # Optional, more common in Standard API
+        environmentDetails:
           type: object
           nullable: true
           properties:
             playProtectVerdict:
               type: string
               example: "NO_ISSUES"
-            appAccessRiskVerdict: # Standard API, optional
+            appAccessRiskVerdict:
               type: object
               nullable: true
               properties:
@@ -317,25 +314,25 @@ components:
           type: string
           description: A message describing the error.
           example: "Failed to generate nonce"
-    NonceMismatchErrorResponse: # Renamed for clarity, though not strictly required by this change
+    NonceMismatchErrorResponse:
       type: object
       required:
         - error
-        - client_provided_value # Generic field name
-        - api_provided_value    # Generic field name
+        - client_provided_value
+        - api_provided_value
       properties:
         error:
           type: string
           description: A message indicating a mismatch (e.g., nonce or requestHash).
           example: "requestHash mismatch"
-        client_provided_value: # Generic field name
+        client_provided_value:
           type: string
           description: The value (e.g. nonce or requestHash) provided by the client.
           example: "client_provided_value_example"
-        api_provided_value:    # Generic field name
+        api_provided_value:
           type: string
           description: The value (e.g. nonce or requestHash) found in the Play Integrity API response.
           example: "api_response_value_example"
-        play_integrity_response: # Optional, included if server decides to send it
-          $ref: '#/components/schemas/TokenPayloadExternal' # Referenced common schema
+        play_integrity_response:
+          $ref: '#/components/schemas/TokenPayloadExternal'
   securitySchemes: {}
