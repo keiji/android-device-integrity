@@ -1,3 +1,6 @@
+android以下はクライアントアプリ（Android）のソースコードです。
+server以下はサーバー側のソースコードです。
+
 # Android SDK Setup for Building and Testing
 
 This document outlines the steps to set up the Android SDK environment required to build and test applications located under the `android` directory.
