@@ -72,11 +72,54 @@ fun ClassicPlayIntegrityContent(
 
         if (uiState.isLoading) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+        } else if (uiState.errorMessages.isNotEmpty()) {
+            Text(text = "Error: ${uiState.errorMessages.joinToString("\n")}")
+        } else if (uiState.verifyTokenResponse != null) {
+            DisplayTokenResponse(uiState.verifyTokenResponse.tokenPayloadExternal)
         } else {
-            Text(text = uiState.status) // Display status text
+            Text(text = uiState.status) // Fallback status
         }
     }
 }
+
+@Composable
+fun DisplayTokenResponse(tokenPayload: dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal?) {
+    if (tokenPayload == null) {
+        Text("Response: N/A")
+        return
+    }
+    Column {
+        Text("Request Details:")
+        Text("  Package Name: ${tokenPayload.requestDetails?.requestPackageName ?: "N/A"}")
+        Text("  Nonce: ${tokenPayload.requestDetails?.nonce ?: "N/A"}")
+        Text("  Request Hash: ${tokenPayload.requestDetails?.requestHash ?: "N/A"}")
+        Text("  Timestamp: ${tokenPayload.requestDetails?.timestampMillis ?: "N/A"}")
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("App Integrity:")
+        Text("  Recognition Verdict: ${tokenPayload.appIntegrity?.appRecognitionVerdict ?: "N/A"}")
+        Text("  Package Name: ${tokenPayload.appIntegrity?.packageName ?: "N/A"}")
+        Text("  Certificate SHA256: ${tokenPayload.appIntegrity?.certificateSha256Digest?.joinToString() ?: "N/A"}")
+        Text("  Version Code: ${tokenPayload.appIntegrity?.versionCode ?: "N/A"}")
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("Device Integrity:")
+        Text("  Recognition Verdict: ${tokenPayload.deviceIntegrity?.deviceRecognitionVerdict?.joinToString() ?: "N/A"}")
+        Text("  SDK Version: ${tokenPayload.deviceIntegrity?.deviceAttributes?.sdkVersion ?: "N/A"}")
+        Text("  Device Activity Level: ${tokenPayload.deviceIntegrity?.recentDeviceActivity?.deviceActivityLevel ?: "N/A"}")
+
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("Account Details:")
+        Text("  Licensing Verdict: ${tokenPayload.accountDetails?.appLicensingVerdict ?: "N/A"}")
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("Environment Details:")
+        Text("  App Access Risk Verdict: ${tokenPayload.environmentDetails?.appAccessRiskVerdict?.appsDetected?.joinToString() ?: "N/A"}")
+        Text("  Play Protect Verdict: ${tokenPayload.environmentDetails?.playProtectVerdict ?: "N/A"}")
+    }
+}
+
 
 @Preview
 @Composable
@@ -86,9 +129,37 @@ private fun ClassicPlayIntegrityContentPreview() {
             nonce = "preview-nonce",
             integrityToken = "preview-token",
             isLoading = false,
-            status = "Preview status text for Classic."
-            // isFetchNonceButtonEnabled, isRequestTokenButtonEnabled,
-            // and isVerifyTokenButtonEnabled are now calculated properties
+            status = "Preview status text for Classic.",
+            verifyTokenResponse = dev.keiji.deviceintegrity.api.playintegrity.VerifyTokenResponse(
+                tokenPayloadExternal = dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal(
+                    requestDetails = dev.keiji.deviceintegrity.api.playintegrity.RequestDetails(
+                        requestPackageName = "dev.keiji.preview",
+                        nonce = "preview-nonce-from-server",
+                        requestHash = "preview-request-hash",
+                        timestampMillis = System.currentTimeMillis()
+                    ),
+                    appIntegrity = dev.keiji.deviceintegrity.api.playintegrity.AppIntegrity(
+                        appRecognitionVerdict = "MEETS_DEVICE_INTEGRITY",
+                        packageName = "dev.keiji.preview",
+                        certificateSha256Digest = listOf("cert1", "cert2"),
+                        versionCode = 123
+                    ),
+                    deviceIntegrity = dev.keiji.deviceintegrity.api.playintegrity.DeviceIntegrity(
+                        deviceRecognitionVerdict = listOf("MEETS_DEVICE_INTEGRITY"),
+                        deviceAttributes = dev.keiji.deviceintegrity.api.playintegrity.DeviceAttributes(sdkVersion = 30),
+                        recentDeviceActivity = dev.keiji.deviceintegrity.api.playintegrity.RecentDeviceActivity(deviceActivityLevel = "LEVEL_1")
+                    ),
+                    accountDetails = dev.keiji.deviceintegrity.api.playintegrity.AccountDetails(
+                        appLicensingVerdict = "LICENSED"
+                    ),
+                    environmentDetails = dev.keiji.deviceintegrity.api.playintegrity.EnvironmentDetails(
+                        appAccessRiskVerdict = dev.keiji.deviceintegrity.api.playintegrity.AppAccessRiskVerdict(
+                            appsDetected = listOf("app1", "app2")
+                        ),
+                        playProtectVerdict = "NO_ISSUES"
+                    )
+                )
+            )
         ),
         onFetchNonce = {},
         onRequestToken = {},

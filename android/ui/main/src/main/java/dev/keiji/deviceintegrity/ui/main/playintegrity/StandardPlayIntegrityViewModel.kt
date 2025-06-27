@@ -49,7 +49,8 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                     it.copy(
                         isLoading = false,
                         integrityToken = token,
-                        status = "Token fetched successfully (Standard API, see Logcat for token)"
+                        status = "Token fetched successfully (Standard API, see Logcat for token)",
+                        errorMessages = emptyList()
                     )
                 }
             } catch (e: Exception) {
@@ -57,7 +58,8 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        status = "Error (Standard): ${e.message}"
+                        status = "Error fetching integrity token (Standard).",
+                        errorMessages = listOfNotNull(e.message)
                     )
                 }
             }
@@ -68,18 +70,23 @@ class StandardPlayIntegrityViewModel @Inject constructor(
         val token = _uiState.value.integrityToken
         if (token.isBlank()) {
             _uiState.update {
-                it.copy(status = "Token not available for verification.")
+                it.copy(
+                    status = "Token not available for verification.",
+                    errorMessages = listOf("Token is required for verification.")
+                )
             }
             return
         }
         _uiState.update {
             it.copy(
                 isLoading = true,
-                status = "Verifying token..."
+                status = "Verifying token...",
+                errorMessages = emptyList(),
+                standardVerifyResponse = null
             )
         }
 
-        val contentBindingForVerification = _uiState.value.contentBinding // Use the same contentBinding
+        val contentBindingForVerification = _uiState.value.contentBinding
 
         viewModelScope.launch {
             try {
@@ -88,55 +95,26 @@ class StandardPlayIntegrityViewModel @Inject constructor(
 
                 Log.d("StandardPlayIntegrityVM", "Verification Response: ${response.tokenPayloadExternal}")
 
-                val verificationStatus = formatTokenPayload(response.tokenPayloadExternal)
-
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        status = "Server Verification Successful:\n$verificationStatus"
+                        status = "Token verification complete.",
+                        standardVerifyResponse = response,
+                        errorMessages = emptyList()
                     )
                 }
             } catch (e: Exception) {
                 Log.e("StandardPlayIntegrityVM", "Error verifying token with server", e)
+                val errorMessage = e.message ?: "Unknown error during verification"
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        status = "Error verifying token with server: ${e.message}"
+                        status = "Error verifying token with server.",
+                        errorMessages = listOf(errorMessage),
+                        standardVerifyResponse = null // Clear previous response on error
                     )
                 }
             }
         }
-    }
-
-    private fun formatTokenPayload(payload: TokenPayloadExternal?): String {
-        if (payload == null) return "No payload data received."
-
-        val requestDetailsStr = payload.requestDetails?.let { rd ->
-            "Request: pkg=${rd.requestPackageName}, nonce='${rd.nonce}', hash='${rd.requestHash}', timestamp=${rd.timestampMillis}"
-        } ?: "Request Details: N/A"
-
-        val appIntegrityStr = payload.appIntegrity?.let { ai ->
-            "App Integrity: verdict=${ai.appRecognitionVerdict}, pkg=${ai.packageName}, certs=${ai.certificateSha256Digest?.joinToString()?.take(20)}..., versionCode=${ai.versionCode}"
-        } ?: "App Integrity: N/A"
-
-        val deviceIntegrityStr = payload.deviceIntegrity?.let { di ->
-            "Device Integrity: verdict=${di.deviceRecognitionVerdict?.joinToString()}, attributes=${di.deviceAttributes}, recentActivity=${di.recentDeviceActivity}"
-        } ?: "Device Integrity: N/A"
-
-        val accountDetailsStr = payload.accountDetails?.let { ad ->
-            "Account Details: licensing=${ad.appLicensingVerdict}"
-        } ?: "Account Details: N/A"
-
-        val environmentDetailsStr = payload.environmentDetails?.let { ed ->
-            "Environment Details: playProtect=${ed.playProtectVerdict}, appAccessRisk=${ed.appAccessRiskVerdict?.appsDetected?.joinToString()}"
-        } ?: "Environment Details: N/A"
-
-        return """
-            $requestDetailsStr
-            $appIntegrityStr
-            $deviceIntegrityStr
-            $accountDetailsStr
-            $environmentDetailsStr
-        """.trimIndent()
     }
 }
