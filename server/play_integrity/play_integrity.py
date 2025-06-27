@@ -7,6 +7,7 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 import google.auth
 import hashlib
+import uuid
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -30,6 +31,10 @@ VERIFIED_PAYLOAD_KIND = "VerifiedSessionPayload"
 #   - payload_data (dict): The client's request JSON, excluding keys used for Play Integrity verification (e.g., 'token', 'session_id', 'contentBinding').
 #   - created_at (datetime): Timestamp of when this entity was created (UTC).
 #   - verification_type (string): "classic" or "standard".
+
+def generate_unique_id():
+    """Generates a unique ID using UUID v4."""
+    return str(uuid.uuid4())
 
 def generate_and_store_nonce_with_session(session_id):
     """
@@ -220,7 +225,8 @@ def verify_integrity():
 
         # Store the verified payload
         try:
-            payload_key = datastore_client.key(VERIFIED_PAYLOAD_KIND, session_id)
+            generated_id = generate_unique_id() # Generate a new unique ID
+            payload_key = datastore_client.key(VERIFIED_PAYLOAD_KIND, generated_id) # Use new ID as key
             payload_entity = datastore.Entity(key=payload_key)
             now = datetime.now(timezone.utc)
 
@@ -236,15 +242,16 @@ def verify_integrity():
             payload_to_store['security_info'] = data.get('security_info', {})
 
             payload_entity.update({
-                'session_id': session_id,
+                'session_id': session_id, # Store the original client-provided session_id
                 'payload_data': payload_to_store,
                 'created_at': now,
                 'verification_type': "classic"
+                # 'generated_id' is not stored as a separate field because it's the entity key.
             })
             datastore_client.put(payload_entity)
-            app.logger.info(f"Successfully stored verified payload for session_id: {session_id}. Stored payload_data: {payload_to_store}")
+            app.logger.info(f"Successfully stored verified payload with generated_id: {generated_id} (client session_id: {session_id}). Stored payload_data: {payload_to_store}")
         except Exception as e:
-            app.logger.error(f"Failed to store verified payload for session_id {session_id}: {e}. Data received: {data}")
+            app.logger.error(f"Failed to store verified payload for generated_id {generated_id} (client session_id: {session_id}): {e}. Data received: {data}")
             # Depending on policy, this could be a critical error or just logged.
             # For now, we'll log and still return the original API response if nonce verification was successful.
             # If storing payload is critical, you might want to return an error here:
@@ -326,7 +333,8 @@ def verify_integrity_standard():
 
         # Store the verified payload
         try:
-            payload_key = datastore_client.key(VERIFIED_PAYLOAD_KIND, session_id)
+            generated_id = generate_unique_id() # Generate a new unique ID
+            payload_key = datastore_client.key(VERIFIED_PAYLOAD_KIND, generated_id) # Use new ID as key
             payload_entity = datastore.Entity(key=payload_key)
             now = datetime.now(timezone.utc)
 
@@ -339,15 +347,16 @@ def verify_integrity_standard():
             payload_to_store['security_info'] = data.get('security_info', {})
 
             payload_entity.update({
-                'session_id': session_id,
+                'session_id': session_id, # Store the original client-provided session_id
                 'payload_data': payload_to_store,
                 'created_at': now,
                 'verification_type': "standard"
+                # 'generated_id' is not stored as a separate field because it's the entity key.
             })
             datastore_client.put(payload_entity)
-            app.logger.info(f"Successfully stored verified payload for session_id: {session_id} (standard). Stored payload_data: {payload_to_store}")
+            app.logger.info(f"Successfully stored verified payload with generated_id: {generated_id} (client session_id: {session_id}) (standard). Stored payload_data: {payload_to_store}")
         except Exception as e:
-            app.logger.error(f"Failed to store verified payload for session_id {session_id} (standard): {e}. Data received: {data}")
+            app.logger.error(f"Failed to store verified payload for generated_id {generated_id} (client session_id: {session_id}) (standard): {e}. Data received: {data}")
             # Depending on policy, this could be a critical error or just logged.
             # For now, we'll log and still return the original API response if requestHash verification was successful.
             # If storing payload is critical, you might want to return an error here:
