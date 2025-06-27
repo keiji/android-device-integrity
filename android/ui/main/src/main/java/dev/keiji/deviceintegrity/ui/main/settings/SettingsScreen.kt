@@ -48,6 +48,10 @@ fun SettingsScreen(
             subtitle = uiState.appVersionName,
         )
         SettingsMenuItem(
+            title = "端末名",
+            subtitle = uiState.deviceName,
+        )
+        SettingsMenuItem(
             title = "OSバージョン",
             subtitle = uiState.osVersion,
         )

@@ -7,6 +7,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.keiji.deviceintegrity.AppInfoProviderImpl
 import dev.keiji.deviceintegrity.provider.contract.AppInfoProvider
+import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
+import dev.keiji.deviceintegrity.provider.impl.DeviceInfoProviderImpl
 import javax.inject.Singleton
 
 @Module
@@ -19,5 +21,11 @@ object AppModule {
         impl: AppInfoProviderImpl
     ): AppInfoProvider {
         return impl
+    }
+
+    @Provides
+    @Singleton
+    fun provideDeviceInfoProvider(): DeviceInfoProvider {
+        return DeviceInfoProviderImpl()
     }
 }
