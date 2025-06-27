@@ -26,7 +26,7 @@ data class CreateNonceRequest(
 @Serializable
 data class StandardVerifyRequest(
     @SerialName("token") val token: String,
-    @SerialName("nonce") val nonce: String
+    @SerialName("requestHash") val requestHash: String // Changed from nonce to requestHash
 )
 
 // Response for Standard API verification
@@ -76,9 +76,9 @@ data class VerifyTokenResponse(
 @Serializable
 data class RequestDetails(
     val requestPackageName: String?,
-    val nonce: String?, // For classic requests
-    val requestHash: String? = null, // For standard requests - often null in classic
-    @SerialName("timestampMillis") val timestampMillis: Long? // Changed to Long?
+    val nonce: String?, // For classic requests, remains nullable
+    val requestHash: String, // For standard requests, changed to non-nullable
+    @SerialName("timestampMillis") val timestampMillis: Long?
 )
 
 @Serializable
@@ -132,11 +132,10 @@ data class ApiErrorResponse(
 )
 
 @Serializable
-data class NonceMismatchErrorResponse(
+data class NonceMismatchErrorResponse( // Field names changed to match OpenAPI
     val error: String,
-    @SerialName("client_nonce") val clientNonce: String,
-    @SerialName("api_nonce") val apiNonce: String,
-    // As per OpenAPI, this should be an object, mapping to TokenPayloadExternal
+    @SerialName("client_provided_value") val clientProvidedValue: String,
+    @SerialName("api_provided_value") val apiProvidedValue: String,
     @SerialName("play_integrity_response") val playIntegrityResponse: TokenPayloadExternal? = null
 )
 

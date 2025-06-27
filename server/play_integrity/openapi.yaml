@@ -146,13 +146,13 @@ paths:
             schema:
               type: object
               required:
-                - nonce
+                - requestHash # Changed from nonce
                 - token
               properties:
-                nonce:
+                requestHash: # Changed from nonce
                   type: string
-                  description: The nonce that was previously obtained (e.g., from /play-integrity/classic/nonce).
-                  example: "aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890-_"
+                  description: The request hash provided by the client app.
+                  example: "client_generated_request_hash"
                 token:
                   type: string
                   description: The integrity token received from the client (from Play Integrity API using Standard request).
@@ -208,15 +208,15 @@ components:
               type: string
               example: "dev.keiji.deviceintegrity"
             nonce: # Nonce is present in classic, requestHash in standard.
-                    # Making nonce required here as it's common, standard might use requestHash instead/additionally.
               type: string
+              nullable: true # Nonce may not be present in standard API responses focusing on requestHash
               example: "aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890-_"
             requestHash: # More common in Standard API
               type: string
-              nullable: true # Allow null if not present (e.g. in Classic)
+              # nullable: true # Assuming requestHash will be present in Standard API responses
               example: "request_hash_example_for_standard"
             timestampMillis:
-              type: integer # Changed to integer
+              type: integer
               format: int64
               description: Timestamp in epoch milliseconds.
               example: 1678886400123
@@ -317,25 +317,25 @@ components:
           type: string
           description: A message describing the error.
           example: "Failed to generate nonce"
-    NonceMismatchErrorResponse:
+    NonceMismatchErrorResponse: # Renamed for clarity, though not strictly required by this change
       type: object
       required:
         - error
-        - client_nonce
-        - api_nonce
+        - client_provided_value # Generic field name
+        - api_provided_value    # Generic field name
       properties:
         error:
           type: string
-          description: A message indicating a nonce mismatch.
-          example: "Nonce mismatch"
-        client_nonce:
+          description: A message indicating a mismatch (e.g., nonce or requestHash).
+          example: "requestHash mismatch"
+        client_provided_value: # Generic field name
           type: string
-          description: The nonce provided by the client.
-          example: "client_provided_nonce"
-        api_nonce:
+          description: The value (e.g. nonce or requestHash) provided by the client.
+          example: "client_provided_value_example"
+        api_provided_value:    # Generic field name
           type: string
-          description: The nonce found in the Play Integrity API response.
-          example: "api_response_nonce"
+          description: The value (e.g. nonce or requestHash) found in the Play Integrity API response.
+          example: "api_response_value_example"
         play_integrity_response: # Optional, included if server decides to send it
           $ref: '#/components/schemas/TokenPayloadExternal' # Referenced common schema
   securitySchemes: {}

@@ -220,16 +220,16 @@ def verify_integrity_standard():
         if not data:
             return jsonify({"error": "Missing JSON payload"}), 400
 
-        client_nonce = data.get('nonce')
+        client_request_hash = data.get('requestHash') # Changed from nonce to requestHash
         integrity_token = data.get('token')
         # session_id = data.get('session_id') # Optional for server-side validation
 
         if not integrity_token:
             return jsonify({"error": "Missing 'token' in request"}), 400
-        if not client_nonce:
-            return jsonify({"error": "Missing 'nonce' in request"}), 400
+        if not client_request_hash: # Changed from client_nonce to client_request_hash
+            return jsonify({"error": "Missing 'requestHash' in request"}), 400
 
-        # Optional: Server-side validation of client_nonce against Datastore using session_id
+        # Optional: Server-side validation of client_request_hash against Datastore using session_id
         # (Similar logic as in the classic verify endpoint)
 
         credentials, project_id = google.auth.default(
@@ -244,42 +244,26 @@ def verify_integrity_standard():
 
         token_payload = api_response.get('tokenPayloadExternal', {})
         request_details_payload = token_payload.get('requestDetails', {})
-        api_nonce = request_details_payload.get('nonce')
+        api_request_hash = request_details_payload.get('requestHash') # Changed from nonce to requestHash
 
-        if not api_nonce:
-            app.logger.warning("Nonce not found in Play Integrity API response payload for standard verify.")
+        if not api_request_hash: # Changed from api_nonce to api_request_hash
+            app.logger.warning("requestHash not found in Play Integrity API response payload for standard verify.")
             return jsonify({
-                "error": "Nonce missing in Play Integrity API response payload (standard)",
+                "error": "requestHash missing in Play Integrity API response payload (standard)", # Changed message
                 "play_integrity_response": api_response
             }), 400 # Or 500
 
-        if client_nonce and api_nonce != client_nonce:
-            try:
-                decoded_api_nonce = base64.urlsafe_b64decode(api_nonce.encode('utf-8') + b'==')
-                re_encoded_api_nonce = base64.urlsafe_b64encode(decoded_api_nonce).decode('utf-8').rstrip('=')
-
-                decoded_client_nonce = base64.urlsafe_b64decode(client_nonce.encode('utf-8') + b'==')
-                re_encoded_client_nonce = base64.urlsafe_b64encode(decoded_client_nonce).decode('utf-8').rstrip('=')
-
-                if re_encoded_api_nonce == re_encoded_client_nonce:
-                    app.logger.info(f"Nonce mismatch (standard) resolved after canonicalization. Original API: {api_nonce}, Client: {client_nonce}")
-                    pass
-                else:
-                    app.logger.error(f"Nonce mismatch (standard) after canonicalization. Client: {client_nonce} (canonical: {re_encoded_client_nonce}), API: {api_nonce} (canonical: {re_encoded_api_nonce})")
-                    return jsonify({
-                        "error": "Nonce mismatch (standard)",
-                        "client_nonce": client_nonce,
-                        "api_nonce": api_nonce,
-                        "play_integrity_response": api_response
-                    }), 400
-            except Exception as e:
-                app.logger.error(f"Error during nonce canonicalization (standard): {e}. Client: {client_nonce}, API: {api_nonce}")
-                return jsonify({
-                    "error": "Nonce mismatch (canonicalization failed, standard)",
-                    "client_nonce": client_nonce,
-                    "api_nonce": api_nonce,
-                    "play_integrity_response": api_response
-                }), 400
+        # Compare client_request_hash with api_request_hash
+        # Assuming requestHash does not need the same canonicalization as nonce.
+        # If it does, similar decoding/re-encoding logic would be needed here.
+        if client_request_hash != api_request_hash:
+            app.logger.error(f"requestHash mismatch (standard). Client: {client_request_hash}, API: {api_request_hash}")
+            return jsonify({
+                "error": "requestHash mismatch (standard)", # Changed message
+                "client_request_hash": client_request_hash, # Changed field name
+                "api_request_hash": api_request_hash,       # Changed field name
+                "play_integrity_response": api_response
+            }), 400
 
         # Optional: If server-side validation using session_id was done, delete nonce from Datastore.
 
