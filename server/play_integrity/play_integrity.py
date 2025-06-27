@@ -157,7 +157,7 @@ def verify_integrity():
         )
         playintegrity = build('playintegrity', 'v1', credentials=credentials, cache_discovery=False)
         request_body = {'integrity_token': integrity_token}
-        api_response = playintegrity.decodeIntegrityToken(
+        api_response = playintegrity.v1().decodeIntegrityToken(
             packageName=PLAY_INTEGRITY_PACKAGE_NAME,
             body=request_body
         ).execute()
@@ -237,7 +237,7 @@ def verify_integrity_standard():
         )
         playintegrity = build('playintegrity', 'v1', credentials=credentials, cache_discovery=False)
         request_body = {'integrity_token': integrity_token}
-        api_response = playintegrity.decodeIntegrityToken(
+        api_response = playintegrity.v1().decodeIntegrityToken(
             packageName=PLAY_INTEGRITY_PACKAGE_NAME,
             body=request_body
         ).execute()
