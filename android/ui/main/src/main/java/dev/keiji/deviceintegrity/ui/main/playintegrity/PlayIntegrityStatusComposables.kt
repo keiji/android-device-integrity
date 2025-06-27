@@ -1,6 +1,6 @@
 package dev.keiji.deviceintegrity.ui.main.playintegrity
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,38 +29,50 @@ fun StatusDisplayArea(
 ) {
     val clipboardManager = LocalClipboardManager.current
 
-    Box(modifier = modifier.fillMaxWidth()) {
+    Column(modifier = modifier.fillMaxWidth()) {
         if (isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
         } else if (errorMessages.isNotEmpty()) {
+            // Copy button for errors (optional, you can remove if not needed)
+            IconButton(
+                onClick = {
+                    clipboardManager.setText(AnnotatedString(errorMessages.joinToString("\n")))
+                },
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Icon(painterResource(id = R.drawable.ic_content_copy), contentDescription = "Copy Error")
+            }
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Error: ${errorMessages.joinToString("\n")}",
-                modifier = Modifier.align(Alignment.TopStart)
+                modifier = Modifier.fillMaxWidth()
             )
         } else if (tokenPayload != null) {
-            DisplayTokenResponse(tokenPayload)
             IconButton(
                 onClick = {
                     val textToCopy = formatTokenPayload(tokenPayload)
                     clipboardManager.setText(AnnotatedString(textToCopy))
                 },
-                modifier = Modifier.align(Alignment.TopEnd)
+                modifier = Modifier.align(Alignment.End)
             ) {
-                    Icon(painterResource(id = R.drawable.ic_content_copy), contentDescription = "Copy")
+                Icon(painterResource(id = R.drawable.ic_content_copy), contentDescription = "Copy")
             }
+            Spacer(modifier = Modifier.height(8.dp))
+            DisplayTokenResponse(tokenPayload)
         } else {
-            Text(
-                text = statusText,
-                modifier = Modifier.align(Alignment.TopStart)
-            )
             if (statusText.isNotEmpty()) {
                 IconButton(
                     onClick = { clipboardManager.setText(AnnotatedString(statusText)) },
-                    modifier = Modifier.align(Alignment.TopEnd)
+                    modifier = Modifier.align(Alignment.End)
                 ) {
-                        Icon(painterResource(id = R.drawable.ic_content_copy), contentDescription = "Copy")
+                    Icon(painterResource(id = R.drawable.ic_content_copy), contentDescription = "Copy")
                 }
+                Spacer(modifier = Modifier.height(8.dp))
             }
+            Text(
+                text = statusText,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
