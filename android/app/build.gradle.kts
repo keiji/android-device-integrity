@@ -16,7 +16,7 @@ val versionProps = if (versionPropertiesFile.exists()) {
     Properties() // Empty Properties object
 }
 
-val serverEndpointPropertiesFile = project.file("server-endpoint.properties")
+val serverEndpointPropertiesFile = rootProject.file("server-endpoint.properties")
 val serverEndpointProps: Properties = if (serverEndpointPropertiesFile.exists()) {
     GUtil.loadProperties(serverEndpointPropertiesFile)
 } else {
