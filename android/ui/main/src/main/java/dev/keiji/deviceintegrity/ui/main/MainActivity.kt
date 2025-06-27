@@ -29,12 +29,15 @@ import dev.keiji.deviceintegrity.ui.main.settings.SettingsScreen
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
-import androidx.hilt.navigation.compose.hiltViewModel
-import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationViewModel
-import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationUiEvent
-import dev.keiji.deviceintegrity.ui.main.settings.SettingsViewModel
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.hilt.navigation.compose.hiltViewModel
+import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationUiEvent
+import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationViewModel
+import dev.keiji.deviceintegrity.ui.main.settings.SettingsUiEvent
+import dev.keiji.deviceintegrity.ui.main.settings.SettingsViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.keiji.deviceintegrity.ui.nav.contract.ApiEndpointSettingsNavigator
 import dev.keiji.deviceintegrity.ui.nav.contract.LicenseNavigator
@@ -148,20 +151,33 @@ fun DeviceIntegrityApp(
                 composable(AppScreen.Settings.route) {
                     val viewModel: SettingsViewModel = hiltViewModel()
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+                    val context = LocalContext.current
+
+                    LaunchedEffect(viewModel.eventFlow) {
+                        viewModel.eventFlow.collect { event ->
+                            when (event) {
+                                is SettingsUiEvent.OpenUrl -> {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(event.url))
+                                    context.startActivity(intent)
+                                }
+                            }
+                        }
+                    }
 
                     val apiSettingsLauncher = rememberLauncherForActivityResult(
                         contract = apiEndpointSettingsNavigator.contract(),
                         onResult = { /* No result is expected, but can handle if needed */ }
                     )
 
-                    val context = LocalContext.current
                     SettingsScreen(
                         uiState = uiState,
                         onNavigateToOssLicenses = {
                             context.startActivity(licenseNavigator.newIntent(context))
                         },
                         onNavigateToApiSettings = { apiSettingsLauncher.launch(Unit) },
-                        onNavigateToDeveloperInfo = { Timber.d("Navigate to Developer Info") }
+                        onNavigateToDeveloperInfo = { viewModel.openAboutAppUrl() },
+                        onNavigateToTermsOfService = { viewModel.openTermsOfServiceUrl() },
+                        onNavigateToPrivacyPolicy = { viewModel.openPrivacyPolicyUrl() }
                     )
                 }
             }
