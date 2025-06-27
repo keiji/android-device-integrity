@@ -168,7 +168,10 @@ def verify_integrity():
 
         if not api_nonce:
             app.logger.error("Nonce not found in Play Integrity API response. Full API response: %s", api_response)
-            return jsonify({"error": "Nonce missing in API response: Nonce not found in Play Integrity API response payload."}), 500 # Or 400
+            return jsonify({
+                "error": "Nonce missing in API response: Nonce not found in Play Integrity API response payload.",
+                "play_integrity_response": api_response
+            }), 500 # Or 400
 
         # Canonicalize both nonces before comparing
         re_encoded_api_nonce = None
@@ -191,7 +194,10 @@ def verify_integrity():
 
         if final_api_nonce_to_compare != final_stored_nonce_to_compare:
             app.logger.error(f"Nonce mismatch for session_id: {session_id}. Stored: {final_stored_nonce_to_compare} (Original: {stored_nonce}), API: {final_api_nonce_to_compare} (Original: {api_nonce}). Full API response: {api_response}")
-            return jsonify({"error": "Nonce mismatch: The nonce from the token does not match the expected nonce for the session."}), 400
+            return jsonify({
+                "error": "Nonce mismatch: The nonce from the token does not match the expected nonce for the session.",
+                "play_integrity_response": api_response
+            }), 400
 
         # Nonce matches. Delete the nonce from Datastore to prevent reuse.
         try:
