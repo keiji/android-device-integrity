@@ -32,7 +32,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(StandardPlayIntegrityUiState())
     val uiState: StateFlow<StandardPlayIntegrityUiState> = _uiState.asStateFlow()
 
-    private var currentSessionId: String = ""
+    private var currentSessionId: String = "" // Initialized as empty
 
     fun updateContentBinding(newContent: String) {
         _uiState.update {
@@ -44,12 +44,13 @@ class StandardPlayIntegrityViewModel @Inject constructor(
     }
 
     fun fetchIntegrityToken() {
+        currentSessionId = UUID.randomUUID().toString() // Generate and assign sessionId here
+
         val currentContent = _uiState.value.contentBinding
         // Standard API might allow empty contentBinding for token request,
         // but the calculated property isRequestTokenButtonEnabled handles UI enablement.
         // We proceed with fetching if the button was somehow clicked despite being disabled by UI.
 
-        currentSessionId = UUID.randomUUID().toString() // Store in ViewModel field
         var encodedHash = ""
         // contentBinding might be empty, but we still need to include currentSessionId in the hash if we were to create one.
         // However, the original logic only created a hash if currentContent was not empty.
@@ -121,7 +122,6 @@ class StandardPlayIntegrityViewModel @Inject constructor(
     fun verifyToken() {
         val currentUiState = _uiState.value
         val token = currentUiState.integrityToken
-        // val sessionId = currentUiState.sessionId // Removed: Use ViewModel's currentSessionId field
 
         if (token.isBlank()) {
             _uiState.update {
