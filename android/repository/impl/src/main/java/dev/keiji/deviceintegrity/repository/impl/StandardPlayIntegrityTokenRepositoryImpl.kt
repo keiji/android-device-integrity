@@ -15,7 +15,7 @@ class StandardPlayIntegrityTokenRepositoryImpl @Inject constructor(
     private val standardIntegrityTokenProviderProvider: StandardIntegrityTokenProviderProvider
 ) : StandardPlayIntegrityTokenRepository {
 
-    override suspend fun getToken(contentToBind: String?): String { // Changed argument name
+    override suspend fun getToken(contentToBind: String?): String {
         // Obtain StandardIntegrityManager via the provider.
         val integrityManager = standardIntegrityTokenProviderProvider.get()
 

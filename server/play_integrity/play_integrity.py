@@ -221,14 +221,14 @@ def verify_integrity_standard():
         if not data:
             return jsonify({"error": "Missing JSON payload"}), 400
 
-        client_content_binding = data.get('contentBinding') # Changed from requestHash to contentBinding
+        client_content_binding = data.get('contentBinding')
         integrity_token = data.get('token')
         # session_id = data.get('session_id') # Optional for server-side validation
 
         if not integrity_token:
             return jsonify({"error": "Missing 'token' in request"}), 400
-        if not client_content_binding: # Changed from client_request_hash to client_content_binding
-            return jsonify({"error": "Missing 'contentBinding' in request"}), 400 # Changed message
+        if not client_content_binding:
+            return jsonify({"error": "Missing 'contentBinding' in request"}), 400
 
         # Hash and Base64URL encode the client_content_binding
         try:
@@ -262,9 +262,9 @@ def verify_integrity_standard():
         if server_generated_hash != api_request_hash:
             app.logger.error(f"Server contentBinding hash mismatch. Server generated: {server_generated_hash}, API: {api_request_hash}. Original client contentBinding: {client_content_binding}")
             return jsonify({
-                "error": "Server contentBinding hash mismatch", # Changed message
-                "client_provided_value": server_generated_hash, # server-generated hash from client's contentBinding
-                "api_provided_value": api_request_hash,       # requestHash from API response
+                "error": "Server contentBinding hash mismatch",
+                "client_provided_value": server_generated_hash,
+                "api_provided_value": api_request_hash,
                 "play_integrity_response": api_response
             }), 400
 

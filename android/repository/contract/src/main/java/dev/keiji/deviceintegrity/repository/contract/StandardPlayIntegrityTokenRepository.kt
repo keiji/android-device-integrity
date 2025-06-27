@@ -13,5 +13,5 @@ interface StandardPlayIntegrityTokenRepository {
      * @return The integrity token as a String.
      * @throws Exception if there is an issue retrieving the token.
      */
-    suspend fun getToken(contentToBind: String?): String // Changed parameter name
+    suspend fun getToken(contentToBind: String?): String
 }
