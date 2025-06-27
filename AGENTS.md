@@ -139,3 +139,8 @@ Follow these steps precisely to set up the Android SDK.
     *   `android/app/build.gradle` (App-module Gradle configuration - check `compileSdk`, `minSdk`, `targetSdk`, `versionCode`, `versionName`, dependencies here)
     *   `android/app/src/main/AndroidManifest.xml` (App manifest - permissions, activities, services, etc.)
     *   `gradle/wrapper/gradle-wrapper.properties` (Specifies Gradle version)
+
+## 6. コード編集時のルール
+
+*   コードを削除する際は、特別な理由がない限りコメントアウトして残すのではなく、シンプルに削除してください。
+*   変更履歴に関するコメント（例：「古いコードは削除しました」など）も追加しないでください。 Gitの履歴がその目的を果たします。
