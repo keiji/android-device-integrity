@@ -84,7 +84,7 @@ class ApiEndpointSettingsViewModel @Inject constructor(
         }
     }
 
-    fun saveApiEndpoints() { // Renamed from saveApiEndpoint
+    fun saveApiEndpoints() {
         println("saveApiEndpoints called")
         val playIntegrityUrlToSave = _uiState.value.editingPlayIntegrityUrl
         val keyAttestationUrlToSave = _uiState.value.editingKeyAttestationUrl
