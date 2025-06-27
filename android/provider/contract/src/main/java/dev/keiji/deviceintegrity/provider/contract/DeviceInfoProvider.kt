@@ -21,4 +21,5 @@ interface DeviceInfoProvider {
     val BOOTLOADER: String
     val FINGERPRINT: String
     val TIME: Long
+    val SECURITY_PATCH: String
 }

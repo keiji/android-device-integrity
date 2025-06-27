@@ -1,6 +1,5 @@
 package dev.keiji.deviceintegrity.ui.main.settings
 
-import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,12 +30,8 @@ class SettingsViewModel @Inject constructor(
             appVersionName = appInfoProvider.getAppVersionName(),
             appVersionCode = appInfoProvider.getAppVersionCode(),
             deviceName = "${deviceInfoProvider.BRAND} ${deviceInfoProvider.MODEL}",
-            osVersion = Build.VERSION.RELEASE,
-            securityPatchLevel = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                Build.VERSION.SECURITY_PATCH
-            } else {
-                "N/A" // Marshmallow以前はSECURITY_PATCHがない
-            }
+            osVersion = deviceInfoProvider.VERSION_RELEASE,
+            securityPatchLevel = deviceInfoProvider.SECURITY_PATCH
         )
     )
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()

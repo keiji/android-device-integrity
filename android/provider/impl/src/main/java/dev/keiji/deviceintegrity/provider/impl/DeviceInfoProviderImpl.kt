@@ -24,4 +24,5 @@ class DeviceInfoProviderImpl : DeviceInfoProvider {
     override val BOOTLOADER: String = Build.BOOTLOADER
     override val FINGERPRINT: String = Build.FINGERPRINT
     override val TIME: Long = Build.TIME
+    override val SECURITY_PATCH: String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) Build.VERSION.SECURITY_PATCH else "N/A"
 }
