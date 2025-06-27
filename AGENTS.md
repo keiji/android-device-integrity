@@ -1,14 +1,25 @@
 android以下はクライアントアプリ（Android）のソースコードです。
 server以下はサーバー側のソースコードです。
 
-# Android SDK Setup for Building and Testing
+# Android SDK Setup for Building and Testing (AI Agent Guide)
 
-This document outlines the steps to set up the Android SDK environment required to build and test applications located under the `android` directory.
+This document outlines the steps for AI coding agents to set up the Android SDK environment required to build and test applications located under the `android` directory.
 
-## Setup Instructions
+## 1. Prerequisites
 
-1.  **Install Android SDK:**
-    Execute the following commands in your terminal to download and install the Android SDK command-line tools:
+Before proceeding with the Android SDK setup, ensure the following are installed and configured:
+
+*   **Java Development Kit (JDK):**
+    *   A specific JDK version is required. Please check the project's `build.gradle` files (e.g., `android/build.gradle` or `android/app/build.gradle`) for `sourceCompatibility` and `targetCompatibility` or the `jvmTarget` in Kotlin options to determine the compatible JDK version. (Example: JDK 17)
+    *   Ensure the `JAVA_HOME` environment variable is set correctly to your JDK installation path.
+    *   Verify installation: `java -version`
+
+## 2. Android SDK Setup Instructions
+
+Follow these steps precisely to set up the Android SDK.
+
+1.  **Install Android SDK Command-line Tools:**
+    *   The following commands will download and install the Android SDK command-line tools to `~/AndroidSdk`.
     ```bash
     wget -q https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip -O /tmp/tools.zip
     unzip -o /tmp/tools.zip -d /tmp/tools
@@ -19,44 +30,101 @@ This document outlines the steps to set up the Android SDK environment required 
     ```
 
 2.  **Configure Environment Variables:**
-    Set the following environment variables. You might want to add these to your shell's configuration file (e.g., `~/.bashrc`, `~/.zshrc`) for persistence.
+    *   Set these environment variables. For persistence, add them to your shell's configuration file (e.g., `~/.bashrc`, `~/.zshrc`) and reload your shell.
     ```bash
     export ANDROID_HOME="$HOME/AndroidSdk"
-    export ANDROID_SDK_ROOT="$HOME/AndroidSdk"
+    export ANDROID_SDK_ROOT="$HOME/AndroidSdk" # ANDROID_HOME is preferred, but some older tools might use this.
     export PATH="$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin"
-    export PATH="$PATH:$ANDROID_SDK_ROOT/platform-tools"
+    export PATH="$PATH:$ANDROID_SDK_ROOT/platform-tools" # platform-tools will be installed in the next step.
     ```
+    *   **Important for AI Agents:** After setting these, ensure your current shell session reflects these changes. If you are in a persistent environment, you might need to re-initialize your shell or source the configuration file (e.g., `source ~/.bashrc`).
 
 3.  **Install SDK Packages:**
-    Use the `sdkmanager` tool to install the necessary platform tools, platforms, and build tools.
+    *   Use the `sdkmanager` tool to install the necessary platform tools, platforms, and build tools. The versions specified below are known to work with this project.
     ```bash
     sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.1"
     ```
+    *   **Note for AI Agents:** If you encounter issues with these specific versions (e.g., "Package ... not available"), it might indicate the versions need updating. Check the `android/app/build.gradle` file for `compileSdk` and `buildToolsVersion` directives for the correct versions to install.
 
 4.  **Accept SDK Licenses:**
-    Accept the SDK licenses by running:
+    *   Accept all SDK licenses by running:
     ```bash
     yes | sdkmanager --licenses
     ```
+    *   **Note for AI Agents:** If this command fails, ensure `sdkmanager` is accessible (PATH configured correctly) and try running it without `yes |` to manually review and accept licenses if prompted.
 
 5.  **Create `local.properties` for the Android Project:**
-    Create a file named `local.properties` in the `android` directory of your project with the following content, ensuring the path points to your Android SDK installation:
+    *   This file tells the Android Gradle Plugin where to find the SDK.
+    *   Create a file named `local.properties` in the `android` directory of your project with the following content:
     ```properties
     sdk.dir=$HOME/AndroidSdk
     ```
-
-    You can create this file with the following command from the repository root:
+    *   You can create this file with the following command from the repository root:
     ```bash
     echo "sdk.dir=\$HOME/AndroidSdk" > android/local.properties
     ```
+    *   **Note for AI Agents:** Ensure this command is run from the *repository root*, not within the `android` directory itself, for the path to be correct.
 
-## Building the Project
+## 3. Building the Project
 
-After completing the setup, you should be able to build the Android application. Navigate to the `android` directory and run the Gradle build command:
+*   **Gradle Wrapper:** This project uses the Gradle Wrapper (`./gradlew`). Always use this script for building, as it ensures the correct Gradle version is used.
+*   **Navigate to the Android project directory:** All Gradle commands should be run from the `android` directory.
+    ```bash
+    cd android
+    ```
 
-```bash
-cd android
-./gradlew build
-```
+*   **Common Build Commands:**
+    *   **Clean the project:**
+        ```bash
+        ./gradlew clean
+        ```
+    *   **Build the debug APK (for testing and development):**
+        ```bash
+        ./gradlew assembleDebug
+        ```
+        *Output APK location: `app/build/outputs/apk/debug/app-debug.apk`*
+    *   **Run unit tests:**
+        ```bash
+        ./gradlew testDebugUnitTest
+        ```
+    *   **Run Android Lint checks:**
+        ```bash
+        ./gradlew lintDebug
+        ```
+    *   **Full build (as originally specified):**
+        ```bash
+        ./gradlew build
+        ```
+        *This typically runs `assembleDebug`, `assembleRelease`, and associated tests. For quicker iteration, prefer `assembleDebug`.*
 
-**Note:** If you encounter build issues, ensure that all environment variables are correctly set and that the `sdk.dir` in `android/local.properties` points to the correct Android SDK location.
+## 4. Troubleshooting Common Issues
+
+*   **`SDK location not found. Define location with sdk.dir in the local.properties file or with an ANDROID_HOME environment variable.`**
+    *   Ensure `android/local.properties` exists and `sdk.dir` points to the correct SDK path (e.g., `$HOME/AndroidSdk`).
+    *   Verify `ANDROID_HOME` environment variable is set correctly and exported in your current session.
+*   **`java.lang.UnsupportedClassVersionError` or issues related to JDK version:**
+    *   Check the required JDK version (see Section 1).
+    *   Ensure `JAVA_HOME` points to the correct JDK installation.
+    *   You might have multiple JDKs installed; ensure the correct one is active. Use `java -version` and `javac -version` to verify.
+*   **`sdkmanager: command not found` or `aapt: command not found`:**
+    *   The `PATH` environment variable is likely not configured correctly to include SDK tools. Refer to Section 2.2.
+    *   Ensure you have reloaded your shell configuration or opened a new terminal after modifying environment variables.
+*   **Gradle sync issues or "Could not resolve all files for configuration..."**:
+    *   Ensure network connectivity if dependencies need to be downloaded.
+    *   Try cleaning the build: `./gradlew clean`
+    *   Try a build with stacktrace for more details: `./gradlew assembleDebug --stacktrace`
+    *   If you are behind a proxy, configure Gradle proxy settings in `~/.gradle/gradle.properties`.
+*   **License not accepted:**
+    *   Re-run `yes | sdkmanager --licenses`. If it still fails, run `sdkmanager --licenses` interactively.
+
+## 5. Notes for AI Agents
+
+*   **Working Directory:** Most commands specific to Android (especially `./gradlew` commands) should be executed from within the `android` directory.
+*   **Environment Variables:** Ensure `JAVA_HOME` and `ANDROID_HOME` (and additions to `PATH`) are correctly set and available in your execution environment *before* running any build commands.
+*   **Build Failures:** If a build fails, carefully examine the error output. The messages usually provide clues. The "Troubleshooting" section above might also help.
+*   **Idempotency:** The setup scripts for SDK tools are generally safe to re-run if you suspect an incomplete setup.
+*   **Checking Project Configuration:** Key Android configuration files include:
+    *   `android/build.gradle` (Project-level Gradle configuration)
+    *   `android/app/build.gradle` (App-module Gradle configuration - check `compileSdk`, `minSdk`, `targetSdk`, `versionCode`, `versionName`, dependencies here)
+    *   `android/app/src/main/AndroidManifest.xml` (App manifest - permissions, activities, services, etc.)
+    *   `gradle/wrapper/gradle-wrapper.properties` (Specifies Gradle version)
