@@ -34,6 +34,7 @@ android {
 
 dependencies {
     api(project(":ui:nav:contract"))
+    implementation(project(":ui:agreement")) // Added
     implementation(project(":ui:api-endpoint-settings"))
     implementation(project(":ui:license")) // For LicenseActivity
     implementation(libs.javax.inject) // For @Inject

@@ -35,6 +35,7 @@ include(
     ":ui:api-endpoint-settings",
     ":ui:nav:contract",
     ":ui:nav:impl",
-    ":ui:license"
+    ":ui:license",
+    ":ui:agreement"
 )
 include(":api")
