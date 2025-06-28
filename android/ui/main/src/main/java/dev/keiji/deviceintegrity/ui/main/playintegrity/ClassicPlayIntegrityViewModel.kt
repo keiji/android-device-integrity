@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID // Import
 import javax.inject.Inject
+// PlayIntegrityProgressConstants will be imported from the new common file
 
 @HiltViewModel
 class ClassicPlayIntegrityViewModel @Inject constructor(
@@ -41,7 +42,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
         currentSessionId = UUID.randomUUID().toString() // Generate and assign sessionId here
         _uiState.update {
             it.copy(
-                isLoading = true,
+                progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS,
                 status = "Fetching nonce from server..."
             )
         }
@@ -52,7 +53,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         nonce = response.nonce,
-                        isLoading = false,
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         status = "Nonce fetched: ${response.nonce}",
                         currentSessionId = currentSessionId
                     )
@@ -61,7 +62,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 Log.e("ClassicPlayIntegrityVM", "Error fetching nonce", e)
                 _uiState.update {
                     it.copy(
-                        isLoading = false,
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         status = "Error fetching nonce.",
                         errorMessages = listOfNotNull(e.message)
                     )
@@ -79,7 +80,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
         if (currentNonce.isBlank()) {
             _uiState.update {
                 it.copy(
-                    isLoading = false,
+                    // isLoading = false, // Not strictly necessary to change here as it's not set to true
                     status = "Nonce cannot be empty.",
                     errorMessages = listOf("Nonce is required to fetch a token.")
                 )
@@ -89,7 +90,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
 
         _uiState.update {
             it.copy(
-                isLoading = true,
+                progressValue = -1.0F,
                 status = "Fetching token...",
                 errorMessages = emptyList(),
                 playIntegrityResponse = null
@@ -101,7 +102,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 Log.d("ClassicPlayIntegrityVM", "Integrity Token: $token")
                 _uiState.update {
                     it.copy(
-                        isLoading = false,
+                        progressValue = 0.0F,
                         integrityToken = token,
                         status = "Token fetched successfully (see Logcat for token)",
                         errorMessages = emptyList()
@@ -111,7 +112,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 Log.e("ClassicPlayIntegrityVM", "Error fetching integrity token", e)
                 _uiState.update {
                     it.copy(
-                        isLoading = false,
+                        progressValue = 0.0F,
                         status = "Error fetching integrity token.",
                         errorMessages = listOfNotNull(e.message)
                     )
@@ -135,8 +136,8 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
 
         _uiState.update {
             it.copy(
-                isLoading = true,
-                status = "Verifying token with server...", // Original status
+                progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS, // Start with CircularProgress
+                status = "Preparing to verify token...", // Initial status
                 errorMessages = emptyList(),
                 playIntegrityResponse = null,
                 deviceInfo = null,
@@ -146,19 +147,33 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                // Update status to indicate waiting period
+                val delayMs = if (appInfoProvider.isDebugBuild) DEBUG_VERIFY_TOKEN_DELAY_MS else VERIFY_TOKEN_DELAY_MS
+                val totalSteps = (delayMs / 100).toInt() // e.g., 200 steps for 20 seconds
+                var currentStep = 0
+
+                // Update status to indicate waiting period and switch to ProgressBar
                 _uiState.update {
                     it.copy(
-                        status = "Waiting for 20 seconds before verification..."
+                        progressValue = 1.0F, // Start ProgressBar at full
+                        status = "Waiting for ${delayMs / 1000} seconds before verification..."
                     )
                 }
 
-                val delayMs = if (appInfoProvider.isDebugBuild) DEBUG_VERIFY_TOKEN_DELAY_MS else VERIFY_TOKEN_DELAY_MS
-                delay(delayMs)
+                while (currentStep < totalSteps) {
+                    delay(100) // Wait for 0.1 seconds
+                    currentStep++
+                    val newProgress = 1.0F - (currentStep.toFloat() / totalSteps)
+                    _uiState.update {
+                        it.copy(
+                            progressValue = newProgress.coerceAtLeast(PlayIntegrityProgressConstants.NO_PROGRESS) // Ensure progress doesn't go below 0
+                        )
+                    }
+                }
 
-                // Update status before actual verification
+                // Update status before actual verification and switch back to CircularProgress
                 _uiState.update {
                     it.copy(
+                        progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS, // Show CircularProgress during actual verification
                         status = "Now verifying token with server..."
                     )
                 }
@@ -197,7 +212,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
 
                 _uiState.update {
                     it.copy(
-                        isLoading = false,
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         status = "Token verification complete.",
                         playIntegrityResponse = verifyResponse.playIntegrityResponse.tokenPayloadExternal,
                         deviceInfo = verifyResponse.deviceInfo,
@@ -212,7 +227,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 val errorMessage = e.message ?: "Unknown error during verification"
                 _uiState.update {
                     it.copy(
-                        isLoading = false,
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         status = "Error verifying token with server.",
                         errorMessages = listOf(errorMessage),
                         playIntegrityResponse = null,

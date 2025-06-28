@@ -81,7 +81,7 @@ fun StandardPlayIntegrityContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         StatusDisplayArea(
-            isLoading = uiState.isLoading,
+            progressValue = uiState.progressValue,
             errorMessages = uiState.errorMessages,
             statusText = uiState.status,
             playIntegrityResponse = uiState.playIntegrityResponse,
@@ -99,7 +99,7 @@ private fun StandardPlayIntegrityContentPreview() {
         uiState = StandardPlayIntegrityUiState(
             contentBinding = "preview-content-binding",
             integrityToken = "preview-token",
-            isLoading = false,
+            progressValue = 0.0F,
             status = "Preview status text for Standard.",
             playIntegrityResponse = dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal(
                 requestDetails = dev.keiji.deviceintegrity.api.playintegrity.RequestDetails(

@@ -73,7 +73,7 @@ private fun PlayIntegrityScreenPreview_ClassicSelected() {
         classicUiState = ClassicPlayIntegrityUiState(
             nonce = "preview-nonce",
             integrityToken = "preview-token",
-            isLoading = false,
+            progressValue = 0.0F,
             status = "Preview result text for Classic."
         ),
         standardUiState = StandardPlayIntegrityUiState(),
@@ -99,7 +99,7 @@ private fun PlayIntegrityScreenPreview_StandardSelected() {
         standardUiState = StandardPlayIntegrityUiState(
             contentBinding = "preview-content",
             integrityToken = "preview-token",
-            isLoading = false,
+            progressValue = 0.0F,
             status = "Preview Standard Content"
         ),
         onClassicFetchNonce = {},

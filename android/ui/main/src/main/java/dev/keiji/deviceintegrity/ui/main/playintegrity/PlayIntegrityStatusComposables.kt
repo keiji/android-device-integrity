@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -31,7 +32,7 @@ import android.content.Intent
 
 @Composable
 fun StatusDisplayArea(
-    isLoading: Boolean,
+    progressValue: Float,
     errorMessages: List<String>,
     statusText: String,
     playIntegrityResponse: TokenPayloadExternal?,
@@ -58,9 +59,25 @@ fun StatusDisplayArea(
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
-        if (isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-        } else if (errorMessages.isNotEmpty()) {
+        // Progress Indicator
+        when {
+            progressValue > 0.0F -> {
+                LinearProgressIndicator(
+                    progress = progressValue,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp)) // Add some space below the progress bar
+            }
+            progressValue < 0.0F -> {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                Spacer(modifier = Modifier.height(8.dp)) // Add some space below the progress indicator
+            }
+            // else progressValue == 0.0F, show nothing for progress
+        }
+
+        // Content (Error messages, response, or status text)
+        if (errorMessages.isNotEmpty()) {
+            // Always show error messages regardless of progressValue
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
@@ -80,55 +97,17 @@ fun StatusDisplayArea(
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-        } else if (playIntegrityResponse != null || deviceInfo != null || securityInfo != null) { // Check all data sources
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                IconButton(
-                    onClick = {
-                        clipboardManager.setText(AnnotatedString(textToShare)) // Use already formatted textToShare
-                    }
-                ) {
-                    Icon(painterResource(id = R.drawable.ic_content_copy), contentDescription = "Copy")
-                }
-                IconButton(
-                    onClick = {
-                        val sendIntent: Intent = Intent().apply {
-                            action = Intent.ACTION_SEND
-                            putExtra(Intent.EXTRA_TEXT, textToShare)
-                            type = "text/plain"
-                        }
-                        val shareIntent = Intent.createChooser(sendIntent, null)
-                        context.startActivity(shareIntent)
-                    }
-                ) {
-                    Icon(painterResource(id = R.drawable.ic_share), contentDescription = "Share")
-                }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            SelectionContainer {
-                Column {
-                    if (currentSessionId.isNotBlank()) {
-                        Text("Current Session ID: $currentSessionId")
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                    // Call the new composable that handles all three sections
-                    DisplayFormattedResponse(
-                        playIntegrityResponse = playIntegrityResponse,
-                        deviceInfo = deviceInfo,
-                        securityInfo = securityInfo
-                    )
-                }
-            }
-        } else {
-            if (statusText.isNotEmpty()) {
+        } else if (progressValue == 0.0F) {
+            // Show response or status text only when not loading (progressValue == 0.0F) and no errors
+            if (playIntegrityResponse != null || deviceInfo != null || securityInfo != null) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
                     IconButton(
-                        onClick = { clipboardManager.setText(AnnotatedString(statusText)) }
+                        onClick = {
+                            clipboardManager.setText(AnnotatedString(textToShare)) // Use already formatted textToShare
+                        }
                     ) {
                         Icon(painterResource(id = R.drawable.ic_content_copy), contentDescription = "Copy")
                     }
@@ -147,14 +126,57 @@ fun StatusDisplayArea(
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-            }
-            SelectionContainer {
-                Text(
-                    text = statusText,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                SelectionContainer {
+                    Column {
+                        if (currentSessionId.isNotBlank()) {
+                            Text("Current Session ID: $currentSessionId")
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                        DisplayFormattedResponse(
+                            playIntegrityResponse = playIntegrityResponse,
+                            deviceInfo = deviceInfo,
+                            securityInfo = securityInfo
+                        )
+                    }
+                }
+            } else if (statusText.isNotEmpty()) {
+                // Show status text if no response data but status text exists
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    IconButton(
+                        onClick = { clipboardManager.setText(AnnotatedString(statusText)) }
+                    ) {
+                        Icon(painterResource(id = R.drawable.ic_content_copy), contentDescription = "Copy Status")
+                    }
+                    IconButton(
+                        onClick = {
+                            val sendIntent: Intent = Intent().apply {
+                                action = Intent.ACTION_SEND
+                                // textToShare should be just statusText if playIntegrityResponse, deviceInfo and securityInfo are null
+                                val contentToShare = if (playIntegrityResponse == null && deviceInfo == null && securityInfo == null) statusText else textToShare
+                                putExtra(Intent.EXTRA_TEXT, contentToShare)
+                                type = "text/plain"
+                            }
+                            val shareIntent = Intent.createChooser(sendIntent, null)
+                            context.startActivity(shareIntent)
+                        }
+                    ) {
+                        Icon(painterResource(id = R.drawable.ic_share), contentDescription = "Share Status")
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                SelectionContainer {
+                    Text(
+                        text = statusText,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
+        // If progressValue != 0.0F and no error messages, only progress indicator will be shown.
+        // If progressValue == 0.0F, no errors, no response data, and statusText is empty, nothing will be shown.
     }
 }
 
