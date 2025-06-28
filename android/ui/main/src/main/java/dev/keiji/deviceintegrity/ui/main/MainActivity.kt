@@ -35,9 +35,6 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.hilt.navigation.compose.hiltViewModel
-import dev.keiji.deviceintegrity.ui.agreement.AgreementActivity
-import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationUiEvent
-import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationViewModel
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsUiEvent
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle

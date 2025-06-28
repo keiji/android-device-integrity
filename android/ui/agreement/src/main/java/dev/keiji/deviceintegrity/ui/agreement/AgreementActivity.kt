@@ -19,12 +19,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dagger.hilt.android.AndroidEntryPoint
+import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 
+@AndroidEntryPoint
 class AgreementActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
+            DeviceIntegrityTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     AgreementScreen(
                         onAgree = {
