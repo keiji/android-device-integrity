@@ -151,7 +151,8 @@ fun formatTimestamp(timestampMillis: Long?): String {
     return try {
         val millis = timestampMillis // No need to convert toLong()
         val date = Date(millis)
-        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.getDefault())
+        // Use Z instead of XXX for API level 23 compatibility
+        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault())
         format.timeZone = TimeZone.getDefault()
         format.format(date)
     } catch (e: NumberFormatException) {
