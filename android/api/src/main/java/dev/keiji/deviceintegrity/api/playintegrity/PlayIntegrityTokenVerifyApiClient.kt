@@ -32,30 +32,6 @@ data class StandardVerifyRequest(
     @SerialName("security_info") val securityInfo: SecurityInfo
 )
 
-@Serializable
-data class DeviceInfo(
-    @SerialName("brand") val brand: String?,
-    @SerialName("model") val model: String?,
-    @SerialName("device") val device: String?,
-    @SerialName("product") val product: String?,
-    @SerialName("manufacturer") val manufacturer: String?,
-    @SerialName("hardware") val hardware: String?,
-    @SerialName("board") val board: String?,
-    @SerialName("bootloader") val bootloader: String?,
-    @SerialName("version_release") val versionRelease: String?,
-    @SerialName("sdk_int") val sdkInt: Int?,
-    @SerialName("fingerprint") val fingerprint: String?,
-    @SerialName("security_patch") val securityPatch: String?
-)
-
-@Serializable
-data class SecurityInfo(
-    @SerialName("is_device_lock_enabled") val isDeviceLockEnabled: Boolean?,
-    @SerialName("is_biometrics_enabled") val isBiometricsEnabled: Boolean?,
-    @SerialName("has_class3_authenticator") val hasClass3Authenticator: Boolean?,
-    @SerialName("has_strongbox") val hasStrongbox: Boolean?
-)
-
 // Response for Standard API verification
 // This models the direct response from the Play Integrity API as returned by our /standard/verify endpoint
 @Serializable
