@@ -12,6 +12,8 @@ import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.repository.contract.ClassicPlayIntegrityTokenRepository
 import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo // Added
 import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo // Added
+import dev.keiji.deviceintegrity.ui.main.common.VERIFY_TOKEN_DELAY_MS // Updated import
+import kotlinx.coroutines.delay // Added for 20-second delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -131,7 +133,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 isLoading = true,
-                status = "Verifying token with server...",
+                status = "Verifying token with server...", // Original status
                 errorMessages = emptyList(),
                 verifyTokenResponse = null
             )
@@ -139,6 +141,22 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
+                // Update status to indicate waiting period
+                _uiState.update {
+                    it.copy(
+                        status = "Waiting for 20 seconds before verification..."
+                    )
+                }
+
+                delay(VERIFY_TOKEN_DELAY_MS) // Used constant
+
+                // Update status before actual verification
+                _uiState.update {
+                    it.copy(
+                        status = "Now verifying token with server..."
+                    )
+                }
+
                 val deviceInfo = DeviceInfo(
                     brand = deviceInfoProvider.BRAND,
                     model = deviceInfoProvider.MODEL,
