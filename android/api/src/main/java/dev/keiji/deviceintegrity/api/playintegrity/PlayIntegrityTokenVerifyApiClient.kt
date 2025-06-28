@@ -10,7 +10,7 @@ interface PlayIntegrityTokenVerifyApiClient {
     suspend fun getNonce(@Body request: CreateNonceRequest): NonceResponse
 
     @POST("/play-integrity/classic/verify")
-    suspend fun verifyToken(@Body request: VerifyTokenRequest): VerifyTokenResponse
+    suspend fun verifyTokenClassic(@Body request: VerifyTokenRequest): VerifyTokenResponse
 
     @POST("/play-integrity/standard/verify")
     suspend fun verifyTokenStandard(@Body request: StandardVerifyRequest): StandardVerifyResponse

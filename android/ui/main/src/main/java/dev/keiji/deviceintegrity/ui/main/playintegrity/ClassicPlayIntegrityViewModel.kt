@@ -187,7 +187,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                     deviceInfo = deviceInfoData,
                     securityInfo = securityInfo
                 )
-                val verifyResponse = playIntegrityTokenVerifyApi.verifyToken(verifyRequest)
+                val verifyResponse = playIntegrityTokenVerifyApi.verifyTokenClassic(verifyRequest)
 
                 Log.d("ClassicPlayIntegrityVM", "Verification Response: ${verifyResponse.playIntegrityResponse}")
 
