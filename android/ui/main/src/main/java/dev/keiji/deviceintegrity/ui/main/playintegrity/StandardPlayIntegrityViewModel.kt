@@ -209,13 +209,13 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 )
                 val response = playIntegrityTokenVerifyApiClient.verifyTokenStandard(request)
 
-                Log.d("StandardPlayIntegrityVM", "Verification Response: ${response.playIntegrityResponse}")
+                Log.d("StandardPlayIntegrityVM", "Verification Response: ${response.playIntegrityResponse.tokenPayloadExternal}")
 
                 _uiState.update {
                     it.copy(
                         isLoading = false,
                         status = "Token verification complete.",
-                        playIntegrityResponse = response.playIntegrityResponse,
+                        playIntegrityResponse = response.playIntegrityResponse.tokenPayloadExternal,
                         deviceInfo = response.deviceInfo,
                         securityInfo = response.securityInfo,
                         errorMessages = emptyList(),
