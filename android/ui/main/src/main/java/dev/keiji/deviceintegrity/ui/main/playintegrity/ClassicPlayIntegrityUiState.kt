@@ -15,12 +15,15 @@ data class ClassicPlayIntegrityUiState(
     val errorMessages: List<String> = emptyList(),
     val currentSessionId: String = ""
 ) {
+    val isLoading: Boolean
+        get() = progressValue != 0.0F
+
     val isFetchNonceButtonEnabled: Boolean
-        get() = progressValue == 0.0F && errorMessages.isEmpty()
+        get() = !isLoading && errorMessages.isEmpty()
 
     val isRequestTokenButtonEnabled: Boolean
-        get() = progressValue == 0.0F && nonce.isNotEmpty()
+        get() = !isLoading && nonce.isNotEmpty()
 
     val isVerifyTokenButtonEnabled: Boolean
-        get() = progressValue == 0.0F && integrityToken.isNotEmpty()
+        get() = !isLoading && integrityToken.isNotEmpty()
 }

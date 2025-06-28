@@ -26,6 +26,20 @@ import android.util.Base64
 import java.util.UUID
 import javax.inject.Inject
 
+// Using the same constants object as ClassicPlayIntegrityViewModel for consistency
+// Alternatively, could be defined in a shared file if more view models use it.
+// For now, duplicating the object or referencing if in the same package and accessible.
+// Assuming PlayIntegrityProgressConstants is accessible or redefined here.
+// For this exercise, let's assume it's accessible. If not, it would be redefined.
+// To ensure it is, we can import it if it's in a separate .kt file or define it here if not.
+// For simplicity in this step, we'll assume `PlayIntegrityProgressConstants` is available
+// as if it were defined in a shared scope or we'll redefine it if necessary.
+// Let's redefine it here to ensure no compile issues for this specific file context.
+object PlayIntegrityProgressConstants {
+    const val NO_PROGRESS = 0.0F
+    const val INDETERMINATE_PROGRESS = -1.0F
+}
+
 @HiltViewModel
 class StandardPlayIntegrityViewModel @Inject constructor(
     private val standardPlayIntegrityTokenRepository: StandardPlayIntegrityTokenRepository,
@@ -78,7 +92,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
 
         _uiState.update {
             it.copy(
-                progressValue = -1.0F,
+                progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS,
                 status = "Fetching token...",
                 requestHashValue = "" // Reset before attempting to fetch
             )
@@ -102,7 +116,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 Log.d("StandardPlayIntegrityVM", "Integrity Token (Standard): $token")
                 _uiState.update {
                     it.copy(
-                        progressValue = 0.0F,
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         integrityToken = token,
                         status = "Token fetched successfully (Standard API, see Logcat for token)",
                         errorMessages = emptyList(),
@@ -115,7 +129,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 Log.e("StandardPlayIntegrityVM", "Error fetching integrity token (Standard)", e)
                 _uiState.update {
                     it.copy(
-                        progressValue = 0.0F,
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         status = "Error fetching integrity token (Standard).",
                         errorMessages = listOfNotNull(e.message),
                         requestHashValue = ""
@@ -152,7 +166,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
 
         _uiState.update {
             it.copy(
-                progressValue = -1.0F, // Start with CircularProgress
+                progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS, // Start with CircularProgress
                 status = "Preparing to verify token...", // Initial status
                 errorMessages = emptyList(),
                 playIntegrityResponse = null,
@@ -183,7 +197,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                     val newProgress = 1.0F - (currentStep.toFloat() / totalSteps)
                     _uiState.update {
                         it.copy(
-                            progressValue = newProgress.coerceAtLeast(0.0F)
+                            progressValue = newProgress.coerceAtLeast(PlayIntegrityProgressConstants.NO_PROGRESS)
                         )
                     }
                 }
@@ -191,7 +205,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 // Update status before actual verification and switch back to CircularProgress
                 _uiState.update {
                     it.copy(
-                        progressValue = -1.0F, // Show CircularProgress during actual verification
+                        progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS, // Show CircularProgress during actual verification
                         status = "Now verifying token with server..."
                     )
                 }

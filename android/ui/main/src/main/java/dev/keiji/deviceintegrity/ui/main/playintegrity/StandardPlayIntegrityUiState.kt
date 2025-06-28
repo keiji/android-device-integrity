@@ -16,12 +16,15 @@ data class StandardPlayIntegrityUiState(
     val requestHashValue: String = "",
     val currentSessionId: String = ""
 ) {
+    val isLoading: Boolean
+        get() = progressValue != 0.0F
+
     val requestHashVisible: Boolean
         get() = requestHashValue.isNotEmpty()
 
     val isRequestTokenButtonEnabled: Boolean
-        get() = progressValue == 0.0F && contentBinding.isNotEmpty() && errorMessages.isEmpty()
+        get() = !isLoading && contentBinding.isNotEmpty() && errorMessages.isEmpty()
 
     val isVerifyTokenButtonEnabled: Boolean
-        get() = progressValue == 0.0F && integrityToken.isNotEmpty()
+        get() = !isLoading && integrityToken.isNotEmpty()
 }

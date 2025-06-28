@@ -24,6 +24,11 @@ import kotlinx.coroutines.launch
 import java.util.UUID // Import
 import javax.inject.Inject
 
+object PlayIntegrityProgressConstants {
+    const val NO_PROGRESS = 0.0F
+    const val INDETERMINATE_PROGRESS = -1.0F
+}
+
 @HiltViewModel
 class ClassicPlayIntegrityViewModel @Inject constructor(
     private val classicPlayIntegrityTokenRepository: ClassicPlayIntegrityTokenRepository,
@@ -41,7 +46,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
         currentSessionId = UUID.randomUUID().toString() // Generate and assign sessionId here
         _uiState.update {
             it.copy(
-                progressValue = -1.0F,
+                progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS,
                 status = "Fetching nonce from server..."
             )
         }
@@ -52,7 +57,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         nonce = response.nonce,
-                        progressValue = 0.0F,
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         status = "Nonce fetched: ${response.nonce}",
                         currentSessionId = currentSessionId
                     )
@@ -61,7 +66,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 Log.e("ClassicPlayIntegrityVM", "Error fetching nonce", e)
                 _uiState.update {
                     it.copy(
-                        progressValue = 0.0F,
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         status = "Error fetching nonce.",
                         errorMessages = listOfNotNull(e.message)
                     )
@@ -135,7 +140,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
 
         _uiState.update {
             it.copy(
-                progressValue = -1.0F, // Start with CircularProgress
+                progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS, // Start with CircularProgress
                 status = "Preparing to verify token...", // Initial status
                 errorMessages = emptyList(),
                 playIntegrityResponse = null,
@@ -164,7 +169,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                     val newProgress = 1.0F - (currentStep.toFloat() / totalSteps)
                     _uiState.update {
                         it.copy(
-                            progressValue = newProgress.coerceAtLeast(0.0F) // Ensure progress doesn't go below 0
+                            progressValue = newProgress.coerceAtLeast(PlayIntegrityProgressConstants.NO_PROGRESS) // Ensure progress doesn't go below 0
                         )
                     }
                 }
@@ -172,7 +177,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 // Update status before actual verification and switch back to CircularProgress
                 _uiState.update {
                     it.copy(
-                        progressValue = -1.0F, // Show CircularProgress during actual verification
+                        progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS, // Show CircularProgress during actual verification
                         status = "Now verifying token with server..."
                     )
                 }
@@ -211,7 +216,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
 
                 _uiState.update {
                     it.copy(
-                        progressValue = 0.0F,
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         status = "Token verification complete.",
                         playIntegrityResponse = verifyResponse.playIntegrityResponse.tokenPayloadExternal,
                         deviceInfo = verifyResponse.deviceInfo,
@@ -226,7 +231,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 val errorMessage = e.message ?: "Unknown error during verification"
                 _uiState.update {
                     it.copy(
-                        progressValue = 0.0F,
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         status = "Error verifying token with server.",
                         errorMessages = listOf(errorMessage),
                         playIntegrityResponse = null,
