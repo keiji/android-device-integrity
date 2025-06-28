@@ -86,7 +86,8 @@ fun StandardPlayIntegrityContent(
             isLoading = uiState.isLoading,
             errorMessages = uiState.errorMessages,
             statusText = uiState.status,
-            tokenPayload = uiState.standardVerifyResponse?.tokenPayloadExternal
+            tokenPayload = uiState.standardVerifyResponse?.tokenPayloadExternal,
+            currentSessionId = uiState.currentSessionId // Pass currentSessionId
         )
     }
 }
