@@ -187,15 +187,15 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                     deviceInfo = deviceInfoData,
                     securityInfo = securityInfo
                 )
-                val verifyResponse = playIntegrityTokenVerifyApi.verifyToken(verifyRequest)
+                val verifyResponse = playIntegrityTokenVerifyApi.verifyTokenClassic(verifyRequest)
 
-                Log.d("ClassicPlayIntegrityVM", "Verification Response: ${verifyResponse.playIntegrityResponse}")
+                Log.d("ClassicPlayIntegrityVM", "Verification Response: ${verifyResponse.playIntegrityResponse.tokenPayloadExternal}")
 
                 _uiState.update {
                     it.copy(
                         isLoading = false,
                         status = "Token verification complete.",
-                        playIntegrityResponse = verifyResponse.playIntegrityResponse,
+                        playIntegrityResponse = verifyResponse.playIntegrityResponse.tokenPayloadExternal,
                         deviceInfo = verifyResponse.deviceInfo,
                         securityInfo = verifyResponse.securityInfo,
                         errorMessages = emptyList(),
