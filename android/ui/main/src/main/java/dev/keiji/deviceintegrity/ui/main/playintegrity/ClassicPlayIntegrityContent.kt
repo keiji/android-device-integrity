@@ -82,15 +82,14 @@ fun ClassicPlayIntegrityContent(
             isLoading = uiState.isLoading,
             errorMessages = uiState.errorMessages,
             statusText = uiState.status,
-            playIntegrityResponse = uiState.playIntegrityResponse, // Renamed from tokenPayload
-            deviceInfo = uiState.deviceInfo, // Added
-            securityInfo = uiState.securityInfo, // Added
+            playIntegrityResponse = uiState.playIntegrityResponse,
+            deviceInfo = uiState.deviceInfo,
+            securityInfo = uiState.securityInfo,
             currentSessionId = uiState.currentSessionId
         )
     }
 }
 
-// Preview remains, but the actual composables DisplayTokenResponse and formatTokenPayload are now in PlayIntegrityStatusComposables.kt
 @Preview
 @Composable
 private fun ClassicPlayIntegrityContentPreview() {
@@ -100,7 +99,7 @@ private fun ClassicPlayIntegrityContentPreview() {
             integrityToken = "preview-token",
             isLoading = false,
             status = "Preview status text for Classic.",
-            playIntegrityResponse = dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal( // Changed
+            playIntegrityResponse = dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal(
                 requestDetails = dev.keiji.deviceintegrity.api.playintegrity.RequestDetails(
                     requestPackageName = "dev.keiji.preview",
                     nonce = "preview-nonce-from-server",
