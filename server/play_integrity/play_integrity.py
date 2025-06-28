@@ -245,7 +245,8 @@ def verify_integrity():
                 'session_id': session_id, # Store the original client-provided session_id
                 'payload_data': payload_to_store,
                 'created_at': now,
-                'verification_type': "classic"
+                'verification_type': "classic",
+                'api_response': api_response # Store the decoded Play Integrity token
                 # 'generated_id' is not stored as a separate field because it's the entity key.
             })
             datastore_client.put(payload_entity)
@@ -352,7 +353,8 @@ def verify_integrity_standard():
                 'session_id': session_id, # Store the original client-provided session_id
                 'payload_data': payload_to_store,
                 'created_at': now,
-                'verification_type': "standard"
+                'verification_type': "standard",
+                'api_response': api_response # Store the decoded Play Integrity token
                 # 'generated_id' is not stored as a separate field because it's the entity key.
             })
             datastore_client.put(payload_entity)
