@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.security.MessageDigest
 import android.util.Base64
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
@@ -31,6 +32,8 @@ class StandardPlayIntegrityViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(StandardPlayIntegrityUiState())
     val uiState: StateFlow<StandardPlayIntegrityUiState> = _uiState.asStateFlow()
 
+    private var currentSessionId: String = "" // Initialized as empty
+
     fun updateContentBinding(newContent: String) {
         _uiState.update {
             it.copy(
@@ -41,20 +44,30 @@ class StandardPlayIntegrityViewModel @Inject constructor(
     }
 
     fun fetchIntegrityToken() {
+        currentSessionId = UUID.randomUUID().toString() // Generate and assign sessionId here
+
         val currentContent = _uiState.value.contentBinding
         // Standard API might allow empty contentBinding for token request,
         // but the calculated property isRequestTokenButtonEnabled handles UI enablement.
         // We proceed with fetching if the button was somehow clicked despite being disabled by UI.
 
         var encodedHash = ""
-        if (currentContent.isNotEmpty()) {
+        // contentBinding might be empty, but we still need to include currentSessionId in the hash if we were to create one.
+        // However, the original logic only created a hash if currentContent was not empty.
+        // For consistency with the requirement "sessionId + contentBinding", we'll prepare the string for hashing.
+        // The actual decision to *use* the hash (i.e., pass it to getToken) depends on whether contentBinding is empty.
+        val stringToHash = currentSessionId + currentContent
+
+        if (stringToHash.isNotEmpty()) { // Or simply if currentContent.isNotEmpty() if requestHash is only for non-empty contentBinding
             try {
                 val digest = MessageDigest.getInstance("SHA-256")
-                val hashBytes = digest.digest(currentContent.toByteArray(Charsets.UTF_8))
-                encodedHash = Base64.encodeToString(hashBytes, Base64.NO_WRAP)
+                // Ensure UTF-8 encoding for consistent hashing across platforms
+                val hashBytes = digest.digest(stringToHash.toByteArray(Charsets.UTF_8))
+                // Use URL_SAFE, NO_WRAP, and NO_PADDING for Play Integrity API compatibility
+                encodedHash = Base64.encodeToString(hashBytes, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
             } catch (e: Exception) {
-                Log.e("StandardPlayIntegrityVM", "Error generating SHA-256 hash", e)
-                // Handle hash generation failure if necessary, though unlikely with SHA-256
+                Log.e("StandardPlayIntegrityVM", "Error generating SHA-256 hash for '$stringToHash'", e)
+                // Handle hash generation failure
             }
         }
 
@@ -67,7 +80,20 @@ class StandardPlayIntegrityViewModel @Inject constructor(
         }
         viewModelScope.launch {
             try {
-                val token = standardPlayIntegrityTokenRepository.getToken(currentContent)
+                // Pass the potentially empty currentContent, the repository handles the requestHash logic.
+                // The `encodedHash` calculated above is based on `sessionId + currentContent`.
+                // The `standardPlayIntegrityTokenRepository.getToken` will internally use this `encodedHash`
+                // if `currentContent` is not empty. We need to ensure the repository is updated to expect
+                // a hash derived from `sessionId + contentBinding` if `contentBinding` is provided.
+                // For now, we are ensuring `encodedHash` is correctly calculated here.
+                // The `getToken` method will be updated to accept the pre-calculated hash.
+                // Based on the current plan, the app (ViewModel) calculates the hash.
+                // If contentBinding is empty, encodedHash will be based on sessionId only.
+                // If contentBinding is also empty, requestHash should not be set.
+                // The original repo logic set requestHash only if contentToBind was not null.
+                // We will pass encodedHash if currentContent is not empty, otherwise null.
+                val hashToPass = if (currentContent.isNotEmpty()) encodedHash else null
+                val token = standardPlayIntegrityTokenRepository.getToken(hashToPass)
                 Log.d("StandardPlayIntegrityVM", "Integrity Token (Standard): $token")
                 _uiState.update {
                     it.copy(
@@ -75,6 +101,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                         integrityToken = token,
                         status = "Token fetched successfully (Standard API, see Logcat for token)",
                         errorMessages = emptyList(),
+                        // Display the hash if it was generated (i.e., if stringToHash was not empty, implies currentContent was not empty based on original logic)
                         requestHashValue = if (currentContent.isNotEmpty()) encodedHash else ""
                     )
                 }
@@ -93,7 +120,9 @@ class StandardPlayIntegrityViewModel @Inject constructor(
     }
 
     fun verifyToken() {
-        val token = _uiState.value.integrityToken
+        val currentUiState = _uiState.value
+        val token = currentUiState.integrityToken
+
         if (token.isBlank()) {
             _uiState.update {
                 it.copy(
@@ -103,6 +132,18 @@ class StandardPlayIntegrityViewModel @Inject constructor(
             }
             return
         }
+
+        if (currentSessionId.isBlank()) { // Use ViewModel's currentSessionId field
+            // This case should ideally not happen if fetchIntegrityToken was successful
+            _uiState.update {
+                it.copy(
+                    status = "Session ID not available for verification.",
+                    errorMessages = listOf("Session ID is missing.")
+                )
+            }
+            return
+        }
+
         _uiState.update {
             it.copy(
                 isLoading = true,
@@ -112,7 +153,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
             )
         }
 
-        val contentBindingForVerification = _uiState.value.contentBinding
+        val contentBindingForVerification = currentUiState.contentBinding
 
         viewModelScope.launch {
             try {
@@ -140,6 +181,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
 
                 val request = StandardVerifyRequest(
                     token = token,
+                    sessionId = currentSessionId, // Use ViewModel's currentSessionId field
                     contentBinding = contentBindingForVerification,
                     deviceInfo = deviceInfo,
                     securityInfo = securityInfo

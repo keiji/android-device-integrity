@@ -289,13 +289,15 @@ def verify_integrity_standard():
         if not isinstance(session_id, str) or not session_id.strip(): # Added: Validate session_id
             return jsonify({"error": "'session_id' must be a non-empty string"}), 400
 
-        # Hash and Base64URL encode the client_content_binding
+        # Hash and Base64URL encode the (session_id + client_content_binding)
         try:
-            hashed_content_binding_bytes = hashlib.sha256(client_content_binding.encode('utf-8')).digest()
-            server_generated_hash = base64.urlsafe_b64encode(hashed_content_binding_bytes).decode('utf-8').rstrip('=')
+            string_to_hash = session_id + client_content_binding
+            hashed_bytes = hashlib.sha256(string_to_hash.encode('utf-8')).digest()
+            server_generated_hash = base64.urlsafe_b64encode(hashed_bytes).decode('utf-8').rstrip('=')
+            app.logger.info(f"Server generated hash for session_id '{session_id}' and contentBinding '{client_content_binding[:50]}...' is '{server_generated_hash}' from string '{string_to_hash[:100]}...'")
         except Exception as e:
-            app.logger.error(f"Error hashing/encoding contentBinding: {e}")
-            return jsonify({"error": "Failed to process contentBinding"}), 500
+            app.logger.error(f"Error hashing/encoding (session_id + contentBinding) for session_id '{session_id}': {e}")
+            return jsonify({"error": "Failed to process session_id and contentBinding for hash"}), 500
 
         credentials, project_id = google.auth.default(
             scopes=['https://www.googleapis.com/auth/playintegrity']

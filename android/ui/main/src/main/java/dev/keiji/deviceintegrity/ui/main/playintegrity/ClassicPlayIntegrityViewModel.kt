@@ -30,10 +30,10 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ClassicPlayIntegrityUiState())
     val uiState: StateFlow<ClassicPlayIntegrityUiState> = _uiState.asStateFlow()
 
-    // Session ID for this ViewModel instance
-    private val sessionId: String = UUID.randomUUID().toString()
+    private var currentSessionId: String = "" // Renamed and initialized as empty
 
     fun fetchNonce() {
+        currentSessionId = UUID.randomUUID().toString() // Generate and assign sessionId here
         _uiState.update {
             it.copy(
                 isLoading = true,
@@ -42,7 +42,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
         }
         viewModelScope.launch {
             try {
-                val request = CreateNonceRequest(sessionId = sessionId)
+                val request = CreateNonceRequest(sessionId = currentSessionId) // Use currentSessionId
                 val response = playIntegrityTokenVerifyApi.getNonce(request)
                 _uiState.update {
                     it.copy(
@@ -162,7 +162,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
 
                 val verifyRequest = VerifyTokenRequest(
                     token = token,
-                    sessionId = sessionId,
+                    sessionId = currentSessionId, // Use currentSessionId
                     deviceInfo = deviceInfo,
                     securityInfo = securityInfo
                 )
