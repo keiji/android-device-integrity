@@ -87,7 +87,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 isLoading = true,
                 status = "Fetching token...",
                 errorMessages = emptyList(),
-                verifyTokenResponse = null
+                playIntegrityResponse = null // verifyTokenResponse was renamed to playIntegrityResponse
             )
         }
         viewModelScope.launch {
