@@ -146,10 +146,10 @@ fun StatusDisplayArea(
     }
 }
 
-fun formatTimestamp(timestampMillis: String?): String {
+fun formatTimestamp(timestampMillis: Long?): String {
     if (timestampMillis == null) return "N/A"
     return try {
-        val millis = timestampMillis.toLong()
+        val millis = timestampMillis // No need to convert toLong()
         val date = Date(millis)
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.getDefault())
         format.timeZone = TimeZone.getDefault()
@@ -248,22 +248,4 @@ internal fun formatTokenPayload(
             """.trimIndent()
         )
     }.trimIndent()
-}
-          Recognition Verdict: ${tokenPayload.appIntegrity?.appRecognitionVerdict ?: "N/A"}
-          Package Name: ${tokenPayload.appIntegrity?.packageName ?: "N/A"}
-          Certificate SHA256: ${tokenPayload.appIntegrity?.certificateSha256Digest?.joinToString() ?: "N/A"}
-          Version Code: ${tokenPayload.appIntegrity?.versionCode ?: "N/A"}
-
-        Device Integrity:
-          Recognition Verdict: ${tokenPayload.deviceIntegrity?.deviceRecognitionVerdict?.joinToString() ?: "N/A"}
-          SDK Version: ${tokenPayload.deviceIntegrity?.deviceAttributes?.sdkVersion ?: "N/A"}
-          Device Activity Level: ${tokenPayload.deviceIntegrity?.recentDeviceActivity?.deviceActivityLevel ?: "N/A"}
-
-        Account Details:
-          Licensing Verdict: ${tokenPayload.accountDetails?.appLicensingVerdict ?: "N/A"}
-
-        Environment Details:
-          App Access Risk Verdict: ${tokenPayload.environmentDetails?.appAccessRiskVerdict?.appsDetected?.joinToString() ?: "N/A"}
-          Play Protect Verdict: ${tokenPayload.environmentDetails?.playProtectVerdict ?: "N/A"}
-    """.trimIndent()
 }
