@@ -78,7 +78,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
 
         _uiState.update {
             it.copy(
-                isLoading = true,
+                progressValue = -1.0F,
                 status = "Fetching token...",
                 requestHashValue = "" // Reset before attempting to fetch
             )
@@ -102,7 +102,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 Log.d("StandardPlayIntegrityVM", "Integrity Token (Standard): $token")
                 _uiState.update {
                     it.copy(
-                        isLoading = false,
+                        progressValue = 0.0F,
                         integrityToken = token,
                         status = "Token fetched successfully (Standard API, see Logcat for token)",
                         errorMessages = emptyList(),
@@ -115,7 +115,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 Log.e("StandardPlayIntegrityVM", "Error fetching integrity token (Standard)", e)
                 _uiState.update {
                     it.copy(
-                        isLoading = false,
+                        progressValue = 0.0F,
                         status = "Error fetching integrity token (Standard).",
                         errorMessages = listOfNotNull(e.message),
                         requestHashValue = ""
@@ -152,8 +152,8 @@ class StandardPlayIntegrityViewModel @Inject constructor(
 
         _uiState.update {
             it.copy(
-                isLoading = true,
-                status = "Verifying token...", // Original status
+                progressValue = -1.0F, // Start with CircularProgress
+                status = "Preparing to verify token...", // Initial status
                 errorMessages = emptyList(),
                 playIntegrityResponse = null,
                 deviceInfo = null,
@@ -165,19 +165,33 @@ class StandardPlayIntegrityViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                // Update status to indicate waiting period
+                val delayMs = if (appInfoProvider.isDebugBuild) DEBUG_VERIFY_TOKEN_DELAY_MS else VERIFY_TOKEN_DELAY_MS
+                val totalSteps = (delayMs / 100).toInt()
+                var currentStep = 0
+
+                // Update status to indicate waiting period and switch to ProgressBar
                 _uiState.update {
                     it.copy(
-                        status = "Waiting for 20 seconds before verification..."
+                        progressValue = 1.0F, // Start ProgressBar at full
+                        status = "Waiting for ${delayMs / 1000} seconds before verification..."
                     )
                 }
 
-                val delayMs = if (appInfoProvider.isDebugBuild) DEBUG_VERIFY_TOKEN_DELAY_MS else VERIFY_TOKEN_DELAY_MS
-                delay(delayMs)
+                while (currentStep < totalSteps) {
+                    delay(100) // Wait for 0.1 seconds
+                    currentStep++
+                    val newProgress = 1.0F - (currentStep.toFloat() / totalSteps)
+                    _uiState.update {
+                        it.copy(
+                            progressValue = newProgress.coerceAtLeast(0.0F)
+                        )
+                    }
+                }
 
-                // Update status before actual verification
+                // Update status before actual verification and switch back to CircularProgress
                 _uiState.update {
                     it.copy(
+                        progressValue = -1.0F, // Show CircularProgress during actual verification
                         status = "Now verifying token with server..."
                     )
                 }
@@ -217,7 +231,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
 
                 _uiState.update {
                     it.copy(
-                        isLoading = false,
+                        progressValue = 0.0F,
                         status = "Token verification complete.",
                         playIntegrityResponse = response.playIntegrityResponse.tokenPayloadExternal,
                         deviceInfo = response.deviceInfo,
@@ -231,7 +245,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 val errorMessage = e.message ?: "Unknown error during verification"
                 _uiState.update {
                     it.copy(
-                        isLoading = false,
+                        progressValue = 0.0F,
                         status = "Error verifying token with server.",
                         errorMessages = listOf(errorMessage),
                         playIntegrityResponse = null,

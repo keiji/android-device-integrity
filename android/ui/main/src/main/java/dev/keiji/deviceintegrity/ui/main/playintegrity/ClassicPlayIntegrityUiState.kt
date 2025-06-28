@@ -7,7 +7,7 @@ import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal
 data class ClassicPlayIntegrityUiState(
     val nonce: String = "",
     val integrityToken: String = "",
-    val isLoading: Boolean = false,
+    val progressValue: Float = 0.0F,
     val status: String = "",
     val playIntegrityResponse: TokenPayloadExternal? = null,
     val deviceInfo: DeviceInfo? = null,
@@ -16,11 +16,11 @@ data class ClassicPlayIntegrityUiState(
     val currentSessionId: String = ""
 ) {
     val isFetchNonceButtonEnabled: Boolean
-        get() = !isLoading && errorMessages.isEmpty()
+        get() = progressValue == 0.0F && errorMessages.isEmpty()
 
     val isRequestTokenButtonEnabled: Boolean
-        get() = !isLoading && nonce.isNotEmpty()
+        get() = progressValue == 0.0F && nonce.isNotEmpty()
 
     val isVerifyTokenButtonEnabled: Boolean
-        get() = !isLoading && integrityToken.isNotEmpty()
+        get() = progressValue == 0.0F && integrityToken.isNotEmpty()
 }

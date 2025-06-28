@@ -7,7 +7,7 @@ import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal
 data class StandardPlayIntegrityUiState(
     val contentBinding: String = "",
     val integrityToken: String = "",
-    val isLoading: Boolean = false,
+    val progressValue: Float = 0.0F,
     val status: String = "",
     val playIntegrityResponse: TokenPayloadExternal? = null,
     val deviceInfo: DeviceInfo? = null,
@@ -20,8 +20,8 @@ data class StandardPlayIntegrityUiState(
         get() = requestHashValue.isNotEmpty()
 
     val isRequestTokenButtonEnabled: Boolean
-        get() = !isLoading && contentBinding.isNotEmpty() && errorMessages.isEmpty()
+        get() = progressValue == 0.0F && contentBinding.isNotEmpty() && errorMessages.isEmpty()
 
     val isVerifyTokenButtonEnabled: Boolean
-        get() = !isLoading && integrityToken.isNotEmpty()
+        get() = progressValue == 0.0F && integrityToken.isNotEmpty()
 }

@@ -77,7 +77,7 @@ fun ClassicPlayIntegrityContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         StatusDisplayArea(
-            isLoading = uiState.isLoading,
+            progressValue = uiState.progressValue,
             errorMessages = uiState.errorMessages,
             statusText = uiState.status,
             playIntegrityResponse = uiState.playIntegrityResponse,
@@ -95,7 +95,7 @@ private fun ClassicPlayIntegrityContentPreview() {
         uiState = ClassicPlayIntegrityUiState(
             nonce = "preview-nonce",
             integrityToken = "preview-token",
-            isLoading = false,
+            progressValue = 0.0F,
             status = "Preview status text for Classic.",
             playIntegrityResponse = dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal(
                 requestDetails = dev.keiji.deviceintegrity.api.playintegrity.RequestDetails(
