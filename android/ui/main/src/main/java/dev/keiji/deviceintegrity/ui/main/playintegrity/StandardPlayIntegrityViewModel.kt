@@ -12,6 +12,7 @@ import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.repository.contract.StandardPlayIntegrityTokenRepository
 import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo // Added
 import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo // Added
+import dev.keiji.deviceintegrity.ui.main.BuildConfig // For checking DEBUG build
 import dev.keiji.deviceintegrity.ui.main.common.VERIFY_TOKEN_DELAY_MS // Updated import
 import kotlinx.coroutines.delay // Added for 20-second delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -160,20 +161,28 @@ class StandardPlayIntegrityViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                // Update status to indicate waiting period
-                _uiState.update {
-                    it.copy(
-                        status = "Waiting for 20 seconds before verification..."
-                    )
-                }
+                if (!BuildConfig.DEBUG) {
+                    // Update status to indicate waiting period
+                    _uiState.update {
+                        it.copy(
+                            status = "Waiting for 20 seconds before verification..."
+                        )
+                    }
 
-                delay(VERIFY_TOKEN_DELAY_MS) // Used constant
+                    delay(VERIFY_TOKEN_DELAY_MS) // Used constant
 
-                // Update status before actual verification
-                _uiState.update {
-                    it.copy(
-                        status = "Now verifying token with server..."
-                    )
+                    // Update status before actual verification
+                    _uiState.update {
+                        it.copy(
+                            status = "Now verifying token with server..."
+                        )
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            status = "Debug build: Skipping delay. Now verifying token with server..."
+                        )
+                    }
                 }
 
                 val deviceInfo = DeviceInfo(
