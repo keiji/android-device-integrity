@@ -35,6 +35,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.hilt.navigation.compose.hiltViewModel
+import dev.keiji.deviceintegrity.provider.contract.AppInfoProvider
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsUiEvent
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -56,6 +57,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var agreementNavigator: AgreementNavigator
 
+    @Inject
+    lateinit var appInfoProvider: AppInfoProvider
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -64,6 +68,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             DeviceIntegrityApp(
+                appInfoProvider = appInfoProvider,
                 apiEndpointSettingsNavigator = apiEndpointSettingsNavigator,
                 licenseNavigator = licenseNavigator,
                 agreementNavigator = agreementNavigator,
@@ -75,6 +80,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun DeviceIntegrityApp(
+    appInfoProvider: AppInfoProvider,
     apiEndpointSettingsNavigator: ApiEndpointSettingsNavigator,
     licenseNavigator: LicenseNavigator,
     agreementNavigator: AgreementNavigator,
@@ -92,9 +98,11 @@ fun DeviceIntegrityApp(
             }
         }
 
-        LaunchedEffect(Unit) {
-            val intent = agreementNavigator.newIntent(context)
-            agreementLauncher.launch(intent)
+        if (!appInfoProvider.isDebugBuild) {
+            LaunchedEffect(Unit) {
+                val intent = agreementNavigator.newIntent(context)
+                agreementLauncher.launch(intent)
+            }
         }
 
         Scaffold(

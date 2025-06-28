@@ -7,13 +7,15 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.keiji.deviceintegrity.api.playintegrity.PlayIntegrityTokenVerifyApiClient
 import dev.keiji.deviceintegrity.api.playintegrity.StandardVerifyRequest
 import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal
+import dev.keiji.deviceintegrity.provider.contract.AppInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.repository.contract.StandardPlayIntegrityTokenRepository
 import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
 import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo
+import dev.keiji.deviceintegrity.ui.main.common.DEBUG_VERIFY_TOKEN_DELAY_MS
 import dev.keiji.deviceintegrity.ui.main.common.VERIFY_TOKEN_DELAY_MS
-import kotlinx.coroutines.delay // Added for 20-second delay
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,7 +31,8 @@ class StandardPlayIntegrityViewModel @Inject constructor(
     private val standardPlayIntegrityTokenRepository: StandardPlayIntegrityTokenRepository,
     private val playIntegrityTokenVerifyApiClient: PlayIntegrityTokenVerifyApiClient,
     private val deviceInfoProvider: DeviceInfoProvider,
-    private val deviceSecurityStateProvider: DeviceSecurityStateProvider
+    private val deviceSecurityStateProvider: DeviceSecurityStateProvider,
+    private val appInfoProvider: AppInfoProvider
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(StandardPlayIntegrityUiState())
     val uiState: StateFlow<StandardPlayIntegrityUiState> = _uiState.asStateFlow()
@@ -169,7 +172,8 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                     )
                 }
 
-                delay(VERIFY_TOKEN_DELAY_MS) // Used constant
+                val delayMs = if (appInfoProvider.isDebugBuild) DEBUG_VERIFY_TOKEN_DELAY_MS else VERIFY_TOKEN_DELAY_MS
+                delay(delayMs)
 
                 // Update status before actual verification
                 _uiState.update {
