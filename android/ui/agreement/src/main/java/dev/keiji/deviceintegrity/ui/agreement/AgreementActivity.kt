@@ -23,27 +23,39 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.activity.viewModels
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dagger.hilt.android.AndroidEntryPoint
 import dev.keiji.deviceintegrity.provider.contract.UrlProvider
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
-import javax.inject.Inject
+import kotlinx.coroutines.flow.collectLatest
 
 @AndroidEntryPoint
 class AgreementActivity : ComponentActivity() {
 
-    @Inject
-    lateinit var urlProvider: UrlProvider
+    private val viewModel: AgreementViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             DeviceIntegrityTheme {
+                val uriHandler = LocalUriHandler.current
+                LaunchedEffect(Unit) {
+                    viewModel.eventFlow.collectLatest { event ->
+                        when (event) {
+                            is UiEvent.OpenPrivacyPolicy -> {
+                                uriHandler.openUri(event.url)
+                            }
+                        }
+                    }
+                }
+
                 Surface(modifier = Modifier.fillMaxSize()) {
                     AgreementScreen(
-                        urlProvider = urlProvider,
+                        viewModel = viewModel,
                         onAgree = {
                             setResult(Activity.RESULT_OK)
                             finish()
@@ -61,13 +73,11 @@ class AgreementActivity : ComponentActivity() {
 
 @Composable
 fun AgreementScreen(
-    urlProvider: UrlProvider,
+    viewModel: AgreementViewModel,
     onAgree: () -> Unit,
     onDisagree: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val uriHandler = LocalUriHandler.current
-
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -85,7 +95,7 @@ fun AgreementScreen(
         Text(
             text = "プライバリーポリシー",
             modifier = Modifier.clickable {
-                uriHandler.openUri(urlProvider.privacyPolicyUrl)
+                viewModel.openPrivacyPolicy()
             },
             color = MaterialTheme.colorScheme.primary
         )
@@ -104,12 +114,13 @@ fun AgreementScreen(
 @Composable
 fun AgreementScreenPreview() {
     MaterialTheme {
+        val dummyUrlProvider = object : UrlProvider {
+            override val termsOfServiceUrl: String = "https://example.com/terms"
+            override val privacyPolicyUrl: String = "https://example.com/privacy"
+            override val aboutAppUrl: String = "https://example.com/about"
+        }
         AgreementScreen(
-            urlProvider = object : UrlProvider {
-                override val termsOfServiceUrl: String = ""
-                override val privacyPolicyUrl: String = ""
-                override val aboutAppUrl: String = ""
-            },
+            viewModel = AgreementViewModel(dummyUrlProvider),
             onAgree = {},
             onDisagree = {}
         )
