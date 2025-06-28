@@ -34,9 +34,9 @@ fun StatusDisplayArea(
     isLoading: Boolean,
     errorMessages: List<String>,
     statusText: String,
-    playIntegrityResponse: TokenPayloadExternal?, // Renamed from tokenPayload
-    deviceInfo: DeviceInfo?, // Added
-    securityInfo: SecurityInfo?, // Added
+    playIntegrityResponse: TokenPayloadExternal?,
+    deviceInfo: DeviceInfo?,
+    securityInfo: SecurityInfo?,
     currentSessionId: String,
     modifier: Modifier = Modifier
 ) {
@@ -48,11 +48,11 @@ fun StatusDisplayArea(
             append("Current Session ID: $currentSessionId\n\n")
         }
         append(
-            formatDisplayOutput( // Changed to new common formatting function
+            formatDisplayOutput(
                 playIntegrityResponse = playIntegrityResponse,
                 deviceInfo = deviceInfo,
                 securityInfo = securityInfo,
-                statusText = if (playIntegrityResponse == null && deviceInfo == null && securityInfo == null) statusText else "" // Pass statusText only if others are null
+                statusText = if (playIntegrityResponse == null && deviceInfo == null && securityInfo == null) statusText else ""
             )
         )
     }
@@ -268,12 +268,11 @@ fun DisplaySecurityInfo(securityInfo: SecurityInfo) {
     }
 }
 
-// Renamed from formatTokenPayload to formatDisplayOutput to reflect its new role
 internal fun formatDisplayOutput(
     playIntegrityResponse: TokenPayloadExternal?,
     deviceInfo: DeviceInfo?,
     securityInfo: SecurityInfo?,
-    statusText: String? = null // Optional status text if no other data is present
+    statusText: String? = null
 ): String {
     if (playIntegrityResponse == null && deviceInfo == null && securityInfo == null) {
         return statusText ?: "Response: N/A"

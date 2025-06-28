@@ -10,8 +10,8 @@ import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal
 import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.repository.contract.StandardPlayIntegrityTokenRepository
-import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo // Added
-import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo // Added
+import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
+import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -150,9 +150,9 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 isLoading = true,
                 status = "Verifying token...",
                 errorMessages = emptyList(),
-                playIntegrityResponse = null, // Changed from standardVerifyResponse
-                deviceInfo = null, // Added
-                securityInfo = null // Added
+                playIntegrityResponse = null,
+                deviceInfo = null,
+                securityInfo = null
             )
         }
 
@@ -160,7 +160,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                val deviceInfoData = DeviceInfo( // Renamed to avoid conflict
+                val deviceInfoData = DeviceInfo(
                     brand = deviceInfoProvider.BRAND,
                     model = deviceInfoProvider.MODEL,
                     device = deviceInfoProvider.DEVICE,
@@ -184,9 +184,9 @@ class StandardPlayIntegrityViewModel @Inject constructor(
 
                 val request = StandardVerifyRequest(
                     token = token,
-                    sessionId = currentSessionId, // Use ViewModel's currentSessionId field
+                    sessionId = currentSessionId,
                     contentBinding = contentBindingForVerification,
-                    deviceInfo = deviceInfoData, // Use renamed variable
+                    deviceInfo = deviceInfoData,
                     securityInfo = securityInfo
                 )
                 val response = playIntegrityTokenVerifyApiClient.verifyTokenStandard(request)
@@ -197,9 +197,9 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                     it.copy(
                         isLoading = false,
                         status = "Token verification complete.",
-                        playIntegrityResponse = response.playIntegrityResponse, // Updated
-                        deviceInfo = response.deviceInfo, // Added
-                        securityInfo = response.securityInfo, // Added
+                        playIntegrityResponse = response.playIntegrityResponse,
+                        deviceInfo = response.deviceInfo,
+                        securityInfo = response.securityInfo,
                         errorMessages = emptyList(),
                         currentSessionId = currentSessionId
                     )
@@ -212,9 +212,9 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                         isLoading = false,
                         status = "Error verifying token with server.",
                         errorMessages = listOf(errorMessage),
-                        playIntegrityResponse = null, // Clear previous response on error
-                        deviceInfo = null, // Clear previous response on error
-                        securityInfo = null // Clear previous response on error
+                        playIntegrityResponse = null,
+                        deviceInfo = null,
+                        securityInfo = null
                     )
                 }
             }
