@@ -1,5 +1,6 @@
 package dev.keiji.deviceintegrity.api.playintegrity
 
+import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -69,7 +70,8 @@ class ServerVerificationPayloadTest {
 
     @Test
     fun `parseServerVerificationPayload successfully parses valid JSON`() {
-        val payload = ServerVerificationPayload.fromJson(sampleJson)
+        val json = Json { ignoreUnknownKeys = true } // Instantiating Json parser
+        val payload = json.decodeFromString<ServerVerificationPayload>(sampleJson)
 
         assertNotNull(payload)
 
