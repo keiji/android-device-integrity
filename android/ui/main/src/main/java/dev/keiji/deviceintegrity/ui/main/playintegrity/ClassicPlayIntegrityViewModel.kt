@@ -12,7 +12,7 @@ import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.repository.contract.ClassicPlayIntegrityTokenRepository
 import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo // Added
 import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo // Added
-import dev.keiji.deviceintegrity.common.VERIFY_TOKEN_DELAY_MS // Added constant
+import dev.keiji.deviceintegrity.ui.main.common.VERIFY_TOKEN_DELAY_MS // Updated import
 import kotlinx.coroutines.delay // Added for 20-second delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
