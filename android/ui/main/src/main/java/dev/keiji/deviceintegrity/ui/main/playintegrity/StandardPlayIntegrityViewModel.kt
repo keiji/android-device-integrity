@@ -7,7 +7,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.keiji.deviceintegrity.api.playintegrity.PlayIntegrityTokenVerifyApiClient
 import dev.keiji.deviceintegrity.api.playintegrity.StandardVerifyRequest
 import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal
-import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.AppInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
