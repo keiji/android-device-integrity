@@ -60,10 +60,6 @@ fun SettingsScreen(
             subtitle = uiState.securityPatchLevel,
         )
         SettingsMenuItem(
-            title = "アプリについて",
-            onClick = onNavigateToDeveloperInfo
-        )
-        SettingsMenuItem(
             title = "利用規約",
             onClick = onNavigateToTermsOfService
         )
@@ -72,13 +68,12 @@ fun SettingsScreen(
             onClick = onNavigateToPrivacyPolicy
         )
         SettingsMenuItem(
-            icon = Icons.Default.Build,
             title = "オープンソースライセンス",
             onClick = onNavigateToOssLicenses
         )
         SettingsMenuItem(
-            title = "接続するAPI設定",
-            onClick = onNavigateToApiSettings
+            title = "アプリについて",
+            onClick = onNavigateToDeveloperInfo
         )
     }
 }
