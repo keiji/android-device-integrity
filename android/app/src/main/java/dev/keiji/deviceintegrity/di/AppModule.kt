@@ -21,10 +21,8 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideAppInfoProvider(
-        impl: AppInfoProviderImpl
-    ): AppInfoProvider {
-        return impl
+    fun provideAppInfoProvider(): AppInfoProvider {
+        return AppInfoProviderImpl(dev.keiji.deviceintegrity.BuildConfig.DEBUG)
     }
 
     @Provides
