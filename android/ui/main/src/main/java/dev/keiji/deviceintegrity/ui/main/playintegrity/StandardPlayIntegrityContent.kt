@@ -102,6 +102,8 @@ private fun StandardPlayIntegrityContentPreview() {
             integrityToken = "preview-token",
             isLoading = false,
             status = "Preview status text for Standard.",
+            requestHashValue = "preview-request-hash", // Added requestHashValue
+            currentSessionId = "preview-session-id", // Added currentSessionId
             standardVerifyResponse = dev.keiji.deviceintegrity.api.playintegrity.StandardVerifyResponse(
                 tokenPayloadExternal = dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal(
                     requestDetails = dev.keiji.deviceintegrity.api.playintegrity.RequestDetails(

@@ -98,6 +98,7 @@ private fun ClassicPlayIntegrityContentPreview() {
             integrityToken = "preview-token",
             isLoading = false,
             status = "Preview status text for Classic.",
+            currentSessionId = "preview-session-id", // Added currentSessionId
             verifyTokenResponse = dev.keiji.deviceintegrity.api.playintegrity.VerifyTokenResponse(
                 tokenPayloadExternal = dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal(
                     requestDetails = dev.keiji.deviceintegrity.api.playintegrity.RequestDetails(
