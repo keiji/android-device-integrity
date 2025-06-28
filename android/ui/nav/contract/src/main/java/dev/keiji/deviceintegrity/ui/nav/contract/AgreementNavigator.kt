@@ -4,5 +4,5 @@ import android.content.Context
 import android.content.Intent
 
 interface AgreementNavigator {
-    fun createAgreementIntent(context: Context): Intent
+    fun newIntent(context: Context): Intent
 }

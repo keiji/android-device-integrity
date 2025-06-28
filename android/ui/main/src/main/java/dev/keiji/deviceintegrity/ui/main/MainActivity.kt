@@ -96,7 +96,7 @@ fun DeviceIntegrityApp(
         }
 
         LaunchedEffect(Unit) {
-            val intent = agreementNavigator.createAgreementIntent(context)
+            val intent = agreementNavigator.newIntent(context)
             agreementLauncher.launch(intent)
         }
 

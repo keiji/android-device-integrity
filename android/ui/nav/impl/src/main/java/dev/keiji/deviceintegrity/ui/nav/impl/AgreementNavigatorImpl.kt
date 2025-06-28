@@ -8,7 +8,7 @@ import javax.inject.Inject
 
 class AgreementNavigatorImpl @Inject constructor() : AgreementNavigator {
 
-    override fun createAgreementIntent(context: Context): Intent {
+    override fun newIntent(context: Context): Intent {
         return Intent(context, AgreementActivity::class.java)
     }
 }
