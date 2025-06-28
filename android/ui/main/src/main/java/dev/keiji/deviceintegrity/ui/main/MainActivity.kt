@@ -33,12 +33,15 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.hilt.navigation.compose.hiltViewModel
+import dev.keiji.deviceintegrity.ui.agreement.AgreementActivity
 import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationUiEvent
 import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationViewModel
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsUiEvent
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.keiji.deviceintegrity.ui.nav.contract.AgreementNavigator
 import dev.keiji.deviceintegrity.ui.nav.contract.ApiEndpointSettingsNavigator
 import dev.keiji.deviceintegrity.ui.nav.contract.LicenseNavigator
 import timber.log.Timber
@@ -53,6 +56,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var licenseNavigator: LicenseNavigator
 
+    @Inject
+    lateinit var agreementNavigator: AgreementNavigator
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -62,7 +68,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             DeviceIntegrityApp(
                 apiEndpointSettingsNavigator = apiEndpointSettingsNavigator,
-                licenseNavigator = licenseNavigator
+                licenseNavigator = licenseNavigator,
+                agreementNavigator = agreementNavigator,
+                onFinishActivity = { finish() }
             )
         }
     }
@@ -71,10 +79,27 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun DeviceIntegrityApp(
     apiEndpointSettingsNavigator: ApiEndpointSettingsNavigator,
-    licenseNavigator: LicenseNavigator
+    licenseNavigator: LicenseNavigator,
+    agreementNavigator: AgreementNavigator,
+    onFinishActivity: () -> Unit
 ) {
     DeviceIntegrityTheme {
         val navController = rememberNavController()
+        val context = LocalContext.current
+
+        val agreementLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode != android.app.Activity.RESULT_OK) {
+                onFinishActivity()
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            val intent = agreementNavigator.createAgreementIntent(context)
+            agreementLauncher.launch(intent)
+        }
+
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             bottomBar = {

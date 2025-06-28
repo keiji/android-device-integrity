@@ -2,18 +2,13 @@ package dev.keiji.deviceintegrity.ui.nav.impl
 
 import android.content.Context
 import android.content.Intent
-import androidx.activity.result.ActivityResultLauncher
 import dev.keiji.deviceintegrity.ui.agreement.AgreementActivity
 import dev.keiji.deviceintegrity.ui.nav.contract.AgreementNavigator
+import javax.inject.Inject
 
-class AgreementNavigatorImpl(
-    private val context: Context
-) : AgreementNavigator {
+class AgreementNavigatorImpl @Inject constructor() : AgreementNavigator {
 
-    override fun navigateToAgreement(
-        activityResultLauncher: ActivityResultLauncher<Intent>,
-    ) {
-        val intent = Intent(context, AgreementActivity::class.java)
-        activityResultLauncher.launch(intent)
+    override fun createAgreementIntent(context: Context): Intent {
+        return Intent(context, AgreementActivity::class.java)
     }
 }
