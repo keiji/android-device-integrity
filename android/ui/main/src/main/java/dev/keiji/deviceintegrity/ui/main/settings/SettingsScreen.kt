@@ -60,10 +60,6 @@ fun SettingsScreen(
             subtitle = uiState.securityPatchLevel,
         )
         SettingsMenuItem(
-            title = "利用規約",
-            onClick = onNavigateToTermsOfService
-        )
-        SettingsMenuItem(
             title = "プライバシーポリシー",
             onClick = onNavigateToPrivacyPolicy
         )
@@ -72,7 +68,7 @@ fun SettingsScreen(
             onClick = onNavigateToOssLicenses
         )
         SettingsMenuItem(
-            title = "アプリについて",
+            title = "サポートサイト",
             onClick = onNavigateToDeveloperInfo
         )
     }
