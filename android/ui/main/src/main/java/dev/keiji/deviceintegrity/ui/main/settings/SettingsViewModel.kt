@@ -51,7 +51,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun openAboutAppUrl() {
+    fun openSupportSiteUrl() {
         viewModelScope.launch {
             _eventChannel.send(SettingsUiEvent.OpenUrl(urlProvider.aboutAppUrl))
         }

@@ -177,8 +177,7 @@ fun DeviceIntegrityApp(
                             context.startActivity(licenseNavigator.newIntent(context))
                         },
                         onNavigateToApiSettings = { apiSettingsLauncher.launch(Unit) },
-                        onNavigateToDeveloperInfo = { viewModel.openAboutAppUrl() },
-                        onNavigateToTermsOfService = { viewModel.openTermsOfServiceUrl() },
+                        onNavigateToDeveloperInfo = { viewModel.openSupportSiteUrl() },
                         onNavigateToPrivacyPolicy = { viewModel.openPrivacyPolicyUrl() }
                     )
                 }
