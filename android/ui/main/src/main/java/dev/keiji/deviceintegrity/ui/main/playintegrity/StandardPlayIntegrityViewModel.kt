@@ -103,7 +103,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                         errorMessages = emptyList(),
                         // Display the hash if it was generated (i.e., if stringToHash was not empty, implies currentContent was not empty based on original logic)
                         requestHashValue = if (currentContent.isNotEmpty()) encodedHash else "",
-                        currentSessionId = currentSessionId // Add currentSessionId to state
+                        currentSessionId = currentSessionId
                     )
                 }
             } catch (e: Exception) {
@@ -197,7 +197,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                         status = "Token verification complete.",
                         standardVerifyResponse = response,
                         errorMessages = emptyList(),
-                        currentSessionId = currentSessionId // Ensure currentSessionId is in state
+                        currentSessionId = currentSessionId
                     )
                 }
             } catch (e: Exception) {

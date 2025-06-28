@@ -49,7 +49,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                         nonce = response.nonce,
                         isLoading = false,
                         status = "Nonce fetched: ${response.nonce}",
-                        currentSessionId = currentSessionId // Add currentSessionId to state
+                        currentSessionId = currentSessionId
                     )
                 }
             } catch (e: Exception) {
@@ -177,7 +177,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                         status = "Token verification complete.",
                         verifyTokenResponse = verifyResponse,
                         errorMessages = emptyList(),
-                        currentSessionId = currentSessionId // Ensure currentSessionId is in state
+                        currentSessionId = currentSessionId
                     )
                 }
             } catch (e: Exception) {
