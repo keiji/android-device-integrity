@@ -90,13 +90,13 @@ paths:
             schema:
               type: object
               required:
-                - nonce
+                - session_id
                 - token
               properties:
-                nonce:
+                session_id:
                   type: string
-                  description: The nonce that was previously obtained from the /play-integrity/classic/nonce endpoint.
-                  example: "aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890-_"
+                  description: The session ID associated with the integrity verification process.
+                  example: "session_xyz789"
                 token:
                   type: string
                   description: The integrity token received from the client (from Play Integrity API).
@@ -146,17 +146,21 @@ paths:
             schema:
               type: object
               required:
-                - contentBinding # Changed from requestHash
+                - contentBinding
                 - token
+                - session_id
               properties:
-                contentBinding: # Changed from requestHash
+                contentBinding:
                   type: string
                   description: The original content string from the client app, which will be hashed by the server.
                   example: "some_content_to_be_hashed_by_server"
                 token:
                   type: string
                   description: The integrity token received from the client (from Play Integrity API using Standard request).
-                  example: "long.standard.integrity.token.string.from.client"
+                session_id:
+                  type: string
+                  description: The session ID associated with the standard integrity verification process.
+                  example: "session_std_abc123"
       responses:
         '200':
           description: Integrity token verified successfully using Standard API features. The response is the direct JSON output from the Google Play Integrity API.
