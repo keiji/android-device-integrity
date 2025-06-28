@@ -20,6 +20,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import dev.keiji.deviceintegrity.ui.main.R
+import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
+import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo
 import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -32,7 +34,9 @@ fun StatusDisplayArea(
     isLoading: Boolean,
     errorMessages: List<String>,
     statusText: String,
-    tokenPayload: TokenPayloadExternal?,
+    playIntegrityResponse: TokenPayloadExternal?, // Renamed from tokenPayload
+    deviceInfo: DeviceInfo?, // Added
+    securityInfo: SecurityInfo?, // Added
     currentSessionId: String,
     modifier: Modifier = Modifier
 ) {
@@ -43,11 +47,14 @@ fun StatusDisplayArea(
         if (currentSessionId.isNotBlank()) {
             append("Current Session ID: $currentSessionId\n\n")
         }
-        if (tokenPayload != null) {
-            append(formatTokenPayload(tokenPayload, currentSessionId))
-        } else {
-            append(statusText)
-        }
+        append(
+            formatDisplayOutput( // Changed to new common formatting function
+                playIntegrityResponse = playIntegrityResponse,
+                deviceInfo = deviceInfo,
+                securityInfo = securityInfo,
+                statusText = if (playIntegrityResponse == null && deviceInfo == null && securityInfo == null) statusText else "" // Pass statusText only if others are null
+            )
+        )
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
@@ -73,14 +80,14 @@ fun StatusDisplayArea(
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-        } else if (tokenPayload != null) {
+        } else if (playIntegrityResponse != null || deviceInfo != null || securityInfo != null) { // Check all data sources
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
                 IconButton(
                     onClick = {
-                        clipboardManager.setText(AnnotatedString(formatTokenPayload(tokenPayload, currentSessionId)))
+                        clipboardManager.setText(AnnotatedString(textToShare)) // Use already formatted textToShare
                     }
                 ) {
                     Icon(painterResource(id = R.drawable.ic_content_copy), contentDescription = "Copy")
@@ -106,7 +113,12 @@ fun StatusDisplayArea(
                         Text("Current Session ID: $currentSessionId")
                         Spacer(modifier = Modifier.height(8.dp))
                     }
-                    DisplayTokenResponse(tokenPayload)
+                    // Call the new composable that handles all three sections
+                    DisplayFormattedResponse(
+                        playIntegrityResponse = playIntegrityResponse,
+                        deviceInfo = deviceInfo,
+                        securityInfo = securityInfo
+                    )
                 }
             }
         } else {
@@ -161,92 +173,179 @@ fun formatTimestamp(timestampMillis: Long?): String {
 }
 
 @Composable
-fun DisplayTokenResponse(tokenPayload: TokenPayloadExternal?) {
-    if (tokenPayload == null) {
-        Text("Response: N/A")
-        return
-    }
+fun DisplayFormattedResponse(
+    playIntegrityResponse: TokenPayloadExternal?,
+    deviceInfo: DeviceInfo?,
+    securityInfo: SecurityInfo?
+) {
     Column {
-        Text("Request Details:")
-        Text("  Package Name: ${tokenPayload.requestDetails?.requestPackageName ?: "N/A"}")
-        Text("  Nonce: ${tokenPayload.requestDetails?.nonce ?: "N/A"}")
-        Text("  Request Hash: ${tokenPayload.requestDetails?.requestHash ?: "N/A"}")
-        Text("  Timestamp: ${formatTimestamp(tokenPayload.requestDetails?.timestampMillis)}")
+        if (playIntegrityResponse == null && deviceInfo == null && securityInfo == null) {
+            Text("Response: N/A")
+            return
+        }
 
-        Spacer(modifier = Modifier.height(8.dp))
-        Text("App Integrity:")
-        Text("  Recognition Verdict: ${tokenPayload.appIntegrity?.appRecognitionVerdict ?: "N/A"}")
-        Text("  Package Name: ${tokenPayload.appIntegrity?.packageName ?: "N/A"}")
-        Text("  Certificate SHA256: ${tokenPayload.appIntegrity?.certificateSha256Digest?.joinToString() ?: "N/A"}")
-        Text("  Version Code: ${tokenPayload.appIntegrity?.versionCode ?: "N/A"}")
+        // Display Play Integrity API Response
+        if (playIntegrityResponse != null) {
+            Text("Play Integrity API Response:")
+            DisplayPlayIntegrityResponse(playIntegrityResponse)
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
-        Spacer(modifier = Modifier.height(8.dp))
-        Text("Device Integrity:")
-        Text("  Recognition Verdict: ${tokenPayload.deviceIntegrity?.deviceRecognitionVerdict?.joinToString() ?: "N/A"}")
-        Text("  SDK Version: ${tokenPayload.deviceIntegrity?.deviceAttributes?.sdkVersion ?: "N/A"}")
-        Text("  Device Activity Level: ${tokenPayload.deviceIntegrity?.recentDeviceActivity?.deviceActivityLevel ?: "N/A"}")
+        // Display Device Info
+        if (deviceInfo != null) {
+            Text("Device Info:")
+            DisplayDeviceInfo(deviceInfo)
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
-
-        Spacer(modifier = Modifier.height(8.dp))
-        Text("Account Details:")
-        Text("  Licensing Verdict: ${tokenPayload.accountDetails?.appLicensingVerdict ?: "N/A"}")
-
-        Spacer(modifier = Modifier.height(8.dp))
-        Text("Environment Details:")
-        Text("  App Access Risk Verdict: ${tokenPayload.environmentDetails?.appAccessRiskVerdict?.appsDetected?.joinToString() ?: "N/A"}")
-        Text("  Play Protect Verdict: ${tokenPayload.environmentDetails?.playProtectVerdict ?: "N/A"}")
+        // Display Security Info
+        if (securityInfo != null) {
+            Text("Security Info:")
+            DisplaySecurityInfo(securityInfo)
+        }
     }
 }
 
-internal fun formatTokenPayload(
-    tokenPayload: TokenPayloadExternal?,
-    currentSessionId: String? = null
-): String {
-    if (tokenPayload == null) {
-        return "Response: N/A"
+@Composable
+fun DisplayPlayIntegrityResponse(playIntegrityResponse: TokenPayloadExternal) {
+    // This function is equivalent to the old DisplayTokenResponse
+    Column {
+        Text("  Request Details:")
+        Text("    Package Name: ${playIntegrityResponse.requestDetails?.requestPackageName ?: "N/A"}")
+        Text("    Nonce: ${playIntegrityResponse.requestDetails?.nonce ?: "N/A"}")
+        Text("    Request Hash: ${playIntegrityResponse.requestDetails?.requestHash ?: "N/A"}")
+        Text("    Timestamp: ${formatTimestamp(playIntegrityResponse.requestDetails?.timestampMillis)}")
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("  App Integrity:")
+        Text("    Recognition Verdict: ${playIntegrityResponse.appIntegrity?.appRecognitionVerdict ?: "N/A"}")
+        Text("    Package Name: ${playIntegrityResponse.appIntegrity?.packageName ?: "N/A"}")
+        Text("    Certificate SHA256: ${playIntegrityResponse.appIntegrity?.certificateSha256Digest?.joinToString() ?: "N/A"}")
+        Text("    Version Code: ${playIntegrityResponse.appIntegrity?.versionCode ?: "N/A"}")
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("  Device Integrity:")
+        Text("    Recognition Verdict: ${playIntegrityResponse.deviceIntegrity?.deviceRecognitionVerdict?.joinToString() ?: "N/A"}")
+        Text("    SDK Version: ${playIntegrityResponse.deviceIntegrity?.deviceAttributes?.sdkVersion ?: "N/A"}")
+        Text("    Device Activity Level: ${playIntegrityResponse.deviceIntegrity?.recentDeviceActivity?.deviceActivityLevel ?: "N/A"}")
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("  Account Details:")
+        Text("    Licensing Verdict: ${playIntegrityResponse.accountDetails?.appLicensingVerdict ?: "N/A"}")
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("  Environment Details:")
+        Text("    App Access Risk Verdict: ${playIntegrityResponse.environmentDetails?.appAccessRiskVerdict?.appsDetected?.joinToString() ?: "N/A"}")
+        Text("    Play Protect Verdict: ${playIntegrityResponse.environmentDetails?.playProtectVerdict ?: "N/A"}")
     }
+}
+
+@Composable
+fun DisplayDeviceInfo(deviceInfo: DeviceInfo) {
+    Column {
+        Text("  Brand: ${deviceInfo.brand ?: "N/A"}")
+        Text("  Model: ${deviceInfo.model ?: "N/A"}")
+        Text("  Device: ${deviceInfo.device ?: "N/A"}")
+        Text("  Product: ${deviceInfo.product ?: "N/A"}")
+        Text("  Manufacturer: ${deviceInfo.manufacturer ?: "N/A"}")
+        Text("  Hardware: ${deviceInfo.hardware ?: "N/A"}")
+        Text("  Board: ${deviceInfo.board ?: "N/A"}")
+        Text("  Bootloader: ${deviceInfo.bootloader ?: "N/A"}")
+        Text("  Version Release: ${deviceInfo.versionRelease ?: "N/A"}")
+        Text("  SDK Int: ${deviceInfo.sdkInt?.toString() ?: "N/A"}")
+        Text("  Fingerprint: ${deviceInfo.fingerprint ?: "N/A"}")
+        Text("  Security Patch: ${deviceInfo.securityPatch ?: "N/A"}")
+    }
+}
+
+@Composable
+fun DisplaySecurityInfo(securityInfo: SecurityInfo) {
+    Column {
+        Text("  Device Lock Enabled: ${securityInfo.isDeviceLockEnabled?.toString() ?: "N/A"}")
+        Text("  Biometrics Enabled: ${securityInfo.isBiometricsEnabled?.toString() ?: "N/A"}")
+        Text("  Has Class3 Authenticator: ${securityInfo.hasClass3Authenticator?.toString() ?: "N/A"}")
+        Text("  Has Strongbox: ${securityInfo.hasStrongbox?.toString() ?: "N/A"}")
+    }
+}
+
+// Renamed from formatTokenPayload to formatDisplayOutput to reflect its new role
+internal fun formatDisplayOutput(
+    playIntegrityResponse: TokenPayloadExternal?,
+    deviceInfo: DeviceInfo?,
+    securityInfo: SecurityInfo?,
+    statusText: String? = null // Optional status text if no other data is present
+): String {
+    if (playIntegrityResponse == null && deviceInfo == null && securityInfo == null) {
+        return statusText ?: "Response: N/A"
+    }
+
     return buildString {
-        if (!currentSessionId.isNullOrBlank()) {
-            append("Current Session ID: $currentSessionId\n\n")
+        // Play Integrity API Response
+        if (playIntegrityResponse != null) {
+            append("Play Integrity API Response:\n")
+            append(
+                """
+                  Request Details:
+                    Package Name: ${playIntegrityResponse.requestDetails?.requestPackageName ?: "N/A"}
+                    Nonce: ${playIntegrityResponse.requestDetails?.nonce ?: "N/A"}
+                    Request Hash: ${playIntegrityResponse.requestDetails?.requestHash ?: "N/A"}
+                    Timestamp: ${formatTimestamp(playIntegrityResponse.requestDetails?.timestampMillis)}
+
+                  App Integrity:
+                    Recognition Verdict: ${playIntegrityResponse.appIntegrity?.appRecognitionVerdict ?: "N/A"}
+                    Package Name: ${playIntegrityResponse.appIntegrity?.packageName ?: "N/A"}
+                    Certificate SHA256: ${playIntegrityResponse.appIntegrity?.certificateSha256Digest?.joinToString() ?: "N/A"}
+                    Version Code: ${playIntegrityResponse.appIntegrity?.versionCode ?: "N/A"}
+
+                  Device Integrity:
+                    Recognition Verdict: ${playIntegrityResponse.deviceIntegrity?.deviceRecognitionVerdict?.joinToString() ?: "N/A"}
+                    SDK Version: ${playIntegrityResponse.deviceIntegrity?.deviceAttributes?.sdkVersion ?: "N/A"}
+                    Device Activity Level: ${playIntegrityResponse.deviceIntegrity?.recentDeviceActivity?.deviceActivityLevel ?: "N/A"}
+
+                  Account Details:
+                    Licensing Verdict: ${playIntegrityResponse.accountDetails?.appLicensingVerdict ?: "N/A"}
+
+                  Environment Details:
+                    App Access Risk Verdict: ${playIntegrityResponse.environmentDetails?.appAccessRiskVerdict?.appsDetected?.joinToString() ?: "N/A"}
+                    Play Protect Verdict: ${playIntegrityResponse.environmentDetails?.playProtectVerdict ?: "N/A"}
+                """.trimIndent()
+            )
+            append("\n\n") // Add space before the next section
         }
-        append(
-            """
-            Request Details:
-              Package Name: ${tokenPayload.requestDetails?.requestPackageName ?: "N/A"}
-              Nonce: ${tokenPayload.requestDetails?.nonce ?: "N/A"}
-              Request Hash: ${tokenPayload.requestDetails?.requestHash ?: "N/A"}
-              Timestamp: ${formatTimestamp(tokenPayload.requestDetails?.timestampMillis)}
 
-            App Integrity:
-            """.trimIndent()
-        )
-        append(
-            """
-              Recognition Verdict: ${tokenPayload.appIntegrity?.appRecognitionVerdict ?: "N/A"}
-              Package Name: ${tokenPayload.appIntegrity?.packageName ?: "N/A"}
-              Certificate SHA256: ${tokenPayload.appIntegrity?.certificateSha256Digest?.joinToString() ?: "N/A"}
-              Version Code: ${tokenPayload.appIntegrity?.versionCode ?: "N/A"}
+        // Device Info
+        if (deviceInfo != null) {
+            append("Device Info:\n")
+            append(
+                """
+                  Brand: ${deviceInfo.brand ?: "N/A"}
+                  Model: ${deviceInfo.model ?: "N/A"}
+                  Device: ${deviceInfo.device ?: "N/A"}
+                  Product: ${deviceInfo.product ?: "N/A"}
+                  Manufacturer: ${deviceInfo.manufacturer ?: "N/A"}
+                  Hardware: ${deviceInfo.hardware ?: "N/A"}
+                  Board: ${deviceInfo.board ?: "N/A"}
+                  Bootloader: ${deviceInfo.bootloader ?: "N/A"}
+                  Version Release: ${deviceInfo.versionRelease ?: "N/A"}
+                  SDK Int: ${deviceInfo.sdkInt?.toString() ?: "N/A"}
+                  Fingerprint: ${deviceInfo.fingerprint ?: "N/A"}
+                  Security Patch: ${deviceInfo.securityPatch ?: "N/A"}
+                """.trimIndent()
+            )
+            append("\n\n") // Add space before the next section
+        }
 
-            Device Integrity:
-            """.trimIndent()
-        )
-        append(
-            """
-              Recognition Verdict: ${tokenPayload.deviceIntegrity?.deviceRecognitionVerdict?.joinToString() ?: "N/A"}
-              SDK Version: ${tokenPayload.deviceIntegrity?.deviceAttributes?.sdkVersion ?: "N/A"}
-              Device Activity Level: ${tokenPayload.deviceIntegrity?.recentDeviceActivity?.deviceActivityLevel ?: "N/A"}
-
-            Account Details:
-            """.trimIndent()
-        )
-        append(
-            """
-              Licensing Verdict: ${tokenPayload.accountDetails?.appLicensingVerdict ?: "N/A"}
-
-            Environment Details:
-              App Access Risk Verdict: ${tokenPayload.environmentDetails?.appAccessRiskVerdict?.appsDetected?.joinToString() ?: "N/A"}
-              Play Protect Verdict: ${tokenPayload.environmentDetails?.playProtectVerdict ?: "N/A"}
-            """.trimIndent()
-        )
+        // Security Info
+        if (securityInfo != null) {
+            append("Security Info:\n")
+            append(
+                """
+                  Device Lock Enabled: ${securityInfo.isDeviceLockEnabled?.toString() ?: "N/A"}
+                  Biometrics Enabled: ${securityInfo.isBiometricsEnabled?.toString() ?: "N/A"}
+                  Has Class3 Authenticator: ${securityInfo.hasClass3Authenticator?.toString() ?: "N/A"}
+                  Has Strongbox: ${securityInfo.hasStrongbox?.toString() ?: "N/A"}
+                """.trimIndent()
+            )
+        }
     }.trimIndent()
 }

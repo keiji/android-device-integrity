@@ -150,7 +150,9 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 isLoading = true,
                 status = "Verifying token...",
                 errorMessages = emptyList(),
-                standardVerifyResponse = null
+                playIntegrityResponse = null, // Changed from standardVerifyResponse
+                deviceInfo = null, // Added
+                securityInfo = null // Added
             )
         }
 
@@ -158,7 +160,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                val deviceInfo = DeviceInfo(
+                val deviceInfoData = DeviceInfo( // Renamed to avoid conflict
                     brand = deviceInfoProvider.BRAND,
                     model = deviceInfoProvider.MODEL,
                     device = deviceInfoProvider.DEVICE,
@@ -184,18 +186,20 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                     token = token,
                     sessionId = currentSessionId, // Use ViewModel's currentSessionId field
                     contentBinding = contentBindingForVerification,
-                    deviceInfo = deviceInfo,
+                    deviceInfo = deviceInfoData, // Use renamed variable
                     securityInfo = securityInfo
                 )
                 val response = playIntegrityTokenVerifyApiClient.verifyTokenStandard(request)
 
-                Log.d("StandardPlayIntegrityVM", "Verification Response: ${response.tokenPayloadExternal}")
+                Log.d("StandardPlayIntegrityVM", "Verification Response: ${response.playIntegrityResponse}")
 
                 _uiState.update {
                     it.copy(
                         isLoading = false,
                         status = "Token verification complete.",
-                        standardVerifyResponse = response,
+                        playIntegrityResponse = response.playIntegrityResponse, // Updated
+                        deviceInfo = response.deviceInfo, // Added
+                        securityInfo = response.securityInfo, // Added
                         errorMessages = emptyList(),
                         currentSessionId = currentSessionId
                     )
@@ -208,7 +212,9 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                         isLoading = false,
                         status = "Error verifying token with server.",
                         errorMessages = listOf(errorMessage),
-                        standardVerifyResponse = null // Clear previous response on error
+                        playIntegrityResponse = null, // Clear previous response on error
+                        deviceInfo = null, // Clear previous response on error
+                        securityInfo = null // Clear previous response on error
                     )
                 }
             }

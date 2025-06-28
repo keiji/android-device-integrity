@@ -86,8 +86,10 @@ fun StandardPlayIntegrityContent(
             isLoading = uiState.isLoading,
             errorMessages = uiState.errorMessages,
             statusText = uiState.status,
-            tokenPayload = uiState.standardVerifyResponse?.tokenPayloadExternal,
-            currentSessionId = uiState.currentSessionId // Pass currentSessionId
+            playIntegrityResponse = uiState.playIntegrityResponse, // Renamed from tokenPayload
+            deviceInfo = uiState.deviceInfo, // Added
+            securityInfo = uiState.securityInfo, // Added
+            currentSessionId = uiState.currentSessionId
         )
     }
 }
@@ -102,11 +104,10 @@ private fun StandardPlayIntegrityContentPreview() {
             integrityToken = "preview-token",
             isLoading = false,
             status = "Preview status text for Standard.",
-            standardVerifyResponse = dev.keiji.deviceintegrity.api.playintegrity.StandardVerifyResponse(
-                tokenPayloadExternal = dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal(
-                    requestDetails = dev.keiji.deviceintegrity.api.playintegrity.RequestDetails(
-                        requestPackageName = "dev.keiji.preview.standard",
-                        nonce = "preview-nonce-from-client", // Standard API uses client-generated nonce in requestDetails
+            playIntegrityResponse = dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal( // Changed
+                requestDetails = dev.keiji.deviceintegrity.api.playintegrity.RequestDetails(
+                    requestPackageName = "dev.keiji.preview.standard",
+                    nonce = "preview-nonce-from-client", // Standard API uses client-generated nonce in requestDetails
                         requestHash = "preview-request-hash-standard",
                         timestampMillis = System.currentTimeMillis()
                     ),
@@ -131,6 +132,17 @@ private fun StandardPlayIntegrityContentPreview() {
                         playProtectVerdict = "NO_ISSUES"
                     )
                 )
+            ),
+            // Preview with dummy DeviceInfo and SecurityInfo
+            deviceInfo = dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo(
+                brand = "PreviewBrandStd", model = "PreviewModelStd", device = "PreviewDeviceStd",
+                product = "PreviewProductStd", manufacturer = "PreviewManufacturerStd", hardware = "PreviewHardwareStd",
+                board = "PreviewBoardStd", bootloader = "PreviewBootloaderStd", versionRelease = "13",
+                sdkInt = 33, fingerprint = "PreviewFingerprintStd", securityPatch = "2023-08-05"
+            ),
+            securityInfo = dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo(
+                isDeviceLockEnabled = false, isBiometricsEnabled = true,
+                hasClass3Authenticator = false, hasStrongbox = true
             )
         ),
         onContentBindingChange = {},
