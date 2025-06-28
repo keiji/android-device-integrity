@@ -10,10 +10,10 @@ interface PlayIntegrityTokenVerifyApiClient {
     suspend fun getNonce(@Body request: CreateNonceRequest): NonceResponse
 
     @POST("/play-integrity/classic/verify")
-    suspend fun verifyTokenClassic(@Body request: VerifyTokenRequest): VerifyTokenResponse
+    suspend fun verifyTokenClassic(@Body request: VerifyTokenRequest): ServerVerificationPayload
 
     @POST("/play-integrity/standard/verify")
-    suspend fun verifyTokenStandard(@Body request: StandardVerifyRequest): StandardVerifyResponse
+    suspend fun verifyTokenStandard(@Body request: StandardVerifyRequest): ServerVerificationPayload
 }
 
 // Request for creating a nonce
@@ -30,21 +30,6 @@ data class StandardVerifyRequest(
     @SerialName("contentBinding") val contentBinding: String,
     @SerialName("device_info") val deviceInfo: DeviceInfo,
     @SerialName("security_info") val securityInfo: SecurityInfo
-)
-
-// Response for Standard API verification
-// This models the direct response from the Play Integrity API as returned by our /standard/verify endpoint
-@Serializable
-data class StandardVerifyResponse(
-    @SerialName("play_integrity_response") val playIntegrityResponse: ServerVerificationPayloadWrapper,
-    @SerialName("device_info") val deviceInfo: DeviceInfo? = null,
-    @SerialName("security_info") val securityInfo: SecurityInfo? = null
-)
-
-// Wrapper for the nested tokenPayloadExternal object
-@Serializable
-data class ServerVerificationPayloadWrapper(
-    @SerialName("tokenPayloadExternal") val tokenPayloadExternal: TokenPayloadExternal
 )
 
 // Common wrapper for the actual integrity verdict, as per Google's documentation
@@ -74,15 +59,6 @@ data class VerifyTokenRequest(
     @SerialName("session_id") val sessionId: String,
     @SerialName("device_info") val deviceInfo: DeviceInfo,
     @SerialName("security_info") val securityInfo: SecurityInfo
-)
-
-// Response for Classic API verification.
-// This now mirrors StandardVerifyResponse as both should return TokenPayloadExternal.
-@Serializable
-data class VerifyTokenResponse(
-    @SerialName("play_integrity_response") val playIntegrityResponse: ServerVerificationPayloadWrapper,
-    @SerialName("device_info") val deviceInfo: DeviceInfo? = null,
-    @SerialName("security_info") val securityInfo: SecurityInfo? = null
 )
 
 // Data classes for Play Integrity API response structure
