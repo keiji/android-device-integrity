@@ -41,6 +41,7 @@ android {
 dependencies {
     implementation(project(":ui"))
     implementation(project(":ui:theme"))
+    implementation(project(":provider:contract"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
