@@ -100,7 +100,7 @@ fun SettingsMenuItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start,
             modifier = Modifier
-                .defaultMinSize(minHeight = 48.dp)
+                .defaultMinSize(minHeight = 64.dp)
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             if (icon != null) {
