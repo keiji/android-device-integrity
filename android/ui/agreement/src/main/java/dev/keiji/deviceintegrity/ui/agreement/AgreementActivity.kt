@@ -101,12 +101,18 @@ fun AgreementScreen(
             },
             color = MaterialTheme.colorScheme.primary
         )
-        Spacer(modifier = Modifier.height(24.dp))
-        OutlinedButton(onClick = onAgree) {
+        Spacer(modifier = Modifier.weight(1f))
+        OutlinedButton(
+            onClick = onAgree,
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Text("利用を開始する")
         }
         Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = onDisagree) {
+        Button(
+            onClick = onDisagree,
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Text("アプリを終了")
         }
     }
