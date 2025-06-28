@@ -15,6 +15,11 @@ app = Flask(__name__)
 # Initialize Datastore client
 datastore_client = datastore.Client()
 
+# Result status constants
+RESULT_SUCCESS = "Success"
+RESULT_FAILED = "Failed"
+RESULT_ERROR = "Error"
+
 # Configuration for Play Integrity API
 PLAY_INTEGRITY_PACKAGE_NAME = "dev.keiji.deviceintegrity"
 
@@ -24,13 +29,17 @@ NONCE_KIND = "NonceSession" # Datastore kind for storing nonce per session
 
 # Verified Payload configuration
 VERIFIED_PAYLOAD_KIND = "VerifiedSessionPayload"
-# This Kind stores the payload received from the client after successful Play Integrity verification.
-# Entity Key: session_id (string)
+# This Kind stores the outcome of a Play Integrity verification attempt.
+# Entity Key: generated_id (string, UUID v4) - A unique ID for each verification attempt.
 # Properties:
-#   - session_id (string): The session ID.
-#   - payload_data (dict): The client's request JSON, excluding keys used for Play Integrity verification (e.g., 'token', 'session_id', 'contentBinding').
+#   - session_id (string): The session ID provided by the client. Can be "UNKNOWN" if not provided or parsing failed early.
+#   - payload_data (dict): The client's request JSON, excluding sensitive keys like 'token', 'session_id', 'contentBinding'.
+#                          Includes 'device_info' and 'security_info' if provided by the client.
 #   - created_at (datetime): Timestamp of when this entity was created (UTC).
-#   - verification_type (string): "classic" or "standard".
+#   - verification_type (string): "classic" (nonce) or "standard" (requestHash).
+#   - result (string): The outcome of the verification. One of RESULT_SUCCESS, RESULT_FAILED, RESULT_ERROR.
+#   - api_response (dict, nullable): The JSON response from the Google Play Integrity API (decodeIntegrityToken).
+#                                    This can be null if the API call failed or was not made (e.g., due to missing parameters).
 
 def generate_unique_id():
     """Generates a unique ID using UUID v4."""
@@ -88,6 +97,51 @@ def cleanup_expired_nonces():
         # Log the error, but don't let cleanup failure break the main functionality
         app.logger.error(f"Error during Datastore cleanup of expired nonces: {e}")
 
+def _store_verification_attempt(session_id, client_request_data, result, decoded_token_response, verification_type_str):
+    """
+    Stores the result of a verification attempt in Datastore.
+    """
+    try:
+        generated_id = generate_unique_id()
+        payload_key = datastore_client.key(VERIFIED_PAYLOAD_KIND, generated_id)
+        payload_entity = datastore.Entity(key=payload_key)
+        now = datetime.now(timezone.utc)
+
+        payload_to_store = {}
+        if client_request_data: # Ensure client_request_data is not None
+            # Define keys to exclude from the main part of payload_data
+            # These are either sensitive, redundant, or handled separately.
+            excluded_keys = {'token', 'session_id', 'contentBinding'} # contentBinding for standard
+
+            # Copy all items from client_request_data to payload_to_store, excluding specified keys.
+            payload_to_store = {k: v for k, v in client_request_data.items() if k not in excluded_keys}
+
+            # Ensure device_info and security_info are present, defaulting to empty dicts if not.
+            # This is slightly redundant if they are already in client_request_data and not excluded,
+            # but ensures they are standardized.
+            payload_to_store['device_info'] = client_request_data.get('device_info', {})
+            payload_to_store['security_info'] = client_request_data.get('security_info', {})
+        else:
+            # If there's no client_request_data (e.g. very early error), ensure these fields exist.
+            payload_to_store['device_info'] = {}
+            payload_to_store['security_info'] = {}
+
+
+        entity_data = {
+            'session_id': session_id if session_id else "UNKNOWN", # Handle cases where session_id might be missing
+            'payload_data': payload_to_store, # Contains client data minus excluded keys
+            'created_at': now,
+            'verification_type': verification_type_str,
+            'result': result if result else RESULT_FAILED, # Default to FAILED if not set
+            'api_response': decoded_token_response # This can be None
+        }
+        payload_entity.update(entity_data)
+        datastore_client.put(payload_entity)
+        app.logger.info(f"Stored verification attempt with generated_id: {generated_id} (client session_id: {session_id}). Result: {result}. API Response included: {decoded_token_response is not None}")
+    except Exception as e:
+        # Log extensively if Datastore saving fails, as this is critical for audit.
+        app.logger.error(f"CRITICAL: Failed to store verification attempt for session_id '{session_id}'. Result: {result}. Error: {e}. Client Data: {client_request_data}. Decoded Token: {decoded_token_response}")
+        # This failure should ideally not prevent the main API from returning its response to the client.
 
 @app.route('/play-integrity/classic/nonce', methods=['POST'])
 def create_nonce_endpoint():
@@ -117,9 +171,9 @@ def create_nonce_endpoint():
         app.logger.error(f"Error in create_nonce_endpoint: {e}")
         return jsonify({"error": "Failed to process nonce request"}), 500
 
-# --- verify_integrity endpoint ---
+# --- verify_integrity_classic endpoint ---
 @app.route('/play-integrity/classic/verify', methods=['POST'])
-def verify_integrity():
+def verify_integrity_classic():
     """
     Handles POST requests to /play-integrity/classic/verify.
     It expects a JSON payload with 'session_id' and 'token'.
@@ -127,20 +181,39 @@ def verify_integrity():
     calls the Google Play Integrity API to decode the token, and verifies the nonce.
     Returns the JSON response from the Play Integrity API.
     """
+    data = request.get_json() # Moved data parsing to the beginning
+    session_id = data.get('session_id') if data else None
+    integrity_token = data.get('token') if data else None
+
+    # Initialize variables for Datastore logging
+    result_status = None
+    decoded_integrity_token_response = None # Stores the response from decodeIntegrityToken
+    error_message_for_client = None
+
     try:
-        data = request.get_json()
         if not data:
-            return jsonify({"error": "Missing JSON payload"}), 400
+            result_status = RESULT_FAILED
+            error_message_for_client = "Missing JSON payload"
+            # Log to Datastore before returning
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+            return jsonify({"error": error_message_for_client}), 400
 
-        session_id = data.get('session_id')
-        integrity_token = data.get('token')
-
+        # session_id and integrity_token are critical for proceeding.
         if not session_id:
-            return jsonify({"error": "Missing 'session_id' in request"}), 400
+            result_status = RESULT_FAILED
+            error_message_for_client = "Missing 'session_id' in request"
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+            return jsonify({"error": error_message_for_client}), 400
         if not isinstance(session_id, str) or not session_id.strip():
-            return jsonify({"error": "'session_id' must be a non-empty string"}), 400
+            result_status = RESULT_FAILED
+            error_message_for_client = "'session_id' must be a non-empty string"
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+            return jsonify({"error": error_message_for_client}), 400
         if not integrity_token:
-            return jsonify({"error": "Missing 'token' in request"}), 400
+            result_status = RESULT_FAILED
+            error_message_for_client = "Missing 'token' in request"
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+            return jsonify({"error": error_message_for_client}), 400
 
         # Retrieve nonce from Datastore using session_id
         key = datastore_client.key(NONCE_KIND, session_id)
@@ -148,244 +221,265 @@ def verify_integrity():
 
         if not entity:
             app.logger.warning(f"No nonce found for session_id: {session_id}")
-            return jsonify({"error": "Invalid session_id: Session ID not found or nonce expired."}), 400
+            result_status = RESULT_FAILED
+            error_message_for_client = "Invalid session_id: Session ID not found or nonce expired."
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+            return jsonify({"error": error_message_for_client}), 400
 
         stored_nonce = entity.get('nonce')
         expiry_datetime = entity.get('expiry_datetime')
 
-        if not stored_nonce: # Should not happen if entity exists and was created by generate_and_store_nonce_with_session
+        if not stored_nonce:
             app.logger.error(f"Nonce value missing in Datastore entity for session_id: {session_id}")
-            return jsonify({"error": "Internal server error: Failed to retrieve nonce details."}), 500
+            result_status = RESULT_FAILED # Or ERROR depending on how critical this is
+            error_message_for_client = "Internal server error: Failed to retrieve nonce details."
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+            return jsonify({"error": error_message_for_client}), 500
 
         if expiry_datetime and expiry_datetime < datetime.now(timezone.utc):
             app.logger.warning(f"Nonce for session_id: {session_id} has expired.")
-            # Consider deleting the expired nonce here or let cleanup_expired_nonces handle it.
-            # If we delete here, ensure it's done safely.
+            result_status = RESULT_FAILED
+            error_message_for_client = "Invalid session_id: Nonce for session has expired."
             try:
                 datastore_client.delete(key)
                 app.logger.info(f"Deleted expired nonce for session_id: {session_id} during verification.")
-            except Exception as e:
-                app.logger.error(f"Failed to delete expired nonce for session_id {session_id}: {e}")
-            return jsonify({"error": "Invalid session_id: Nonce for session has expired."}), 400
+            except Exception as e_del:
+                app.logger.error(f"Failed to delete expired nonce for session_id {session_id}: {e_del}")
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+            return jsonify({"error": error_message_for_client}), 400
 
-        credentials, project = google.auth.default(
-            scopes=['https://www.googleapis.com/auth/playintegrity']
-        )
-        playintegrity = build('playintegrity', 'v1', credentials=credentials, cache_discovery=False)
-        request_body = {'integrity_token': integrity_token}
-        api_response = playintegrity.v1().decodeIntegrityToken(
-            packageName=PLAY_INTEGRITY_PACKAGE_NAME,
-            body=request_body
-        ).execute()
-
-        token_payload = api_response.get('tokenPayloadExternal', {})
-        request_details = token_payload.get('requestDetails', {})
-        api_nonce = request_details.get('nonce')
-
-        if not api_nonce:
-            app.logger.error("Nonce not found in Play Integrity API response. Full API response: %s", api_response)
-            return jsonify({
-                "error": "Nonce missing in API response: Nonce not found in Play Integrity API response payload.",
-                "play_integrity_response": api_response
-            }), 500 # Or 400
-
-        # Canonicalize both nonces before comparing
-        re_encoded_api_nonce = None
-        re_encoded_stored_nonce = None
+        # Attempt to decode the integrity token
         try:
-            # API nonce might not have padding, stored nonce should be correctly padded or not require it if generated via urlsafe_b64encode().rstrip('=')
-            # Ensure consistent comparison by decoding and re-encoding.
-            decoded_api_nonce = base64.urlsafe_b64decode(api_nonce.encode('utf-8') + b'==') # Add padding for robust decoding
-            re_encoded_api_nonce = base64.urlsafe_b64encode(decoded_api_nonce).decode('utf-8').rstrip('=')
+            credentials, project = google.auth.default(
+                scopes=['https://www.googleapis.com/auth/playintegrity']
+            )
+            playintegrity = build('playintegrity', 'v1', credentials=credentials, cache_discovery=False)
+            request_body = {'integrity_token': integrity_token}
+            decoded_integrity_token_response = playintegrity.v1().decodeIntegrityToken(
+                packageName=PLAY_INTEGRITY_PACKAGE_NAME,
+                body=request_body
+            ).execute()
+            # Successfully decoded, now verify nonce
+            token_payload = decoded_integrity_token_response.get('tokenPayloadExternal', {})
+            request_details = token_payload.get('requestDetails', {})
+            api_nonce = request_details.get('nonce')
 
-            decoded_stored_nonce = base64.urlsafe_b64decode(stored_nonce.encode('utf-8') + b'==')
-            re_encoded_stored_nonce = base64.urlsafe_b64encode(decoded_stored_nonce).decode('utf-8').rstrip('=')
-        except Exception as e:
-            app.logger.error(f"Error during nonce canonicalization for session {session_id}: {e}. API nonce: {api_nonce}, Stored nonce: {stored_nonce}")
-            # If canonicalization fails, proceed with direct comparison, but log it.
-            pass
+            if not api_nonce:
+                app.logger.error("Nonce not found in Play Integrity API response. Full API response: %s", decoded_integrity_token_response)
+                result_status = RESULT_FAILED # Or ERROR, as API response is malformed for our needs
+                error_message_for_client = "Nonce missing in API response."
+                # Store attempt before returning
+                _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+                return jsonify({
+                    "error": error_message_for_client,
+                    "play_integrity_response": decoded_integrity_token_response
+                }), 400 # Or 500
 
-        final_api_nonce_to_compare = re_encoded_api_nonce if re_encoded_api_nonce else api_nonce
-        final_stored_nonce_to_compare = re_encoded_stored_nonce if re_encoded_stored_nonce else stored_nonce
+            # Canonicalize and compare nonces
+            re_encoded_api_nonce, re_encoded_stored_nonce = None, None
+            try:
+                decoded_api_nonce_bytes = base64.urlsafe_b64decode(api_nonce.encode('utf-8') + b'==')
+                re_encoded_api_nonce = base64.urlsafe_b64encode(decoded_api_nonce_bytes).decode('utf-8').rstrip('=')
+                decoded_stored_nonce_bytes = base64.urlsafe_b64decode(stored_nonce.encode('utf-8') + b'==')
+                re_encoded_stored_nonce = base64.urlsafe_b64encode(decoded_stored_nonce_bytes).decode('utf-8').rstrip('=')
+            except Exception as e_nonce_canon:
+                app.logger.error(f"Error during nonce canonicalization for session {session_id}: {e_nonce_canon}. API nonce: {api_nonce}, Stored nonce: {stored_nonce}")
+                # Fallback to direct comparison if canonicalization fails
 
-        if final_api_nonce_to_compare != final_stored_nonce_to_compare:
-            app.logger.error(f"Nonce mismatch for session_id: {session_id}. Stored: {final_stored_nonce_to_compare} (Original: {stored_nonce}), API: {final_api_nonce_to_compare} (Original: {api_nonce}). Full API response: {api_response}")
-            return jsonify({
-                "error": "Nonce mismatch: The nonce from the token does not match the expected nonce for the session.",
-                "play_integrity_response": api_response
-            }), 400
+            final_api_nonce_to_compare = re_encoded_api_nonce if re_encoded_api_nonce else api_nonce
+            final_stored_nonce_to_compare = re_encoded_stored_nonce if re_encoded_stored_nonce else stored_nonce
 
-        # Nonce matches. Delete the nonce from Datastore to prevent reuse.
-        try:
-            datastore_client.delete(key)
-            app.logger.info(f"Nonce for session_id: {session_id} used and deleted from Datastore.")
-        except Exception as e:
-            app.logger.error(f"Failed to delete used nonce for session_id {session_id} from Datastore: {e}")
-            # Continue returning success even if delete fails, but log the error.
+            if final_api_nonce_to_compare != final_stored_nonce_to_compare:
+                app.logger.error(f"Nonce mismatch for session_id: {session_id}. Stored: {final_stored_nonce_to_compare}, API: {final_api_nonce_to_compare}. Full API response: {decoded_integrity_token_response}")
+                result_status = RESULT_FAILED
+                error_message_for_client = "Nonce mismatch."
+                _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+                return jsonify({
+                    "error": error_message_for_client,
+                    "play_integrity_response": decoded_integrity_token_response
+                }), 400
 
-        # Store the verified payload
-        try:
-            generated_id = generate_unique_id() # Generate a new unique ID
-            payload_key = datastore_client.key(VERIFIED_PAYLOAD_KIND, generated_id) # Use new ID as key
-            payload_entity = datastore.Entity(key=payload_key)
-            now = datetime.now(timezone.utc)
+            # Nonce matches
+            result_status = RESULT_SUCCESS
+            try:
+                datastore_client.delete(key) # Delete used nonce
+                app.logger.info(f"Nonce for session_id: {session_id} used and deleted.")
+            except Exception as e_del_used:
+                app.logger.error(f"Failed to delete used nonce for session_id {session_id}: {e_del_used}")
 
-            # Create a new dictionary for payload_data.
-            # We explicitly include device_info and security_info if they exist.
-            # Other unexpected top-level keys from the client will also be included if not in the exclusion list.
-            excluded_keys = {'token', 'session_id'}
-            payload_to_store = {k: v for k, v in data.items() if k not in excluded_keys}
+        except google.auth.exceptions.DefaultCredentialsError as e_auth:
+            app.logger.error(f"Google Cloud Credentials error: {e_auth}")
+            result_status = RESULT_ERROR # This is a server-side configuration error
+            decoded_integrity_token_response = None # No response from Play Integrity API
+            error_message_for_client = "Server authentication configuration error"
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+            return jsonify({"error": error_message_for_client}), 500
+        except Exception as e_api: # Catch other exceptions from Play Integrity API call or subsequent processing
+            app.logger.error(f"Error decoding integrity token or processing its response for session {session_id}: {e_api}")
+            result_status = RESULT_ERROR # Decoding failed or other unexpected error
+            # decoded_integrity_token_response might be None or partially filled if error occurred after API call
+            # If e_api is from .execute(), decoded_integrity_token_response would not have been set.
+            error_message_for_client = "Failed to decode integrity token or process response"
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+            return jsonify({"error": error_message_for_client, "details": str(e_api)}), 500
 
-            # Ensure device_info and security_info are dictionaries if they exist, or default to empty dict.
-            # This helps prevent errors if they are missing or not in the expected format.
-            payload_to_store['device_info'] = data.get('device_info', {})
-            payload_to_store['security_info'] = data.get('security_info', {})
+        # If we reach here, processing was successful or handled error with a return.
+        # For success, result_status is RESULT_SUCCESS.
+        _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
 
-            payload_entity.update({
-                'session_id': session_id, # Store the original client-provided session_id
-                'payload_data': payload_to_store,
-                'created_at': now,
-                'verification_type': "classic",
-                'api_response': api_response # Store the decoded Play Integrity token
-                # 'generated_id' is not stored as a separate field because it's the entity key.
-            })
-            datastore_client.put(payload_entity)
-            app.logger.info(f"Successfully stored verified payload with generated_id: {generated_id} (client session_id: {session_id}). Stored payload_data: {payload_to_store}")
-        except Exception as e:
-            app.logger.error(f"Failed to store verified payload for generated_id {generated_id} (client session_id: {session_id}): {e}. Data received: {data}")
-            # Depending on policy, this could be a critical error or just logged.
-            # For now, we'll log and still return the original API response if nonce verification was successful.
-            # If storing payload is critical, you might want to return an error here:
-            # return jsonify({"error": "Failed to store verified payload", "details": str(e)}), 500
-
-        # Construct the new response format
-        response_data = {
-            "play_integrity_response": api_response,
+        response_payload = {
+            "play_integrity_response": decoded_integrity_token_response,
             "device_info": data.get('device_info', {}),
             "security_info": data.get('security_info', {})
         }
-        return jsonify(response_data), 200
+        if result_status == RESULT_SUCCESS:
+            return jsonify(response_payload), 200
+        else:
+            # This path should ideally not be reached if errors lead to earlier returns.
+            # However, as a fallback, if result_status is not SUCCESS but also not an error that returned:
+            app.logger.warning(f"verify_integrity_classic reached end with non-SUCCESS status '{result_status}' without prior return. Session: {session_id}")
+            return jsonify({"error": error_message_for_client if error_message_for_client else "Verification failed", "play_integrity_response": decoded_integrity_token_response}), 400
 
-    except google.auth.exceptions.DefaultCredentialsError as e:
-        app.logger.error(f"Google Cloud Credentials error: {e}")
-        return jsonify({"error": "Server authentication configuration error"}), 500
-    except Exception as e:
-        app.logger.error(f"Error verifying integrity token: {e}")
-        return jsonify({"error": "Failed to verify integrity token"}), 500
+
+    except Exception as e_global: # Catch-all for any unhandled errors in the main try block
+        app.logger.error(f"Global error in verify_integrity_classic for session {session_id}: {e_global}")
+        # Ensure storing an attempt even for global errors, if session_id is available
+        # If session_id is None here, it means error occurred before session_id was parsed.
+        _store_verification_attempt(session_id, data, RESULT_ERROR, None, "classic")
+        return jsonify({"error": "An unexpected server error occurred"}), 500
 
 # --- verify_integrity_standard endpoint ---
 @app.route('/play-integrity/standard/verify', methods=['POST'])
 def verify_integrity_standard():
     # This function requires similar nonce handling (canonicalization, optional server-side session validation)
     # as the classic verify endpoint.
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "Missing JSON payload"}), 400
+    data = request.get_json() # Moved data parsing to the beginning
+    session_id = data.get('session_id') if data else None
+    integrity_token = data.get('token') if data else None
+    client_content_binding = data.get('contentBinding') if data else None
 
-        client_content_binding = data.get('contentBinding')
-        integrity_token = data.get('token')
-        session_id = data.get('session_id') # Activated: session_id is now required
+    # Initialize variables for Datastore logging
+    result_status = None
+    decoded_integrity_token_response = None # Stores the response from decodeIntegrityToken
+    error_message_for_client = None
+
+    try:
+        if not data:
+            result_status = RESULT_FAILED
+            error_message_for_client = "Missing JSON payload"
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+            return jsonify({"error": error_message_for_client}), 400
 
         if not integrity_token:
-            return jsonify({"error": "Missing 'token' in request"}), 400
+            result_status = RESULT_FAILED
+            error_message_for_client = "Missing 'token' in request"
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+            return jsonify({"error": error_message_for_client}), 400
         if not client_content_binding:
-            return jsonify({"error": "Missing 'contentBinding' in request"}), 400
-        if not session_id: # Added: Check for session_id
-            return jsonify({"error": "Missing 'session_id' in request"}), 400
-        if not isinstance(session_id, str) or not session_id.strip(): # Added: Validate session_id
-            return jsonify({"error": "'session_id' must be a non-empty string"}), 400
+            result_status = RESULT_FAILED
+            error_message_for_client = "Missing 'contentBinding' in request"
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+            return jsonify({"error": error_message_for_client}), 400
+        if not session_id:
+            result_status = RESULT_FAILED
+            error_message_for_client = "Missing 'session_id' in request"
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+            return jsonify({"error": error_message_for_client}), 400
+        if not isinstance(session_id, str) or not session_id.strip():
+            result_status = RESULT_FAILED
+            error_message_for_client = "'session_id' must be a non-empty string"
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+            return jsonify({"error": error_message_for_client}), 400
 
         # Hash and Base64URL encode the (session_id + client_content_binding)
+        server_generated_hash = None # Initialize to ensure it's defined for logging if hashing fails
         try:
-            string_to_hash = session_id + client_content_binding
+            string_to_hash = session_id + client_content_binding # Ensure session_id is part of the hash input
             hashed_bytes = hashlib.sha256(string_to_hash.encode('utf-8')).digest()
             server_generated_hash = base64.urlsafe_b64encode(hashed_bytes).decode('utf-8').rstrip('=')
             app.logger.info(f"Server generated hash for session_id '{session_id}' and contentBinding '{client_content_binding[:50]}...' is '{server_generated_hash}' from string '{string_to_hash[:100]}...'")
-        except Exception as e:
-            app.logger.error(f"Error hashing/encoding (session_id + contentBinding) for session_id '{session_id}': {e}")
-            return jsonify({"error": "Failed to process session_id and contentBinding for hash"}), 500
+        except Exception as e_hash:
+            app.logger.error(f"Error hashing/encoding (session_id + contentBinding) for session_id '{session_id}': {e_hash}")
+            result_status = RESULT_FAILED # Consider this a failure in preparing for verification
+            error_message_for_client = "Failed to process contentBinding for hash"
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+            return jsonify({"error": error_message_for_client}), 500 # Internal server issue
 
-        credentials, project_id = google.auth.default(
-            scopes=['https://www.googleapis.com/auth/playintegrity']
-        )
-        playintegrity = build('playintegrity', 'v1', credentials=credentials, cache_discovery=False)
-        request_body = {'integrity_token': integrity_token}
-        api_response = playintegrity.v1().decodeIntegrityToken(
-            packageName=PLAY_INTEGRITY_PACKAGE_NAME,
-            body=request_body
-        ).execute()
-
-        token_payload = api_response.get('tokenPayloadExternal', {})
-        request_details_payload = token_payload.get('requestDetails', {})
-        api_request_hash = request_details_payload.get('requestHash')
-
-        if not api_request_hash:
-            app.logger.warning("requestHash not found in Play Integrity API response payload for standard verify.")
-            return jsonify({
-                "error": "requestHash missing in Play Integrity API response payload (standard)",
-                "play_integrity_response": api_response
-            }), 400 # Or 500
-
-        if server_generated_hash != api_request_hash:
-            app.logger.error(f"Server contentBinding hash mismatch. Server generated: {server_generated_hash}, API: {api_request_hash}. Original client contentBinding: {client_content_binding}")
-            return jsonify({
-                "error": "Server contentBinding hash mismatch",
-                "client_provided_value": server_generated_hash,
-                "api_provided_value": api_request_hash,
-                "play_integrity_response": api_response
-            }), 400
-
-        # Optional: If server-side validation using session_id was done (e.g. for a one-time use token tied to this session_id),
-        # you might delete a corresponding nonce here.
-        # For this task, we are focusing on storing the payload associated with the session_id.
-
-        # Store the verified payload
+        # Attempt to decode the integrity token
         try:
-            generated_id = generate_unique_id() # Generate a new unique ID
-            payload_key = datastore_client.key(VERIFIED_PAYLOAD_KIND, generated_id) # Use new ID as key
-            payload_entity = datastore.Entity(key=payload_key)
-            now = datetime.now(timezone.utc)
+            credentials, project_id = google.auth.default(
+                scopes=['https://www.googleapis.com/auth/playintegrity']
+            )
+            playintegrity = build('playintegrity', 'v1', credentials=credentials, cache_discovery=False)
+            request_body = {'integrity_token': integrity_token}
+            decoded_integrity_token_response = playintegrity.v1().decodeIntegrityToken(
+                packageName=PLAY_INTEGRITY_PACKAGE_NAME,
+                body=request_body
+            ).execute()
 
-            # Create a new dictionary for payload_data.
-            # We explicitly include device_info and security_info if they exist.
-            excluded_keys = {'token', 'contentBinding', 'session_id'}
-            payload_to_store = {k: v for k, v in data.items() if k not in excluded_keys}
+            token_payload = decoded_integrity_token_response.get('tokenPayloadExternal', {})
+            request_details_payload = token_payload.get('requestDetails', {})
+            api_request_hash = request_details_payload.get('requestHash')
 
-            payload_to_store['device_info'] = data.get('device_info', {})
-            payload_to_store['security_info'] = data.get('security_info', {})
+            if not api_request_hash:
+                app.logger.warning("requestHash not found in Play Integrity API response payload for standard verify. Full response: %s", decoded_integrity_token_response)
+                result_status = RESULT_FAILED # API response is not as expected
+                error_message_for_client = "requestHash missing in API response."
+                _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+                return jsonify({
+                    "error": error_message_for_client,
+                    "play_integrity_response": decoded_integrity_token_response
+                }), 400
 
-            payload_entity.update({
-                'session_id': session_id, # Store the original client-provided session_id
-                'payload_data': payload_to_store,
-                'created_at': now,
-                'verification_type': "standard",
-                'api_response': api_response # Store the decoded Play Integrity token
-                # 'generated_id' is not stored as a separate field because it's the entity key.
-            })
-            datastore_client.put(payload_entity)
-            app.logger.info(f"Successfully stored verified payload with generated_id: {generated_id} (client session_id: {session_id}) (standard). Stored payload_data: {payload_to_store}")
-        except Exception as e:
-            app.logger.error(f"Failed to store verified payload for generated_id {generated_id} (client session_id: {session_id}) (standard): {e}. Data received: {data}")
-            # Depending on policy, this could be a critical error or just logged.
-            # For now, we'll log and still return the original API response if requestHash verification was successful.
-            # If storing payload is critical, you might want to return an error here:
-            # return jsonify({"error": "Failed to store verified payload (standard)", "details": str(e)}), 500
+            if server_generated_hash != api_request_hash:
+                app.logger.error(f"Server contentBinding hash mismatch. Session ID: {session_id}. Server generated: {server_generated_hash}, API: {api_request_hash}. Original client contentBinding: {client_content_binding}")
+                result_status = RESULT_FAILED
+                error_message_for_client = "Content binding hash mismatch."
+                _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+                return jsonify({
+                    "error": error_message_for_client,
+                    "client_provided_value_hash_debug": server_generated_hash, # For debugging, consider removing in prod
+                    "api_provided_value_hash_debug": api_request_hash,     # For debugging, consider removing in prod
+                    "play_integrity_response": decoded_integrity_token_response
+                }), 400
 
-        # Construct the new response format
-        response_data = {
-            "play_integrity_response": api_response,
+            # Hash matches
+            result_status = RESULT_SUCCESS
+
+        except google.auth.exceptions.DefaultCredentialsError as e_auth:
+            app.logger.error(f"Google Cloud Credentials error (standard): {e_auth}")
+            result_status = RESULT_ERROR
+            decoded_integrity_token_response = None
+            error_message_for_client = "Server authentication configuration error (standard)"
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+            return jsonify({"error": error_message_for_client}), 500
+        except Exception as e_api:
+            app.logger.error(f"Error decoding/processing integrity token (standard) for session {session_id}: {e_api}")
+            result_status = RESULT_ERROR
+            error_message_for_client = "Failed to decode integrity token or process response (standard)"
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard") # decoded_integrity_token_response might be None
+            return jsonify({"error": error_message_for_client, "details": str(e_api)}), 500
+
+        # Store the attempt (Success, or Failed/Error if not returned earlier)
+        _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+
+        response_payload = {
+            "play_integrity_response": decoded_integrity_token_response,
             "device_info": data.get('device_info', {}),
             "security_info": data.get('security_info', {})
         }
-        return jsonify(response_data), 200
 
-    except google.auth.exceptions.DefaultCredentialsError as e:
-        app.logger.error(f"Google Cloud Credentials error (standard): {e}")
-        return jsonify({"error": "Server authentication configuration error (standard)"}), 500
-    except Exception as e:
-        app.logger.error(f"Error verifying integrity token (standard): {e}")
-        return jsonify({"error": f"Failed to verify integrity token (standard): {str(e)}"}), 500
+        if result_status == RESULT_SUCCESS:
+            return jsonify(response_payload), 200
+        else:
+            # This path should ideally not be reached if errors lead to earlier returns.
+            app.logger.warning(f"verify_integrity_standard reached end with non-SUCCESS status '{result_status}' without prior return. Session: {session_id}")
+            return jsonify({"error": error_message_for_client if error_message_for_client else "Verification failed (standard)", "play_integrity_response": decoded_integrity_token_response}), 400
+
+    except Exception as e_global: # Catch-all for any unhandled errors in the main try block
+        app.logger.error(f"Global error in verify_integrity_standard for session {session_id}: {e_global}")
+        _store_verification_attempt(session_id, data, RESULT_ERROR, None, "standard")
+        return jsonify({"error": "An unexpected server error occurred (standard)"}), 500
 
 
 if __name__ == '__main__':
