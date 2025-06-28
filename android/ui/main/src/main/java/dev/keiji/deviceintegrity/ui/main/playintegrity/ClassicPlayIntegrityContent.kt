@@ -5,20 +5,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
@@ -103,37 +99,48 @@ private fun ClassicPlayIntegrityContentPreview() {
                 requestDetails = dev.keiji.deviceintegrity.api.playintegrity.RequestDetails(
                     requestPackageName = "dev.keiji.preview",
                     nonce = "preview-nonce-from-server",
-                        requestHash = "preview-request-hash",
-                        timestampMillis = System.currentTimeMillis()
+                    requestHash = "preview-request-hash",
+                    timestampMillis = System.currentTimeMillis()
+                ),
+                appIntegrity = dev.keiji.deviceintegrity.api.playintegrity.AppIntegrity(
+                    appRecognitionVerdict = "MEETS_DEVICE_INTEGRITY",
+                    packageName = "dev.keiji.preview",
+                    certificateSha256Digest = listOf("cert1", "cert2"),
+                    versionCode = 123
+                ),
+                deviceIntegrity = dev.keiji.deviceintegrity.api.playintegrity.DeviceIntegrity(
+                    deviceRecognitionVerdict = listOf("MEETS_DEVICE_INTEGRITY"),
+                    deviceAttributes = dev.keiji.deviceintegrity.api.playintegrity.DeviceAttributes(
+                        sdkVersion = 30
                     ),
-                    appIntegrity = dev.keiji.deviceintegrity.api.playintegrity.AppIntegrity(
-                        appRecognitionVerdict = "MEETS_DEVICE_INTEGRITY",
-                        packageName = "dev.keiji.preview",
-                        certificateSha256Digest = listOf("cert1", "cert2"),
-                        versionCode = 123
-                    ),
-                    deviceIntegrity = dev.keiji.deviceintegrity.api.playintegrity.DeviceIntegrity(
-                        deviceRecognitionVerdict = listOf("MEETS_DEVICE_INTEGRITY"),
-                        deviceAttributes = dev.keiji.deviceintegrity.api.playintegrity.DeviceAttributes(sdkVersion = 30),
-                        recentDeviceActivity = dev.keiji.deviceintegrity.api.playintegrity.RecentDeviceActivity(deviceActivityLevel = "LEVEL_1")
-                    ),
-                    accountDetails = dev.keiji.deviceintegrity.api.playintegrity.AccountDetails(
-                        appLicensingVerdict = "LICENSED"
-                    ),
-                    environmentDetails = dev.keiji.deviceintegrity.api.playintegrity.EnvironmentDetails(
-                        appAccessRiskVerdict = dev.keiji.deviceintegrity.api.playintegrity.AppAccessRiskVerdict(
-                            appsDetected = listOf("app1", "app2")
-                        ),
-                        playProtectVerdict = "NO_ISSUES"
+                    recentDeviceActivity = dev.keiji.deviceintegrity.api.playintegrity.RecentDeviceActivity(
+                        deviceActivityLevel = "LEVEL_1"
                     )
+                ),
+                accountDetails = dev.keiji.deviceintegrity.api.playintegrity.AccountDetails(
+                    appLicensingVerdict = "LICENSED"
+                ),
+                environmentDetails = dev.keiji.deviceintegrity.api.playintegrity.EnvironmentDetails(
+                    appAccessRiskVerdict = dev.keiji.deviceintegrity.api.playintegrity.AppAccessRiskVerdict(
+                        appsDetected = listOf("app1", "app2")
+                    ),
+                    playProtectVerdict = "NO_ISSUES"
                 )
             ),
             // Preview with dummy DeviceInfo and SecurityInfo
             deviceInfo = dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo(
-                brand = "PreviewBrand", model = "PreviewModel", device = "PreviewDevice",
-                product = "PreviewProduct", manufacturer = "PreviewManufacturer", hardware = "PreviewHardware",
-                board = "PreviewBoard", bootloader = "PreviewBootloader", versionRelease = "12",
-                sdkInt = 31, fingerprint = "PreviewFingerprint", securityPatch = "2023-03-05"
+                brand = "PreviewBrand",
+                model = "PreviewModel",
+                device = "PreviewDevice",
+                product = "PreviewProduct",
+                manufacturer = "PreviewManufacturer",
+                hardware = "PreviewHardware",
+                board = "PreviewBoard",
+                bootloader = "PreviewBootloader",
+                versionRelease = "12",
+                sdkInt = 31,
+                fingerprint = "PreviewFingerprint",
+                securityPatch = "2023-03-05"
             ),
             securityInfo = dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo(
                 isDeviceLockEnabled = true, isBiometricsEnabled = false,
