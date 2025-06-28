@@ -102,7 +102,8 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                         status = "Token fetched successfully (Standard API, see Logcat for token)",
                         errorMessages = emptyList(),
                         // Display the hash if it was generated (i.e., if stringToHash was not empty, implies currentContent was not empty based on original logic)
-                        requestHashValue = if (currentContent.isNotEmpty()) encodedHash else ""
+                        requestHashValue = if (currentContent.isNotEmpty()) encodedHash else "",
+                        currentSessionId = currentSessionId
                     )
                 }
             } catch (e: Exception) {
@@ -195,7 +196,8 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                         isLoading = false,
                         status = "Token verification complete.",
                         standardVerifyResponse = response,
-                        errorMessages = emptyList()
+                        errorMessages = emptyList(),
+                        currentSessionId = currentSessionId
                     )
                 }
             } catch (e: Exception) {

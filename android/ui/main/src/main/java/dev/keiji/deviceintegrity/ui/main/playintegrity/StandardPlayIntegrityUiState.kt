@@ -9,7 +9,8 @@ data class StandardPlayIntegrityUiState(
     val status: String = "",
     val standardVerifyResponse: StandardVerifyResponse? = null,
     val errorMessages: List<String> = emptyList(),
-    val requestHashValue: String = ""
+    val requestHashValue: String = "",
+    val currentSessionId: String = ""
 ) {
     val requestHashVisible: Boolean
         get() = requestHashValue.isNotEmpty()

@@ -8,7 +8,8 @@ data class ClassicPlayIntegrityUiState(
     val isLoading: Boolean = false,
     val status: String = "",
     val verifyTokenResponse: VerifyTokenResponse? = null,
-    val errorMessages: List<String> = emptyList()
+    val errorMessages: List<String> = emptyList(),
+    val currentSessionId: String = ""
 ) {
     val isFetchNonceButtonEnabled: Boolean
         get() = !isLoading && errorMessages.isEmpty()
