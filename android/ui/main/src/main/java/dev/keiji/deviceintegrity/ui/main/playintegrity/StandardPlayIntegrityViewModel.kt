@@ -35,10 +35,7 @@ import javax.inject.Inject
 // For simplicity in this step, we'll assume `PlayIntegrityProgressConstants` is available
 // as if it were defined in a shared scope or we'll redefine it if necessary.
 // Let's redefine it here to ensure no compile issues for this specific file context.
-object PlayIntegrityProgressConstants {
-    const val NO_PROGRESS = 0.0F
-    const val INDETERMINATE_PROGRESS = -1.0F
-}
+// PlayIntegrityProgressConstants will be imported from the new common file
 
 @HiltViewModel
 class StandardPlayIntegrityViewModel @Inject constructor(

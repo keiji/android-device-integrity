@@ -23,11 +23,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID // Import
 import javax.inject.Inject
-
-object PlayIntegrityProgressConstants {
-    const val NO_PROGRESS = 0.0F
-    const val INDETERMINATE_PROGRESS = -1.0F
-}
+// PlayIntegrityProgressConstants will be imported from the new common file
 
 @HiltViewModel
 class ClassicPlayIntegrityViewModel @Inject constructor(
