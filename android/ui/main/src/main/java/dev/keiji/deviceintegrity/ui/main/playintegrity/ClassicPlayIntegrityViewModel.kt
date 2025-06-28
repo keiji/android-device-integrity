@@ -42,6 +42,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
         currentSessionId = UUID.randomUUID().toString() // Generate and assign sessionId here
         _uiState.update {
             it.copy(
+                integrityToken = "", // Clear previous integrity token
                 progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS,
                 status = "Fetching nonce from server..."
             )
