@@ -258,7 +258,13 @@ def verify_integrity():
             # If storing payload is critical, you might want to return an error here:
             # return jsonify({"error": "Failed to store verified payload", "details": str(e)}), 500
 
-        return jsonify(api_response), 200
+        # Construct the new response format
+        response_data = {
+            "play_integrity_response": api_response,
+            "device_info": data.get('device_info', {}),
+            "security_info": data.get('security_info', {})
+        }
+        return jsonify(response_data), 200
 
     except google.auth.exceptions.DefaultCredentialsError as e:
         app.logger.error(f"Google Cloud Credentials error: {e}")
@@ -366,7 +372,13 @@ def verify_integrity_standard():
             # If storing payload is critical, you might want to return an error here:
             # return jsonify({"error": "Failed to store verified payload (standard)", "details": str(e)}), 500
 
-        return jsonify(api_response), 200
+        # Construct the new response format
+        response_data = {
+            "play_integrity_response": api_response,
+            "device_info": data.get('device_info', {}),
+            "security_info": data.get('security_info', {})
+        }
+        return jsonify(response_data), 200
 
     except google.auth.exceptions.DefaultCredentialsError as e:
         app.logger.error(f"Google Cloud Credentials error (standard): {e}")

@@ -36,7 +36,9 @@ data class StandardVerifyRequest(
 // This models the direct response from the Play Integrity API as returned by our /standard/verify endpoint
 @Serializable
 data class StandardVerifyResponse(
-    @SerialName("tokenPayloadExternal") val tokenPayloadExternal: TokenPayloadExternal
+    @SerialName("play_integrity_response") val playIntegrityResponse: TokenPayloadExternal,
+    @SerialName("device_info") val deviceInfo: DeviceInfo? = null,
+    @SerialName("security_info") val securityInfo: SecurityInfo? = null
 )
 
 // Common wrapper for the actual integrity verdict, as per Google's documentation
@@ -72,7 +74,9 @@ data class VerifyTokenRequest(
 // This now mirrors StandardVerifyResponse as both should return TokenPayloadExternal.
 @Serializable
 data class VerifyTokenResponse(
-    @SerialName("tokenPayloadExternal") val tokenPayloadExternal: TokenPayloadExternal
+    @SerialName("play_integrity_response") val playIntegrityResponse: TokenPayloadExternal,
+    @SerialName("device_info") val deviceInfo: DeviceInfo? = null,
+    @SerialName("security_info") val securityInfo: SecurityInfo? = null
 )
 
 // Data classes for Play Integrity API response structure

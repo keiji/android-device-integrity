@@ -1,13 +1,17 @@
 package dev.keiji.deviceintegrity.ui.main.playintegrity
 
-import dev.keiji.deviceintegrity.api.playintegrity.VerifyTokenResponse
+import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
+import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo
+import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal
 
 data class ClassicPlayIntegrityUiState(
     val nonce: String = "",
     val integrityToken: String = "",
     val isLoading: Boolean = false,
     val status: String = "",
-    val verifyTokenResponse: VerifyTokenResponse? = null,
+    val playIntegrityResponse: TokenPayloadExternal? = null,
+    val deviceInfo: DeviceInfo? = null,
+    val securityInfo: SecurityInfo? = null,
     val errorMessages: List<String> = emptyList(),
     val currentSessionId: String = ""
 ) {
