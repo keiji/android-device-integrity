@@ -41,7 +41,7 @@ fun StatusDisplayArea(
     currentSessionId: String,
     modifier: Modifier = Modifier
 ) {
-    val clipboardManager = SuspendClipboardManager.current
+    val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
 
     val textToShare = buildString {
