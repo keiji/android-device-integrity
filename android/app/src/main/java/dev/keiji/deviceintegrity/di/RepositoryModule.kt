@@ -19,4 +19,10 @@ object RepositoryModule {
     fun providePreferencesRepository(
         @ApplicationContext context: Context
     ): PreferencesRepository = PreferencesRepositoryImpl(context)
+
+    @Singleton
+    @Provides
+    fun providePlayIntegrityRepository(
+        playIntegrityRepositoryImpl: dev.keiji.repository.impl.PlayIntegrityRepositoryImpl
+    ): dev.keiji.repository.contract.PlayIntegrityRepository = playIntegrityRepositoryImpl
 }
