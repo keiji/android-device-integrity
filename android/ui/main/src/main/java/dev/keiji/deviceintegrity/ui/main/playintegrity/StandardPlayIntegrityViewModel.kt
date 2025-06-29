@@ -124,11 +124,17 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e("StandardPlayIntegrityVM", "Error fetching integrity token (Standard)", e)
+                val errorMessage = if (e is retrofit2.HttpException) {
+                    val errorBody = e.response()?.errorBody()?.string() ?: "No additional error information."
+                    "Error fetching integrity token (Standard): ${e.code()} - $errorBody"
+                } else {
+                    e.message ?: "Unknown error fetching integrity token (Standard)."
+                }
                 _uiState.update {
                     it.copy(
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         status = "Error fetching integrity token (Standard).",
-                        errorMessages = listOfNotNull(e.message),
+                        errorMessages = listOf(errorMessage),
                         requestHashValue = ""
                     )
                 }
@@ -177,21 +183,21 @@ class StandardPlayIntegrityViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val delayMs = if (appInfoProvider.isDebugBuild) DEBUG_VERIFY_TOKEN_DELAY_MS else VERIFY_TOKEN_DELAY_MS
-                val totalSteps = (delayMs / 100).toInt()
+                val totalSteps = (delayMs / PlayIntegrityProgressConstants.PROGRESS_UPDATE_INTERVAL_MS).toInt()
                 var currentStep = 0
 
                 // Update status to indicate waiting period and switch to ProgressBar
                 _uiState.update {
                     it.copy(
-                        progressValue = 1.0F, // Start ProgressBar at full
+                        progressValue = PlayIntegrityProgressConstants.FULL_PROGRESS, // Start ProgressBar at full
                         status = "Waiting for ${delayMs / 1000} seconds before verification..."
                     )
                 }
 
                 while (currentStep < totalSteps) {
-                    delay(100) // Wait for 0.1 seconds
+                    delay(PlayIntegrityProgressConstants.PROGRESS_UPDATE_INTERVAL_MS) // Wait
                     currentStep++
-                    val newProgress = 1.0F - (currentStep.toFloat() / totalSteps)
+                    val newProgress = PlayIntegrityProgressConstants.FULL_PROGRESS - (currentStep.toFloat() / totalSteps)
                     _uiState.update {
                         it.copy(
                             progressValue = newProgress.coerceAtLeast(PlayIntegrityProgressConstants.NO_PROGRESS)
@@ -242,7 +248,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
 
                 _uiState.update {
                     it.copy(
-                        progressValue = 0.0F,
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         status = "Token verification complete.",
                         playIntegrityResponse = response.playIntegrityResponse.tokenPayloadExternal,
                         deviceInfo = response.deviceInfo,
@@ -253,10 +259,15 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e("StandardPlayIntegrityVM", "Error verifying token with server", e)
-                val errorMessage = e.message ?: "Unknown error during verification"
+                val errorMessage = if (e is retrofit2.HttpException) {
+                    val errorBody = e.response()?.errorBody()?.string() ?: "No additional error information."
+                    "Error verifying token: ${e.code()} - $errorBody"
+                } else {
+                    e.message ?: "Unknown error during verification."
+                }
                 _uiState.update {
                     it.copy(
-                        progressValue = 0.0F,
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         status = "Error verifying token with server.",
                         errorMessages = listOf(errorMessage),
                         playIntegrityResponse = null,

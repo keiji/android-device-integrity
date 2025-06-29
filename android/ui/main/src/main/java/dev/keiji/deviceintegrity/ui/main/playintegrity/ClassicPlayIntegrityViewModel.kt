@@ -43,13 +43,29 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 integrityToken = "", // Clear previous integrity token
-                progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS,
+                progressValue = PlayIntegrityProgressConstants.FULL_PROGRESS, // Start ProgressBar at full for nonce fetching
                 status = "Fetching nonce from server..."
             )
         }
         viewModelScope.launch {
             try {
-                delay(VERIFY_TOKEN_DELAY_MS)
+                // Simulate delay for fetching nonce with progress updates
+                val delayMs = VERIFY_TOKEN_DELAY_MS // Using existing constant for delay
+                val totalSteps = (delayMs / PlayIntegrityProgressConstants.PROGRESS_UPDATE_INTERVAL_MS).toInt()
+                var currentStep = 0
+
+                while (currentStep < totalSteps) {
+                    delay(PlayIntegrityProgressConstants.PROGRESS_UPDATE_INTERVAL_MS) // Wait
+                    currentStep++
+                    val newProgress = PlayIntegrityProgressConstants.FULL_PROGRESS - (currentStep.toFloat() / totalSteps)
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            progressValue = newProgress.coerceAtLeast(PlayIntegrityProgressConstants.NO_PROGRESS)
+                        )
+                    }
+                }
+
+                _uiState.update { it.copy(status = "Finalizing nonce request...") }
 
                 val request = CreateNonceRequest(sessionId = currentSessionId) // Use currentSessionId
                 val response = playIntegrityTokenVerifyApi.getNonce(request)
@@ -63,11 +79,17 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e("ClassicPlayIntegrityVM", "Error fetching nonce", e)
+                val errorMessage = if (e is retrofit2.HttpException) {
+                    val errorBody = e.response()?.errorBody()?.string() ?: "No additional error information."
+                    "Error fetching nonce: ${e.code()} - $errorBody"
+                } else {
+                    e.message ?: "Unknown error fetching nonce."
+                }
                 _uiState.update {
                     it.copy(
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         status = "Error fetching nonce.",
-                        errorMessages = listOfNotNull(e.message)
+                        errorMessages = listOf(errorMessage)
                     )
                 }
             }
@@ -151,21 +173,21 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val delayMs = if (appInfoProvider.isDebugBuild) DEBUG_VERIFY_TOKEN_DELAY_MS else VERIFY_TOKEN_DELAY_MS
-                val totalSteps = (delayMs / 100).toInt() // e.g., 200 steps for 20 seconds
+                val totalSteps = (delayMs / PlayIntegrityProgressConstants.PROGRESS_UPDATE_INTERVAL_MS).toInt()
                 var currentStep = 0
 
                 // Update status to indicate waiting period and switch to ProgressBar
                 _uiState.update {
                     it.copy(
-                        progressValue = 1.0F, // Start ProgressBar at full
+                        progressValue = PlayIntegrityProgressConstants.FULL_PROGRESS, // Start ProgressBar at full
                         status = "Waiting for ${delayMs / 1000} seconds before verification..."
                     )
                 }
 
                 while (currentStep < totalSteps) {
-                    delay(100) // Wait for 0.1 seconds
+                    delay(PlayIntegrityProgressConstants.PROGRESS_UPDATE_INTERVAL_MS) // Wait
                     currentStep++
-                    val newProgress = 1.0F - (currentStep.toFloat() / totalSteps)
+                    val newProgress = PlayIntegrityProgressConstants.FULL_PROGRESS - (currentStep.toFloat() / totalSteps)
                     _uiState.update {
                         it.copy(
                             progressValue = newProgress.coerceAtLeast(PlayIntegrityProgressConstants.NO_PROGRESS) // Ensure progress doesn't go below 0
@@ -226,8 +248,12 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e("ClassicPlayIntegrityVM", "Error verifying token with server", e)
-                // Consider parsing specific error types if server returns structured errors
-                val errorMessage = e.message ?: "Unknown error during verification"
+                val errorMessage = if (e is retrofit2.HttpException) {
+                    val errorBody = e.response()?.errorBody()?.string() ?: "No additional error information."
+                    "Error verifying token: ${e.code()} - $errorBody"
+                } else {
+                    e.message ?: "Unknown error during verification."
+                }
                 _uiState.update {
                     it.copy(
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
