@@ -43,7 +43,7 @@ fun ClassicPlayIntegrityContent(
         Spacer(modifier = Modifier.height(8.dp))
         Button(
             onClick = { onFetchNonce() },
-            enabled = !uiState.isLoading,
+            enabled = uiState.isFetchNonceButtonEnabled,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(ButtonHeight)
