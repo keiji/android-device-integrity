@@ -175,8 +175,41 @@ fun StatusDisplayArea(
                 }
             }
         }
-        // If progressValue != 0.0F and no error messages, only progress indicator will be shown.
+        // If progressValue != 0.0F and no error messages, only progress indicator will be shown,
+        // unless it's a LinearProgressIndicator, in which case status text is also shown.
         // If progressValue == 0.0F, no errors, no response data, and statusText is empty, nothing will be shown.
+        else if (statusText.isNotEmpty() && progressValue > 0.0F) { // Show status text with LinearProgressIndicator
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                IconButton(
+                    onClick = { clipboardManager.setText(AnnotatedString(statusText)) }
+                ) {
+                    Icon(painterResource(id = R.drawable.ic_content_copy), contentDescription = "Copy Status")
+                }
+                IconButton(
+                    onClick = {
+                        val sendIntent: Intent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_TEXT, statusText)
+                            type = "text/plain"
+                        }
+                        val shareIntent = Intent.createChooser(sendIntent, null)
+                        context.startActivity(shareIntent)
+                    }
+                ) {
+                    Icon(painterResource(id = R.drawable.ic_share), contentDescription = "Share Status")
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            SelectionContainer {
+                Text(
+                    text = statusText,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
     }
 }
 
