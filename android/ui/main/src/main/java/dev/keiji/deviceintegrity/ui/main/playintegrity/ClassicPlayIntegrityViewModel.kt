@@ -49,6 +49,9 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
         }
         viewModelScope.launch {
             try {
+                // Add a 5-second delay
+                delay(VERIFY_TOKEN_DELAY_MS)
+
                 val request = CreateNonceRequest(sessionId = currentSessionId) // Use currentSessionId
                 val response = playIntegrityTokenVerifyApi.getNonce(request)
                 _uiState.update {
@@ -91,7 +94,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
 
         _uiState.update {
             it.copy(
-                progressValue = -1.0F,
+                progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS,
                 status = "Fetching token...",
                 errorMessages = emptyList(),
                 playIntegrityResponse = null
@@ -103,7 +106,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 Log.d("ClassicPlayIntegrityVM", "Integrity Token: $token")
                 _uiState.update {
                     it.copy(
-                        progressValue = 0.0F,
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         integrityToken = token,
                         status = "Token fetched successfully (see Logcat for token)",
                         errorMessages = emptyList()
@@ -113,7 +116,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 Log.e("ClassicPlayIntegrityVM", "Error fetching integrity token", e)
                 _uiState.update {
                     it.copy(
-                        progressValue = 0.0F,
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         status = "Error fetching integrity token.",
                         errorMessages = listOfNotNull(e.message)
                     )
