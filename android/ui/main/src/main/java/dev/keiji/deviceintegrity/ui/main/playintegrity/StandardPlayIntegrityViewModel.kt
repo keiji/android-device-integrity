@@ -82,7 +82,11 @@ class StandardPlayIntegrityViewModel @Inject constructor(
             it.copy(
                 progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS,
                 status = "Fetching token...",
-                requestHashValue = "" // Reset before attempting to fetch
+                requestHashValue = "", // Reset before attempting to fetch
+                errorMessages = emptyList(), // Clear previous errors
+                playIntegrityResponse = null, // Clear previous response
+                deviceInfo = null,
+                securityInfo = null
             )
         }
         viewModelScope.launch {

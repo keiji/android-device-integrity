@@ -24,7 +24,7 @@ data class StandardPlayIntegrityUiState(
         get() = requestHashValue.isNotEmpty()
 
     val isRequestTokenButtonEnabled: Boolean
-        get() = !isLoading && contentBinding.isNotEmpty() && errorMessages.isEmpty()
+        get() = !isLoading && contentBinding.isNotEmpty()
 
     val isVerifyTokenButtonEnabled: Boolean
         get() = !isLoading && integrityToken.isNotEmpty()

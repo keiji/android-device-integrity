@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
+import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityProgressConstants
 
 @Composable
 fun ClassicPlayIntegrityContent(
@@ -40,9 +41,10 @@ fun ClassicPlayIntegrityContent(
         verticalArrangement = Arrangement.Top
     ) {
         Text(text = "Step 1. サーバーからNonceを取得")
+        Spacer(modifier = Modifier.height(8.dp))
         Button(
             onClick = { onFetchNonce() },
-            enabled = true,
+            enabled = uiState.progressValue == PlayIntegrityProgressConstants.NO_PROGRESS,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(ButtonHeight)
@@ -56,6 +58,7 @@ fun ClassicPlayIntegrityContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(text = "Step 2. トークンを取得")
+        Spacer(modifier = Modifier.height(8.dp))
         Button(
             onClick = { onRequestToken() },
             enabled = uiState.isRequestTokenButtonEnabled,
@@ -69,6 +72,7 @@ fun ClassicPlayIntegrityContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(text = "Step 3. トークンを検証")
+        Spacer(modifier = Modifier.height(8.dp))
         Button(
             onClick = { onRequestVerify() },
             enabled = uiState.isVerifyTokenButtonEnabled,
