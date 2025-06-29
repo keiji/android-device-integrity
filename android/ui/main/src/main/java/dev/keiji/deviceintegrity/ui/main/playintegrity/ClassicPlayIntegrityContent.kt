@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
 
 @Composable
 fun ClassicPlayIntegrityContent(
@@ -42,7 +43,9 @@ fun ClassicPlayIntegrityContent(
         Button(
             onClick = { onFetchNonce() },
             enabled = uiState.isFetchNonceButtonEnabled,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(ButtonHeight)
         ) {
             Text(text = "Fetch Nonce")
         }
@@ -56,7 +59,9 @@ fun ClassicPlayIntegrityContent(
         Button(
             onClick = { onRequestToken() },
             enabled = uiState.isRequestTokenButtonEnabled,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(ButtonHeight)
         ) {
             Text(text = "Request Integrity Token")
         }
@@ -67,7 +72,9 @@ fun ClassicPlayIntegrityContent(
         Button(
             onClick = { onRequestVerify() },
             enabled = uiState.isVerifyTokenButtonEnabled,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(ButtonHeight)
         ) {
             Text(text = "Request Verify Token")
         }

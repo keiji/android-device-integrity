@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
 
 @Composable
 fun StandardPlayIntegrityContent(
@@ -55,7 +56,9 @@ fun StandardPlayIntegrityContent(
         Button(
             onClick = { onRequestToken() },
             enabled = uiState.isRequestTokenButtonEnabled,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(ButtonHeight)
         ) {
             Text(text = "Request Integrity Token")
         }
@@ -71,7 +74,9 @@ fun StandardPlayIntegrityContent(
         Button(
             onClick = { onRequestVerify() },
             enabled = uiState.isVerifyTokenButtonEnabled,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(ButtonHeight)
         ) {
             Text(text = "Request Verify Token")
         }

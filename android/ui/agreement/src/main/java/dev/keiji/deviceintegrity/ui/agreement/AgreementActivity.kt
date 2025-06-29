@@ -33,6 +33,7 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import dev.keiji.deviceintegrity.provider.contract.UrlProvider
+import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 import kotlinx.coroutines.flow.collectLatest
 
@@ -111,14 +112,18 @@ fun AgreementScreen(
         Spacer(modifier = Modifier.weight(1f))
         OutlinedButton(
             onClick = onAgree,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(ButtonHeight)
         ) {
             Text("利用を開始する")
         }
         Spacer(modifier = Modifier.height(8.dp))
         Button(
             onClick = onDisagree,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(ButtonHeight)
         ) {
             Text("アプリを終了")
         }
