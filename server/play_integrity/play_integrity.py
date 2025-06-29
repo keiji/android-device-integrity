@@ -143,7 +143,7 @@ def _store_verification_attempt(session_id, client_request_data, result, decoded
         app.logger.error(f"CRITICAL: Failed to store verification attempt for session_id '{session_id}'. Result: {result}. Error: {e}. Client Data: {client_request_data}. Decoded Token: {decoded_token_response}")
         # This failure should ideally not prevent the main API from returning its response to the client.
 
-@app.route('/play-integrity/classic/nonce', methods=['POST'])
+@app.route('/play-integrity/classic/v1/nonce', methods=['POST'])
 def create_nonce_endpoint():
     """
     Handles POST requests to /play-integrity/classic/nonce.
@@ -172,7 +172,7 @@ def create_nonce_endpoint():
         return jsonify({"error": "Failed to process nonce request"}), 500
 
 # --- verify_integrity_classic endpoint ---
-@app.route('/play-integrity/classic/verify', methods=['POST'])
+@app.route('/play-integrity/classic/v1/verify', methods=['POST'])
 def verify_integrity_classic():
     """
     Handles POST requests to /play-integrity/classic/verify.
@@ -349,7 +349,7 @@ def verify_integrity_classic():
         return jsonify({"error": "An unexpected server error occurred"}), 500
 
 # --- verify_integrity_standard endpoint ---
-@app.route('/play-integrity/standard/verify', methods=['POST'])
+@app.route('/play-integrity/standard/v1/verify', methods=['POST'])
 def verify_integrity_standard():
     # This function requires similar nonce handling (canonicalization, optional server-side session validation)
     # as the classic verify endpoint.
