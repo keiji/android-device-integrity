@@ -68,8 +68,8 @@ fun LicenseScreen(
         }
     ) { paddingValues ->
         // This will call the Composable currently named LicenseScreen in LicenseScreen.kt
-        // It will be renamed to LicenseList in the next step.
-        dev.keiji.deviceintegrity.ui.license.LicenseScreen(
+        // It has been renamed to LicenseList.
+        LicenseList( // Call the renamed Composable from LicenseScreen.kt
             licenses = licenses,
             contentPadding = paddingValues
         )
