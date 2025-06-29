@@ -19,9 +19,8 @@ data class ClassicPlayIntegrityUiState(
     val isLoading: Boolean
         get() = progressValue != PlayIntegrityProgressConstants.NO_PROGRESS
 
-    // Fetch Nonce button is always enabled as per new requirement.
-    val isFetchNonceButtonEnabled: Boolean
-        get() = true
+    // isFetchNonceButtonEnabled removed as it's always true.
+    // The button in the Composable will be set to enabled by default.
 
     val isRequestTokenButtonEnabled: Boolean
         get() = !isLoading && nonce.isNotEmpty()
