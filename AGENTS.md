@@ -5,19 +5,6 @@ server以下はサーバー側のソースコードです。
 
 This document outlines the steps for AI coding agents to set up the Android SDK environment required to build and test applications located under the `android` directory.
 
-## 1. Prerequisites
-
-Before proceeding with the Android SDK setup, ensure the following are installed and configured:
-
-*   **Java Development Kit (JDK):**
-    *   **Project JDK Version:** A specific JDK version is required for compiling the project's Java/Kotlin source code. Please check the project's `build.gradle.kts` files (e.g., `android/app/build.gradle.kts`) for `sourceCompatibility` and `targetCompatibility` under `compileOptions`, or the `jvmTarget` in `kotlinOptions`. For this project, it is typically **JDK 11**.
-    *   Ensure the `JAVA_HOME` environment variable is set correctly to this JDK installation path (e.g., JDK 11).
-    *   Verify installation: `java -version`
-    *   **Android Gradle Plugin (AGP) JDK Version:** The Android Gradle Plugin itself may require a newer JDK version to run (e.g., JDK 17). If you encounter errors like "Android Gradle plugin requires Java X to run", you will need to configure Gradle to use that specific JDK version for its daemon.
-        *   Set `org.gradle.java.home=/path/to/jdk-X` (replace X with the required version, e.g., `/usr/lib/jvm/java-17-openjdk-amd64`) in the `android/gradle.properties` file.
-        *   `JAVA_HOME` should still point to the project's compilation JDK (e.g., JDK 11).
-    *   **SDK Manager JDK Version:** The `sdkmanager` tool itself might also require a newer JDK (e.g., JDK 17). If you see `UnsupportedClassVersionError` when running `sdkmanager`, temporarily set `JAVA_HOME` to JDK 17+ for `sdkmanager` execution, then revert it.
-
 ## 2. Android SDK Setup Instructions
 
 Follow these steps precisely to set up the Android SDK.
@@ -111,12 +98,6 @@ Follow these steps precisely to set up the Android SDK.
 *   **`SDK location not found. Define location with sdk.dir in the local.properties file or with an ANDROID_HOME environment variable.`**
     *   Ensure `android/local.properties` exists and `sdk.dir` points to the correct SDK path (e.g., `/home/agent/AndroidSdk`). Using an absolute path is recommended.
     *   Verify `ANDROID_HOME` environment variable is set correctly and exported in your current session. This is often the primary way Gradle finds the SDK.
-*   **`java.lang.UnsupportedClassVersionError` or issues related to JDK version:**
-    *   **During `sdkmanager` execution:** This tool might require a newer JDK (e.g., JDK 17+) than the project's compilation JDK. See Section 2.3 Note.
-    *   **During Gradle build (`./gradlew`):**
-        *   If the error message indicates "Android Gradle plugin requires Java X to run", set `org.gradle.java.home=/path/to/jdk-X` in `android/gradle.properties`. Ensure `JAVA_HOME` still points to the JDK version specified for project compilation (e.g., JDK 11). See Section 1 Prerequisites.
-        *   If the error relates to source compilation, ensure `JAVA_HOME` points to the correct JDK version specified in `sourceCompatibility` / `jvmTarget` (e.g., JDK 11).
-    *   Verify `java -version` and `javac -version` reflect the intended active JDK for the task at hand.
 *   **`sdkmanager: command not found` or `aapt: command not found`:**
     *   The `PATH` environment variable is likely not configured correctly to include SDK tools. Refer to Section 2.2.
     *   Ensure you have reloaded your shell configuration or opened a new terminal after modifying environment variables.
@@ -131,7 +112,7 @@ Follow these steps precisely to set up the Android SDK.
 ## 5. Notes for AI Agents
 
 *   **Working Directory:** Most commands specific to Android (especially `./gradlew` commands) should be executed from within the `android` directory.
-*   **Environment Variables:** Ensure `JAVA_HOME` and `ANDROID_HOME` (and additions to `PATH`) are correctly set and available in your execution environment *before* running any build commands.
+*   **Environment Variables:** Ensure `ANDROID_HOME` (and additions to `PATH`) are correctly set and available in your execution environment *before* running any build commands.
 *   **Build Failures:** If a build fails, carefully examine the error output. The messages usually provide clues. The "Troubleshooting" section above might also help.
 *   **Idempotency:** The setup scripts for SDK tools are generally safe to re-run if you suspect an incomplete setup.
 *   **Checking Project Configuration:** Key Android configuration files include:
