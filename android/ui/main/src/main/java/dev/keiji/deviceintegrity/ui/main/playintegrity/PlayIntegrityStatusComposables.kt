@@ -60,19 +60,21 @@ fun StatusDisplayArea(
 
     Column(modifier = modifier.fillMaxWidth()) {
         // Progress Indicator
-        when {
-            progressValue > 0.0F -> {
-                LinearProgressIndicator(
-                    progress = { progressValue },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp)) // Add some space below the progress bar
-            }
-            progressValue < 0.0F -> {
+        when (progressValue) {
+            PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS -> {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                 Spacer(modifier = Modifier.height(8.dp)) // Add some space below the progress indicator
             }
-            // else progressValue == 0.0F, show nothing for progress
+            else -> {
+                if (progressValue > PlayIntegrityProgressConstants.NO_PROGRESS) { // For LinearProgressIndicator
+                    LinearProgressIndicator(
+                        progress = progressValue,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp)) // Add some space below the progress bar
+                }
+                // If progressValue == PlayIntegrityProgressConstants.NO_PROGRESS, show nothing for progress
+            }
         }
 
         // Content (Error messages, response, or status text)
@@ -97,8 +99,8 @@ fun StatusDisplayArea(
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-        } else if (progressValue == 0.0F) {
-            // Show response or status text only when not loading (progressValue == 0.0F) and no errors
+        } else if (progressValue == PlayIntegrityProgressConstants.NO_PROGRESS) {
+            // Show response or status text only when not loading (progressValue == NO_PROGRESS) and no errors
             if (playIntegrityResponse != null || deviceInfo != null || securityInfo != null) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -175,10 +177,10 @@ fun StatusDisplayArea(
                 }
             }
         }
-        // If progressValue != 0.0F and no error messages, only progress indicator will be shown,
-        // unless it's a LinearProgressIndicator, in which case status text is also shown.
-        // If progressValue == 0.0F, no errors, no response data, and statusText is empty, nothing will be shown.
-        else if (statusText.isNotEmpty() && progressValue > 0.0F) { // Show status text with LinearProgressIndicator
+        // If progressValue is not NO_PROGRESS and no error messages, only progress indicator will be shown,
+        // unless it's a LinearProgressIndicator (progressValue > NO_PROGRESS), in which case status text is also shown.
+        // If progressValue is NO_PROGRESS, no errors, no response data, and statusText is empty, nothing will be shown.
+        else if (statusText.isNotEmpty() && progressValue > PlayIntegrityProgressConstants.NO_PROGRESS) { // Show status text with LinearProgressIndicator
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
