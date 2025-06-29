@@ -49,7 +49,6 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
         }
         viewModelScope.launch {
             try {
-                // Add a 5-second delay
                 delay(VERIFY_TOKEN_DELAY_MS)
 
                 val request = CreateNonceRequest(sessionId = currentSessionId) // Use currentSessionId
