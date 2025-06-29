@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.security.MessageDigest
 import android.util.Base64
+import retrofit2.HttpException
 import java.util.UUID
 import javax.inject.Inject
 
@@ -124,7 +125,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e("StandardPlayIntegrityVM", "Error fetching integrity token (Standard)", e)
-                val errorMessage = if (e is retrofit2.HttpException) {
+                val errorMessage = if (e is HttpException) {
                     val errorBody = e.response()?.errorBody()?.string() ?: "No additional error information."
                     "Error fetching integrity token (Standard): ${e.code()} - $errorBody"
                 } else {
@@ -259,7 +260,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e("StandardPlayIntegrityVM", "Error verifying token with server", e)
-                val errorMessage = if (e is retrofit2.HttpException) {
+                val errorMessage = if (e is HttpException) {
                     val errorBody = e.response()?.errorBody()?.string() ?: "No additional error information."
                     "Error verifying token: ${e.code()} - $errorBody"
                 } else {

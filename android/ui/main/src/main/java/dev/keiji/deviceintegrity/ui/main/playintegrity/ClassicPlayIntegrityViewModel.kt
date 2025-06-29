@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 import java.util.UUID // Import
 import javax.inject.Inject
 // PlayIntegrityProgressConstants will be imported from the new common file
@@ -79,7 +80,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e("ClassicPlayIntegrityVM", "Error fetching nonce", e)
-                val errorMessage = if (e is retrofit2.HttpException) {
+                val errorMessage = if (e is HttpException) {
                     val errorBody = e.response()?.errorBody()?.string() ?: "No additional error information."
                     "Error fetching nonce: ${e.code()} - $errorBody"
                 } else {
@@ -248,7 +249,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e("ClassicPlayIntegrityVM", "Error verifying token with server", e)
-                val errorMessage = if (e is retrofit2.HttpException) {
+                val errorMessage = if (e is HttpException) {
                     val errorBody = e.response()?.errorBody()?.string() ?: "No additional error information."
                     "Error verifying token: ${e.code()} - $errorBody"
                 } else {
