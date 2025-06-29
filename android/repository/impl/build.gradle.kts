@@ -36,6 +36,7 @@ android {
 
 dependencies {
     api(project(":repository:contract"))
+    implementation(project(":api")) // Added API module dependency
     implementation(project(":provider:contract"))
 
     // Play Integrity API
@@ -55,6 +56,11 @@ dependencies {
     implementation(libs.protobuf.kotlin.lite)
 
     implementation(libs.timber)
+
+    // Retrofit for network operations
+    implementation(libs.retrofit.core)
+    implementation(libs.retrofit.converter.kotlinx.serialization)
+    implementation(libs.kotlinx.serialization.json) // Required by kotlinx-serialization-converter
 
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)

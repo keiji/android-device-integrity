@@ -4,13 +4,12 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.keiji.deviceintegrity.api.playintegrity.CreateNonceRequest // Import
-import dev.keiji.deviceintegrity.api.playintegrity.PlayIntegrityTokenVerifyApiClient
-import dev.keiji.deviceintegrity.api.playintegrity.VerifyTokenRequest
 import dev.keiji.deviceintegrity.provider.contract.AppInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.repository.contract.ClassicPlayIntegrityTokenRepository
+import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository // Added
+import dev.keiji.deviceintegrity.repository.contract.exception.ServerException // Corrected path
 import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
 import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo
 import dev.keiji.deviceintegrity.ui.main.common.DEBUG_VERIFY_TOKEN_DELAY_MS
@@ -21,15 +20,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
-import java.util.UUID // Import
+import java.io.IOException // Added
+import java.util.UUID
 import javax.inject.Inject
 // PlayIntegrityProgressConstants will be imported from the new common file
 
 @HiltViewModel
 class ClassicPlayIntegrityViewModel @Inject constructor(
     private val classicPlayIntegrityTokenRepository: ClassicPlayIntegrityTokenRepository,
-    private val playIntegrityTokenVerifyApi: PlayIntegrityTokenVerifyApiClient,
+    private val playIntegrityRepository: PlayIntegrityRepository, // Changed
     private val deviceInfoProvider: DeviceInfoProvider,
     private val deviceSecurityStateProvider: DeviceSecurityStateProvider,
     private val appInfoProvider: AppInfoProvider
@@ -68,8 +67,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
 
                 _uiState.update { it.copy(status = "Finalizing nonce request...") }
 
-                val request = CreateNonceRequest(sessionId = currentSessionId) // Use currentSessionId
-                val response = playIntegrityTokenVerifyApi.getNonce(request)
+                val response = playIntegrityRepository.prepareChallenge(currentSessionId) // Use repository
                 _uiState.update {
                     it.copy(
                         nonce = response.nonce,
@@ -78,19 +76,31 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                         currentSessionId = currentSessionId
                     )
                 }
-            } catch (e: Exception) {
-                Log.e("ClassicPlayIntegrityVM", "Error fetching nonce", e)
-                val errorMessage = if (e is HttpException) {
-                    val errorBody = e.response()?.errorBody()?.string() ?: "No additional error information."
-                    "Error fetching nonce: ${e.code()} - $errorBody"
-                } else {
-                    e.message ?: "Unknown error fetching nonce."
-                }
+            } catch (e: ServerException) { // Catch ServerException
+                Log.e("ClassicPlayIntegrityVM", "Server error fetching nonce: ${e.errorCode} - ${e.errorMessage}", e)
                 _uiState.update {
                     it.copy(
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
-                        status = "Error fetching nonce.",
-                        errorMessages = listOf(errorMessage)
+                        status = "Server error fetching nonce.",
+                        errorMessages = listOf("Server error: ${e.errorCode ?: "N/A"} - ${e.errorMessage ?: "Unknown"}")
+                    )
+                }
+            } catch (e: IOException) { // Catch IOException
+                Log.e("ClassicPlayIntegrityVM", "Network error fetching nonce", e)
+                _uiState.update {
+                    it.copy(
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
+                        status = "Network error fetching nonce.",
+                        errorMessages = listOf(e.message ?: "Unknown network error.")
+                    )
+                }
+            } catch (e: Exception) { // Catch other exceptions
+                Log.e("ClassicPlayIntegrityVM", "Unknown error fetching nonce", e)
+                _uiState.update {
+                    it.copy(
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
+                        status = "Unknown error fetching nonce.",
+                        errorMessages = listOf(e.message ?: "An unexpected error occurred.")
                     )
                 }
             }
@@ -232,7 +242,13 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                     deviceInfo = deviceInfoData,
                     securityInfo = securityInfo
                 )
-                val verifyResponse = playIntegrityTokenVerifyApi.verifyTokenClassic(verifyRequest)
+
+                val verifyResponse = playIntegrityRepository.getIntegrityVerdictClassic( // Use repository
+                    integrityToken = token,
+                    sessionId = currentSessionId,
+                    deviceInfo = deviceInfoData,
+                    securityInfo = securityInfo
+                )
 
                 Log.d("ClassicPlayIntegrityVM", "Verification Response: ${verifyResponse.playIntegrityResponse.tokenPayloadExternal}")
 
@@ -247,19 +263,37 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                         currentSessionId = currentSessionId
                     )
                 }
-            } catch (e: Exception) {
-                Log.e("ClassicPlayIntegrityVM", "Error verifying token with server", e)
-                val errorMessage = if (e is HttpException) {
-                    val errorBody = e.response()?.errorBody()?.string() ?: "No additional error information."
-                    "Error verifying token: ${e.code()} - $errorBody"
-                } else {
-                    e.message ?: "Unknown error during verification."
-                }
+            } catch (e: ServerException) { // Catch ServerException
+                Log.e("ClassicPlayIntegrityVM", "Server error verifying token: ${e.errorCode} - ${e.errorMessage}", e)
                 _uiState.update {
                     it.copy(
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
-                        status = "Error verifying token with server.",
-                        errorMessages = listOf(errorMessage),
+                        status = "Server error verifying token.",
+                        errorMessages = listOf("Server error: ${e.errorCode ?: "N/A"} - ${e.errorMessage ?: "Unknown"}"),
+                        playIntegrityResponse = null,
+                        deviceInfo = null,
+                        securityInfo = null
+                    )
+                }
+            } catch (e: IOException) { // Catch IOException
+                Log.e("ClassicPlayIntegrityVM", "Network error verifying token", e)
+                _uiState.update {
+                    it.copy(
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
+                        status = "Network error verifying token.",
+                        errorMessages = listOf(e.message ?: "Unknown network error."),
+                        playIntegrityResponse = null,
+                        deviceInfo = null,
+                        securityInfo = null
+                    )
+                }
+            } catch (e: Exception) { // Catch other exceptions
+                Log.e("ClassicPlayIntegrityVM", "Unknown error verifying token", e)
+                _uiState.update {
+                    it.copy(
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
+                        status = "Unknown error verifying token.",
+                        errorMessages = listOf(e.message ?: "An unexpected error occurred."),
                         playIntegrityResponse = null,
                         deviceInfo = null,
                         securityInfo = null
