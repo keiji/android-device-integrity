@@ -177,10 +177,10 @@ fun StatusDisplayArea(
                 }
             }
         }
-        // If progressValue is not NO_PROGRESS and no error messages, only progress indicator will be shown,
-        // unless it's a LinearProgressIndicator (progressValue > NO_PROGRESS), in which case status text is also shown.
-        // If progressValue is NO_PROGRESS, no errors, no response data, and statusText is empty, nothing will be shown.
-        else if (statusText.isNotEmpty() && progressValue > PlayIntegrityProgressConstants.NO_PROGRESS) { // Show status text with LinearProgressIndicator
+        // Show status text only if LinearProgressIndicator is shown (progressValue > NO_PROGRESS)
+        // and not when CircularProgressIndicator is shown (progressValue == INDETERMINATE_PROGRESS)
+        // Also, ensure statusText is not empty.
+        else if (statusText.isNotEmpty() && progressValue > PlayIntegrityProgressConstants.NO_PROGRESS && progressValue != PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
@@ -212,6 +212,8 @@ fun StatusDisplayArea(
                 )
             }
         }
+        // If CircularProgressIndicator is shown, status text is explicitly not shown here,
+        // as per the new requirement. Only the CircularProgressIndicator itself will be visible.
     }
 }
 
