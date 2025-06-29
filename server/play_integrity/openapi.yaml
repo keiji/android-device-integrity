@@ -21,7 +21,7 @@ servers:
     description: Development server
 
 paths:
-  /play-integrity/classic/nonce:
+  /play-integrity/classic/v1/nonce:
     post:
       summary: Create Nonce
       description: |-
@@ -72,7 +72,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /play-integrity/classic/verify:
+  /play-integrity/classic/v1/verify:
     post:
       summary: Verify Integrity Token
       description: |-
@@ -128,7 +128,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /play-integrity/standard/verify:
+  /play-integrity/standard/v1/verify:
     post:
       summary: Verify Integrity Token (Standard)
       description: |-

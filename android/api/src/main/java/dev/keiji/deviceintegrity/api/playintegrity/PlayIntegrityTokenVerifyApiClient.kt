@@ -5,14 +5,16 @@ import kotlinx.serialization.Serializable
 import retrofit2.http.Body
 import retrofit2.http.POST
 
+private const val API_VERSION_V1 = "v1"
+
 interface PlayIntegrityTokenVerifyApiClient {
-    @POST("/play-integrity/classic/nonce")
+    @POST("/play-integrity/classic/$API_VERSION_V1/nonce")
     suspend fun getNonce(@Body request: CreateNonceRequest): NonceResponse
 
-    @POST("/play-integrity/classic/verify")
+    @POST("/play-integrity/classic/$API_VERSION_V1/verify")
     suspend fun verifyTokenClassic(@Body request: VerifyTokenRequest): ServerVerificationPayload
 
-    @POST("/play-integrity/standard/verify")
+    @POST("/play-integrity/standard/$API_VERSION_V1/verify")
     suspend fun verifyTokenStandard(@Body request: StandardVerifyRequest): ServerVerificationPayload
 }
 
