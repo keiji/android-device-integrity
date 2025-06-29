@@ -5,7 +5,7 @@ import androidx.annotation.DrawableRes
 sealed class AppScreen(
     val route: String,
     val label: String,
-    @DrawableRes val icon: Int
+    @param:DrawableRes val icon: Int
 ) {
     object PlayIntegrity : AppScreen("play_integrity", "Play Integrity", R.drawable.ic_play_circle)
     object KeyAttestation : AppScreen("key_attestation", "Key Attestation", R.drawable.ic_key)
