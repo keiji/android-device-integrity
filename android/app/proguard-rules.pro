@@ -19,3 +19,7 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Suppress R8 warning for kotlinx-serialization-common.pro
+# See https://youtrack.jetbrains.com/issue/KT-73255 and the build log for details.
+-dontwarn kotlinx.serialization.**

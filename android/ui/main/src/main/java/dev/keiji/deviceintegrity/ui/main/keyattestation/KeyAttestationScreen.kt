@@ -48,7 +48,7 @@ fun KeyAttestationScreen(
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Characters,
-                autoCorrect = false,
+                autoCorrectEnabled = false,
                 keyboardType = KeyboardType.Ascii
             ),
             singleLine = true,
