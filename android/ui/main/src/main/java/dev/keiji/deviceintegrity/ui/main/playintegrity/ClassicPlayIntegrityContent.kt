@@ -40,9 +40,10 @@ fun ClassicPlayIntegrityContent(
         verticalArrangement = Arrangement.Top
     ) {
         Text(text = "Step 1. サーバーからNonceを取得")
+        Spacer(modifier = Modifier.height(8.dp))
         Button(
             onClick = { onFetchNonce() },
-            enabled = true,
+            enabled = uiState.isFetchNonceButtonEnabled,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(ButtonHeight)
@@ -56,6 +57,7 @@ fun ClassicPlayIntegrityContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(text = "Step 2. トークンを取得")
+        Spacer(modifier = Modifier.height(8.dp))
         Button(
             onClick = { onRequestToken() },
             enabled = uiState.isRequestTokenButtonEnabled,
@@ -69,6 +71,7 @@ fun ClassicPlayIntegrityContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(text = "Step 3. トークンを検証")
+        Spacer(modifier = Modifier.height(8.dp))
         Button(
             onClick = { onRequestVerify() },
             enabled = uiState.isVerifyTokenButtonEnabled,

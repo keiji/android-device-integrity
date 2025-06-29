@@ -46,7 +46,11 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
             it.copy(
                 integrityToken = "", // Clear previous integrity token
                 progressValue = PlayIntegrityProgressConstants.FULL_PROGRESS, // Start ProgressBar at full for nonce fetching
-                status = "Fetching nonce from server..."
+                status = "Fetching nonce from server...",
+                playIntegrityResponse = null,
+                deviceInfo = null,
+                securityInfo = null,
+                errorMessages = emptyList()
             )
         }
         viewModelScope.launch {
@@ -137,7 +141,9 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS,
                 status = "Fetching token...",
                 errorMessages = emptyList(),
-                playIntegrityResponse = null
+                playIntegrityResponse = null,
+                deviceInfo = null,
+                securityInfo = null
             )
         }
         viewModelScope.launch {
