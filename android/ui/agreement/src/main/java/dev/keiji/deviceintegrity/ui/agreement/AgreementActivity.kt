@@ -97,11 +97,11 @@ fun AgreementScreen(
     ) {
         Text(
             text = "Device Integrity",
-            style = MaterialTheme.typography.headlineLarge
+            style = MaterialTheme.typography.displaySmall
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(32.dp))
         Text(text = "プライバリーポリシーを確認して利用を開始してください")
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = "プライバリーポリシー",
             modifier = Modifier.clickable {
@@ -114,7 +114,7 @@ fun AgreementScreen(
             onClick = onAgree,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(ButtonHeight)
+                .height(64.dp)
         ) {
             Text("利用を開始する")
         }
@@ -123,7 +123,7 @@ fun AgreementScreen(
             onClick = onDisagree,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(ButtonHeight)
+                .height(64.dp)
         ) {
             Text("アプリを終了")
         }
