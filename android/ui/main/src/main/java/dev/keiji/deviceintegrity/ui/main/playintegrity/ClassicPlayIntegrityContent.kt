@@ -42,7 +42,7 @@ fun ClassicPlayIntegrityContent(
         Text(text = "Step 1. サーバーからNonceを取得")
         Button(
             onClick = { onFetchNonce() },
-            enabled = true, // Always enabled
+            enabled = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(ButtonHeight)
