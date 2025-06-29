@@ -5,7 +5,7 @@ import dev.keiji.deviceintegrity.api.playintegrity.NonceResponse
 import dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload
 import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo // For verifyToken methods if needed in request
 import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo // For verifyToken methods if needed in request
-import dev.keiji.repository.contract.exception.ServerException
+import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
 
 /**
  * Repository interface for Play Integrity API and classic integrity checks.
@@ -24,7 +24,7 @@ interface PlayIntegrityRepository {
      * @throws java.io.IOException for other network or I/O related issues.
      */
     @Throws(ServerException::class, java.io.IOException::class)
-    suspend fun getIntegrityVerdictStandard(
+    suspend fun verifyTokenStandard(
         integrityToken: String,
         sessionId: String,
         contentBinding: String,
@@ -43,7 +43,7 @@ interface PlayIntegrityRepository {
      * @throws java.io.IOException for other network or I/O related issues.
      */
     @Throws(ServerException::class, java.io.IOException::class)
-    suspend fun getIntegrityVerdictClassic(
+    suspend fun verifyTokenClassic(
         integrityToken: String,
         sessionId: String,
         deviceInfo: DeviceInfo,
@@ -59,21 +59,7 @@ interface PlayIntegrityRepository {
      * @throws java.io.IOException for other network or I/O related issues.
      */
     @Throws(ServerException::class, java.io.IOException::class)
-    suspend fun prepareChallenge(
+    suspend fun getNonce(
         sessionId: String
     ): NonceResponse
-
-    /**
-     * Verifies the attestation data for classic integrity check (e.g. Key Attestation).
-     * @param challenge The challenge that was used for attestation.
-     * @param attestationStatement The attestation data (e.g., from Key Attestation, Base64 encoded).
-     * @return [KeyAttestationResponse] indicating if the attestation is legitimate.
-     * @throws ServerException if there is an issue communicating with the server or the server returns an error.
-     * @throws java.io.IOException for other network or I/O related issues.
-     */
-    @Throws(ServerException::class, java.io.IOException::class)
-    suspend fun verifyClassicDeviceAttestation(
-        challenge: String,
-        attestationStatement: String,
-    ): KeyAttestationResponse
 }

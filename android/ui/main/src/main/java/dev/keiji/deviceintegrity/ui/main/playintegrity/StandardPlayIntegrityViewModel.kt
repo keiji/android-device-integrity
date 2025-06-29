@@ -12,7 +12,6 @@ import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository // 
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException // Corrected path
 import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
 import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo
-// import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal // No longer directly used for response type
 import dev.keiji.deviceintegrity.ui.main.common.DEBUG_VERIFY_TOKEN_DELAY_MS
 import dev.keiji.deviceintegrity.ui.main.common.VERIFY_TOKEN_DELAY_MS
 import kotlinx.coroutines.delay
@@ -116,9 +115,9 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e("StandardPlayIntegrityVM", "Error fetching integrity token (Standard)", e)
-                val errorMessage = if (e is HttpException) {
-                    val errorBody = e.response()?.errorBody()?.string() ?: "No additional error information."
-                    "Error fetching integrity token (Standard): ${e.code()} - $errorBody"
+                val errorMessage = if (e is ServerException) {
+                    val errorBody = e.errorMessage ?: "No additional error information."
+                    "Error fetching integrity token (Standard): ${e.errorCode} - $errorBody"
                 } else {
                     e.message ?: "Unknown error fetching integrity token (Standard)."
                 }
@@ -227,14 +226,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                     hasStrongbox = deviceSecurityStateProvider.hasStrongBox
                 )
 
-                val request = StandardVerifyRequest(
-                    token = token,
-                    sessionId = currentSessionId,
-                    contentBinding = contentBindingForVerification,
-                    deviceInfo = deviceInfoData,
-                    securityInfo = securityInfo
-                )
-                val response = playIntegrityRepository.getIntegrityVerdictStandard( // Use repository
+                val response = playIntegrityRepository.verifyTokenStandard( // Use repository
                     integrityToken = token,
                     sessionId = currentSessionId,
                     contentBinding = contentBindingForVerification,

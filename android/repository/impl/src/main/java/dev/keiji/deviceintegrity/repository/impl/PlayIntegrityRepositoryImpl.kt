@@ -1,8 +1,5 @@
 package dev.keiji.deviceintegrity.repository.impl
 
-import dev.keiji.deviceintegrity.api.keyattestation.KeyAttestationRequest
-import dev.keiji.deviceintegrity.api.keyattestation.KeyAttestationResponse
-import dev.keiji.deviceintegrity.api.keyattestation.KeyAttestationVerifyApiClient
 import dev.keiji.deviceintegrity.api.playintegrity.CreateNonceRequest
 import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
 import dev.keiji.deviceintegrity.api.playintegrity.NonceResponse
@@ -18,11 +15,10 @@ import java.io.IOException
 import javax.inject.Inject
 
 class PlayIntegrityRepositoryImpl @Inject constructor(
-    private val keyAttestationVerifyApiClient: KeyAttestationVerifyApiClient,
     private val playIntegrityTokenVerifyApiClient: PlayIntegrityTokenVerifyApiClient
 ) : PlayIntegrityRepository {
 
-    override suspend fun getIntegrityVerdictStandard(
+    override suspend fun verifyTokenStandard(
         integrityToken: String,
         sessionId: String,
         contentBinding: String,
@@ -41,16 +37,14 @@ class PlayIntegrityRepositoryImpl @Inject constructor(
         } catch (e: HttpException) {
             throw ServerException(
                 errorCode = e.code(),
-                errorMessage = e.response()?.errorBody()?.string(), // Consider parsing error body if it's structured (e.g., JSON)
+                errorMessage = e.response()?.errorBody()
+                    ?.string(), // Consider parsing error body if it's structured (e.g., JSON)
                 cause = e
             )
-        } catch (e: IOException) {
-            // Re-throw other IOExceptions (network errors, etc.)
-            throw e
         }
     }
 
-    override suspend fun getIntegrityVerdictClassic(
+    override suspend fun verifyTokenClassic(
         integrityToken: String,
         sessionId: String,
         deviceInfo: DeviceInfo,
@@ -75,7 +69,7 @@ class PlayIntegrityRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun prepareChallenge(sessionId: String): NonceResponse {
+    override suspend fun getNonce(sessionId: String): NonceResponse {
         return try {
             val request = CreateNonceRequest(sessionId = sessionId)
             playIntegrityTokenVerifyApiClient.getNonce(request)
@@ -85,29 +79,6 @@ class PlayIntegrityRepositoryImpl @Inject constructor(
                 errorMessage = e.response()?.errorBody()?.string(),
                 cause = e
             )
-        } catch (e: IOException) {
-            throw e
-        }
-    }
-
-    override suspend fun verifyClassicDeviceAttestation(
-        challenge: String,
-        attestationStatement: String
-    ): KeyAttestationResponse {
-        return try {
-            val request = KeyAttestationRequest(
-                attestationStatement = attestationStatement,
-                challenge = challenge
-            )
-            keyAttestationVerifyApiClient.verifyAttestation(request)
-        } catch (e: HttpException) {
-            throw ServerException(
-                errorCode = e.code(),
-                errorMessage = e.response()?.errorBody()?.string(),
-                cause = e
-            )
-        } catch (e: IOException) {
-            throw e
         }
     }
 }

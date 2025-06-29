@@ -36,7 +36,7 @@ android {
 
 dependencies {
     api(project(":repository:contract"))
-    implementation(project(":api")) // Added API module dependency
+    implementation(project(":api"))
     implementation(project(":provider:contract"))
 
     // Play Integrity API
@@ -66,7 +66,12 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core.ktx)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.mockito.kotlin)
+    testImplementation(libs.hilt.android.testing)
 
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
     // Robolectric and other test dependencies if needed for this module specifically
     // For PreferencesRepositoryImplTest, Robolectric is used.
     // It's often better to have a separate test module or configure it if it's only for a few tests.

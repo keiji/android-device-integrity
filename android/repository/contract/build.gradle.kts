@@ -32,7 +32,7 @@ android {
 }
 
 dependencies {
-    api(project(":api")) // Added API module dependency
+    api(project(":api"))
 
     implementation(libs.timber)
     implementation(libs.kotlinx.coroutines.core)

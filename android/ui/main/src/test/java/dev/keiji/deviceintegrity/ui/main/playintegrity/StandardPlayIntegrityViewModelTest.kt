@@ -1,6 +1,5 @@
 package dev.keiji.deviceintegrity.ui.main.playintegrity
 
-import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
 import dev.keiji.deviceintegrity.api.playintegrity.PlayIntegrityResponseWrapper
 import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo
@@ -11,7 +10,7 @@ import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository
 import dev.keiji.deviceintegrity.repository.contract.StandardPlayIntegrityTokenRepository
-import dev.keiji.repository.contract.exception.ServerException
+import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -23,18 +22,19 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.io.IOException
 
+@Config(application = dagger.hilt.android.testing.HiltTestApplication::class)
+@RunWith(RobolectricTestRunner::class)
 @ExperimentalCoroutinesApi
 class StandardPlayIntegrityViewModelTest {
-
-    @get:Rule
-    val instantTaskExecutorRule = InstantTaskExecutorRule()
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -63,6 +63,26 @@ class StandardPlayIntegrityViewModelTest {
 
         whenever(mockDeviceInfoProvider.BRAND).thenReturn("TestBrand")
         whenever(mockDeviceInfoProvider.MODEL).thenReturn("TestModel")
+        whenever(mockDeviceInfoProvider.DEVICE).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.PRODUCT).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.BOARD).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.BASE_OS).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.BOOTLOADER).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.DISPLAY).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.FINGERPRINT).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.HARDWARE).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.HOST).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.ID).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.MANUFACTURER).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.SDK_INT).thenReturn(30)
+        whenever(mockDeviceInfoProvider.SECURITY_PATCH).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.TAGS).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.TIME).thenReturn(0)
+        whenever(mockDeviceInfoProvider.TYPE).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.USER).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.VERSION_RELEASE).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.VERSION_INCREMENTAL).thenReturn("TestDevice")
+
         whenever(mockDeviceSecurityStateProvider.isDeviceLockEnabled).thenReturn(true)
         whenever(mockAppInfoProvider.isDebugBuild).thenReturn(false)
 
@@ -107,7 +127,7 @@ class StandardPlayIntegrityViewModelTest {
         viewModel.fetchIntegrityToken()
         testDispatcher.scheduler.advanceUntilIdle() // Ensure token and session ID are set
 
-        whenever(mockPlayIntegrityRepository.getIntegrityVerdictStandard(any(), any(), any(), any(), any()))
+        whenever(mockPlayIntegrityRepository.verifyTokenStandard(any(), any(), any(), any(), any()))
             .thenReturn(dummyServerVerificationPayload)
 
         viewModel.verifyToken()
@@ -129,7 +149,7 @@ class StandardPlayIntegrityViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val serverException = ServerException(400, "Bad Request from server")
-        whenever(mockPlayIntegrityRepository.getIntegrityVerdictStandard(any(), any(), any(), any(), any()))
+        whenever(mockPlayIntegrityRepository.verifyTokenStandard(any(), any(), any(), any(), any()))
             .thenThrow(serverException)
 
         viewModel.verifyToken()
@@ -151,7 +171,7 @@ class StandardPlayIntegrityViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val ioException = IOException("No internet")
-        whenever(mockPlayIntegrityRepository.getIntegrityVerdictStandard(any(), any(), any(), any(), any()))
+        whenever(mockPlayIntegrityRepository.verifyTokenStandard(any(), any(), any(), any(), any()))
             .thenThrow(ioException)
 
         viewModel.verifyToken()

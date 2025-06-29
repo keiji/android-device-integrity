@@ -1,6 +1,5 @@
 package dev.keiji.deviceintegrity.ui.main.playintegrity
 
-import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
 import dev.keiji.deviceintegrity.api.playintegrity.NonceResponse
 import dev.keiji.deviceintegrity.api.playintegrity.PlayIntegrityResponseWrapper
@@ -12,11 +11,12 @@ import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.repository.contract.ClassicPlayIntegrityTokenRepository
 import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository
-import dev.keiji.repository.contract.exception.ServerException
+import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -24,18 +24,19 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.io.IOException
 
+@Config(application = dagger.hilt.android.testing.HiltTestApplication::class)
+@RunWith(RobolectricTestRunner::class)
 @ExperimentalCoroutinesApi
 class ClassicPlayIntegrityViewModelTest {
-
-    @get:Rule
-    val instantTaskExecutorRule = InstantTaskExecutorRule()
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -66,6 +67,26 @@ class ClassicPlayIntegrityViewModelTest {
         // Mock provider methods to return dummy data
         whenever(mockDeviceInfoProvider.BRAND).thenReturn("TestBrand")
         whenever(mockDeviceInfoProvider.MODEL).thenReturn("TestModel")
+        whenever(mockDeviceInfoProvider.DEVICE).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.PRODUCT).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.BOARD).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.BASE_OS).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.BOOTLOADER).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.DISPLAY).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.FINGERPRINT).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.HARDWARE).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.HOST).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.ID).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.MANUFACTURER).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.SDK_INT).thenReturn(30)
+        whenever(mockDeviceInfoProvider.SECURITY_PATCH).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.TAGS).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.TIME).thenReturn(0)
+        whenever(mockDeviceInfoProvider.TYPE).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.USER).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.VERSION_RELEASE).thenReturn("TestDevice")
+        whenever(mockDeviceInfoProvider.VERSION_INCREMENTAL).thenReturn("TestDevice")
+
         // ... mock other DeviceInfoProvider properties as needed
         whenever(mockDeviceSecurityStateProvider.isDeviceLockEnabled).thenReturn(true)
         // ... mock other DeviceSecurityStateProvider properties
@@ -90,7 +111,7 @@ class ClassicPlayIntegrityViewModelTest {
     fun `fetchNonce success updates uiState with nonce`() = runTest {
         val nonce = "test-nonce"
         val expectedResponse = NonceResponse(nonce, System.currentTimeMillis())
-        whenever(mockPlayIntegrityRepository.prepareChallenge(any())).thenReturn(expectedResponse)
+        whenever(mockPlayIntegrityRepository.getNonce(any())).thenReturn(expectedResponse)
 
         viewModel.fetchNonce()
         testDispatcher.scheduler.advanceUntilIdle() // Execute coroutines
@@ -104,10 +125,10 @@ class ClassicPlayIntegrityViewModelTest {
     @Test
     fun `fetchNonce serverException updates uiState with error`() = runTest {
         val serverException = ServerException(500, "Server error")
-        whenever(mockPlayIntegrityRepository.prepareChallenge(any())).thenThrow(serverException)
+        whenever(mockPlayIntegrityRepository.getNonce(any())).thenThrow(serverException)
 
         viewModel.fetchNonce()
-        testDispatcher.scheduler.advanceUntilIdle()
+        advanceUntilIdle()
 
         val uiState = viewModel.uiState.first()
         assertTrue(uiState.errorMessages.isNotEmpty())
@@ -118,10 +139,10 @@ class ClassicPlayIntegrityViewModelTest {
     @Test
     fun `fetchNonce ioException updates uiState with error`() = runTest {
         val ioException = IOException("Network error")
-        whenever(mockPlayIntegrityRepository.prepareChallenge(any())).thenThrow(ioException)
+        whenever(mockPlayIntegrityRepository.getNonce(any())).thenThrow(ioException)
 
         viewModel.fetchNonce()
-        testDispatcher.scheduler.advanceUntilIdle()
+        advanceUntilIdle()
 
         val uiState = viewModel.uiState.first()
         assertTrue(uiState.errorMessages.isNotEmpty())
@@ -155,7 +176,7 @@ class ClassicPlayIntegrityViewModelTest {
         viewModel.fetchIntegrityToken()
         testDispatcher.scheduler.advanceUntilIdle() // Ensure token is set
 
-        whenever(mockPlayIntegrityRepository.getIntegrityVerdictClassic(any(), any(), any(), any()))
+        whenever(mockPlayIntegrityRepository.verifyTokenClassic(any(), any(), any(), any()))
             .thenReturn(dummyServerVerificationPayload)
 
         viewModel.verifyToken()
@@ -178,7 +199,7 @@ class ClassicPlayIntegrityViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val serverException = ServerException(403, "Forbidden by server")
-        whenever(mockPlayIntegrityRepository.getIntegrityVerdictClassic(any(), any(), any(), any()))
+        whenever(mockPlayIntegrityRepository.verifyTokenClassic(any(), any(), any(), any()))
             .thenThrow(serverException)
 
         viewModel.verifyToken()
@@ -193,7 +214,7 @@ class ClassicPlayIntegrityViewModelTest {
     @Test
     fun `verifyToken ioException updates uiState with error`() = runTest {
         val token = "test-token"
-         viewModel.fetchNonce()
+        viewModel.fetchNonce()
         testDispatcher.scheduler.advanceUntilIdle()
         viewModel.updateNonce("dummy-nonce-for-token-fetch")
         whenever(mockClassicPlayIntegrityTokenRepository.getToken(any())).thenReturn(token)
@@ -201,7 +222,7 @@ class ClassicPlayIntegrityViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val ioException = IOException("Network connection lost")
-        whenever(mockPlayIntegrityRepository.getIntegrityVerdictClassic(any(), any(), any(), any()))
+        whenever(mockPlayIntegrityRepository.verifyTokenClassic(any(), any(), any(), any()))
             .thenThrow(ioException)
 
         viewModel.verifyToken()

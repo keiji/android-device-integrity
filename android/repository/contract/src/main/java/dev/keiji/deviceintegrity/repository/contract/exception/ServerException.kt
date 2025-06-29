@@ -1,4 +1,4 @@
-package dev.keiji.repository.contract.exception
+package dev.keiji.deviceintegrity.repository.contract.exception
 
 import java.io.IOException
 
