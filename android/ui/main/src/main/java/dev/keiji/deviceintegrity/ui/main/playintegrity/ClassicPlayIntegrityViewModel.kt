@@ -49,6 +49,9 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
         }
         viewModelScope.launch {
             try {
+                // Add a 5-second delay
+                delay(5000)
+
                 val request = CreateNonceRequest(sessionId = currentSessionId) // Use currentSessionId
                 val response = playIntegrityTokenVerifyApi.getNonce(request)
                 _uiState.update {
