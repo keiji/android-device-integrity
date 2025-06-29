@@ -15,10 +15,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import dev.keiji.deviceintegrity.ui.main.R
 import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
@@ -41,21 +40,28 @@ fun StatusDisplayArea(
     currentSessionId: String,
     modifier: Modifier = Modifier
 ) {
-    val clipboardManager = LocalClipboardManager.current
+    val clipboardManager = LocalClipboard.current
     val context = LocalContext.current
 
     val textToShare = buildString {
         if (currentSessionId.isNotBlank()) {
             append("Current Session ID: $currentSessionId\n\n")
         }
-        append(
-            formatDisplayOutput(
-                playIntegrityResponse = playIntegrityResponse,
-                deviceInfo = deviceInfo,
-                securityInfo = securityInfo,
-                statusText = if (playIntegrityResponse == null && deviceInfo == null && securityInfo == null) statusText else ""
+        if (playIntegrityResponse != null || deviceInfo != null || securityInfo != null) {
+            append(
+                formatDisplayOutput(
+                    playIntegrityResponse = playIntegrityResponse,
+                    deviceInfo = deviceInfo,
+                    securityInfo = securityInfo
+                )
             )
-        )
+        } else if (statusText.isNotEmpty()) {
+            append(statusText)
+        } else {
+            // Fallback if there's no response data and no status text, though formatDisplayOutput would return "Response: N/A"
+            // This path might be redundant if statusText or response data is always expected.
+            append(formatDisplayOutput(null, null, null))
+        }
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
@@ -63,7 +69,7 @@ fun StatusDisplayArea(
         when {
             progressValue > 0.0F -> {
                 LinearProgressIndicator(
-                    progress = progressValue,
+                    progress = { progressValue },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp)) // Add some space below the progress bar
@@ -84,7 +90,7 @@ fun StatusDisplayArea(
             ) {
                 IconButton(
                     onClick = {
-                        clipboardManager.setText(AnnotatedString(errorMessages.joinToString("\n")))
+                        clipboardManager.setPlainText(errorMessages.joinToString("\n"))
                     }
                 ) {
                     Icon(painterResource(id = R.drawable.ic_content_copy), contentDescription = "Copy Error")
@@ -106,7 +112,7 @@ fun StatusDisplayArea(
                 ) {
                     IconButton(
                         onClick = {
-                            clipboardManager.setText(AnnotatedString(textToShare)) // Use already formatted textToShare
+                            clipboardManager.setPlainText(textToShare) // Use already formatted textToShare
                         }
                     ) {
                         Icon(painterResource(id = R.drawable.ic_content_copy), contentDescription = "Copy")
@@ -146,7 +152,7 @@ fun StatusDisplayArea(
                     horizontalArrangement = Arrangement.End
                 ) {
                     IconButton(
-                        onClick = { clipboardManager.setText(AnnotatedString(statusText)) }
+                        onClick = { clipboardManager.setPlainText(statusText) }
                     ) {
                         Icon(painterResource(id = R.drawable.ic_content_copy), contentDescription = "Copy Status")
                     }
@@ -154,9 +160,7 @@ fun StatusDisplayArea(
                         onClick = {
                             val sendIntent: Intent = Intent().apply {
                                 action = Intent.ACTION_SEND
-                                // textToShare should be just statusText if playIntegrityResponse, deviceInfo and securityInfo are null
-                                val contentToShare = if (playIntegrityResponse == null && deviceInfo == null && securityInfo == null) statusText else textToShare
-                                putExtra(Intent.EXTRA_TEXT, contentToShare)
+                                putExtra(Intent.EXTRA_TEXT, textToShare)
                                 type = "text/plain"
                             }
                             val shareIntent = Intent.createChooser(sendIntent, null)
@@ -293,11 +297,10 @@ fun DisplaySecurityInfo(securityInfo: SecurityInfo) {
 internal fun formatDisplayOutput(
     playIntegrityResponse: TokenPayloadExternal?,
     deviceInfo: DeviceInfo?,
-    securityInfo: SecurityInfo?,
-    statusText: String? = null
+    securityInfo: SecurityInfo?
 ): String {
     if (playIntegrityResponse == null && deviceInfo == null && securityInfo == null) {
-        return statusText ?: "Response: N/A"
+        return "Response: N/A" // Or an empty string, depending on desired behavior when all are null
     }
 
     return buildString {

@@ -7,10 +7,10 @@ import dev.keiji.deviceintegrity.provider.contract.UrlProvider
 import javax.inject.Inject
 
 class UrlProviderImpl @Inject constructor(
-    @ApplicationContext private val context: Context,
-    @StringRes private val termsOfServiceUrlResId: Int,
-    @StringRes private val privacyPolicyUrlResId: Int,
-    @StringRes private val aboutAppUrlResId: Int,
+    @param:ApplicationContext private val context: Context,
+    @param:StringRes private val termsOfServiceUrlResId: Int,
+    @param:StringRes private val privacyPolicyUrlResId: Int,
+    @param:StringRes private val aboutAppUrlResId: Int,
 ) : UrlProvider {
 
     override val termsOfServiceUrl: String
