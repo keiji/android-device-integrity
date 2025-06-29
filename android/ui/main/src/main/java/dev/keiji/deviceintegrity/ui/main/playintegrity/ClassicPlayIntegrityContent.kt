@@ -19,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
-import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityProgressConstants
 
 @Composable
 fun ClassicPlayIntegrityContent(
@@ -44,7 +43,7 @@ fun ClassicPlayIntegrityContent(
         Spacer(modifier = Modifier.height(8.dp))
         Button(
             onClick = { onFetchNonce() },
-            enabled = uiState.progressValue == PlayIntegrityProgressConstants.NO_PROGRESS,
+            enabled = !uiState.isLoading,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(ButtonHeight)
