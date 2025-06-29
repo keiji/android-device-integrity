@@ -14,6 +14,9 @@ import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.provider.impl.DeviceInfoProviderImpl
 import dev.keiji.deviceintegrity.provider.impl.DeviceSecurityStateProviderImpl
 import javax.inject.Singleton
+import android.content.res.AssetManager
+import dev.keiji.deviceintegrity.provider.AssetInputStreamProviderImpl
+import dev.keiji.provider.contract.AssetInputStreamProvider
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -37,5 +40,21 @@ object AppModule {
         @ApplicationContext context: Context
     ): DeviceSecurityStateProvider {
         return DeviceSecurityStateProviderImpl(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAssetManager(
+        @ApplicationContext context: Context
+    ): AssetManager {
+        return context.assets
+    }
+
+    @Provides
+    @Singleton
+    fun provideAssetInputStreamProvider(
+        assetManager: AssetManager
+    ): AssetInputStreamProvider {
+        return AssetInputStreamProviderImpl(assetManager)
     }
 }
