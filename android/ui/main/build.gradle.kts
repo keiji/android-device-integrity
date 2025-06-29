@@ -60,4 +60,8 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     implementation(libs.timber)
+
+    implementation(libs.retrofit.core)
+    implementation(libs.retrofit.converter.kotlinx.serialization)
+    implementation(libs.kotlinx.serialization.json)
 }
