@@ -4,15 +4,15 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.keiji.deviceintegrity.api.playintegrity.PlayIntegrityTokenVerifyApiClient
-import dev.keiji.deviceintegrity.api.playintegrity.StandardVerifyRequest
-import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal
 import dev.keiji.deviceintegrity.provider.contract.AppInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.repository.contract.StandardPlayIntegrityTokenRepository
+import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository // Added
+import dev.keiji.deviceintegrity.repository.contract.exception.ServerException // Corrected path
 import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
 import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo
+// import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal // No longer directly used for response type
 import dev.keiji.deviceintegrity.ui.main.common.DEBUG_VERIFY_TOKEN_DELAY_MS
 import dev.keiji.deviceintegrity.ui.main.common.VERIFY_TOKEN_DELAY_MS
 import kotlinx.coroutines.delay
@@ -23,25 +23,16 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.security.MessageDigest
 import android.util.Base64
-import retrofit2.HttpException
+import java.io.IOException // Added
 import java.util.UUID
 import javax.inject.Inject
 
-// Using the same constants object as ClassicPlayIntegrityViewModel for consistency
-// Alternatively, could be defined in a shared file if more view models use it.
-// For now, duplicating the object or referencing if in the same package and accessible.
-// Assuming PlayIntegrityProgressConstants is accessible or redefined here.
-// For this exercise, let's assume it's accessible. If not, it would be redefined.
-// To ensure it is, we can import it if it's in a separate .kt file or define it here if not.
-// For simplicity in this step, we'll assume `PlayIntegrityProgressConstants` is available
-// as if it were defined in a shared scope or we'll redefine it if necessary.
-// Let's redefine it here to ensure no compile issues for this specific file context.
 // PlayIntegrityProgressConstants will be imported from the new common file
 
 @HiltViewModel
 class StandardPlayIntegrityViewModel @Inject constructor(
     private val standardPlayIntegrityTokenRepository: StandardPlayIntegrityTokenRepository,
-    private val playIntegrityTokenVerifyApiClient: PlayIntegrityTokenVerifyApiClient,
+    private val playIntegrityRepository: PlayIntegrityRepository, // Changed
     private val deviceInfoProvider: DeviceInfoProvider,
     private val deviceSecurityStateProvider: DeviceSecurityStateProvider,
     private val appInfoProvider: AppInfoProvider
@@ -243,7 +234,13 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                     deviceInfo = deviceInfoData,
                     securityInfo = securityInfo
                 )
-                val response = playIntegrityTokenVerifyApiClient.verifyTokenStandard(request)
+                val response = playIntegrityRepository.getIntegrityVerdictStandard( // Use repository
+                    integrityToken = token,
+                    sessionId = currentSessionId,
+                    contentBinding = contentBindingForVerification,
+                    deviceInfo = deviceInfoData,
+                    securityInfo = securityInfo
+                )
 
                 Log.d("StandardPlayIntegrityVM", "Verification Response: ${response.playIntegrityResponse.tokenPayloadExternal}")
 
@@ -258,19 +255,37 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                         currentSessionId = currentSessionId
                     )
                 }
-            } catch (e: Exception) {
-                Log.e("StandardPlayIntegrityVM", "Error verifying token with server", e)
-                val errorMessage = if (e is HttpException) {
-                    val errorBody = e.response()?.errorBody()?.string() ?: "No additional error information."
-                    "Error verifying token: ${e.code()} - $errorBody"
-                } else {
-                    e.message ?: "Unknown error during verification."
-                }
+            } catch (e: ServerException) { // Catch ServerException
+                Log.e("StandardPlayIntegrityVM", "Server error verifying token: ${e.errorCode} - ${e.errorMessage}", e)
                 _uiState.update {
                     it.copy(
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
-                        status = "Error verifying token with server.",
-                        errorMessages = listOf(errorMessage),
+                        status = "Server error verifying token.",
+                        errorMessages = listOf("Server error: ${e.errorCode ?: "N/A"} - ${e.errorMessage ?: "Unknown"}"),
+                        playIntegrityResponse = null,
+                        deviceInfo = null,
+                        securityInfo = null
+                    )
+                }
+            } catch (e: IOException) { // Catch IOException
+                Log.e("StandardPlayIntegrityVM", "Network error verifying token", e)
+                _uiState.update {
+                    it.copy(
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
+                        status = "Network error verifying token.",
+                        errorMessages = listOf(e.message ?: "Unknown network error."),
+                        playIntegrityResponse = null,
+                        deviceInfo = null,
+                        securityInfo = null
+                    )
+                }
+            } catch (e: Exception) { // Catch other exceptions
+                Log.e("StandardPlayIntegrityVM", "Unknown error verifying token", e)
+                _uiState.update {
+                    it.copy(
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
+                        status = "Unknown error verifying token.",
+                        errorMessages = listOf(e.message ?: "An unexpected error occurred."),
                         playIntegrityResponse = null,
                         deviceInfo = null,
                         securityInfo = null

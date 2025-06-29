@@ -39,6 +39,7 @@ dependencies {
     implementation(project(":ui:agreement"))
     implementation(project(":provider:contract"))
     implementation(project(":repository:contract"))
+    implementation(project(":repository:impl")) // Added repository:impl dependency for Hilt
     implementation(project(":ui:nav:contract"))
 
     implementation(libs.androidx.core.ktx)
@@ -60,8 +61,4 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     implementation(libs.timber)
-
-    implementation(libs.retrofit.core)
-    implementation(libs.retrofit.converter.kotlinx.serialization)
-    implementation(libs.kotlinx.serialization.json)
 }
