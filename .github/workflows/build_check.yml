@@ -8,14 +8,16 @@ on:
     branches: [ "main" ]
     paths:
       - 'android/**'
-      - '!.android/docs/**'
       - '.github/workflows/build_check.yml' # To ensure changes to the workflow itself are checked
+    paths-ignore:
+      - 'android/docs/**'
   pull_request:
     branches: [ "main" ]
     paths:
       - 'android/**'
-      - '!.android/docs/**'
       - '.github/workflows/build_check.yml' # To ensure changes to the workflow itself are checked
+    paths-ignore:
+      - 'android/docs/**'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
