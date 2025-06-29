@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 
 @Composable
-fun LicenseScreen(
+fun LicenseList( // Renamed from LicenseScreen
     licenses: List<LicenseInfo>,
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
@@ -89,13 +89,13 @@ fun LicenseItem(
 
 @Preview(showBackground = true)
 @Composable
-fun LicenseScreenPreview() {
+fun LicenseListPreview() { // Renamed from LicenseScreenPreview
     DeviceIntegrityTheme {
         val previewLicenses = listOf(
             LicenseInfo("Preview Lib 1", "MIT", "Dev", "url1"),
             LicenseInfo("Preview Lib 2", "Apache 2.0", "Another Dev", "url2")
         )
-        LicenseScreen(
+        LicenseList( // Renamed from LicenseScreen
             licenses = previewLicenses
         )
     }

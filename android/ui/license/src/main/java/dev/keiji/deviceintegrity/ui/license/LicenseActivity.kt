@@ -1,7 +1,6 @@
 package dev.keiji.deviceintegrity.ui.license
 
 import android.os.Bundle
-// import android.util.Log // Log import removed
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,9 +30,7 @@ class LicenseActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             DeviceIntegrityTheme {
-                LicenseView(
-                    onClose = { finish() }
-                )
+                LicenseScreen(onClose = { finish() })
             }
         }
     }
@@ -41,11 +38,12 @@ class LicenseActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LicenseView(
+fun LicenseScreen(
     onClose: () -> Unit,
     viewModel: LicenseViewModel = hiltViewModel()
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
+    val licenses by viewModel.licenses.collectAsState()
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -69,9 +67,9 @@ fun LicenseView(
             )
         }
     ) { paddingValues ->
-        val licenses by viewModel.licenses.collectAsState()
-
-        LicenseScreen(
+        // This will call the Composable currently named LicenseScreen in LicenseScreen.kt
+        // It will be renamed to LicenseList in the next step.
+        dev.keiji.deviceintegrity.ui.license.LicenseScreen(
             licenses = licenses,
             contentPadding = paddingValues
         )
