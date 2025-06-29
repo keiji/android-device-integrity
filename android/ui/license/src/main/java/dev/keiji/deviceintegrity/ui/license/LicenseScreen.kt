@@ -22,24 +22,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 
-data class LicenseInfo(
-    val softwareName: String,
-    val licenseName: String,
-    val copyrightHolder: String,
-    val licenseUrl: String
-)
-
-val dummyLicenseData = List(10) { index ->
-    LicenseInfo(
-        softwareName = "Software Name ${index + 1}",
-        licenseName = "Apache License 2.0",
-        copyrightHolder = "Copyright Holder ${index + 1}",
-        licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0"
-    )
-}
-
 @Composable
-fun LicenseScreen(
+fun LicenseList( // Renamed from LicenseScreen
     licenses: List<LicenseInfo>,
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
@@ -97,7 +81,7 @@ fun LicenseItem(
                 text = licenseInfo.licenseUrl,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clickable(onClick = onClick) // Make URL itself clickable again for clarity
+                modifier = Modifier.clickable(onClick = onClick)
             )
         }
     }
@@ -105,9 +89,15 @@ fun LicenseItem(
 
 @Preview(showBackground = true)
 @Composable
-fun LicenseScreenPreview() {
+fun LicenseListPreview() { // Renamed from LicenseScreenPreview
     DeviceIntegrityTheme {
-        LicenseScreen(licenses = dummyLicenseData)
+        val previewLicenses = listOf(
+            LicenseInfo("Preview Lib 1", "MIT", "Dev", "url1"),
+            LicenseInfo("Preview Lib 2", "Apache 2.0", "Another Dev", "url2")
+        )
+        LicenseList( // Renamed from LicenseScreen
+            licenses = previewLicenses
+        )
     }
 }
 
