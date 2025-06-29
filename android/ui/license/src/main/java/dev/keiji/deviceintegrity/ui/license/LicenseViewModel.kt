@@ -8,45 +8,60 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.io.InputStreamReader
+// import java.io.InputStreamReader // No longer needed for now
 import javax.inject.Inject
 
-// LicenseInfo data class は LicenseScreen.kt から移動するか、
-// 共通のdomainモジュールなどにあればそれを使うべきですが、
-// 今回はここに再定義するか、そのまま LicenseScreen.kt のものを使う前提で進めます。
-//ひとまず、LicenseScreen.ktにあるものを参照すると仮定します。
+// LicenseInfo data class moved here
+data class LicenseInfo(
+    val softwareName: String,
+    val licenseName: String,
+    val copyrightHolder: String,
+    val licenseUrl: String
+)
 
 @HiltViewModel
 class LicenseViewModel @Inject constructor(
     private val assetInputStreamProvider: AssetInputStreamProvider
 ) : ViewModel() {
 
-    private val _licenseText = MutableStateFlow<String?>(null)
-    val licenseText: StateFlow<String?> = _licenseText.asStateFlow()
+    // private val _licenseText = MutableStateFlow<String?>(null) // Removed
+    // val licenseText: StateFlow<String?> = _licenseText.asStateFlow() // Removed
 
-    // TODO: 将来的には LicenseInfo のリストを保持するようにする
-    // private val _licenses = MutableStateFlow<List<LicenseInfo>>(emptyList())
-    // val licenses: StateFlow<List<LicenseInfo>> = _licenses.asStateFlow()
+    private val _licenses = MutableStateFlow<List<LicenseInfo>>(emptyList())
+    val licenses: StateFlow<List<LicenseInfo>> = _licenses.asStateFlow()
 
-    init {
-        loadLicenseFile()
+    // Dummy data similar to what was in LicenseScreen.kt
+    private val dummyLicenseData = List(10) { index ->
+        LicenseInfo(
+            softwareName = "Software Name ${index + 1} from ViewModel", // Added "from ViewModel" for clarity
+            licenseName = "Apache License 2.0",
+            copyrightHolder = "Copyright Holder ${index + 1}",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0"
+        )
     }
 
-    private fun loadLicenseFile() {
+    init {
+        loadLicenses()
+    }
+
+    private fun loadLicenses() {
         viewModelScope.launch {
             try {
+                // Open the license file to ensure it's accessible, but don't use its content for now
                 val inputStream = assetInputStreamProvider.openLicense()
-                // TODO: 本来はここでJSONをパースして LicenseInfo のリストに変換する
-                // 今回はInputStreamをテキストとして読み込み、保持するだけ
-                val reader = InputStreamReader(inputStream)
-                _licenseText.value = reader.readText()
-                reader.close()
+                // val reader = InputStreamReader(inputStream) // Not reading text for now
+                // val textContent = reader.readText() // Not reading text for now
+                // reader.close()
                 inputStream.close()
-                // Log.d("LicenseViewModel", "License Text: ${_licenseText.value}") // 必要ならログ出力
+                // Log.d("LicenseViewModel", "License file opened successfully. Content not used yet.")
+
+                // For now, just use dummy data
+                _licenses.value = dummyLicenseData
+
             } catch (e: Exception) {
-                // Handle error, e.g., show an error message to the user
-                _licenseText.value = "Error loading license file: ${e.message}"
-                // Log.e("LicenseViewModel", "Error loading license", e) // 必要ならエラーログ出力
+                // Handle error, e.g., by setting an error state or logging
+                // Log.e("LicenseViewModel", "Error loading license file, using dummy data as fallback", e)
+                _licenses.value = dummyLicenseData // Fallback to dummy data on error too
             }
         }
     }

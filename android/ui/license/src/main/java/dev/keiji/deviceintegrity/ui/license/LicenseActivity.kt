@@ -4,9 +4,9 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+// import androidx.compose.foundation.layout.padding // No longer directly used here
+// import androidx.compose.foundation.rememberScrollState // No longer directly used here
+// import androidx.compose.foundation.verticalScroll // No longer directly used here
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -23,7 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
+// import androidx.compose.ui.unit.dp // No longer directly used here
 import androidx.hilt.navigation.compose.hiltViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import dev.keiji.deviceintegrity.ui.license.R
@@ -35,7 +35,7 @@ class LicenseActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             DeviceIntegrityTheme {
-                LicenseContent(
+                LicenseView( // Renamed from LicenseContent
                     onClose = { finish() }
                 )
             }
@@ -45,7 +45,7 @@ class LicenseActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LicenseContent(
+fun LicenseView( // Renamed from LicenseContent
     onClose: () -> Unit,
     viewModel: LicenseViewModel = hiltViewModel()
 ) {
@@ -73,18 +73,14 @@ fun LicenseContent(
             )
         }
     ) { paddingValues ->
-        val licenseTextState by viewModel.licenseText.collectAsState()
-        val textToShow = licenseTextState ?: "Loading licenses..."
+        val licenses by viewModel.licenses.collectAsState()
 
-        // Log the text to check if it's loaded
-        Log.d("LicenseActivity", "License text: $textToShow")
+        // Log to confirm licenses are collected
+        Log.d("LicenseActivity", "Collected licenses: ${licenses.size} items")
 
-        Text(
-            text = textToShow,
-            modifier = Modifier
-                .padding(paddingValues)
-                .padding(16.dp) // Add some padding around the text
-                .verticalScroll(rememberScrollState()) // Make it scrollable
+        LicenseScreen( // Use the Composable from LicenseScreen.kt
+            licenses = licenses,
+            contentPadding = paddingValues
         )
     }
 }
