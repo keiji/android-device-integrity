@@ -1,4 +1,4 @@
-package dev.keiji.repository.impl
+package dev.keiji.deviceintegrity.repository.impl
 
 import dev.keiji.deviceintegrity.api.keyattestation.KeyAttestationRequest
 import dev.keiji.deviceintegrity.api.keyattestation.KeyAttestationResponse
@@ -11,8 +11,8 @@ import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo
 import dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload
 import dev.keiji.deviceintegrity.api.playintegrity.StandardVerifyRequest
 import dev.keiji.deviceintegrity.api.playintegrity.VerifyTokenRequest
-import dev.keiji.repository.contract.PlayIntegrityRepository
-import dev.keiji.repository.contract.exception.ServerException
+import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository
+import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
 import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject

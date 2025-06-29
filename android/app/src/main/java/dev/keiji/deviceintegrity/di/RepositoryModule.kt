@@ -8,6 +8,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dev.keiji.deviceintegrity.repository.contract.PreferencesRepository
 import dev.keiji.deviceintegrity.repository.impl.PreferencesRepositoryImpl
+import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository
+import dev.keiji.deviceintegrity.repository.impl.PlayIntegrityRepositoryImpl
 import javax.inject.Singleton
 
 @Module
@@ -23,6 +25,6 @@ object RepositoryModule {
     @Singleton
     @Provides
     fun providePlayIntegrityRepository(
-        playIntegrityRepositoryImpl: dev.keiji.repository.impl.PlayIntegrityRepositoryImpl
-    ): dev.keiji.repository.contract.PlayIntegrityRepository = playIntegrityRepositoryImpl
+        playIntegrityRepositoryImpl: PlayIntegrityRepositoryImpl
+    ): PlayIntegrityRepository = playIntegrityRepositoryImpl
 }

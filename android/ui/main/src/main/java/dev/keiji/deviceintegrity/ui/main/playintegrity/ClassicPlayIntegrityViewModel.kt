@@ -8,8 +8,8 @@ import dev.keiji.deviceintegrity.provider.contract.AppInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.repository.contract.ClassicPlayIntegrityTokenRepository
-import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository // Added
-import dev.keiji.deviceintegrity.repository.contract.exception.ServerException // Corrected path
+import dev.keiji.repository.contract.PlayIntegrityRepository // Added
+import dev.keiji.repository.contract.exception.ServerException // Corrected path
 import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
 import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo
 import dev.keiji.deviceintegrity.ui.main.common.DEBUG_VERIFY_TOKEN_DELAY_MS

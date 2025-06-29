@@ -1,4 +1,4 @@
-package dev.keiji.repository.contract
+package dev.keiji.deviceintegrity.repository.contract
 
 import dev.keiji.deviceintegrity.api.keyattestation.KeyAttestationResponse
 import dev.keiji.deviceintegrity.api.playintegrity.NonceResponse
