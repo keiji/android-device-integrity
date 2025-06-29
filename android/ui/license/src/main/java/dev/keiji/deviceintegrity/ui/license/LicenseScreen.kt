@@ -22,9 +22,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 
-// LicenseInfo data class is now in LicenseViewModel.kt
-// val dummyLicenseData is also removed as it's sourced from ViewModel or specific preview data
-
 @Composable
 fun LicenseScreen(
     licenses: List<LicenseInfo>,
@@ -84,7 +81,7 @@ fun LicenseItem(
                 text = licenseInfo.licenseUrl,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clickable(onClick = onClick) // Make URL itself clickable again for clarity
+                modifier = Modifier.clickable(onClick = onClick)
             )
         }
     }
@@ -94,7 +91,6 @@ fun LicenseItem(
 @Composable
 fun LicenseScreenPreview() {
     DeviceIntegrityTheme {
-        // dummyLicenseData is removed, provide a sample or empty list for preview
         val previewLicenses = listOf(
             LicenseInfo("Preview Lib 1", "MIT", "Dev", "url1"),
             LicenseInfo("Preview Lib 2", "Apache 2.0", "Another Dev", "url2")
@@ -110,7 +106,6 @@ fun LicenseScreenPreview() {
 fun LicenseItemPreview() {
     DeviceIntegrityTheme {
         LicenseItem(
-            // LicenseInfo is now defined in ViewModel, but accessible for preview if package is imported
             licenseInfo = LicenseInfo(
                 "Sample Software",
                 "MIT License",

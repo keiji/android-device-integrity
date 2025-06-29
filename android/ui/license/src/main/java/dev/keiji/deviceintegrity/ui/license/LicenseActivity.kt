@@ -1,12 +1,9 @@
 package dev.keiji.deviceintegrity.ui.license
 
 import android.os.Bundle
-import android.util.Log
+// import android.util.Log // Log import removed
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-// import androidx.compose.foundation.layout.padding // No longer directly used here
-// import androidx.compose.foundation.rememberScrollState // No longer directly used here
-// import androidx.compose.foundation.verticalScroll // No longer directly used here
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -23,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-// import androidx.compose.ui.unit.dp // No longer directly used here
 import androidx.hilt.navigation.compose.hiltViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import dev.keiji.deviceintegrity.ui.license.R
@@ -35,7 +31,7 @@ class LicenseActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             DeviceIntegrityTheme {
-                LicenseView( // Renamed from LicenseContent
+                LicenseView(
                     onClose = { finish() }
                 )
             }
@@ -45,7 +41,7 @@ class LicenseActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LicenseView( // Renamed from LicenseContent
+fun LicenseView(
     onClose: () -> Unit,
     viewModel: LicenseViewModel = hiltViewModel()
 ) {
@@ -75,10 +71,7 @@ fun LicenseView( // Renamed from LicenseContent
     ) { paddingValues ->
         val licenses by viewModel.licenses.collectAsState()
 
-        // Log to confirm licenses are collected
-        Log.d("LicenseActivity", "Collected licenses: ${licenses.size} items")
-
-        LicenseScreen( // Use the Composable from LicenseScreen.kt
+        LicenseScreen(
             licenses = licenses,
             contentPadding = paddingValues
         )
