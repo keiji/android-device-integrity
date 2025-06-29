@@ -15,7 +15,7 @@ import timber.log.Timber
 import javax.inject.Inject
 
 class StandardIntegrityTokenProviderProviderImpl @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val cloudProjectNumber: Long,
     private val dispatcher: CoroutineDispatcher
 ) : StandardIntegrityTokenProviderProvider {
