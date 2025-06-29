@@ -22,6 +22,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
 
 @Composable
 fun KeyAttestationScreen(
@@ -57,7 +58,9 @@ fun KeyAttestationScreen(
 
         Button(
             onClick = { onSubmit() }, // Use callback
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(ButtonHeight)
         ) {
             Text(text = "送信")
         }
