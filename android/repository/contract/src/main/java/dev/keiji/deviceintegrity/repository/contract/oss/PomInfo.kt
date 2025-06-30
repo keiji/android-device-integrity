@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.repository.contract.oss // パッケージ名を変更
+package dev.keiji.deviceintegrity.repository.contract.oss
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -30,7 +30,7 @@ data class PomInfo(
     val organization: Organization?,
 
     @SerialName("dependencies")
-    val dependencies: List<String>, // Assuming dependencies are just strings, adjust if they are more complex
+    val dependencies: List<String>,
 
     @SerialName("depth")
     val depth: Int

@@ -3,8 +3,8 @@ package dev.keiji.deviceintegrity.ui.license
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.keiji.deviceintegrity.repository.contract.oss.OssLicenseRepository // Changed
-import dev.keiji.deviceintegrity.repository.contract.oss.PomInfo // Changed
+import dev.keiji.deviceintegrity.repository.contract.oss.OssLicenseRepository
+import dev.keiji.deviceintegrity.repository.contract.oss.PomInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,13 +20,11 @@ data class LicenseInfo(
 
 @HiltViewModel
 class LicenseViewModel @Inject constructor(
-    private val ossLicenseRepository: OssLicenseRepository // Changed
+    private val ossLicenseRepository: OssLicenseRepository
 ) : ViewModel() {
 
     private val _licenses = MutableStateFlow<List<LicenseInfo>>(emptyList())
     val licenses: StateFlow<List<LicenseInfo>> = _licenses.asStateFlow()
-
-    // dummyLicenseData removed
 
     init {
         loadLicenses()
@@ -35,7 +33,7 @@ class LicenseViewModel @Inject constructor(
     private fun loadLicenses() {
         viewModelScope.launch {
             try {
-                val pomInfos = ossLicenseRepository.loadLicenses() // Changed
+                val pomInfos = ossLicenseRepository.loadLicenses()
                 _licenses.value = pomInfos.map { pomInfo ->
                     LicenseInfo(
                         softwareName = pomInfo.name,
@@ -47,7 +45,7 @@ class LicenseViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 // Log the exception e
-                _licenses.value = emptyList() // Set empty list on error
+                _licenses.value = emptyList()
             }
         }
     }

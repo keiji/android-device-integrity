@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.repository.contract.oss // パッケージ名を変更
+package dev.keiji.deviceintegrity.repository.contract.oss
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

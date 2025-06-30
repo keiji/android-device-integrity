@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.repository.contract.oss // パッケージ名を変更
+package dev.keiji.deviceintegrity.repository.contract.oss
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class OssLicense(
     @SerialName("settings")
-    val settings: String?, // Assuming settings is a String?, adjust if it's a complex object
+    val settings: String?,
 
     @SerialName("pom_list")
     val pomList: List<PomInfo>
