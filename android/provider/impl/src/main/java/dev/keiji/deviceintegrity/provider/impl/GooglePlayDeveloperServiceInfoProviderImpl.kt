@@ -2,6 +2,7 @@ package dev.keiji.deviceintegrity.provider.impl
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import com.google.android.gms.common.GooglePlayServicesUtil
 import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfo
 import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfoProvider
@@ -19,7 +20,11 @@ class GooglePlayDeveloperServiceInfoProviderImpl(
             val packageName = GooglePlayServicesUtil.GOOGLE_PLAY_SERVICES_PACKAGE
             val packageInfo = packageManager.getPackageInfo(packageName, 0)
 
-            val versionCode = packageInfo.longVersionCode
+            val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                packageInfo.longVersionCode
+            } else {
+                packageInfo.versionCode.toLong()
+            }
             val versionName = packageInfo.versionName ?: ""
 
             return@withContext GooglePlayDeveloperServiceInfo(

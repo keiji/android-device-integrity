@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -33,10 +34,10 @@ android {
 }
 
 dependencies {
+    implementation(libs.retrofit.converter.kotlinx.serialization)
     implementation(libs.timber)
-    api(libs.play.integrity) // Use api since the interface exposes types from this library
+    api(libs.play.integrity)
     implementation(libs.javax.inject) // For @Qualifier
-    // Removed Hilt compiler: ksp(libs.hilt.compiler)
 
     api(libs.hilt.android)
 }

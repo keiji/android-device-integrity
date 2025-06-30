@@ -47,6 +47,9 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 
+    // GooglePlayServicesUtil for checking GooglePlayServices availability
+    implementation(libs.play.services.base)
+
     implementation(libs.timber)
 
     testImplementation(libs.junit)

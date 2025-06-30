@@ -33,6 +33,7 @@ android {
 
 dependencies {
     api(project(":api"))
+    api(project(":provider:contract"))
 
     implementation(libs.timber)
     implementation(libs.kotlinx.coroutines.core)

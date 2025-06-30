@@ -1,6 +1,5 @@
 package dev.keiji.deviceintegrity.repository.contract
 
-import dev.keiji.deviceintegrity.api.keyattestation.KeyAttestationResponse
 import dev.keiji.deviceintegrity.api.playintegrity.NonceResponse
 import dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload
 import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
