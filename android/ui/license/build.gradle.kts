@@ -63,7 +63,7 @@ dependencies {
     implementation(project(":ui:theme"))
     implementation(project(":ui:nav:contract"))
 
-    implementation(project(":provider:contract"))
+    implementation(project(":repository:contract"))
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

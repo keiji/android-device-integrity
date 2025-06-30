@@ -17,8 +17,8 @@ import dev.keiji.deviceintegrity.provider.impl.DeviceSecurityStateProviderImpl
 import dev.keiji.deviceintegrity.provider.impl.GooglePlayDeveloperServiceInfoProviderImpl
 import javax.inject.Singleton
 import android.content.res.AssetManager
-import dev.keiji.deviceintegrity.provider.AssetInputStreamProviderImpl
-import dev.keiji.provider.contract.AssetInputStreamProvider
+import dev.keiji.deviceintegrity.repository.contract.oss.OssLicenseRepository
+import dev.keiji.deviceintegrity.repository.impl.oss.OssLicenseRepositoryImpl
 import kotlinx.coroutines.Dispatchers
 
 @Module
@@ -55,17 +55,15 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideAssetInputStreamProvider(
-        assetManager: AssetManager
-    ): AssetInputStreamProvider {
-        return AssetInputStreamProviderImpl(assetManager)
-    }
-
-    @Provides
-    @Singleton
     fun provideGooglePlayDeveloperServiceInfoProvider(
         @ApplicationContext context: Context
     ): GooglePlayDeveloperServiceInfoProvider {
         return GooglePlayDeveloperServiceInfoProviderImpl(Dispatchers.IO, context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideOssLicenseRepository(): OssLicenseRepository {
+        return OssLicenseRepositoryImpl(Dispatchers.IO)
     }
 }

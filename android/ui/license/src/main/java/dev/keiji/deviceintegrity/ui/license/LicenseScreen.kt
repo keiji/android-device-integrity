@@ -76,13 +76,15 @@ fun LicenseItem(
                 text = "Copyright: ${licenseInfo.copyrightHolder}",
                 style = MaterialTheme.typography.bodyMedium
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = licenseInfo.licenseUrl,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clickable(onClick = onClick)
-            )
+            licenseInfo.licenseUrl?.also { licenseUrl ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = licenseUrl,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable(onClick = onClick)
+                )
+            }
         }
     }
 }
