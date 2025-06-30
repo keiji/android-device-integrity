@@ -86,6 +86,7 @@ protobuf-protoc = { group = "com.google.protobuf", name = "protoc", version.ref 
 
 # Mockito
 mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockitoKotlin" }
+mockito-android = { group = "org.mockito", name = "mockito-android", version.ref = "mockitoKotlin" }
 
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 

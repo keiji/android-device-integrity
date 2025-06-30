@@ -8,6 +8,7 @@ import dev.keiji.deviceintegrity.api.playintegrity.PlayIntegrityTokenVerifyApiCl
 import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo
 import dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload
 import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal
+import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfo
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -59,6 +60,7 @@ class PlayIntegrityRepositoryImplTest {
         "patch"
     )
     private val dummySecurityInfo = SecurityInfo(true, true, true, true)
+    private val dummyGooglePlayDeveloperServiceInfo = GooglePlayDeveloperServiceInfo(256L, "dummyVersion")
     private val dummyTokenPayloadExternal = TokenPayloadExternal(null, null, null, null, null)
     private val dummyPlayIntegrityResponseWrapper =
         PlayIntegrityResponseWrapper(dummyTokenPayloadExternal)
@@ -80,7 +82,7 @@ class PlayIntegrityRepositoryImplTest {
     // --- verifyTokenStandard Tests ---
 
     @Test
-    fun `verifyTokenStandard success should return ServerVerificationPayload`() = runTest {
+    fun `verifyTokenStandard_success_should_return_ServerVerificationPayload`() = runTest {
         val expectedResponse = ServerVerificationPayload(
             dummyDeviceInfo,
             dummyPlayIntegrityResponseWrapper,
@@ -95,13 +97,14 @@ class PlayIntegrityRepositoryImplTest {
             "sid",
             "binding",
             dummyDeviceInfo,
-            dummySecurityInfo
+            dummySecurityInfo,
+            dummyGooglePlayDeveloperServiceInfo
         )
         Assert.assertEquals(expectedResponse, result)
     }
 
     @Test
-    fun `verifyTokenStandard httpException should throw ServerException`() = runTest {
+    fun `verifyTokenStandard_httpException_should_throw_ServerException`() = runTest {
         val httpException = HttpException(
             Response.error<ServerVerificationPayload>(
                 400,
@@ -118,7 +121,8 @@ class PlayIntegrityRepositoryImplTest {
                 "sid",
                 "binding",
                 dummyDeviceInfo,
-                dummySecurityInfo
+                dummySecurityInfo,
+                dummyGooglePlayDeveloperServiceInfo
             )
         }
         Assert.assertEquals(400, exception.errorCode)
@@ -126,7 +130,7 @@ class PlayIntegrityRepositoryImplTest {
     }
 
     @Test
-    fun `verifyTokenStandard ioException should throw IOException`() = runTest {
+    fun verifyTokenStandard_ioException_should_throw_IOException() = runTest {
         val ioException = IOException("Network error")
         whenever(mockPlayIntegrityTokenVerifyApiClient.verifyTokenStandard(any())).thenAnswer { throw ioException }
 
@@ -136,7 +140,8 @@ class PlayIntegrityRepositoryImplTest {
                 "sid",
                 "binding",
                 dummyDeviceInfo,
-                dummySecurityInfo
+                dummySecurityInfo,
+                dummyGooglePlayDeveloperServiceInfo
             )
         }
         testDispatcher.scheduler.advanceUntilIdle()
@@ -144,7 +149,7 @@ class PlayIntegrityRepositoryImplTest {
 
     // --- verifyTokenClassic Tests ---
     @Test
-    fun `verifyTokenClassic success should return ServerVerificationPayload`() = runTest {
+    fun `verifyTokenClassic_success_should_return_ServerVerificationPayload`() = runTest {
         val expectedResponse = ServerVerificationPayload(
             dummyDeviceInfo,
             dummyPlayIntegrityResponseWrapper,
@@ -155,12 +160,18 @@ class PlayIntegrityRepositoryImplTest {
         )
 
         val result =
-            repository.verifyTokenClassic("token", "sid", dummyDeviceInfo, dummySecurityInfo)
+            repository.verifyTokenClassic(
+                "token",
+                "sid",
+                dummyDeviceInfo,
+                dummySecurityInfo,
+                dummyGooglePlayDeveloperServiceInfo
+            )
         Assert.assertEquals(expectedResponse, result)
     }
 
     @Test
-    fun `verifyTokenClassic httpException should throw ServerException`() = runTest {
+    fun `verifyTokenClassic_httpException_should_throw_ServerException`() = runTest {
         val httpException = HttpException(
             Response.error<ServerVerificationPayload>(
                 403,
@@ -176,7 +187,8 @@ class PlayIntegrityRepositoryImplTest {
                 "token",
                 "sid",
                 dummyDeviceInfo,
-                dummySecurityInfo
+                dummySecurityInfo,
+                dummyGooglePlayDeveloperServiceInfo
             )
         }
         Assert.assertEquals(403, exception.errorCode)
@@ -185,7 +197,7 @@ class PlayIntegrityRepositoryImplTest {
 
     // --- getNonce Tests ---
     @Test
-    fun `getNonce success should return NonceResponse`() = runTest {
+    fun `getNonce_success_should_return_NonceResponse`() = runTest {
         val expectedResponse = NonceResponse("nonce_value", 12345L)
         whenever(mockPlayIntegrityTokenVerifyApiClient.getNonce(any())).thenReturn(expectedResponse)
 

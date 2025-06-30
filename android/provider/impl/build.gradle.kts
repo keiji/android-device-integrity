@@ -25,6 +25,7 @@ android {
         }
     }
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -52,7 +53,19 @@ dependencies {
 
     implementation(libs.timber)
 
-    testImplementation(libs.junit)
-
     implementation(libs.androidx.biometric.ktx)
+
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
+
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test.core.ktx)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.kotlin.test)
+    androidTestImplementation(libs.mockito.android)
+    androidTestImplementation(libs.mockito.kotlin)
+
+    androidTestImplementation(libs.hilt.android.testing)
+
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
 }
