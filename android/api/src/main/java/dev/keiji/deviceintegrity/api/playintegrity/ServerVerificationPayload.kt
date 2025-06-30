@@ -1,8 +1,5 @@
 package dev.keiji.deviceintegrity.api.playintegrity
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-
 import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfo
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
