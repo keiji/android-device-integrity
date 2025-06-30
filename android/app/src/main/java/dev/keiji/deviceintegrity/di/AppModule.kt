@@ -66,6 +66,6 @@ object AppModule {
     fun provideGooglePlayDeveloperServiceInfoProvider(
         @ApplicationContext context: Context
     ): GooglePlayDeveloperServiceInfoProvider {
-        return GooglePlayDeveloperServiceInfoProviderImpl(context, Dispatchers.IO)
+        return GooglePlayDeveloperServiceInfoProviderImpl(Dispatchers.IO, context)
     }
 }

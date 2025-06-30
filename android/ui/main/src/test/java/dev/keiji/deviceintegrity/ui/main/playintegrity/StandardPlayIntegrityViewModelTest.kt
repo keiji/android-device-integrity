@@ -63,7 +63,7 @@ class StandardPlayIntegrityViewModelTest {
     )
 
     @Before
-    fun setUp() {
+    fun setUp() = runTest {
         Dispatchers.setMain(testDispatcher)
         mockPlayIntegrityRepository = mock()
         mockStandardPlayIntegrityTokenRepository = mock()
@@ -140,7 +140,7 @@ class StandardPlayIntegrityViewModelTest {
         viewModel.fetchIntegrityToken()
         testDispatcher.scheduler.advanceUntilIdle() // Ensure token and session ID are set
 
-        whenever(mockPlayIntegrityRepository.verifyTokenStandard(any(), any(), any(), any(), any()))
+        whenever(mockPlayIntegrityRepository.verifyTokenStandard(any(), any(), any(), any(), any(), any()))
             .thenReturn(dummyServerVerificationPayload)
 
         viewModel.verifyToken()
@@ -162,7 +162,7 @@ class StandardPlayIntegrityViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val serverException = ServerException(400, "Bad Request from server")
-        whenever(mockPlayIntegrityRepository.verifyTokenStandard(any(), any(), any(), any(), any()))
+        whenever(mockPlayIntegrityRepository.verifyTokenStandard(any(), any(), any(), any(), any(), any()))
             .thenThrow(serverException)
 
         viewModel.verifyToken()
@@ -184,7 +184,7 @@ class StandardPlayIntegrityViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val ioException = IOException("No internet")
-        whenever(mockPlayIntegrityRepository.verifyTokenStandard(any(), any(), any(), any(), any()))
+        whenever(mockPlayIntegrityRepository.verifyTokenStandard(any(), any(), any(), any(), any(), any()))
             .thenThrow(ioException)
 
         viewModel.verifyToken()

@@ -66,7 +66,7 @@ class ClassicPlayIntegrityViewModelTest {
 
 
     @Before
-    fun setUp() {
+    fun setUp() = runTest {
         Dispatchers.setMain(testDispatcher)
         mockPlayIntegrityRepository = mock()
         mockClassicPlayIntegrityTokenRepository = mock()
@@ -189,7 +189,7 @@ class ClassicPlayIntegrityViewModelTest {
         viewModel.fetchIntegrityToken()
         testDispatcher.scheduler.advanceUntilIdle() // Ensure token is set
 
-        whenever(mockPlayIntegrityRepository.verifyTokenClassic(any(), any(), any(), any()))
+        whenever(mockPlayIntegrityRepository.verifyTokenClassic(any(), any(), any(), any(), any()))
             .thenReturn(dummyServerVerificationPayload)
 
         viewModel.verifyToken()
@@ -212,7 +212,7 @@ class ClassicPlayIntegrityViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val serverException = ServerException(403, "Forbidden by server")
-        whenever(mockPlayIntegrityRepository.verifyTokenClassic(any(), any(), any(), any()))
+        whenever(mockPlayIntegrityRepository.verifyTokenClassic(any(), any(), any(), any(), any()))
             .thenThrow(serverException)
 
         viewModel.verifyToken()
@@ -235,7 +235,7 @@ class ClassicPlayIntegrityViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val ioException = IOException("Network connection lost")
-        whenever(mockPlayIntegrityRepository.verifyTokenClassic(any(), any(), any(), any()))
+        whenever(mockPlayIntegrityRepository.verifyTokenClassic(any(), any(), any(), any(), any()))
             .thenThrow(ioException)
 
         viewModel.verifyToken()
