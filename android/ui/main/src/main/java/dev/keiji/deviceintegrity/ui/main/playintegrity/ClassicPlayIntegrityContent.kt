@@ -18,6 +18,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.keiji.deviceintegrity.api.playintegrity.AccountDetails
+import dev.keiji.deviceintegrity.api.playintegrity.AppAccessRiskVerdict
+import dev.keiji.deviceintegrity.api.playintegrity.AppIntegrity
+import dev.keiji.deviceintegrity.api.playintegrity.DeviceAttributes
+import dev.keiji.deviceintegrity.api.playintegrity.DeviceIntegrity
+import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
+import dev.keiji.deviceintegrity.api.playintegrity.EnvironmentDetails
+import dev.keiji.deviceintegrity.api.playintegrity.PlayIntegrityResponseWrapper
+import dev.keiji.deviceintegrity.api.playintegrity.RecentDeviceActivity
+import dev.keiji.deviceintegrity.api.playintegrity.RequestDetails
+import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo
+import dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload
+import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal
+import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfo
 import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
 
 @Composable
@@ -90,9 +104,7 @@ fun ClassicPlayIntegrityContent(
             progressValue = uiState.progressValue,
             errorMessages = uiState.errorMessages,
             statusText = uiState.status,
-            playIntegrityResponse = uiState.playIntegrityResponse,
-            deviceInfo = uiState.deviceInfo,
-            securityInfo = uiState.securityInfo,
+            serverVerificationPayload = uiState.serverVerificationPayload,
             currentSessionId = uiState.currentSessionId
         )
     }
@@ -107,56 +119,63 @@ private fun ClassicPlayIntegrityContentPreview() {
             integrityToken = "preview-token",
             progressValue = 0.0F,
             status = "Preview status text for Classic.",
-            playIntegrityResponse = dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal(
-                requestDetails = dev.keiji.deviceintegrity.api.playintegrity.RequestDetails(
-                    requestPackageName = "dev.keiji.preview",
-                    nonce = "preview-nonce-from-server",
-                    requestHash = "preview-request-hash",
-                    timestampMillis = System.currentTimeMillis()
-                ),
-                appIntegrity = dev.keiji.deviceintegrity.api.playintegrity.AppIntegrity(
-                    appRecognitionVerdict = "MEETS_DEVICE_INTEGRITY",
-                    packageName = "dev.keiji.preview",
-                    certificateSha256Digest = listOf("cert1", "cert2"),
-                    versionCode = 123
-                ),
-                deviceIntegrity = dev.keiji.deviceintegrity.api.playintegrity.DeviceIntegrity(
-                    deviceRecognitionVerdict = listOf("MEETS_DEVICE_INTEGRITY"),
-                    deviceAttributes = dev.keiji.deviceintegrity.api.playintegrity.DeviceAttributes(
-                        sdkVersion = 30
-                    ),
-                    recentDeviceActivity = dev.keiji.deviceintegrity.api.playintegrity.RecentDeviceActivity(
-                        deviceActivityLevel = "LEVEL_1"
+            serverVerificationPayload = ServerVerificationPayload(
+                playIntegrityResponse = PlayIntegrityResponseWrapper(
+                    tokenPayloadExternal = TokenPayloadExternal(
+                        requestDetails = RequestDetails(
+                            requestPackageName = "dev.keiji.preview",
+                            nonce = "preview-nonce-from-server",
+                            requestHash = "preview-request-hash",
+                            timestampMillis = System.currentTimeMillis()
+                        ),
+                        appIntegrity = AppIntegrity(
+                            appRecognitionVerdict = "MEETS_DEVICE_INTEGRITY",
+                            packageName = "dev.keiji.preview",
+                            certificateSha256Digest = listOf("cert1", "cert2"),
+                            versionCode = 123
+                        ),
+                        deviceIntegrity = DeviceIntegrity(
+                            deviceRecognitionVerdict = listOf("MEETS_DEVICE_INTEGRITY"),
+                            deviceAttributes = DeviceAttributes(
+                                sdkVersion = 30
+                            ),
+                            recentDeviceActivity = RecentDeviceActivity(
+                                deviceActivityLevel = "LEVEL_1"
+                            )
+                        ),
+                        accountDetails = AccountDetails(
+                            appLicensingVerdict = "LICENSED"
+                        ),
+                        environmentDetails = EnvironmentDetails(
+                            appAccessRiskVerdict = AppAccessRiskVerdict(
+                                appsDetected = listOf("app1", "app2")
+                            ),
+                            playProtectVerdict = "NO_ISSUES"
+                        )
                     )
                 ),
-                accountDetails = dev.keiji.deviceintegrity.api.playintegrity.AccountDetails(
-                    appLicensingVerdict = "LICENSED"
+                deviceInfo = DeviceInfo(
+                    brand = "PreviewBrand",
+                    model = "PreviewModel",
+                    device = "PreviewDevice",
+                    product = "PreviewProduct",
+                    manufacturer = "PreviewManufacturer",
+                    hardware = "PreviewHardware",
+                    board = "PreviewBoard",
+                    bootloader = "PreviewBootloader",
+                    versionRelease = "12",
+                    sdkInt = 31,
+                    fingerprint = "PreviewFingerprint",
+                    securityPatch = "2023-03-05"
                 ),
-                environmentDetails = dev.keiji.deviceintegrity.api.playintegrity.EnvironmentDetails(
-                    appAccessRiskVerdict = dev.keiji.deviceintegrity.api.playintegrity.AppAccessRiskVerdict(
-                        appsDetected = listOf("app1", "app2")
-                    ),
-                    playProtectVerdict = "NO_ISSUES"
+                securityInfo = SecurityInfo(
+                    isDeviceLockEnabled = true, isBiometricsEnabled = false,
+                    hasClass3Authenticator = true, hasStrongbox = false
+                ),
+                googlePlayDeveloperServiceInfo = GooglePlayDeveloperServiceInfo(
+                    versionCode = 100,
+                    versionName = ""
                 )
-            ),
-            // Preview with dummy DeviceInfo and SecurityInfo
-            deviceInfo = dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo(
-                brand = "PreviewBrand",
-                model = "PreviewModel",
-                device = "PreviewDevice",
-                product = "PreviewProduct",
-                manufacturer = "PreviewManufacturer",
-                hardware = "PreviewHardware",
-                board = "PreviewBoard",
-                bootloader = "PreviewBootloader",
-                versionRelease = "12",
-                sdkInt = 31,
-                fingerprint = "PreviewFingerprint",
-                securityPatch = "2023-03-05"
-            ),
-            securityInfo = dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo(
-                isDeviceLockEnabled = true, isBiometricsEnabled = false,
-                hasClass3Authenticator = true, hasStrongbox = false
             )
         ),
         onFetchNonce = {},

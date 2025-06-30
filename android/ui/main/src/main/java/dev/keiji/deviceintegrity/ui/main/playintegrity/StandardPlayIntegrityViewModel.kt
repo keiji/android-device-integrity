@@ -46,7 +46,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val info = googlePlayDeveloperServiceInfoProvider.provide()
-            _uiState.update { it.copy(googlePlayDeveloperServiceInfo = info) }
+             _uiState.update { it.copy(googlePlayDeveloperServiceInfo = info) }
         }
     }
 
@@ -93,9 +93,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 status = "Fetching token...",
                 requestHashValue = "", // Reset before attempting to fetch
                 errorMessages = emptyList(), // Clear previous errors
-                playIntegrityResponse = null, // Clear previous response
-                deviceInfo = null,
-                securityInfo = null
+                serverVerificationPayload = null // Clear previous response
             )
         }
         viewModelScope.launch {
@@ -176,9 +174,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS, // Start with CircularProgress
                 status = "Preparing to verify token...", // Initial status
                 errorMessages = emptyList(),
-                playIntegrityResponse = null,
-                deviceInfo = null,
-                securityInfo = null
+                serverVerificationPayload = null
             )
         }
 
@@ -245,7 +241,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                     contentBinding = contentBindingForVerification,
                     deviceInfo = deviceInfoData,
                     securityInfo = securityInfo,
-                    googlePlayDeveloperServiceInfo = _uiState.value.googlePlayDeveloperServiceInfo
+                    googlePlayDeveloperServiceInfo = googlePlayDeveloperServiceInfoProvider.provide()
                 )
 
                 Log.d("StandardPlayIntegrityVM", "Verification Response: ${response.playIntegrityResponse.tokenPayloadExternal}")
@@ -254,9 +250,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                     it.copy(
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         status = "Token verification complete.",
-                        playIntegrityResponse = response.playIntegrityResponse.tokenPayloadExternal,
-                        deviceInfo = response.deviceInfo,
-                        securityInfo = response.securityInfo,
+                        serverVerificationPayload = response,
                         errorMessages = emptyList(),
                         currentSessionId = currentSessionId
                     )
@@ -268,9 +262,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         status = "Server error verifying token.",
                         errorMessages = listOf("Server error: ${e.errorCode ?: "N/A"} - ${e.errorMessage ?: "Unknown"}"),
-                        playIntegrityResponse = null,
-                        deviceInfo = null,
-                        securityInfo = null
+                        serverVerificationPayload = null
                     )
                 }
             } catch (e: IOException) { // Catch IOException
@@ -280,9 +272,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         status = "Network error verifying token.",
                         errorMessages = listOf(e.message ?: "Unknown network error."),
-                        playIntegrityResponse = null,
-                        deviceInfo = null,
-                        securityInfo = null
+                        serverVerificationPayload = null
                     )
                 }
             } catch (e: Exception) { // Catch other exceptions
@@ -292,9 +282,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         status = "Unknown error verifying token.",
                         errorMessages = listOf(e.message ?: "An unexpected error occurred."),
-                        playIntegrityResponse = null,
-                        deviceInfo = null,
-                        securityInfo = null
+                        serverVerificationPayload = null
                     )
                 }
             }
