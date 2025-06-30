@@ -260,8 +260,8 @@ def verify_integrity_classic():
                 body=request_body
             ).execute()
             # Successfully decoded, now verify nonce
-            token_payload = decoded_integrity_token_response.get('tokenPayloadExternal', {})
-            request_details = token_payload.get('requestDetails', {})
+            token_payload = decoded_integrity_token_response.get('token_payload_external', {})
+            request_details = token_payload.get('request_details', {})
             api_nonce = request_details.get('nonce')
 
             if not api_nonce:
@@ -272,7 +272,7 @@ def verify_integrity_classic():
                 _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
                 return jsonify({
                     "error": error_message_for_client,
-                    "play_integrity_response": decoded_integrity_token_response
+                    "play_integrity_response": decoded_integrity_token_response # Keep this wrapper for error context
                 }), 400 # Or 500
 
             # Canonicalize and compare nonces
@@ -294,8 +294,12 @@ def verify_integrity_classic():
                 result_status = RESULT_FAILED
                 error_message_for_client = "Nonce mismatch."
                 _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+                # decoded_integrity_token_response here IS the full response from Google, which matches
+                # the 'play_integrity_response' field in our NonceMismatchErrorResponse schema.
                 return jsonify({
                     "error": error_message_for_client,
+                    "client_provided_value": final_stored_nonce_to_compare, # Added for NonceMismatchErrorResponse
+                    "api_provided_value": final_api_nonce_to_compare,     # Added for NonceMismatchErrorResponse
                     "play_integrity_response": decoded_integrity_token_response
                 }), 400
 
@@ -327,18 +331,24 @@ def verify_integrity_classic():
         # For success, result_status is RESULT_SUCCESS.
         _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
 
-        response_payload = {
-            "play_integrity_response": decoded_integrity_token_response,
-            "device_info": data.get('device_info', {}),
-            "security_info": data.get('security_info', {})
-        }
         if result_status == RESULT_SUCCESS:
-            return jsonify(response_payload), 200
+            # The decoded_integrity_token_response from Google's library is a dict
+            # that directly matches our TokenPayloadExternal schema (after key conversion).
+            # The OpenAPI expects a response body: {"token_payload_external": {...}}
+            # The variable `decoded_integrity_token_response` IS the content for `token_payload_external`.
+            # We need to ensure its internal keys are snake_case if they are not already.
+            # However, the Google API client library for Python typically returns snake_case keys.
+            # Let's assume `decoded_integrity_token_response` is already snake_case or we'll handle it if tests fail.
+            # The client also sends device_info and security_info which are not part of token_payload_external.
+            # These are not defined in the successful response schema in OpenAPI, so we should not include them.
+            return jsonify({"token_payload_external": decoded_integrity_token_response}), 200
         else:
             # This path should ideally not be reached if errors lead to earlier returns.
             # However, as a fallback, if result_status is not SUCCESS but also not an error that returned:
             app.logger.warning(f"verify_integrity_classic reached end with non-SUCCESS status '{result_status}' without prior return. Session: {session_id}")
-            return jsonify({"error": error_message_for_client if error_message_for_client else "Verification failed", "play_integrity_response": decoded_integrity_token_response}), 400
+            # For non-success, the response format might be an ErrorResponse or NonceMismatchErrorResponse
+            # The NonceMismatchErrorResponse case is handled above. This would be a generic ErrorResponse.
+            return jsonify({"error": error_message_for_client if error_message_for_client else "Verification failed"}), 400
 
 
     except Exception as e_global: # Catch-all for any unhandled errors in the main try block
@@ -417,18 +427,18 @@ def verify_integrity_standard():
                 body=request_body
             ).execute()
 
-            token_payload = decoded_integrity_token_response.get('tokenPayloadExternal', {})
-            request_details_payload = token_payload.get('requestDetails', {})
-            api_request_hash = request_details_payload.get('requestHash')
+            token_payload = decoded_integrity_token_response.get('token_payload_external', {})
+            request_details_payload = token_payload.get('request_details', {})
+            api_request_hash = request_details_payload.get('request_hash') # Changed from requestHash
 
             if not api_request_hash:
-                app.logger.warning("requestHash not found in Play Integrity API response payload for standard verify. Full response: %s", decoded_integrity_token_response)
+                app.logger.warning("request_hash not found in Play Integrity API response payload for standard verify. Full response: %s", decoded_integrity_token_response)
                 result_status = RESULT_FAILED # API response is not as expected
-                error_message_for_client = "requestHash missing in API response."
+                error_message_for_client = "request_hash missing in API response."
                 _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
                 return jsonify({
                     "error": error_message_for_client,
-                    "play_integrity_response": decoded_integrity_token_response
+                    "play_integrity_response": decoded_integrity_token_response # Keep this wrapper for error context
                 }), 400
 
             if server_generated_hash != api_request_hash:
@@ -436,10 +446,11 @@ def verify_integrity_standard():
                 result_status = RESULT_FAILED
                 error_message_for_client = "Content binding hash mismatch."
                 _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+                # Ensure response matches NonceMismatchErrorResponse schema
                 return jsonify({
                     "error": error_message_for_client,
-                    "client_provided_value_hash_debug": server_generated_hash, # For debugging, consider removing in prod
-                    "api_provided_value_hash_debug": api_request_hash,     # For debugging, consider removing in prod
+                    "client_provided_value": server_generated_hash,
+                    "api_provided_value": api_request_hash,
                     "play_integrity_response": decoded_integrity_token_response
                 }), 400
 
@@ -463,18 +474,18 @@ def verify_integrity_standard():
         # Store the attempt (Success, or Failed/Error if not returned earlier)
         _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
 
-        response_payload = {
-            "play_integrity_response": decoded_integrity_token_response,
-            "device_info": data.get('device_info', {}),
-            "security_info": data.get('security_info', {})
-        }
-
         if result_status == RESULT_SUCCESS:
-            return jsonify(response_payload), 200
+            # The decoded_integrity_token_response from Google's library is a dict
+            # that directly matches our TokenPayloadExternal schema (after key conversion).
+            # The OpenAPI expects a response body: {"token_payload_external": {...}}
+            # We assume `decoded_integrity_token_response` has snake_case keys from the Google library.
+            return jsonify({"token_payload_external": decoded_integrity_token_response}), 200
         else:
             # This path should ideally not be reached if errors lead to earlier returns.
+            # The NonceMismatchErrorResponse and other specific errors are handled above.
+            # This would be a generic ErrorResponse.
             app.logger.warning(f"verify_integrity_standard reached end with non-SUCCESS status '{result_status}' without prior return. Session: {session_id}")
-            return jsonify({"error": error_message_for_client if error_message_for_client else "Verification failed (standard)", "play_integrity_response": decoded_integrity_token_response}), 400
+            return jsonify({"error": error_message_for_client if error_message_for_client else "Verification failed (standard)"}), 400
 
     except Exception as e_global: # Catch-all for any unhandled errors in the main try block
         app.logger.error(f"Global error in verify_integrity_standard for session {session_id}: {e_global}")

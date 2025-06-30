@@ -109,9 +109,9 @@ paths:
               schema:
                 type: object
                 required:
-                  - tokenPayloadExternal
+                  - token_payload_external
                 properties:
-                  tokenPayloadExternal:
+                  token_payload_external:
                     $ref: '#/components/schemas/TokenPayloadExternal'
         '400':
           description: Bad request. This can be due to a missing JSON payload, missing 'nonce' or 'token' in the request, or a nonce mismatch.
@@ -194,120 +194,120 @@ components:
       type: object
       description: Contains the decoded integrity verdict from Google Play Integrity API.
       required:
-        - requestDetails
-        - appIntegrity
-        - deviceIntegrity
-        - accountDetails
+        - request_details
+        - app_integrity
+        - device_integrity
+        - account_details
       properties:
-        requestDetails:
+        request_details:
           type: object
           required:
-            - requestPackageName
+            - request_package_name
             - nonce
-            - timestampMillis
+            - timestamp_millis
           properties:
-            requestPackageName:
+            request_package_name:
               type: string
               example: "dev.keiji.deviceintegrity"
             nonce:
               type: string
               nullable: true
               example: "aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890-_"
-            requestHash:
+            request_hash: # Already snake_case like
               type: string
               example: "request_hash_example_for_standard"
-            timestampMillis:
+            timestamp_millis:
               type: integer
               format: int64
               description: Timestamp in epoch milliseconds.
               example: 1678886400123
-        appIntegrity:
+        app_integrity:
           type: object
           required:
-            - appRecognitionVerdict
-            - packageName
-            - certificateSha256Digest
-            - versionCode
+            - app_recognition_verdict
+            - package_name
+            - certificate_sha256_digest
+            - version_code
           properties:
-            appRecognitionVerdict:
+            app_recognition_verdict:
               type: string
               example: "PLAY_RECOGNIZED"
-            packageName:
+            package_name:
               type: string
               example: "dev.keiji.deviceintegrity"
-            certificateSha256Digest:
+            certificate_sha256_digest:
               type: array
               items:
                 type: string
               example: ["sha256_cert_digest"]
-            versionCode:
+            version_code:
               type: integer
               description: Application version code.
               example: 123
-        deviceIntegrity:
+        device_integrity:
           type: object
           required:
-            - deviceRecognitionVerdict
+            - device_recognition_verdict
           properties:
-            deviceRecognitionVerdict:
+            device_recognition_verdict:
               type: array
               items:
                 type: string
               example: ["MEETS_DEVICE_INTEGRITY"]
-            deviceAttributes:
+            device_attributes: # Already snake_case like
               type: object
               nullable: true
               properties:
-                sdkVersion:
+                sdk_version: # Already snake_case like
                   type: string
                   example: "30"
-            recentDeviceActivity:
+            recent_device_activity: # Already snake_case like
               type: object
               nullable: true
               properties:
-                deviceActivityLevel:
+                device_activity_level: # Already snake_case like
                   type: string
                   example: "LEVEL_2"
-        accountDetails:
+        account_details:
           type: object
           required:
-            - appLicensingVerdict
+            - app_licensing_verdict
           properties:
-            appLicensingVerdict:
+            app_licensing_verdict:
               type: string
               example: "LICENSED"
-        environmentDetails:
+        environment_details: # Already snake_case like
           type: object
           nullable: true
           properties:
-            playProtectVerdict:
+            play_protect_verdict: # Already snake_case like
               type: string
               example: "NO_ISSUES"
-            appAccessRiskVerdict:
+            app_access_risk_verdict: # Already snake_case like
               type: object
               nullable: true
               properties:
-                appsDetected:
+                apps_detected: # Already snake_case like
                   type: array
                   items:
                     type: string
                   example: ["com.example.someapp"]
       example:
-        requestDetails:
-          requestPackageName: "dev.keiji.deviceintegrity"
+        request_details:
+          request_package_name: "dev.keiji.deviceintegrity"
           nonce: "aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890-_"
-          timestampMillis: 1678886400123
-        appIntegrity:
-          appRecognitionVerdict: "PLAY_RECOGNIZED"
-          packageName: "dev.keiji.deviceintegrity"
-          certificateSha256Digest: ["sha256_cert_digest"]
-          versionCode: 123
-        deviceIntegrity:
-          deviceRecognitionVerdict: ["MEETS_DEVICE_INTEGRITY"]
-        accountDetails:
-          appLicensingVerdict: "LICENSED"
-        environmentDetails:
-          playProtectVerdict: "NO_ISSUES"
+          timestamp_millis: 1678886400123
+        app_integrity:
+          app_recognition_verdict: "PLAY_RECOGNIZED"
+          package_name: "dev.keiji.deviceintegrity"
+          certificate_sha256_digest: ["sha256_cert_digest"]
+          version_code: 123
+        device_integrity:
+          device_recognition_verdict: ["MEETS_DEVICE_INTEGRITY"]
+        account_details:
+          app_licensing_verdict: "LICENSED"
+        environment_details:
+          play_protect_verdict: "NO_ISSUES"
 
     ErrorResponse:
       type: object

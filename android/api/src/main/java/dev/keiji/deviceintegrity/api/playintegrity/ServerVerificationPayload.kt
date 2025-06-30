@@ -15,5 +15,5 @@ data class ServerVerificationPayload(
 
 @Serializable
 data class PlayIntegrityResponseWrapper(
-    @SerialName("tokenPayloadExternal") val tokenPayloadExternal: TokenPayloadExternal
+    @SerialName("token_payload_external") val tokenPayloadExternal: TokenPayloadExternal
 )

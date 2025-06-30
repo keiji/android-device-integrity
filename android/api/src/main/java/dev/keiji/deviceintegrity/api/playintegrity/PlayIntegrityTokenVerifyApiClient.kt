@@ -44,11 +44,11 @@ data class TokenPayloadExternal(
     // Nullability should be confirmed against what the server *actually* guarantees
     // for classic vs standard responses. For now, keeping them nullable as per original,
     // but a stricter definition based on server guarantees is better.
-    @SerialName("requestDetails") val requestDetails: RequestDetails?,
-    @SerialName("appIntegrity") val appIntegrity: AppIntegrity?,
-    @SerialName("deviceIntegrity") val deviceIntegrity: DeviceIntegrity?,
-    @SerialName("accountDetails") val accountDetails: AccountDetails?,
-    @SerialName("environmentDetails") val environmentDetails: EnvironmentDetails? = null // EnvironmentDetails is often optional
+    @SerialName("request_details") val requestDetails: RequestDetails?,
+    @SerialName("app_integrity") val appIntegrity: AppIntegrity?,
+    @SerialName("device_integrity") val deviceIntegrity: DeviceIntegrity?,
+    @SerialName("account_details") val accountDetails: AccountDetails?,
+    @SerialName("environment_details") val environmentDetails: EnvironmentDetails? = null // EnvironmentDetails is often optional
 )
 
 @Serializable
@@ -71,51 +71,51 @@ data class VerifyTokenRequest(
 
 @Serializable
 data class RequestDetails(
-    val requestPackageName: String?,
-    val nonce: String? = null, // Classic API
-    val requestHash: String? = null, // Standard API
-    @SerialName("timestampMillis") val timestampMillis: Long?
+    @SerialName("request_package_name") val requestPackageName: String?,
+    @SerialName("nonce") val nonce: String? = null, // Classic API, already snake_case
+    @SerialName("request_hash") val requestHash: String? = null, // Standard API
+    @SerialName("timestamp_millis") val timestampMillis: Long?
 )
 
 @Serializable
 data class AppIntegrity(
-    val appRecognitionVerdict: String?,
-    val packageName: String?,
-    val certificateSha256Digest: List<String>?,
-    @SerialName("versionCode") val versionCode: Long?
+    @SerialName("app_recognition_verdict") val appRecognitionVerdict: String?,
+    @SerialName("package_name") val packageName: String?,
+    @SerialName("certificate_sha256_digest") val certificateSha256Digest: List<String>?,
+    @SerialName("version_code") val versionCode: Long?
 )
 
 @Serializable
 data class DeviceIntegrity(
-    val deviceRecognitionVerdict: List<String>?,
-    val deviceAttributes: DeviceAttributes? = null,
-    val recentDeviceActivity: RecentDeviceActivity? = null
+    @SerialName("device_recognition_verdict") val deviceRecognitionVerdict: List<String>?,
+    @SerialName("device_attributes") val deviceAttributes: DeviceAttributes? = null,
+    @SerialName("recent_device_activity") val recentDeviceActivity: RecentDeviceActivity? = null
 )
 
 @Serializable
 data class DeviceAttributes(
-    val sdkVersion: Int?
+    @SerialName("sdk_version") val sdkVersion: Int? // Assuming it was meant to be sdk_version from OpenAPI
 )
 
 @Serializable
 data class RecentDeviceActivity(
-    val deviceActivityLevel: String?
+    @SerialName("device_activity_level") val deviceActivityLevel: String? // Assuming device_activity_level
 )
 
 @Serializable
 data class AccountDetails(
-    val appLicensingVerdict: String?
+    @SerialName("app_licensing_verdict") val appLicensingVerdict: String?
 )
 
 @Serializable
 data class EnvironmentDetails(
-    val appAccessRiskVerdict: AppAccessRiskVerdict? = null,
-    val playProtectVerdict: String?
+    @SerialName("app_access_risk_verdict") val appAccessRiskVerdict: AppAccessRiskVerdict? = null,
+    @SerialName("play_protect_verdict") val playProtectVerdict: String? // Assuming play_protect_verdict
 )
 
 @Serializable
 data class AppAccessRiskVerdict(
-    val appsDetected: List<String>? = null
+    @SerialName("apps_detected") val appsDetected: List<String>? = null // Assuming apps_detected
 )
 
 

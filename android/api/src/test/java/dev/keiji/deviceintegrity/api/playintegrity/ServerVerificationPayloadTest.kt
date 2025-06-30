@@ -25,37 +25,39 @@ class ServerVerificationPayloadTest {
             "version_release": "16"
         },
         "play_integrity_response": {
-            "tokenPayloadExternal": {
-                "accountDetails": {
-                    "appLicensingVerdict": "UNEVALUATED"
+            "token_payload_external": {
+                "account_details": {
+                    "app_licensing_verdict": "UNEVALUATED"
                 },
-                "appIntegrity": {
-                    "appRecognitionVerdict": "UNRECOGNIZED_VERSION",
-                    "certificateSha256Digest": [
+                "app_integrity": {
+                    "app_recognition_verdict": "UNRECOGNIZED_VERSION",
+                    "certificate_sha256_digest": [
                         "hIO7bIJmGlKa_ly9Jw-83oZMk_2iAF3IMh-OG7SGmR8"
                     ],
-                    "packageName": "dev.keiji.deviceintegrity",
-                    "versionCode": "4"
+                    "package_name": "dev.keiji.deviceintegrity",
+                    "version_code": "4"
                 },
-                "deviceIntegrity": {
-                    "deviceAttributes": {
-                        "sdkVersion": 36
+                "device_integrity": {
+                    "device_attributes": {
+                        "sdk_version": 36
                     },
-                    "deviceRecognitionVerdict": [
+                    "device_recognition_verdict": [
                         "MEETS_DEVICE_INTEGRITY"
                     ],
-                    "recentDeviceActivity": {
-                        "deviceActivityLevel": "UNEVALUATED"
+                    "recent_device_activity": {
+                        "device_activity_level": "UNEVALUATED"
                     }
                 },
-                "environmentDetails": {
-                    "appAccessRiskVerdict": {},
-                    "playProtectVerdict": "UNEVALUATED"
+                "environment_details": {
+                    "app_access_risk_verdict": {
+                        "apps_detected": []
+                    },
+                    "play_protect_verdict": "UNEVALUATED"
                 },
-                "requestDetails": {
+                "request_details": {
                     "nonce": "YqMFcbaN7X_qc9X9xbaGafR7J2sF7pvW",
-                    "requestPackageName": "dev.keiji.deviceintegrity",
-                    "timestampMillis": "1751089185015"
+                    "request_package_name": "dev.keiji.deviceintegrity",
+                    "timestamp_millis": "1751089185015"
                 }
             }
         },
