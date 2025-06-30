@@ -11,12 +11,15 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
+import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfoProvider
 import dev.keiji.deviceintegrity.provider.impl.DeviceInfoProviderImpl
 import dev.keiji.deviceintegrity.provider.impl.DeviceSecurityStateProviderImpl
+import dev.keiji.deviceintegrity.provider.impl.GooglePlayDeveloperServiceInfoProviderImpl
 import javax.inject.Singleton
 import android.content.res.AssetManager
 import dev.keiji.deviceintegrity.provider.AssetInputStreamProviderImpl
 import dev.keiji.provider.contract.AssetInputStreamProvider
+import kotlinx.coroutines.Dispatchers
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -56,5 +59,13 @@ object AppModule {
         assetManager: AssetManager
     ): AssetInputStreamProvider {
         return AssetInputStreamProviderImpl(assetManager)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGooglePlayDeveloperServiceInfoProvider(
+        @ApplicationContext context: Context
+    ): GooglePlayDeveloperServiceInfoProvider {
+        return GooglePlayDeveloperServiceInfoProviderImpl(Dispatchers.IO, context)
     }
 }

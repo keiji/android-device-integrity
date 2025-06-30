@@ -1,5 +1,6 @@
 package dev.keiji.deviceintegrity.api.playintegrity
 
+import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfo
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import retrofit2.http.Body
@@ -31,7 +32,8 @@ data class StandardVerifyRequest(
     @SerialName("session_id") val sessionId: String,
     @SerialName("contentBinding") val contentBinding: String,
     @SerialName("device_info") val deviceInfo: DeviceInfo,
-    @SerialName("security_info") val securityInfo: SecurityInfo
+    @SerialName("security_info") val securityInfo: SecurityInfo,
+    @SerialName("google_play_developer_service_info") val googlePlayDeveloperServiceInfo: GooglePlayDeveloperServiceInfo? = null,
 )
 
 // Common wrapper for the actual integrity verdict, as per Google's documentation
@@ -60,7 +62,8 @@ data class VerifyTokenRequest(
     val token: String,
     @SerialName("session_id") val sessionId: String,
     @SerialName("device_info") val deviceInfo: DeviceInfo,
-    @SerialName("security_info") val securityInfo: SecurityInfo
+    @SerialName("security_info") val securityInfo: SecurityInfo,
+    @SerialName("google_play_developer_service_info") val googlePlayDeveloperServiceInfo: GooglePlayDeveloperServiceInfo? = null,
 )
 
 // Data classes for Play Integrity API response structure

@@ -1,6 +1,7 @@
 [versions]
 agp = "8.12.0-alpha07"
 datastoreVersion = "1.1.7"
+desugar_jdk_libs = "2.1.5"
 kotlin = "2.2.0"
 coreKtx = "1.16.0"
 junit = "4.13.2"
@@ -14,6 +15,7 @@ navigationCompose = "2.9.0" # Previous plan's version, will keep for now
 lifecycleRuntimeCompose = "2.9.1"
 lifecycleViewmodel = "2.9.1"
 hiltNavigationCompose = "1.2.0"
+playServicesBase = "18.7.0"
 playIntegrity = "1.4.0"
 kotlinxCoroutines = "1.10.2"
 datastore = "1.1.7" # Added DataStore
@@ -42,6 +44,7 @@ androidTargetSdk = "36"
 
 [libraries]
 androidx-biometric-ktx = { group = "androidx.biometric", name = "biometric-ktx", version.ref = "androidxBiometric" }
+desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
 javax-inject = { group = "javax.inject", name = "javax.inject", version.ref = "javaxInject" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -65,6 +68,7 @@ androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navig
 androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activityKtx" }
 androidx-test-core-ktx = { group = "androidx.test", name = "core-ktx", version.ref = "testCoreKtx" }
 
+play-services-base = { group = "com.google.android.gms", name = "play-services-base", version.ref = "playServicesBase" }
 play-integrity = { group = "com.google.android.play", name = "integrity", version.ref = "playIntegrity" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" }
@@ -82,6 +86,7 @@ protobuf-protoc = { group = "com.google.protobuf", name = "protoc", version.ref 
 
 # Mockito
 mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockitoKotlin" }
+mockito-android = { group = "org.mockito", name = "mockito-android", version.ref = "mockitoKotlin" }
 
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 

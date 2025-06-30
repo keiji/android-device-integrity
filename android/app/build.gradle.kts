@@ -89,6 +89,8 @@ android {
         }
     }
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
+
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -97,6 +99,7 @@ android {
     }
     buildFeatures {
         buildConfig = true
+
     }
 }
 
@@ -119,6 +122,8 @@ dependencies {
     implementation(libs.timber)
     implementation(libs.retrofit.core)
     implementation(libs.retrofit.converter.kotlinx.serialization)
+
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     testImplementation(libs.junit)
     testImplementation(libs.hilt.android.testing)

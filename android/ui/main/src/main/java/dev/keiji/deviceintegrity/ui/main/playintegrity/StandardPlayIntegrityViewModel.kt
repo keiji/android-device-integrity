@@ -7,6 +7,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.keiji.deviceintegrity.provider.contract.AppInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
+import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfoProvider
 import dev.keiji.deviceintegrity.repository.contract.StandardPlayIntegrityTokenRepository
 import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository // Added
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException // Corrected path
@@ -34,12 +35,20 @@ class StandardPlayIntegrityViewModel @Inject constructor(
     private val playIntegrityRepository: PlayIntegrityRepository, // Changed
     private val deviceInfoProvider: DeviceInfoProvider,
     private val deviceSecurityStateProvider: DeviceSecurityStateProvider,
+    private val googlePlayDeveloperServiceInfoProvider: GooglePlayDeveloperServiceInfoProvider,
     private val appInfoProvider: AppInfoProvider
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(StandardPlayIntegrityUiState())
     val uiState: StateFlow<StandardPlayIntegrityUiState> = _uiState.asStateFlow()
 
     private var currentSessionId: String = "" // Initialized as empty
+
+    init {
+        viewModelScope.launch {
+            val info = googlePlayDeveloperServiceInfoProvider.provide()
+            _uiState.update { it.copy(googlePlayDeveloperServiceInfo = info) }
+        }
+    }
 
     fun updateContentBinding(newContent: String) {
         _uiState.update {
@@ -235,7 +244,8 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                     sessionId = currentSessionId,
                     contentBinding = contentBindingForVerification,
                     deviceInfo = deviceInfoData,
-                    securityInfo = securityInfo
+                    securityInfo = securityInfo,
+                    googlePlayDeveloperServiceInfo = _uiState.value.googlePlayDeveloperServiceInfo
                 )
 
                 Log.d("StandardPlayIntegrityVM", "Verification Response: ${response.playIntegrityResponse.tokenPayloadExternal}")
