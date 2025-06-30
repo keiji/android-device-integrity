@@ -29,13 +29,14 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 import android.content.Intent
+import dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload
 
 @Composable
 fun StatusDisplayArea(
     progressValue: Float,
     errorMessages: List<String>,
     statusText: String,
-    serverVerificationPayload: dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload?,
+    serverVerificationPayload: ServerVerificationPayload?,
     currentSessionId: String,
     modifier: Modifier = Modifier
 ) {
@@ -225,7 +226,7 @@ fun formatTimestamp(timestampMillis: Long?): String {
 
 @Composable
 fun DisplayFormattedResponse(
-    serverVerificationPayload: dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload?
+    serverVerificationPayload: ServerVerificationPayload?
 ) {
     Column {
         if (serverVerificationPayload == null) {
@@ -327,7 +328,7 @@ fun DisplayGooglePlayDeveloperServiceInfo(info: dev.keiji.deviceintegrity.provid
 }
 
 internal fun formatDisplayOutput(
-    serverVerificationPayload: dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload?,
+    serverVerificationPayload: ServerVerificationPayload?,
     statusText: String? = null
 ): String {
     if (serverVerificationPayload == null) {
