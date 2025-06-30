@@ -33,5 +33,5 @@ android {
 }
 
 dependencies {
-    implementation(libs.androidx.activity.ktx) // For ActivityResultContract
+    api(libs.androidx.activity.ktx)
 }

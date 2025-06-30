@@ -37,7 +37,7 @@ dependencies {
     implementation(libs.retrofit.converter.kotlinx.serialization)
     implementation(libs.timber)
     api(libs.play.integrity)
-    implementation(libs.javax.inject) // For @Qualifier
 
-    api(libs.hilt.android)
+    implementation(libs.javax.inject)
+    implementation(libs.hilt.android)
 }

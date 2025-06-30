@@ -111,7 +111,6 @@ dependencies {
     implementation(project(":provider:contract"))
     implementation(project(":repository:impl"))
     implementation(project(":ui:nav:impl"))
-    implementation(project(":api"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

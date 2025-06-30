@@ -35,8 +35,6 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
-    // implementation(libs.androidx.appcompat) // Removed as it's not in libs.versions.toml and likely not needed for an api module
-    // implementation(libs.com.google.android.material) // Removed as it's not in libs.versions.toml and likely not needed for an api module
 
     // Retrofit
     implementation(libs.retrofit.core)
