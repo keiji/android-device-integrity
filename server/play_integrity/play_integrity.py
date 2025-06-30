@@ -121,7 +121,7 @@ def _store_verification_attempt(session_id, client_request_data, result, decoded
             # but ensures they are standardized.
             payload_to_store['device_info'] = client_request_data.get('device_info', {})
             payload_to_store['security_info'] = client_request_data.get('security_info', {})
-            payload_to_store['google_play_developer_service_info'] = client_request_data.get('googlePlayDeveloperServiceInfo', {})
+            payload_to_store['google_play_developer_service_info'] = client_request_data.get('google_play_developer_service_info', {})
         else:
             # If there's no client_request_data (e.g. very early error), ensure these fields exist.
             payload_to_store['device_info'] = {}
@@ -333,7 +333,7 @@ def verify_integrity_classic():
             "play_integrity_response": decoded_integrity_token_response,
             "device_info": data.get('device_info', {}),
             "security_info": data.get('security_info', {}),
-            "google_play_developer_service_info": data.get('googlePlayDeveloperServiceInfo', {})
+            "google_play_developer_service_info": data.get('google_play_developer_service_info', {})
         }
         if result_status == RESULT_SUCCESS:
             return jsonify(response_payload), 200
@@ -470,7 +470,7 @@ def verify_integrity_standard():
             "play_integrity_response": decoded_integrity_token_response,
             "device_info": data.get('device_info', {}),
             "security_info": data.get('security_info', {}),
-            "google_play_developer_service_info": data.get('googlePlayDeveloperServiceInfo', {})
+            "google_play_developer_service_info": data.get('google_play_developer_service_info', {})
         }
 
         if result_status == RESULT_SUCCESS:
