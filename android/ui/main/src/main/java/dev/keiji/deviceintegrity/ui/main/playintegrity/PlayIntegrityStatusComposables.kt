@@ -35,9 +35,7 @@ fun StatusDisplayArea(
     progressValue: Float,
     errorMessages: List<String>,
     statusText: String,
-    playIntegrityResponse: TokenPayloadExternal?,
-    deviceInfo: DeviceInfo?,
-    securityInfo: SecurityInfo?,
+    serverVerificationPayload: dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload?,
     currentSessionId: String,
     modifier: Modifier = Modifier
 ) {
@@ -50,10 +48,8 @@ fun StatusDisplayArea(
         }
         append(
             formatDisplayOutput(
-                playIntegrityResponse = playIntegrityResponse,
-                deviceInfo = deviceInfo,
-                securityInfo = securityInfo,
-                statusText = if (playIntegrityResponse == null && deviceInfo == null && securityInfo == null) statusText else ""
+                serverVerificationPayload = serverVerificationPayload,
+                statusText = if (serverVerificationPayload == null) statusText else ""
             )
         )
     }
@@ -101,7 +97,7 @@ fun StatusDisplayArea(
             }
         } else if (progressValue == PlayIntegrityProgressConstants.NO_PROGRESS) {
             // Show response or status text only when not loading (progressValue == NO_PROGRESS) and no errors
-            if (playIntegrityResponse != null || deviceInfo != null || securityInfo != null) {
+            if (serverVerificationPayload != null) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
@@ -134,11 +130,7 @@ fun StatusDisplayArea(
                             Text("Current Session ID: $currentSessionId")
                             Spacer(modifier = Modifier.height(8.dp))
                         }
-                        DisplayFormattedResponse(
-                            playIntegrityResponse = playIntegrityResponse,
-                            deviceInfo = deviceInfo,
-                            securityInfo = securityInfo
-                        )
+                        DisplayFormattedResponse(serverVerificationPayload = serverVerificationPayload)
                     }
                 }
             } else if (statusText.isNotEmpty()) {
@@ -156,8 +148,8 @@ fun StatusDisplayArea(
                         onClick = {
                             val sendIntent: Intent = Intent().apply {
                                 action = Intent.ACTION_SEND
-                                // textToShare should be just statusText if playIntegrityResponse, deviceInfo and securityInfo are null
-                                val contentToShare = if (playIntegrityResponse == null && deviceInfo == null && securityInfo == null) statusText else textToShare
+                                // textToShare should be just statusText if serverVerificationPayload is null
+                                val contentToShare = if (serverVerificationPayload == null) statusText else textToShare
                                 putExtra(Intent.EXTRA_TEXT, contentToShare)
                                 type = "text/plain"
                             }
@@ -233,34 +225,33 @@ fun formatTimestamp(timestampMillis: Long?): String {
 
 @Composable
 fun DisplayFormattedResponse(
-    playIntegrityResponse: TokenPayloadExternal?,
-    deviceInfo: DeviceInfo?,
-    securityInfo: SecurityInfo?
+    serverVerificationPayload: dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload?
 ) {
     Column {
-        if (playIntegrityResponse == null && deviceInfo == null && securityInfo == null) {
+        if (serverVerificationPayload == null) {
             Text("Response: N/A")
             return
         }
 
         // Display Play Integrity API Response
-        if (playIntegrityResponse != null) {
-            Text("Play Integrity API Response:")
-            DisplayPlayIntegrityResponse(playIntegrityResponse)
-            Spacer(modifier = Modifier.height(16.dp))
-        }
+        Text("Play Integrity API Response:")
+        DisplayPlayIntegrityResponse(serverVerificationPayload.playIntegrityResponse.tokenPayloadExternal)
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Display Device Info
-        if (deviceInfo != null) {
-            Text("Device Info:")
-            DisplayDeviceInfo(deviceInfo)
-            Spacer(modifier = Modifier.height(16.dp))
-        }
+        Text("Device Info:")
+        DisplayDeviceInfo(serverVerificationPayload.deviceInfo)
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Display Security Info
-        if (securityInfo != null) {
-            Text("Security Info:")
-            DisplaySecurityInfo(securityInfo)
+        Text("Security Info:")
+        DisplaySecurityInfo(serverVerificationPayload.securityInfo)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Display Google Play Developer Service Info
+        serverVerificationPayload.googlePlayDeveloperServiceInfo?.let {
+            Text("Google Play Developer Service Info:")
+            DisplayGooglePlayDeveloperServiceInfo(it)
         }
     }
 }
@@ -327,81 +318,98 @@ fun DisplaySecurityInfo(securityInfo: SecurityInfo) {
     }
 }
 
+@Composable
+fun DisplayGooglePlayDeveloperServiceInfo(info: dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfo) {
+    Column {
+        Text("  Google Play Services Version: ${info.googlePlayServicesVersion ?: "N/A"}")
+        Text("  Is Google Play Services Available: ${info.isGooglePlayServicesAvailable?.toString() ?: "N/A"}")
+    }
+}
+
 internal fun formatDisplayOutput(
-    playIntegrityResponse: TokenPayloadExternal?,
-    deviceInfo: DeviceInfo?,
-    securityInfo: SecurityInfo?,
+    serverVerificationPayload: dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload?,
     statusText: String? = null
 ): String {
-    if (playIntegrityResponse == null && deviceInfo == null && securityInfo == null) {
+    if (serverVerificationPayload == null) {
         return statusText ?: "Response: N/A"
     }
 
     return buildString {
+        val playIntegrityResponse = serverVerificationPayload.playIntegrityResponse.tokenPayloadExternal
+        val deviceInfo = serverVerificationPayload.deviceInfo
+        val securityInfo = serverVerificationPayload.securityInfo
+        val googlePlayDeveloperServiceInfo = serverVerificationPayload.googlePlayDeveloperServiceInfo
+
         // Play Integrity API Response
-        if (playIntegrityResponse != null) {
-            append("Play Integrity API Response:\n")
-            append(
-                """
-                  Request Details:
-                    Package Name: ${playIntegrityResponse.requestDetails?.requestPackageName ?: "N/A"}
-                    Nonce: ${playIntegrityResponse.requestDetails?.nonce ?: "N/A"}
-                    Request Hash: ${playIntegrityResponse.requestDetails?.requestHash ?: "N/A"}
-                    Timestamp: ${formatTimestamp(playIntegrityResponse.requestDetails?.timestampMillis)}
+        append("Play Integrity API Response:\n")
+        append(
+            """
+              Request Details:
+                Package Name: ${playIntegrityResponse.requestDetails?.requestPackageName ?: "N/A"}
+                Nonce: ${playIntegrityResponse.requestDetails?.nonce ?: "N/A"}
+                Request Hash: ${playIntegrityResponse.requestDetails?.requestHash ?: "N/A"}
+                Timestamp: ${formatTimestamp(playIntegrityResponse.requestDetails?.timestampMillis)}
 
-                  App Integrity:
-                    Recognition Verdict: ${playIntegrityResponse.appIntegrity?.appRecognitionVerdict ?: "N/A"}
-                    Package Name: ${playIntegrityResponse.appIntegrity?.packageName ?: "N/A"}
-                    Certificate SHA256: ${playIntegrityResponse.appIntegrity?.certificateSha256Digest?.joinToString() ?: "N/A"}
-                    Version Code: ${playIntegrityResponse.appIntegrity?.versionCode ?: "N/A"}
+              App Integrity:
+                Recognition Verdict: ${playIntegrityResponse.appIntegrity?.appRecognitionVerdict ?: "N/A"}
+                Package Name: ${playIntegrityResponse.appIntegrity?.packageName ?: "N/A"}
+                Certificate SHA256: ${playIntegrityResponse.appIntegrity?.certificateSha256Digest?.joinToString() ?: "N/A"}
+                Version Code: ${playIntegrityResponse.appIntegrity?.versionCode ?: "N/A"}
 
-                  Device Integrity:
-                    Recognition Verdict: ${playIntegrityResponse.deviceIntegrity?.deviceRecognitionVerdict?.joinToString() ?: "N/A"}
-                    SDK Version: ${playIntegrityResponse.deviceIntegrity?.deviceAttributes?.sdkVersion ?: "N/A"}
-                    Device Activity Level: ${playIntegrityResponse.deviceIntegrity?.recentDeviceActivity?.deviceActivityLevel ?: "N/A"}
+              Device Integrity:
+                Recognition Verdict: ${playIntegrityResponse.deviceIntegrity?.deviceRecognitionVerdict?.joinToString() ?: "N/A"}
+                SDK Version: ${playIntegrityResponse.deviceIntegrity?.deviceAttributes?.sdkVersion ?: "N/A"}
+                Device Activity Level: ${playIntegrityResponse.deviceIntegrity?.recentDeviceActivity?.deviceActivityLevel ?: "N/A"}
 
-                  Account Details:
-                    Licensing Verdict: ${playIntegrityResponse.accountDetails?.appLicensingVerdict ?: "N/A"}
+              Account Details:
+                Licensing Verdict: ${playIntegrityResponse.accountDetails?.appLicensingVerdict ?: "N/A"}
 
-                  Environment Details:
-                    App Access Risk Verdict: ${playIntegrityResponse.environmentDetails?.appAccessRiskVerdict?.appsDetected?.joinToString() ?: "N/A"}
-                    Play Protect Verdict: ${playIntegrityResponse.environmentDetails?.playProtectVerdict ?: "N/A"}
-                """.trimIndent()
-            )
-            append("\n\n") // Add space before the next section
-        }
+              Environment Details:
+                App Access Risk Verdict: ${playIntegrityResponse.environmentDetails?.appAccessRiskVerdict?.appsDetected?.joinToString() ?: "N/A"}
+                Play Protect Verdict: ${playIntegrityResponse.environmentDetails?.playProtectVerdict ?: "N/A"}
+            """.trimIndent()
+        )
+        append("\n\n") // Add space before the next section
 
         // Device Info
-        if (deviceInfo != null) {
-            append("Device Info:\n")
-            append(
-                """
-                  Brand: ${deviceInfo.brand ?: "N/A"}
-                  Model: ${deviceInfo.model ?: "N/A"}
-                  Device: ${deviceInfo.device ?: "N/A"}
-                  Product: ${deviceInfo.product ?: "N/A"}
-                  Manufacturer: ${deviceInfo.manufacturer ?: "N/A"}
-                  Hardware: ${deviceInfo.hardware ?: "N/A"}
-                  Board: ${deviceInfo.board ?: "N/A"}
-                  Bootloader: ${deviceInfo.bootloader ?: "N/A"}
-                  Version Release: ${deviceInfo.versionRelease ?: "N/A"}
-                  SDK Int: ${deviceInfo.sdkInt?.toString() ?: "N/A"}
-                  Fingerprint: ${deviceInfo.fingerprint ?: "N/A"}
-                  Security Patch: ${deviceInfo.securityPatch ?: "N/A"}
-                """.trimIndent()
-            )
-            append("\n\n") // Add space before the next section
-        }
+        append("Device Info:\n")
+        append(
+            """
+              Brand: ${deviceInfo.brand ?: "N/A"}
+              Model: ${deviceInfo.model ?: "N/A"}
+              Device: ${deviceInfo.device ?: "N/A"}
+              Product: ${deviceInfo.product ?: "N/A"}
+              Manufacturer: ${deviceInfo.manufacturer ?: "N/A"}
+              Hardware: ${deviceInfo.hardware ?: "N/A"}
+              Board: ${deviceInfo.board ?: "N/A"}
+              Bootloader: ${deviceInfo.bootloader ?: "N/A"}
+              Version Release: ${deviceInfo.versionRelease ?: "N/A"}
+              SDK Int: ${deviceInfo.sdkInt?.toString() ?: "N/A"}
+              Fingerprint: ${deviceInfo.fingerprint ?: "N/A"}
+              Security Patch: ${deviceInfo.securityPatch ?: "N/A"}
+            """.trimIndent()
+        )
+        append("\n\n") // Add space before the next section
 
         // Security Info
-        if (securityInfo != null) {
-            append("Security Info:\n")
+        append("Security Info:\n")
+        append(
+            """
+              Device Lock Enabled: ${securityInfo.isDeviceLockEnabled?.toString() ?: "N/A"}
+              Biometrics Enabled: ${securityInfo.isBiometricsEnabled?.toString() ?: "N/A"}
+              Has Class3 Authenticator: ${securityInfo.hasClass3Authenticator?.toString() ?: "N/A"}
+              Has Strongbox: ${securityInfo.hasStrongbox?.toString() ?: "N/A"}
+            """.trimIndent()
+        )
+
+        // Google Play Developer Service Info
+        googlePlayDeveloperServiceInfo?.let {
+            append("\n\n") // Add space before the next section
+            append("Google Play Developer Service Info:\n")
             append(
                 """
-                  Device Lock Enabled: ${securityInfo.isDeviceLockEnabled?.toString() ?: "N/A"}
-                  Biometrics Enabled: ${securityInfo.isBiometricsEnabled?.toString() ?: "N/A"}
-                  Has Class3 Authenticator: ${securityInfo.hasClass3Authenticator?.toString() ?: "N/A"}
-                  Has Strongbox: ${securityInfo.hasStrongbox?.toString() ?: "N/A"}
+                  Google Play Services Version: ${it.googlePlayServicesVersion ?: "N/A"}
+                  Is Google Play Services Available: ${it.isGooglePlayServicesAvailable?.toString() ?: "N/A"}
                 """.trimIndent()
             )
         }

@@ -92,9 +92,7 @@ fun StandardPlayIntegrityContent(
             progressValue = uiState.progressValue,
             errorMessages = uiState.errorMessages,
             statusText = uiState.status,
-            playIntegrityResponse = uiState.playIntegrityResponse,
-            deviceInfo = uiState.deviceInfo,
-            securityInfo = uiState.securityInfo,
+            serverVerificationPayload = uiState.serverVerificationPayload,
             currentSessionId = uiState.currentSessionId
         )
     }
@@ -109,60 +107,67 @@ private fun StandardPlayIntegrityContentPreview() {
             integrityToken = "preview-token",
             progressValue = 0.0F,
             status = "Preview status text for Standard.",
-            playIntegrityResponse = dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal(
-                requestDetails = dev.keiji.deviceintegrity.api.playintegrity.RequestDetails(
-                    requestPackageName = "dev.keiji.preview.standard",
-                    nonce = "preview-nonce-from-client",
-                    requestHash = "preview-request-hash-standard",
-                    timestampMillis = System.currentTimeMillis()
-                ),
-                appIntegrity = dev.keiji.deviceintegrity.api.playintegrity.AppIntegrity(
-                    appRecognitionVerdict = "MEETS_DEVICE_INTEGRITY",
-                    packageName = "dev.keiji.preview.standard",
-                    certificateSha256Digest = listOf("cert_std_1", "cert_std_2"),
-                    versionCode = 456
-                ),
-                deviceIntegrity = dev.keiji.deviceintegrity.api.playintegrity.DeviceIntegrity(
-                    deviceRecognitionVerdict = listOf(
-                        "MEETS_DEVICE_INTEGRITY",
-                        "MEETS_STRONG_INTEGRITY"
-                    ),
-                    deviceAttributes = dev.keiji.deviceintegrity.api.playintegrity.DeviceAttributes(
-                        sdkVersion = 31
-                    ),
-                    recentDeviceActivity = dev.keiji.deviceintegrity.api.playintegrity.RecentDeviceActivity(
-                        deviceActivityLevel = "LEVEL_2"
+            serverVerificationPayload = dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload(
+                playIntegrityResponse = dev.keiji.deviceintegrity.api.playintegrity.PlayIntegrityResponseWrapper(
+                    tokenPayloadExternal = dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal(
+                        requestDetails = dev.keiji.deviceintegrity.api.playintegrity.RequestDetails(
+                            requestPackageName = "dev.keiji.preview.standard",
+                            nonce = "preview-nonce-from-client", // Standard API doesn't use server-nonce in requestDetails
+                            requestHash = "preview-request-hash-standard",
+                            timestampMillis = System.currentTimeMillis()
+                        ),
+                        appIntegrity = dev.keiji.deviceintegrity.api.playintegrity.AppIntegrity(
+                            appRecognitionVerdict = "MEETS_DEVICE_INTEGRITY",
+                            packageName = "dev.keiji.preview.standard",
+                            certificateSha256Digest = listOf("cert_std_1", "cert_std_2"),
+                            versionCode = 456
+                        ),
+                        deviceIntegrity = dev.keiji.deviceintegrity.api.playintegrity.DeviceIntegrity(
+                            deviceRecognitionVerdict = listOf(
+                                "MEETS_DEVICE_INTEGRITY",
+                                "MEETS_STRONG_INTEGRITY"
+                            ),
+                            deviceAttributes = dev.keiji.deviceintegrity.api.playintegrity.DeviceAttributes(
+                                sdkVersion = 31
+                            ),
+                            recentDeviceActivity = dev.keiji.deviceintegrity.api.playintegrity.RecentDeviceActivity(
+                                deviceActivityLevel = "LEVEL_2"
+                            )
+                        ),
+                        accountDetails = dev.keiji.deviceintegrity.api.playintegrity.AccountDetails(
+                            appLicensingVerdict = "LICENSED"
+                        ),
+                        environmentDetails = dev.keiji.deviceintegrity.api.playintegrity.EnvironmentDetails(
+                            appAccessRiskVerdict = dev.keiji.deviceintegrity.api.playintegrity.AppAccessRiskVerdict(
+                                appsDetected = listOf("std_app1", "std_app2")
+                            ),
+                            playProtectVerdict = "NO_ISSUES"
+                        )
                     )
                 ),
-                accountDetails = dev.keiji.deviceintegrity.api.playintegrity.AccountDetails(
-                    appLicensingVerdict = "LICENSED"
+                deviceInfo = dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo(
+                    brand = "PreviewBrandStd",
+                    model = "PreviewModelStd",
+                    device = "PreviewDeviceStd",
+                    product = "PreviewProductStd",
+                    manufacturer = "PreviewManufacturerStd",
+                    hardware = "PreviewHardwareStd",
+                    board = "PreviewBoardStd",
+                    bootloader = "PreviewBootloaderStd",
+                    versionRelease = "13",
+                    sdkInt = 33,
+                    fingerprint = "PreviewFingerprintStd",
+                    securityPatch = "2023-08-05"
                 ),
-                environmentDetails = dev.keiji.deviceintegrity.api.playintegrity.EnvironmentDetails(
-                    appAccessRiskVerdict = dev.keiji.deviceintegrity.api.playintegrity.AppAccessRiskVerdict(
-                        appsDetected = listOf("std_app1", "std_app2")
-                    ),
-                    playProtectVerdict = "NO_ISSUES"
+                securityInfo = dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo(
+                    isDeviceLockEnabled = false, isBiometricsEnabled = true,
+                    hasClass3Authenticator = false, hasStrongbox = true
+                ),
+                googlePlayDeveloperServiceInfo = dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfo(
+                    googlePlayServicesVersion = "87654321",
+                    isGooglePlayServicesAvailable = false
                 )
-            ),
-            // Preview with dummy DeviceInfo and SecurityInfo
-            deviceInfo = dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo(
-                brand = "PreviewBrandStd",
-                model = "PreviewModelStd",
-                device = "PreviewDeviceStd",
-                product = "PreviewProductStd",
-                manufacturer = "PreviewManufacturerStd",
-                hardware = "PreviewHardwareStd",
-                board = "PreviewBoardStd",
-                bootloader = "PreviewBootloaderStd",
-                versionRelease = "13",
-                sdkInt = 33,
-                fingerprint = "PreviewFingerprintStd",
-                securityPatch = "2023-08-05"
-            ),
-            securityInfo = dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo(
-                isDeviceLockEnabled = false, isBiometricsEnabled = true,
-                hasClass3Authenticator = false, hasStrongbox = true
-            ),
+            )
         ),
         onContentBindingChange = {},
         onRequestToken = {},
