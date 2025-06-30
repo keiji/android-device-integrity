@@ -27,14 +27,16 @@ import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityScreen
 import dev.keiji.deviceintegrity.ui.main.playintegrity.StandardPlayIntegrityViewModel
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsScreen
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.platform.LocalContext
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.keiji.deviceintegrity.provider.contract.AppInfoProvider
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsUiEvent
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsViewModel
@@ -67,8 +69,10 @@ class MainActivity : ComponentActivity() {
         Timber.d("MainActivity onCreate")
 
         setContent {
+            val mainViewModel: MainViewModel = viewModel()
             DeviceIntegrityApp(
                 appInfoProvider = appInfoProvider,
+                mainViewModel = mainViewModel,
                 apiEndpointSettingsNavigator = apiEndpointSettingsNavigator,
                 licenseNavigator = licenseNavigator,
                 agreementNavigator = agreementNavigator,
@@ -81,6 +85,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun DeviceIntegrityApp(
     appInfoProvider: AppInfoProvider,
+    mainViewModel: MainViewModel,
     apiEndpointSettingsNavigator: ApiEndpointSettingsNavigator,
     licenseNavigator: LicenseNavigator,
     agreementNavigator: AgreementNavigator,
@@ -89,19 +94,24 @@ fun DeviceIntegrityApp(
     DeviceIntegrityTheme {
         val navController = rememberNavController()
         val context = LocalContext.current
+        val isAgreed by mainViewModel.isAgreed.collectAsStateWithLifecycle()
 
         val agreementLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.StartActivityForResult()
         ) { result ->
-            if (result.resultCode != android.app.Activity.RESULT_OK) {
+            if (result.resultCode == android.app.Activity.RESULT_OK) {
+                mainViewModel.setAgreed(true)
+            } else {
                 onFinishActivity()
             }
         }
 
-        if (!appInfoProvider.isDebugBuild) {
-            LaunchedEffect(Unit) {
-                val intent = agreementNavigator.newIntent(context)
-                agreementLauncher.launch(intent)
+        if (!appInfoProvider.isDebugBuild && !isAgreed) {
+            LaunchedEffect(isAgreed) {
+                if (!isAgreed) { // Avoid re-launching if already agreed during recomposition
+                    val intent = agreementNavigator.newIntent(context)
+                    agreementLauncher.launch(intent)
+                }
             }
         }
 
