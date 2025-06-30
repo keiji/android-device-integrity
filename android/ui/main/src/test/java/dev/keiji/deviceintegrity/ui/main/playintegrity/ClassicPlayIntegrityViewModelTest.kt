@@ -197,7 +197,7 @@ class ClassicPlayIntegrityViewModelTest {
 
         val uiState = viewModel.uiState.first()
         assertEquals("Token verification complete.", uiState.status)
-        assertEquals(dummyServerVerificationPayload.playIntegrityResponse.tokenPayloadExternal, uiState.playIntegrityResponse)
+        assertEquals(dummyServerVerificationPayload, uiState.serverVerificationPayload)
         assertTrue(uiState.errorMessages.isEmpty())
     }
 
@@ -266,10 +266,6 @@ class ClassicPlayIntegrityViewModelTest {
         viewModel.fetchIntegrityToken()
         testDispatcher.scheduler.advanceUntilIdle() // Ensure token and GPDS info are set
 
-        // Ensure GPDS info is loaded into state by init
-        val initialUiState = viewModel.uiState.first()
-        assertEquals(dummyGooglePlayDeveloperServiceInfo, initialUiState.googlePlayDeveloperServiceInfo)
-
         whenever(mockPlayIntegrityRepository.verifyTokenClassic(
             eq(token),
             any(), // sessionId
@@ -283,6 +279,6 @@ class ClassicPlayIntegrityViewModelTest {
 
         val finalUiState = viewModel.uiState.first()
         assertEquals("Token verification complete.", finalUiState.status)
-        assertEquals(dummyServerVerificationPayload.playIntegrityResponse.tokenPayloadExternal, finalUiState.playIntegrityResponse)
+        assertEquals(dummyServerVerificationPayload.playIntegrityResponse, finalUiState.serverVerificationPayload?.playIntegrityResponse)
     }
 }

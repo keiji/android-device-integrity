@@ -178,8 +178,8 @@ private fun StandardPlayIntegrityContentPreview() {
                     hasClass3Authenticator = false, hasStrongbox = true
                 ),
                 googlePlayDeveloperServiceInfo = GooglePlayDeveloperServiceInfo(
-                    googlePlayServicesVersion = "87654321",
-                    isGooglePlayServicesAvailable = false
+                    versionCode = 100,
+                    versionName = "87654321"
                 )
             )
         ),

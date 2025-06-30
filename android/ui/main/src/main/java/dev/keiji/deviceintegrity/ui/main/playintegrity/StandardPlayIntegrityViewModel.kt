@@ -46,8 +46,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val info = googlePlayDeveloperServiceInfoProvider.provide()
-            // This will be passed directly during verifyToken call, not stored in UiState anymore
-            // _uiState.update { it.copy(googlePlayDeveloperServiceInfo = info) }
+             _uiState.update { it.copy(googlePlayDeveloperServiceInfo = info) }
         }
     }
 

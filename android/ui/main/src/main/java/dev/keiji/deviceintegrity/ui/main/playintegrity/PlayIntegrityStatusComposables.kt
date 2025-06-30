@@ -322,8 +322,8 @@ fun DisplaySecurityInfo(securityInfo: SecurityInfo) {
 @Composable
 fun DisplayGooglePlayDeveloperServiceInfo(info: dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfo) {
     Column {
-        Text("  Google Play Services Version: ${info.googlePlayServicesVersion ?: "N/A"}")
-        Text("  Is Google Play Services Available: ${info.isGooglePlayServicesAvailable?.toString() ?: "N/A"}")
+        Text("  Google Play Services versionCode: ${info.versionCode}")
+        Text("  Google Play Services versionName: ${info.versionName}")
     }
 }
 
@@ -409,8 +409,8 @@ internal fun formatDisplayOutput(
             append("Google Play Developer Service Info:\n")
             append(
                 """
-                  Google Play Services Version: ${it.googlePlayServicesVersion ?: "N/A"}
-                  Is Google Play Services Available: ${it.isGooglePlayServicesAvailable?.toString() ?: "N/A"}
+                  Google Play Services versionCode: ${it.versionCode}
+                  Google Play Services versionName: ${it.versionName}
                 """.trimIndent()
             )
         }
