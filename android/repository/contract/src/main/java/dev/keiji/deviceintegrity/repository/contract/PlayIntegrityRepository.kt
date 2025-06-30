@@ -3,8 +3,9 @@ package dev.keiji.deviceintegrity.repository.contract
 import dev.keiji.deviceintegrity.api.keyattestation.KeyAttestationResponse
 import dev.keiji.deviceintegrity.api.playintegrity.NonceResponse
 import dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload
-import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo // For verifyToken methods if needed in request
-import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo // For verifyToken methods if needed in request
+import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
+import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo
+import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfo
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
 
 /**
@@ -29,7 +30,8 @@ interface PlayIntegrityRepository {
         sessionId: String,
         contentBinding: String,
         deviceInfo: DeviceInfo,
-        securityInfo: SecurityInfo
+        securityInfo: SecurityInfo,
+        googlePlayDeveloperServiceInfo: GooglePlayDeveloperServiceInfo?,
     ): ServerVerificationPayload
 
     /**
@@ -47,7 +49,8 @@ interface PlayIntegrityRepository {
         integrityToken: String,
         sessionId: String,
         deviceInfo: DeviceInfo,
-        securityInfo: SecurityInfo
+        securityInfo: SecurityInfo,
+        googlePlayDeveloperServiceInfo: GooglePlayDeveloperServiceInfo?,
     ): ServerVerificationPayload
 
 

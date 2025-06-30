@@ -8,6 +8,7 @@ import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo
 import dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload
 import dev.keiji.deviceintegrity.api.playintegrity.StandardVerifyRequest
 import dev.keiji.deviceintegrity.api.playintegrity.VerifyTokenRequest
+import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfo
 import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
 import retrofit2.HttpException
@@ -23,7 +24,8 @@ class PlayIntegrityRepositoryImpl @Inject constructor(
         sessionId: String,
         contentBinding: String,
         deviceInfo: DeviceInfo,
-        securityInfo: SecurityInfo
+        securityInfo: SecurityInfo,
+        googlePlayDeveloperServiceInfo: GooglePlayDeveloperServiceInfo?
     ): ServerVerificationPayload {
         return try {
             val request = StandardVerifyRequest(
@@ -31,9 +33,10 @@ class PlayIntegrityRepositoryImpl @Inject constructor(
                 sessionId = sessionId,
                 contentBinding = contentBinding,
                 deviceInfo = deviceInfo,
-                securityInfo = securityInfo
+                securityInfo = securityInfo,
+                googlePlayDeveloperServiceInfo = googlePlayDeveloperServiceInfo
             )
-            playIntegrityTokenVerifyApiClient.verifyTokenStandard(request)
+            return playIntegrityTokenVerifyApiClient.verifyTokenStandard(request)
         } catch (e: HttpException) {
             throw ServerException(
                 errorCode = e.code(),
@@ -48,16 +51,18 @@ class PlayIntegrityRepositoryImpl @Inject constructor(
         integrityToken: String,
         sessionId: String,
         deviceInfo: DeviceInfo,
-        securityInfo: SecurityInfo
+        securityInfo: SecurityInfo,
+        googlePlayDeveloperServiceInfo: GooglePlayDeveloperServiceInfo?
     ): ServerVerificationPayload {
         return try {
             val request = VerifyTokenRequest(
                 token = integrityToken,
                 sessionId = sessionId,
                 deviceInfo = deviceInfo,
-                securityInfo = securityInfo
+                securityInfo = securityInfo,
+                googlePlayDeveloperServiceInfo = googlePlayDeveloperServiceInfo
             )
-            playIntegrityTokenVerifyApiClient.verifyTokenClassic(request)
+            return playIntegrityTokenVerifyApiClient.verifyTokenClassic(request)
         } catch (e: HttpException) {
             throw ServerException(
                 errorCode = e.code(),

@@ -10,6 +10,7 @@ import dev.keiji.deviceintegrity.api.playintegrity.VerifyTokenRequest
 import dev.keiji.deviceintegrity.provider.contract.AppInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
+import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfoProvider
 import dev.keiji.deviceintegrity.repository.contract.ClassicPlayIntegrityTokenRepository
 import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
@@ -33,12 +34,20 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
     private val playIntegrityRepository: PlayIntegrityRepository,
     private val deviceInfoProvider: DeviceInfoProvider,
     private val deviceSecurityStateProvider: DeviceSecurityStateProvider,
+    private val googlePlayDeveloperServiceInfoProvider: GooglePlayDeveloperServiceInfoProvider,
     private val appInfoProvider: AppInfoProvider
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ClassicPlayIntegrityUiState())
     val uiState: StateFlow<ClassicPlayIntegrityUiState> = _uiState.asStateFlow()
 
     private var currentSessionId: String = "" // Renamed and initialized as empty
+
+    init {
+        viewModelScope.launch {
+            val info = googlePlayDeveloperServiceInfoProvider.provide()
+            _uiState.update { it.copy(googlePlayDeveloperServiceInfo = info) }
+        }
+    }
 
     fun fetchNonce() {
         currentSessionId = UUID.randomUUID().toString() // Generate and assign sessionId here
@@ -260,12 +269,15 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                     securityInfo = securityInfo
                 )
 
+                val googlePlayDeveloperServiceInfo = _uiState.value.googlePlayDeveloperServiceInfo
+
                 val verifyResponse =
                     playIntegrityRepository.verifyTokenClassic( // Use repository
                         integrityToken = token,
                         sessionId = currentSessionId,
                         deviceInfo = deviceInfoData,
-                        securityInfo = securityInfo
+                        securityInfo = securityInfo,
+                        googlePlayDeveloperServiceInfo = googlePlayDeveloperServiceInfo
                     )
 
                 Log.d(

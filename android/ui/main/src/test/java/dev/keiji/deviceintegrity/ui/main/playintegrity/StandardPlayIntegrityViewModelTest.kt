@@ -8,6 +8,8 @@ import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal
 import dev.keiji.deviceintegrity.provider.contract.AppInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
+import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfo
+import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfoProvider
 import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository
 import dev.keiji.deviceintegrity.repository.contract.StandardPlayIntegrityTokenRepository
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
@@ -25,6 +27,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
@@ -43,14 +46,21 @@ class StandardPlayIntegrityViewModelTest {
     private lateinit var mockStandardPlayIntegrityTokenRepository: StandardPlayIntegrityTokenRepository
     private lateinit var mockDeviceInfoProvider: DeviceInfoProvider
     private lateinit var mockDeviceSecurityStateProvider: DeviceSecurityStateProvider
+    private lateinit var mockGooglePlayDeveloperServiceInfoProvider: GooglePlayDeveloperServiceInfoProvider
     private lateinit var mockAppInfoProvider: AppInfoProvider
 
     // Dummy data
     private val dummyDeviceInfo = DeviceInfo("brand", "model", "device", "product", "manufacturer", "hardware", "board", "bootloader", "release", 30, "fingerprint", "patch")
     private val dummySecurityInfo = SecurityInfo(true, true, true, true)
+    private val dummyGooglePlayDeveloperServiceInfo = GooglePlayDeveloperServiceInfo(456L, "4.5.6")
     private val dummyTokenPayloadExternal = TokenPayloadExternal(null, null, null, null, null)
     private val dummyPlayIntegrityResponseWrapper = PlayIntegrityResponseWrapper(dummyTokenPayloadExternal)
-    private val dummyServerVerificationPayload = ServerVerificationPayload(dummyDeviceInfo, dummyPlayIntegrityResponseWrapper, dummySecurityInfo)
+    private val dummyServerVerificationPayload = ServerVerificationPayload(
+        deviceInfo = dummyDeviceInfo,
+        playIntegrityResponse = dummyPlayIntegrityResponseWrapper,
+        securityInfo = dummySecurityInfo,
+        googlePlayDeveloperServiceInfo = dummyGooglePlayDeveloperServiceInfo
+    )
 
     @Before
     fun setUp() {
@@ -59,8 +69,10 @@ class StandardPlayIntegrityViewModelTest {
         mockStandardPlayIntegrityTokenRepository = mock()
         mockDeviceInfoProvider = mock()
         mockDeviceSecurityStateProvider = mock()
+        mockGooglePlayDeveloperServiceInfoProvider = mock()
         mockAppInfoProvider = mock()
 
+        whenever(mockGooglePlayDeveloperServiceInfoProvider.provide()).thenReturn(dummyGooglePlayDeveloperServiceInfo)
         whenever(mockDeviceInfoProvider.BRAND).thenReturn("TestBrand")
         whenever(mockDeviceInfoProvider.MODEL).thenReturn("TestModel")
         whenever(mockDeviceInfoProvider.DEVICE).thenReturn("TestDevice")
@@ -91,6 +103,7 @@ class StandardPlayIntegrityViewModelTest {
             mockPlayIntegrityRepository,
             mockDeviceInfoProvider,
             mockDeviceSecurityStateProvider,
+            mockGooglePlayDeveloperServiceInfoProvider,
             mockAppInfoProvider
         )
     }
@@ -181,5 +194,42 @@ class StandardPlayIntegrityViewModelTest {
         assertEquals("Network error verifying token.", uiState.status)
         assertTrue(uiState.errorMessages.isNotEmpty())
         assertEquals("No internet", uiState.errorMessages.first())
+    }
+
+    @Test
+    fun `init loads GooglePlayDeveloperServiceInfo and updates uiState`() = runTest {
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val uiState = viewModel.uiState.first()
+        assertEquals(dummyGooglePlayDeveloperServiceInfo, uiState.googlePlayDeveloperServiceInfo)
+    }
+
+    @Test
+    fun `verifyToken uses GooglePlayDeveloperServiceInfo from uiState`() = runTest {
+        val token = "test-standard-token"
+        val contentBinding = "testContent"
+        viewModel.updateContentBinding(contentBinding)
+        whenever(mockStandardPlayIntegrityTokenRepository.getToken(any())).thenReturn(token)
+        viewModel.fetchIntegrityToken()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val initialUiState = viewModel.uiState.first()
+        assertEquals(dummyGooglePlayDeveloperServiceInfo, initialUiState.googlePlayDeveloperServiceInfo)
+
+        whenever(mockPlayIntegrityRepository.verifyTokenStandard(
+            eq(token),
+            any(), // sessionId
+            eq(contentBinding),
+            any(), // deviceInfo
+            any(), // securityInfo
+            eq(dummyGooglePlayDeveloperServiceInfo) // Explicitly check this arg
+        )).thenReturn(dummyServerVerificationPayload)
+
+        viewModel.verifyToken()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val finalUiState = viewModel.uiState.first()
+        assertEquals("Token verification complete.", finalUiState.status)
+        assertEquals(dummyServerVerificationPayload.playIntegrityResponse.tokenPayloadExternal, finalUiState.playIntegrityResponse)
     }
 }
