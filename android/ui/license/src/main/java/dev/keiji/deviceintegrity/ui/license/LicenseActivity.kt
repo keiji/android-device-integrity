@@ -58,7 +58,7 @@ fun LicenseScreen(
                     IconButton(onClick = onClose) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_close),
-                            contentDescription = "Close",
+                            contentDescription = stringResource(R.string.license_screen_close_button_description),
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
