@@ -1,4 +1,4 @@
-「Integrity Check Tool (Dev)」は、Androidアプリ開発者向けの検証ツールです。自身のAndroid端末や開発中のアプリケーションで、端末信頼性検証機能（例: Play Integrity API）がどのように動作し、どのような結果を返すかを確認するために使用します。
+「Integrity Check Tool」は、Androidアプリ開発者向けの検証ツールです。自身のAndroid端末や開発中のアプリケーションで、端末信頼性検証機能（例: Play Integrity API）がどのように動作し、どのような結果を返すかを確認するために使用します。
 
 **主な目的と機能:**
 *   **端末信頼性検証の確認:** あなたのAndroidデバイスが、GoogleのPlay Integrity APIなどの検証メカニズムによってどのように評価されるか、その詳細な結果（デバイスの完全性、アプリのライセンス状況など）を表示します

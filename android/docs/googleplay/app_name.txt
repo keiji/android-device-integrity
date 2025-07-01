@@ -1,1 +1,1 @@
-    Integrity Check Tool (Dev)
+    Integrity Check Tool
