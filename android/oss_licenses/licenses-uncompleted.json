@@ -1,0 +1,251 @@
+{
+    "settings": null,
+    "pom_list": [
+        {
+            "group_id": "androidx.compose",
+            "artifact_id": "compose-bom",
+            "version": "2025.06.01",
+            "name": "Jetpack Compose Libraries BOM",
+            "url": "https://developer.android.com/jetpack",
+            "licenses": [
+                {
+                    "name": "The Apache Software License, Version 2.0",
+                    "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                }
+            ],
+            "developers": [
+            ],
+            "organization": null,
+            "dependencies": [
+            ],
+            "depth": 2
+        },
+        {
+            "group_id": "com.google.android.gms",
+            "artifact_id": "play-services-base",
+            "version": "18.7.0",
+            "name": "play-services-base",
+            "url": null,
+            "licenses": [
+                {
+                    "name": "Android Software Development Kit License",
+                    "url": "https://developer.android.com/studio/terms.html"
+                }
+            ],
+            "developers": [
+            ],
+            "organization": null,
+            "dependencies": [
+            ],
+            "depth": 2
+        },
+        {
+            "group_id": "com.google.android.play",
+            "artifact_id": "integrity",
+            "version": "1.4.0",
+            "name": "integrity",
+            "url": null,
+            "licenses": [
+                {
+                    "name": "Play Integrity API Terms of Service",
+                    "url": "https://developer.android.com/google/play/integrity/overview#tos"
+                }
+            ],
+            "developers": [
+            ],
+            "organization": null,
+            "dependencies": [
+            ],
+            "depth": 2
+        },
+        {
+            "group_id": "com.google.protobuf",
+            "artifact_id": "protobuf-kotlin-lite",
+            "version": "4.31.1",
+            "name": "Protocol Buffers [Kotlin-Lite]",
+            "url": null,
+            "licenses": [
+            ],
+            "developers": [
+            ],
+            "organization": null,
+            "dependencies": [
+            ],
+            "depth": 2
+        },
+        {
+            "group_id": "javax.inject",
+            "artifact_id": "javax.inject",
+            "version": "1",
+            "name": "javax.inject",
+            "url": "http://code.google.com/p/atinject/",
+            "licenses": [
+                {
+                    "name": "The Apache Software License, Version 2.0",
+                    "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                }
+            ],
+            "developers": [
+            ],
+            "organization": null,
+            "dependencies": [
+            ],
+            "depth": 2
+        },
+        {
+            "group_id": "com.google.android.gms",
+            "artifact_id": "play-services-basement",
+            "version": "18.7.0",
+            "name": "play-services-basement",
+            "url": null,
+            "licenses": [
+                {
+                    "name": "Android Software Development Kit License",
+                    "url": "https://developer.android.com/studio/terms.html"
+                }
+            ],
+            "developers": [
+            ],
+            "organization": null,
+            "dependencies": [
+            ],
+            "depth": 3
+        },
+        {
+            "group_id": "com.google.android.gms",
+            "artifact_id": "play-services-tasks",
+            "version": "18.3.0",
+            "name": "play-services-tasks",
+            "url": null,
+            "licenses": [
+                {
+                    "name": "Android Software Development Kit License",
+                    "url": "https://developer.android.com/studio/terms.html"
+                }
+            ],
+            "developers": [
+            ],
+            "organization": null,
+            "dependencies": [
+            ],
+            "depth": 3
+        },
+        {
+            "group_id": "com.google.code.findbugs",
+            "artifact_id": "jsr305",
+            "version": "3.0.2",
+            "name": "FindBugs-jsr305",
+            "url": "http://findbugs.sourceforge.net/",
+            "licenses": [
+                {
+                    "name": "The Apache Software License, Version 2.0",
+                    "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                }
+            ],
+            "developers": [
+            ],
+            "organization": null,
+            "dependencies": [
+            ],
+            "depth": 3
+        },
+        {
+            "group_id": "com.google.protobuf",
+            "artifact_id": "protobuf-javalite",
+            "version": "4.31.1",
+            "name": "Protocol Buffers [Lite]",
+            "url": null,
+            "licenses": [
+            ],
+            "developers": [
+            ],
+            "organization": null,
+            "dependencies": [
+            ],
+            "depth": 3
+        },
+        {
+            "group_id": "com.google.android.play",
+            "artifact_id": "core-common",
+            "version": "2.0.4",
+            "name": "core-common",
+            "url": null,
+            "licenses": [
+                {
+                    "name": "Play Core Software Development Kit Terms of Service",
+                    "url": "https://developer.android.com/guide/playcore/license"
+                }
+            ],
+            "developers": [
+            ],
+            "organization": null,
+            "dependencies": [
+            ],
+            "depth": 4
+        },
+        {
+            "group_id": "com.squareup.okhttp3",
+            "artifact_id": "parent",
+            "version": "3.14.9",
+            "name": "OkHttp (Parent)",
+            "url": "https://github.com/square/okhttp",
+            "licenses": [
+                {
+                    "name": "Apache 2.0",
+                    "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                }
+            ],
+            "developers": [
+            ],
+            "organization": null,
+            "dependencies": [
+            ],
+            "depth": 6
+        },
+        {
+            "group_id": "org.codehaus.mojo",
+            "artifact_id": "animal-sniffer-annotations",
+            "version": "1.17",
+            "name": "Animal Sniffer Annotations",
+            "url": null,
+            "licenses": [
+            ],
+            "developers": [
+            ],
+            "organization": null,
+            "dependencies": [
+            ],
+            "depth": 6
+        },
+        {
+            "group_id": "com.google.guava",
+            "artifact_id": "listenablefuture",
+            "version": "1.0",
+            "name": "Guava ListenableFuture only",
+            "url": null,
+            "licenses": [
+            ],
+            "developers": [
+            ],
+            "organization": null,
+            "dependencies": [
+            ],
+            "depth": 7
+        },
+        {
+            "group_id": "org.sonatype.oss",
+            "artifact_id": "oss-parent",
+            "version": "7",
+            "name": "Sonatype OSS Parent",
+            "url": "http://nexus.sonatype.org/oss-repository-hosting.html",
+            "licenses": [
+            ],
+            "developers": [
+            ],
+            "organization": null,
+            "dependencies": [
+            ],
+            "depth": 7
+        }
+    ]
+}

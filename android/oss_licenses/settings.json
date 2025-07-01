@@ -1,0 +1,31 @@
+{
+  "target_file_path": "./oss_licenses/dependencies.txt",
+  "working_dir": "build/tmp",
+  "local_repository_dirs": [
+    ".m2/repository"
+  ],
+  "repository_urls": [
+    "https://repo1.maven.org/maven2",
+    "https://dl.google.com/android/maven2",
+    "https://maven.repository.redhat.com/ga"
+  ],
+  "remove_conflicting_versions": true,
+  "ignore_scopes": [
+    "test",
+    "runtime"
+  ],
+  "include_dependencies": false,
+  "include_settings": false,
+  "output": {
+    "complete": {
+      "path": "./oss_licenses/licenses.json",
+      "override": true,
+      "is_pretty_print_enabled": false
+    },
+    "incomplete": {
+      "path": "./oss_licenses/licenses-uncompleted.json",
+      "override": true,
+      "is_pretty_print_enabled": true
+    }
+  }
+}
