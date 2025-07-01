@@ -96,7 +96,7 @@ fun AgreementScreen(
         horizontalAlignment = Alignment.Start
     ) {
         Text(
-            text = "Device Integrity",
+            text = "Integrity Check Tool",
             style = MaterialTheme.typography.displaySmall
         )
         Spacer(modifier = Modifier.height(32.dp))
