@@ -108,7 +108,7 @@ fun DeviceIntegrityApp(
 
         // The outer if condition was removed as per user request.
         // The LaunchedEffect will now run based on isAgreed state regardless of isDebugBuild.
-        LaunchedEffect(isAgreed) {
+        LaunchedEffect(Unit) {
             if (!isAgreed) { // Avoid re-launching if already agreed during recomposition
                 val intent = agreementNavigator.newIntent(context)
                 agreementLauncher.launch(intent)
