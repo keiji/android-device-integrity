@@ -182,7 +182,7 @@ fun DeviceIntegrityApp(
                     )
                 }
                 */
-                composable(AppScreen.Settings.route) {
+                composable(AppScreen.Menu.route) {
                     val viewModel: SettingsViewModel = hiltViewModel()
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                     val context = LocalContext.current
