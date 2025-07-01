@@ -71,7 +71,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             val mainViewModel: MainViewModel = viewModel()
             DeviceIntegrityApp(
-                appInfoProvider = appInfoProvider,
                 mainViewModel = mainViewModel,
                 apiEndpointSettingsNavigator = apiEndpointSettingsNavigator,
                 licenseNavigator = licenseNavigator,
@@ -84,7 +83,6 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun DeviceIntegrityApp(
-    appInfoProvider: AppInfoProvider,
     mainViewModel: MainViewModel,
     apiEndpointSettingsNavigator: ApiEndpointSettingsNavigator,
     licenseNavigator: LicenseNavigator,

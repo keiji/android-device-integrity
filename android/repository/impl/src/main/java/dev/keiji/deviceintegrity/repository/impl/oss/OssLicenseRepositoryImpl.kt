@@ -1,11 +1,13 @@
 package dev.keiji.deviceintegrity.repository.impl.oss
 
 import android.content.res.AssetManager
+import dev.keiji.deviceintegrity.repository.contract.oss.OssLicense
 import dev.keiji.deviceintegrity.repository.contract.oss.OssLicenseRepository
 import dev.keiji.deviceintegrity.repository.contract.oss.PomInfo
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import timber.log.Timber
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
@@ -27,9 +29,9 @@ class OssLicenseRepositoryImpl(
                     reader.readText()
                 }
             }
-            // Assuming each JSON file is an array of PomInfo objects
-            val pomInfosInFile = json.decodeFromString<List<PomInfo>>(jsonString)
-            allPomInfos.addAll(pomInfosInFile)
+            val pomInfosInFile = json.decodeFromString<OssLicense>(jsonString)
+            Timber.d(pomInfosInFile.toString())
+            allPomInfos.addAll(pomInfosInFile.pomList)
         }
         allPomInfos
     }

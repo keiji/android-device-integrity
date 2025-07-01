@@ -66,8 +66,10 @@ object AppModule {
     fun provideOssLicenseRepository(
         assetManager: AssetManager
     ): OssLicenseRepository {
-        // TODO: Confirm the actual filename(s) for OSS licenses
-        val licenseFilenames = listOf("licenses/licenses.json")
+        val licenseFilenames = listOf(
+            "licenses/licenses.json",
+            "licenses/licenses-ext.json",
+        )
         return OssLicenseRepositoryImpl(assetManager, licenseFilenames, Dispatchers.IO)
     }
 }
