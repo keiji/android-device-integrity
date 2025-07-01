@@ -4,6 +4,7 @@ import android.content.res.AssetManager
 import dev.keiji.deviceintegrity.repository.contract.oss.Developer
 import dev.keiji.deviceintegrity.repository.contract.oss.License
 import dev.keiji.deviceintegrity.repository.contract.oss.Organization
+import dev.keiji.deviceintegrity.repository.contract.oss.OssLicense
 import dev.keiji.deviceintegrity.repository.contract.oss.OssLicenseRepository
 import dev.keiji.deviceintegrity.repository.contract.oss.PomInfo
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -71,8 +72,10 @@ class OssLicenseRepositoryImplTest {
 
     @Test
     fun `loadLicenses concatenates PomInfo from multiple files`() = runTest(testDispatcher) {
-        val jsonContent1 = json.encodeToString(listOf(samplePomInfo1))
-        val jsonContent2 = json.encodeToString(listOf(samplePomInfo2))
+        val jsonContent1 =
+            json.encodeToString(OssLicense(settings = null, pomList = listOf(samplePomInfo1)))
+        val jsonContent2 =
+            json.encodeToString(OssLicense(settings = null, pomList = listOf(samplePomInfo2)))
 
         whenever(mockAssetManager.open("licenses/license1.json")).doReturn(createInputStream(jsonContent1))
         whenever(mockAssetManager.open("licenses/license2.json")).doReturn(createInputStream(jsonContent2))
@@ -87,7 +90,9 @@ class OssLicenseRepositoryImplTest {
 
     @Test
     fun `loadLicenses handles single file`() = runTest(testDispatcher) {
-        val jsonContent = json.encodeToString(listOf(samplePomInfo1))
+        val jsonContent =
+            json.encodeToString(OssLicense(settings = null, pomList = listOf(samplePomInfo1)))
+
         whenever(mockAssetManager.open("licenses/single.json")).doReturn(createInputStream(jsonContent))
 
         repository = OssLicenseRepositoryImpl(mockAssetManager, listOf("licenses/single.json"), testDispatcher)

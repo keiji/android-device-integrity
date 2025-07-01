@@ -63,7 +63,13 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideOssLicenseRepository(): OssLicenseRepository {
-        return OssLicenseRepositoryImpl(Dispatchers.IO)
+    fun provideOssLicenseRepository(
+        assetManager: AssetManager
+    ): OssLicenseRepository {
+        val licenseFilenames = listOf(
+            "licenses/licenses.json",
+            "licenses/licenses-ext.json",
+        )
+        return OssLicenseRepositoryImpl(assetManager, licenseFilenames, Dispatchers.IO)
     }
 }
