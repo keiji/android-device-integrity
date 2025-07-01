@@ -17,9 +17,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.keiji.deviceintegrity.ui.license.R
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 
 @Composable
@@ -68,12 +70,12 @@ fun LicenseItem(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "License: ${licenseInfo.licenseName}",
+                text = stringResource(R.string.license_item_license_label, licenseInfo.licenseName),
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Copyright: ${licenseInfo.copyrightHolder}",
+                text = stringResource(R.string.license_item_copyright_label, licenseInfo.copyrightHolder),
                 style = MaterialTheme.typography.bodyMedium
             )
             licenseInfo.licenseUrl?.also { licenseUrl ->

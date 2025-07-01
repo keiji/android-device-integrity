@@ -27,8 +27,10 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.keiji.deviceintegrity.ui.agreement.R
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
@@ -96,14 +98,14 @@ fun AgreementScreen(
         horizontalAlignment = Alignment.Start
     ) {
         Text(
-            text = "Integrity Check Tool",
+            text = stringResource(R.string.agreement_screen_title),
             style = MaterialTheme.typography.displaySmall
         )
         Spacer(modifier = Modifier.height(32.dp))
-        Text(text = "プライバリーポリシーを確認して利用を開始してください")
+        Text(text = stringResource(R.string.agreement_screen_description))
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "プライバリーポリシー",
+            text = stringResource(R.string.agreement_screen_privacy_policy_link),
             modifier = Modifier.clickable {
                 onOpenPrivacyPolicy()
             },
@@ -116,7 +118,7 @@ fun AgreementScreen(
                 .fillMaxWidth()
                 .height(64.dp)
         ) {
-            Text("利用を開始する")
+            Text(stringResource(R.string.agreement_screen_agree_button))
         }
         Spacer(modifier = Modifier.height(8.dp))
         Button(
@@ -125,7 +127,7 @@ fun AgreementScreen(
                 .fillMaxWidth()
                 .height(64.dp)
         ) {
-            Text("アプリを終了")
+            Text(stringResource(R.string.agreement_screen_disagree_button))
         }
     }
 }
