@@ -35,7 +35,6 @@ dependencies {
     implementation(project(":api"))
     implementation(project(":ui"))
     implementation(project(":ui:theme"))
-    implementation(project(":ui:api-endpoint-settings"))
     implementation(project(":ui:agreement"))
     implementation(project(":provider:contract"))
     implementation(project(":repository:contract"))

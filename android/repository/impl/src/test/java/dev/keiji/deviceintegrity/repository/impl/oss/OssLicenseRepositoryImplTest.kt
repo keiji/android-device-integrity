@@ -92,6 +92,7 @@ class OssLicenseRepositoryImplTest {
     fun `loadLicenses handles single file`() = runTest(testDispatcher) {
         val jsonContent =
             json.encodeToString(OssLicense(settings = null, pomList = listOf(samplePomInfo1)))
+
         whenever(mockAssetManager.open("licenses/single.json")).doReturn(createInputStream(jsonContent))
 
         repository = OssLicenseRepositoryImpl(mockAssetManager, listOf("licenses/single.json"), testDispatcher)
