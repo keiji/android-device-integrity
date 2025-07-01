@@ -106,7 +106,6 @@ android {
 dependencies {
     implementation(project(":ui:main"))
     implementation(project(":ui:license"))
-    implementation(project(":ui:api-endpoint-settings"))
     implementation(project(":provider:impl"))
     implementation(project(":provider:contract"))
     implementation(project(":repository:impl"))
