@@ -126,6 +126,7 @@ dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     testImplementation(libs.junit)
+    testImplementation(libs.mockito.kotlin)
     testImplementation(libs.hilt.android.testing)
     kspTest(libs.hilt.compiler)
     testImplementation(libs.robolectric)
