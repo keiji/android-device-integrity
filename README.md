@@ -83,3 +83,21 @@ When contributing to this project or making modifications:
 -   **Android Development**: Follow the setup and build instructions in `AGENTS.md`. This file also contains important notes for AI agents regarding the Android development environment.
 -   **Server Development**: Adhere to the guidelines and instructions provided in `server/README.md` for the backend services.
 -   **Code Editing Rules**: General rules for code editing (e.g., code removal, commit messages) are outlined in the `AGENTS.md` file under the section "コード編集時のルール". Please consult this section before committing changes.
+
+## License
+
+```
+Copyright 2025 ARIYAMA Keiji C-LIS CO., LTD.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
