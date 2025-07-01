@@ -4,6 +4,5 @@ option java_package = "dev.keiji.deviceintegrity.repository.impl.pb";
 option java_multiple_files = true;
 
 message UserPreferences {
-  string play_integrity_verify_api_endpoint_url = 1;
-  string key_attestation_verify_api_endpoint_url = 2;
+  int64 first_launch_datetime = 1;
 }
