@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_screen_play_integrity_label">Play Integrity</string>
+    <string name="app_screen_key_attestation_label">Key Attestation</string>
+    <string name="app_screen_menu_label">Menu</string>
+</resources>
