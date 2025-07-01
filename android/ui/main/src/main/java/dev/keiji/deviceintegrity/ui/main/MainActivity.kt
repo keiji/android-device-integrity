@@ -42,16 +42,12 @@ import dev.keiji.deviceintegrity.ui.main.settings.SettingsUiEvent
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.keiji.deviceintegrity.ui.nav.contract.AgreementNavigator
-import dev.keiji.deviceintegrity.ui.nav.contract.ApiEndpointSettingsNavigator
 import dev.keiji.deviceintegrity.ui.nav.contract.LicenseNavigator
 import timber.log.Timber
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
-    @Inject
-    lateinit var apiEndpointSettingsNavigator: ApiEndpointSettingsNavigator
 
     @Inject
     lateinit var licenseNavigator: LicenseNavigator
@@ -72,7 +68,6 @@ class MainActivity : ComponentActivity() {
             val mainViewModel: MainViewModel = viewModel()
             DeviceIntegrityApp(
                 mainViewModel = mainViewModel,
-                apiEndpointSettingsNavigator = apiEndpointSettingsNavigator,
                 licenseNavigator = licenseNavigator,
                 agreementNavigator = agreementNavigator,
                 onFinishActivity = { finish() }
@@ -84,7 +79,6 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun DeviceIntegrityApp(
     mainViewModel: MainViewModel,
-    apiEndpointSettingsNavigator: ApiEndpointSettingsNavigator,
     licenseNavigator: LicenseNavigator,
     agreementNavigator: AgreementNavigator,
     onFinishActivity: () -> Unit
@@ -204,17 +198,11 @@ fun DeviceIntegrityApp(
                         }
                     }
 
-                    val apiSettingsLauncher = rememberLauncherForActivityResult(
-                        contract = apiEndpointSettingsNavigator.contract(),
-                        onResult = { /* No result is expected, but can handle if needed */ }
-                    )
-
                     SettingsScreen(
                         uiState = uiState,
                         onNavigateToOssLicenses = {
                             context.startActivity(licenseNavigator.newIntent(context))
                         },
-                        onNavigateToApiSettings = { apiSettingsLauncher.launch(Unit) },
                         onNavigateToDeveloperInfo = { viewModel.openSupportSiteUrl() },
                         onNavigateToPrivacyPolicy = { viewModel.openPrivacyPolicyUrl() }
                     )

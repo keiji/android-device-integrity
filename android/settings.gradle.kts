@@ -32,7 +32,6 @@ include(
 include(
     ":ui:main",
     ":ui:theme",
-    ":ui:api-endpoint-settings",
     ":ui:nav:contract",
     ":ui:nav:impl",
     ":ui:license",
