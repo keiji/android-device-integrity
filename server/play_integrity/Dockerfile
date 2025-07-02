@@ -19,7 +19,6 @@ EXPOSE $PORT
 
 # Define environment variable
 ENV PORT 8080
-ENV PYTHONPATH /app
 
 # Run app.py when the container launches
-CMD exec gunicorn -b :$PORT server.play_integrity:app
+CMD exec gunicorn --pythonpath /app -b :$PORT server.play_integrity:app
