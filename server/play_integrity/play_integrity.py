@@ -54,7 +54,7 @@ def mask_server_url(error_message: str) -> str:
     # Regex to find URLs. It looks for http:// or https:// followed by non-whitespace characters.
     # It tries to be somewhat conservative to avoid accidentally replacing non-URL strings.
     # Common URL terminators like spaces, commas, parentheses, or end of string are considered.
-    url_pattern = r'https?://[^\s()<>]+(?:\([^\s()<>]*\)|[^\s`!()\[\]{};:\'".,<>?«»“”‘’])'
+    url_pattern = r'(https?://[^\s"\']+)'
     return re.sub(url_pattern, "API", error_message)
 
 def generate_unique_id():
