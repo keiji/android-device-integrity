@@ -21,4 +21,4 @@ EXPOSE $PORT
 ENV PORT 8080
 
 # Run app.py when the container launches
-CMD exec gunicorn --pythonpath ../ -b :$PORT play_integrity:app
+CMD exec gunicorn -b :$PORT play_integrity:app
