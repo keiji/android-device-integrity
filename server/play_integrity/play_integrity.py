@@ -394,11 +394,6 @@ def verify_integrity_standard():
             error_message_for_client = "Missing 'token' in request"
             _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
             return jsonify({"error": error_message_for_client}), 400
-        if not client_content_binding:
-            result_status = RESULT_FAILED
-            error_message_for_client = "Missing 'contentBinding' in request"
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
-            return jsonify({"error": error_message_for_client}), 400
         if not session_id:
             result_status = RESULT_FAILED
             error_message_for_client = "Missing 'session_id' in request"
