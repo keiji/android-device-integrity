@@ -85,6 +85,7 @@ android {
             versionNameSuffix = "-$commitHash"
         }
         debug {
+            applicationIdSuffix = ".debug"
             versionNameSuffix = "-$commitHash"
         }
     }
