@@ -1,0 +1,109 @@
+name: Deploy to Cloud Run (Debug)
+
+on:
+  push:
+    branches:
+      - develop/server
+    paths:
+      - 'server/**'
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.DEBUG_GCP_PROJECT_ID }}
+  GCP_CLOUD_RUN_REGION: ${{ secrets.DEBUG_GCP_CLOUD_RUN_REGION }}
+  GCP_SA_KEY: ${{ secrets.DEBUG_GCP_SA_KEY }}
+  IMAGE_REGISTRY_HOST: gcr.io # Or your Artifact Registry host if preferred
+
+jobs:
+  authenticate:
+    name: Authenticate to Google Cloud
+    runs-on: ubuntu-latest
+    outputs:
+      authenticated: "true"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ env.GCP_SA_KEY }}
+
+  deploy_key_attestation:
+    name: Deploy KeyAttestationVerify
+    needs: authenticate
+    if: needs.authenticate.outputs.authenticated == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ env.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${{ env.IMAGE_REGISTRY_HOST }} --quiet
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --tag "${{ env.IMAGE_REGISTRY_HOST }}/${{ env.GCP_PROJECT_ID }}/keyattestationverify:${{ github.sha }}" \
+            ./server/key_attestation
+        working-directory: ./
+
+      - name: Push Docker image
+        run: docker push "${{ env.IMAGE_REGISTRY_HOST }}/${{ env.GCP_PROJECT_ID }}/keyattestationverify:${{ github.sha }}"
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy key-attestation-verify-debug \
+            --image "${{ env.IMAGE_REGISTRY_HOST }}/${{ env.GCP_PROJECT_ID }}/keyattestationverify:${{ github.sha }}" \
+            --platform managed \
+            --region "${{ env.GCP_CLOUD_RUN_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --allow-unauthenticated \
+            --quiet
+
+  deploy_play_integrity:
+    name: Deploy PlayIntegrityVerify
+    needs: authenticate
+    if: needs.authenticate.outputs.authenticated == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ env.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${{ env.IMAGE_REGISTRY_HOST }} --quiet
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --tag "${{ env.IMAGE_REGISTRY_HOST }}/${{ env.GCP_PROJECT_ID }}/playintegrityverify:${{ github.sha }}" \
+            ./server/play_integrity
+        working-directory: ./
+
+      - name: Push Docker image
+        run: docker push "${{ env.IMAGE_REGISTRY_HOST }}/${{ env.GCP_PROJECT_ID }}/playintegrityverify:${{ github.sha }}"
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy play-integrity-verify-debug \
+            --image "${{ env.IMAGE_REGISTRY_HOST }}/${{ env.GCP_PROJECT_ID }}/playintegrityverify:${{ github.sha }}" \
+            --platform managed \
+            --region "${{ env.GCP_CLOUD_RUN_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --allow-unauthenticated \
+            --quiet
