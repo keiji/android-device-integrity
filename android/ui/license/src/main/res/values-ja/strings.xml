@@ -1,6 +1,4 @@
 <resources>
     <string name="open_source_licenses">オープンソースライセンス</string>
     <string name="license_screen_close_button_description">閉じる</string>
-    <string name="license_item_license_label">ライセンス: %s</string>
-    <string name="license_item_copyright_label">著作権者: %s</string>
 </resources>
