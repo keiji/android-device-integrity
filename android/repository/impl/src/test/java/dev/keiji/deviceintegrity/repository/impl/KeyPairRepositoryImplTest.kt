@@ -250,4 +250,16 @@ class KeyPairRepositoryImplTest {
         // So we trust that part of the code works if the condition (null/empty chain) is met.
         assertTrue("Test for missing cert chain needs better KeyStore mocking or DI for KeyStore in Impl.", true)
     }
+
+    @Test(expected = UnsupportedOperationException::class)
+    @Config(sdk = [Build.VERSION_CODES.M]) // Marshmallow, API 23 (pre-Nougat)
+    fun `generateKeyPair throws UnsupportedOperationException if challenge provided on pre-N SDK`() = runTest(testDispatcher) {
+        // Arrange
+        val challenge = "test_challenge".toByteArray()
+        // System under test is already configured with testDispatcher and mockContext
+        // The @Config annotation should handle the SDK version for this test method.
+
+        // Act
+        keyPairRepository.generateKeyPair(challenge) // Should throw due to SDK version and challenge
+    }
 }

@@ -13,9 +13,6 @@ import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.KeyStore
 import java.security.cert.X509Certificate
-// PrivateKey and PublicKey are not directly used in the adjusted version of getKeyPair returning KeyPair?
-// import java.security.PrivateKey
-// import java.security.PublicKey
 import java.util.UUID
 
 class KeyPairRepositoryImpl(
@@ -26,6 +23,7 @@ class KeyPairRepositoryImpl(
     companion object {
         private const val ANDROID_KEY_STORE_PROVIDER = "AndroidKeyStore"
         private const val TAG = "KeyPairRepositoryImpl"
+        private const val KEY_SIZE = 256 // Added constant
     }
 
     private fun getKeyStoreInstance(): KeyStore {
@@ -65,31 +63,48 @@ class KeyPairRepositoryImpl(
     }
 
     override suspend fun generateKeyPair(challenge: ByteArray): KeyPairData = withContext(dispatcher) {
-        val keyStore = getKeyStoreInstance()
-        var localKeyAlias: String // Renamed from keyAlias to localKeyAlias as in new code
-        var attempts = 0
+        // Early exit if attestation is requested on an unsupported OS version
+        if (challenge.isNotEmpty() && Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+            throw UnsupportedOperationException("Key attestation with a challenge is not supported before Android N (API 24).")
+        }
 
-        while (attempts < 10) {
+        val keyStore = getKeyStoreInstance()
+        var localKeyAlias: String
+
+        // Loop indefinitely until a unique alias is found
+        while (true) {
             localKeyAlias = UUID.randomUUID().toString()
             if (!keyStore.containsAlias(localKeyAlias)) {
-                try {
-                    val keyPairGenerator = KeyPairGenerator.getInstance(
-                        KeyProperties.KEY_ALGORITHM_EC,
-                        ANDROID_KEY_STORE_PROVIDER
-                    )
+                // Found unique alias, break from alias generation loop
+                break
+            }
+            Log.w(TAG, "Key alias collision detected for: $localKeyAlias. Retrying...")
+            // No more attempts limit, will loop until unique
+        }
 
-                    val specBuilder = KeyGenParameterSpec.Builder(
-                        localKeyAlias,
-                        KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
-                    )
-                        .setDigests(KeyProperties.DIGEST_SHA256)
-                        .setKeySize(256)
+        try {
+            val keyPairGenerator = KeyPairGenerator.getInstance(
+                KeyProperties.KEY_ALGORITHM_EC,
+                ANDROID_KEY_STORE_PROVIDER
+            )
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        specBuilder.setAttestationChallenge(challenge)
-                    }
+            val specBuilder = KeyGenParameterSpec.Builder(
+                localKeyAlias,
+                KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
+            )
+                .setDigests(KeyProperties.DIGEST_SHA256)
+                .setKeySize(KEY_SIZE) // Use constant
 
-                    keyPairGenerator.initialize(specBuilder.build())
+            // Only set attestation challenge if API is N+ AND challenge is provided.
+            // The initial check already handles if challenge.isNotEmpty() on pre-N.
+            // So, if we are here and challenge is not empty, it's N+
+            if (challenge.isNotEmpty()) { // Redundant check if Build.VERSION.SDK_INT >= N is already implied, but safe.
+                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) { // Explicitly keep for clarity
+                    specBuilder.setAttestationChallenge(challenge)
+                }
+            }
+
+            keyPairGenerator.initialize(specBuilder.build())
                     keyPairGenerator.generateKeyPair() // Key pair is generated and stored
 
                     // Fetch the certificate chain
@@ -122,10 +137,5 @@ class KeyPairRepositoryImpl(
                     }
                     throw e
                 }
-            }
-            Log.w(TAG, "Key alias collision detected for: $localKeyAlias. Retrying...")
-            attempts++
-        }
-        throw IllegalStateException("Failed to generate a unique key alias after $attempts attempts.")
     }
 }
