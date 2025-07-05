@@ -89,6 +89,7 @@ android {
             applicationIdSuffix = ".develop"
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
+            matchingFallbacks = listOf("debug")
             // proguardFiles are inherited from release.
             // versionNameSuffix is inherited from release.
         }
