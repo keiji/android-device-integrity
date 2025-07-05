@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("dev.keiji.deviceintegrity", appContext.packageName)
+        assertEquals("dev.keiji.deviceintegrity.develop", appContext.packageName)
     }
 }
