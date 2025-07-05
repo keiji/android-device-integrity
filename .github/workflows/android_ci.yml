@@ -94,12 +94,18 @@ jobs:
           sudo udevadm trigger
           sudo usermod -a -G kvm $USER
 
-      - name: Create and run an Android emulator
+      - name: Run tests on emulator
         uses: reactivecircus/android-emulator-runner@v2
+        timeout-minutes: 20
         with:
           api-level: 30
-          script: echo "Generated AVD snapshot for caching."
-
-      - name: Run Android Connected Tests
-        run: ./gradlew connectedAndroidTest
-        working-directory: ./android
+          target: google_apis
+          arch: x86 # Explicitly set, though it's default
+          # emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim # Using default options is often fine, can add if needed
+          disable-animations: true
+          working-directory: ./android # Important for gradle script path
+          script: |
+            echo "Listing connected devices..."
+            adb devices
+            echo "Running Android connected tests..."
+            ./gradlew connectedAndroidTest
