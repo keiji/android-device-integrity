@@ -20,5 +20,7 @@ EXPOSE $PORT
 # Define environment variable
 ENV PORT 8080
 
+ENV PLAY_INTEGRITY_PACKAGE_NAME="dev.keiji.deviceintegrity"
+
 # Run app.py when the container launches
 CMD exec gunicorn -b :$PORT play_integrity:app

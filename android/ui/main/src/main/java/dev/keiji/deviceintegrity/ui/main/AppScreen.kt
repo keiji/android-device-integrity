@@ -16,6 +16,6 @@ sealed class AppScreen(
 
 val bottomNavigationItems = listOf(
     AppScreen.PlayIntegrity,
-    // AppScreen.KeyAttestation,
+    AppScreen.KeyAttestation,
     AppScreen.Menu
 )

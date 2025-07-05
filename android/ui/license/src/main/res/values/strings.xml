@@ -1,6 +1,4 @@
 <resources>
     <string name="open_source_licenses">Open Source Licenses</string>
     <string name="license_screen_close_button_description">Close</string>
-    <string name="license_item_license_label">License: %s</string>
-    <string name="license_item_copyright_label">Copyright: %s</string>
 </resources>
