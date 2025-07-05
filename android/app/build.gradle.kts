@@ -94,7 +94,7 @@ android {
             // versionNameSuffix is inherited from release.
         }
         debug {
-            applicationIdSuffix = ".debug"
+            applicationIdSuffix = ".develop"
             versionNameSuffix = "-$commitHash"
         }
     }
