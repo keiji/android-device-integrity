@@ -93,7 +93,6 @@ android {
             // versionNameSuffix is inherited from release.
         }
         debug {
-            applicationIdSuffix = null // Ensure debug does not have a suffix if it was added previously by mistake
             versionNameSuffix = "-$commitHash"
         }
     }
