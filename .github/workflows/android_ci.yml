@@ -94,6 +94,12 @@ jobs:
           sudo udevadm trigger
           sudo usermod -a -G kvm $USER
 
+      - name: Create and run an Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          script: echo "Generated AVD snapshot for caching."
+
       - name: Run Android Connected Tests
-        run: ./gradlew androidConnectedTest
+        run: ./gradlew connectedAndroidTest
         working-directory: ./android
