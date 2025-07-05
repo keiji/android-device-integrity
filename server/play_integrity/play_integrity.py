@@ -406,18 +406,21 @@ def verify_integrity_standard():
             return jsonify({"error": error_message_for_client}), 400
 
         # Hash and Base64URL encode the (session_id + client_content_binding)
-        server_generated_hash = None # Initialize to ensure it's defined for logging if hashing fails
-        try:
-            string_to_hash = session_id + client_content_binding # Ensure session_id is part of the hash input
-            hashed_bytes = hashlib.sha256(string_to_hash.encode('utf-8')).digest()
-            server_generated_hash = base64.urlsafe_b64encode(hashed_bytes).decode('utf-8').rstrip('=')
-            app.logger.info(f"Server generated hash for session_id '{session_id}' and contentBinding '{client_content_binding[:50]}...' is '{server_generated_hash}' from string '{string_to_hash[:100]}...'")
-        except Exception as e_hash:
-            app.logger.error(f"Error hashing/encoding (session_id + contentBinding) for session_id '{session_id}': {e_hash}")
-            result_status = RESULT_FAILED # Consider this a failure in preparing for verification
-            error_message_for_client = "Failed to process contentBinding for hash"
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
-            return jsonify({"error": error_message_for_client}), 500 # Internal server issue
+        server_generated_hash = None # Initialize to ensure it's defined
+        if client_content_binding:
+            try:
+                string_to_hash = session_id + client_content_binding # Ensure session_id is part of the hash input
+                hashed_bytes = hashlib.sha256(string_to_hash.encode('utf-8')).digest()
+                server_generated_hash = base64.urlsafe_b64encode(hashed_bytes).decode('utf-8').rstrip('=')
+                app.logger.info(f"Server generated hash for session_id '{session_id}' and contentBinding '{client_content_binding[:50]}...' is '{server_generated_hash}' from string '{string_to_hash[:100]}...'")
+            except Exception as e_hash:
+                app.logger.error(f"Error hashing/encoding (session_id + contentBinding) for session_id '{session_id}': {e_hash}")
+                result_status = RESULT_FAILED # Consider this a failure in preparing for verification
+                error_message_for_client = "Failed to process contentBinding for hash"
+                _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+                return jsonify({"error": error_message_for_client}), 500 # Internal server issue
+        else:
+            app.logger.info(f"No client_content_binding provided for session_id '{session_id}'. Skipping server hash generation.")
 
         # Attempt to decode the integrity token
         try:
@@ -436,16 +439,24 @@ def verify_integrity_standard():
             api_request_hash = request_details_payload.get('requestHash')
 
             if not api_request_hash:
-                app.logger.warning("requestHash not found in Play Integrity API response payload for standard verify. Full response: %s", decoded_integrity_token_response)
-                result_status = RESULT_FAILED # API response is not as expected
-                error_message_for_client = "requestHash missing in API response."
-                _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
-                return jsonify({
-                    "error": error_message_for_client,
-                    "play_integrity_response": decoded_integrity_token_response
-                }), 400
+                if client_content_binding: # Only an error if we expected to compare it
+                    app.logger.error("requestHash missing in Play Integrity API response, but client_content_binding was provided. Full response: %s", decoded_integrity_token_response)
+                    result_status = RESULT_FAILED
+                    error_message_for_client = "requestHash missing in API response when contentBinding was provided."
+                    _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+                    return jsonify({
+                        "error": error_message_for_client,
+                        "play_integrity_response": decoded_integrity_token_response
+                    }), 400
+                else:
+                    # contentBinding was not provided by client, so missing api_request_hash is expected.
+                    app.logger.info("requestHash not found in Play Integrity API response, and client_content_binding was not provided. This is expected. Session ID: %s", session_id)
+            # Continue to the hash comparison logic which will only run if server_generated_hash is not None (due to client_content_binding being present)
+            # and api_request_hash is present (if client_content_binding was present).
 
-            if server_generated_hash != api_request_hash:
+            if client_content_binding and server_generated_hash != api_request_hash: # server_generated_hash will exist if client_content_binding did
+                # Also, if api_request_hash was missing when client_content_binding was present, we would have returned an error above.
+                # So, if we reach here and client_content_binding was provided, both hashes must be present.
                 app.logger.error(f"Server contentBinding hash mismatch. Session ID: {session_id}. Server generated: {server_generated_hash}, API: {api_request_hash}. Original client contentBinding: {client_content_binding}")
                 result_status = RESULT_FAILED
                 error_message_for_client = "Content binding hash mismatch."
