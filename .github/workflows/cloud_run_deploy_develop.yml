@@ -7,6 +7,9 @@ on:
     paths:
       - 'server/**'
 
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
 env:
   DEVELOP_GCP_PROJECT_ID: ${{ secrets.DEVELOP_GCP_PROJECT_ID }}
   DEVELOP_GCP_CLOUD_RUN_REGION: ${{ secrets.DEVELOP_GCP_CLOUD_RUN_REGION }}
