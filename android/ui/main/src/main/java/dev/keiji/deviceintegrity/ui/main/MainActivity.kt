@@ -39,6 +39,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.keiji.deviceintegrity.provider.contract.AppInfoProvider
+import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationUiEvent
+import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationViewModel
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsUiEvent
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -160,7 +162,6 @@ fun DeviceIntegrityApp(
                         onStandardRequestVerify = { standardViewModel.verifyToken() }
                     )
                 }
-                /*
                 composable(AppScreen.KeyAttestation.route) {
                     val viewModel: KeyAttestationViewModel = hiltViewModel()
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -182,7 +183,6 @@ fun DeviceIntegrityApp(
                         onSubmit = viewModel::submit
                     )
                 }
-                */
                 composable(AppScreen.Menu.route) {
                     val viewModel: SettingsViewModel = hiltViewModel()
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
