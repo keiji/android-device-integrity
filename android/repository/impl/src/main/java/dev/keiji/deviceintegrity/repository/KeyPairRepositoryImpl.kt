@@ -5,8 +5,8 @@ import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Log
-import dev.keiji.deviceintegrity.repository.KeyPairData
-import dev.keiji.deviceintegrity.repository.KeyPairRepository
+import dev.keiji.deviceintegrity.repository.contract.KeyPairData
+import dev.keiji.deviceintegrity.repository.contract.KeyPairRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import java.security.KeyPair

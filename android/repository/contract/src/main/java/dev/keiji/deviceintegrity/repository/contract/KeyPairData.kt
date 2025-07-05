@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.repository
+package dev.keiji.deviceintegrity.repository.contract
 
 import java.security.cert.X509Certificate
 
