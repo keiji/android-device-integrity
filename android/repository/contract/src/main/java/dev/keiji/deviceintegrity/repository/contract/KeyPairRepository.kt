@@ -1,10 +1,9 @@
 package dev.keiji.deviceintegrity.repository.contract
 
-import java.security.KeyStore
-import java.security.cert.X509Certificate
+import java.security.KeyPair
 
 interface KeyPairRepository {
+    suspend fun getKeyPair(alias: String): KeyPair?
+    suspend fun removeKeyPair(alias: String)
     suspend fun generateKeyPair(challenge: ByteArray): KeyPairData
-    fun getKeyPair(keyAlias: String): KeyStore.Entry?
-    fun removeKeyPair(keyAlias: String)
 }
