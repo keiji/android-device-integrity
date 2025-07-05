@@ -84,7 +84,16 @@ android {
             signingConfig = signingConfigs.getByName("release")
             versionNameSuffix = "-$commitHash"
         }
+        create("develop") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".develop"
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            // proguardFiles are inherited from release.
+            // versionNameSuffix is inherited from release.
+        }
         debug {
+            applicationIdSuffix = null // Ensure debug does not have a suffix if it was added previously by mistake
             versionNameSuffix = "-$commitHash"
         }
     }
