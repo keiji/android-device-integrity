@@ -21,7 +21,7 @@ RESULT_FAILED = "Failed"
 RESULT_ERROR = "Error"
 
 # Configuration for Play Integrity API
-PLAY_INTEGRITY_PACKAGE_NAME = "dev.keiji.deviceintegrity"
+PLAY_INTEGRITY_PACKAGE_NAME = os.environ.get("PLAY_INTEGRITY_PACKAGE_NAME", "dev.keiji.deviceintegrity")
 
 # Nonce configuration
 NONCE_EXPIRY_MINUTES = 10
