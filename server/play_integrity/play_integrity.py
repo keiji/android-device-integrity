@@ -373,45 +373,41 @@ def verify_integrity_standard():
     # This function requires similar nonce handling (canonicalization, optional server-side session validation)
     # as the classic verify endpoint.
     data = request.get_json() # Moved data parsing to the beginning
-    session_id = data.get('session_id') if data else None
-    integrity_token = data.get('token') if data else None
-    client_content_binding = data.get('contentBinding') if data else None
+    session_id = data.get('session_id') if data else None # Keep for early logging if data is None
+    integrity_token = data.get('token') if data else None # Keep for early logging
+    client_content_binding = data.get('contentBinding') if data else None # Keep for early logging
 
-    # Initialize variables for Datastore logging
+    # Initial basic request validation
+    if not data:
+        # Cannot use _store_verification_attempt here as session_id might be unknown or data is None
+        app.logger.warning("verify_integrity_standard: Missing JSON payload.")
+        return jsonify({"error": "Missing JSON payload"}), 400
+    if not integrity_token:
+        # Cannot use _store_verification_attempt reliably yet
+        app.logger.warning(f"verify_integrity_standard: Missing 'token' in request for session_id: {session_id}.")
+        # Storing an attempt here is tricky as result_status isn't fully formed, but let's try
+        _store_verification_attempt(session_id, data, RESULT_FAILED, None, "standard")
+        return jsonify({"error": "Missing 'token' in request"}), 400
+    if not session_id:
+        # Cannot use _store_verification_attempt reliably yet
+        app.logger.warning("verify_integrity_standard: Missing 'session_id' in request.")
+        _store_verification_attempt(session_id, data, RESULT_FAILED, None, "standard") # session_id will be "UNKNOWN"
+        return jsonify({"error": "Missing 'session_id' in request"}), 400
+    if not isinstance(session_id, str) or not session_id.strip():
+        app.logger.warning(f"verify_integrity_standard: 'session_id' must be a non-empty string. Received: {session_id}")
+        _store_verification_attempt(session_id, data, RESULT_FAILED, None, "standard")
+        return jsonify({"error": "'session_id' must be a non-empty string"}), 400
+
+    # Initialize variables for the main logic flow
     result_status = None
-    decoded_integrity_token_response = None # Stores the response from decodeIntegrityToken
     error_message_for_client = None
+    decoded_integrity_token_response = None
+    server_generated_hash = None
+    api_request_hash = None # Define here for broader scope for final response
 
+    # Main try block for core verification logic. Catches global unhandled errors.
     try:
-        if not data:
-            result_status = RESULT_FAILED
-            error_message_for_client = "Missing JSON payload"
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
-            return jsonify({"error": error_message_for_client}), 400
-
-        if not integrity_token:
-            result_status = RESULT_FAILED
-            error_message_for_client = "Missing 'token' in request"
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
-            return jsonify({"error": error_message_for_client}), 400
-        # if not client_content_binding:
-        #     result_status = RESULT_FAILED
-        #     error_message_for_client = "Missing 'contentBinding' in request"
-        #     _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
-        #     return jsonify({"error": error_message_for_client}), 400
-        if not session_id:
-            result_status = RESULT_FAILED
-            error_message_for_client = "Missing 'session_id' in request"
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
-            return jsonify({"error": error_message_for_client}), 400
-        if not isinstance(session_id, str) or not session_id.strip():
-            result_status = RESULT_FAILED
-            error_message_for_client = "'session_id' must be a non-empty string"
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
-            return jsonify({"error": error_message_for_client}), 400
-
         # Hash and Base64URL encode the (session_id + client_content_binding)
-        server_generated_hash = None # Initialize to ensure it's defined
         if client_content_binding:
             try:
                 string_to_hash = session_id + client_content_binding # Ensure session_id is part of the hash input
@@ -420,97 +416,109 @@ def verify_integrity_standard():
                 app.logger.info(f"Server generated hash for session_id '{session_id}' and contentBinding '{client_content_binding[:50]}...' is '{server_generated_hash}' from string '{string_to_hash[:100]}...'")
             except Exception as e_hash:
                 app.logger.error(f"Error hashing/encoding (session_id + contentBinding) for session_id '{session_id}': {e_hash}")
-                result_status = RESULT_FAILED # Consider this a failure in preparing for verification
+                result_status = RESULT_ERROR # Server-side issue
                 error_message_for_client = "Failed to process contentBinding for hash"
-                _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
-                return jsonify({"error": error_message_for_client}), 500 # Internal server issue
+                # Flow will continue to _store_verification_attempt and final response generation
         else:
             app.logger.info(f"No client_content_binding provided for session_id '{session_id}'. Skipping server hash generation.")
 
-        # Attempt to decode the integrity token
-        try:
-            credentials, project_id = google.auth.default(
-                scopes=['https://www.googleapis.com/auth/playintegrity']
-            )
-            playintegrity = build('playintegrity', 'v1', credentials=credentials, cache_discovery=False)
-            request_body = {'integrity_token': integrity_token}
-            decoded_integrity_token_response = playintegrity.v1().decodeIntegrityToken(
-                packageName=PLAY_INTEGRITY_PACKAGE_NAME,
-                body=request_body
-            ).execute()
+        # Proceed only if hashing didn't fail
+        if result_status is None:
+            try:
+                credentials, project_id = google.auth.default(
+                    scopes=['https://www.googleapis.com/auth/playintegrity']
+                )
+                playintegrity = build('playintegrity', 'v1', credentials=credentials, cache_discovery=False)
+                request_body = {'integrity_token': integrity_token}
+                decoded_integrity_token_response = playintegrity.v1().decodeIntegrityToken(
+                    packageName=PLAY_INTEGRITY_PACKAGE_NAME,
+                    body=request_body
+                ).execute()
 
-            token_payload = decoded_integrity_token_response.get('tokenPayloadExternal', {})
-            request_details_payload = token_payload.get('requestDetails', {})
-            api_request_hash = request_details_payload.get('requestHash')
+                token_payload = decoded_integrity_token_response.get('tokenPayloadExternal', {})
+                request_details_payload = token_payload.get('requestDetails', {})
+                api_request_hash = request_details_payload.get('requestHash') # Assign to broader scope variable
 
-            if not api_request_hash:
-                if client_content_binding: # Only an error if we expected to compare it
-                    app.logger.error("requestHash missing in Play Integrity API response, but client_content_binding was provided. Full response: %s", decoded_integrity_token_response)
-                    result_status = RESULT_FAILED
-                    error_message_for_client = "requestHash missing in API response when contentBinding was provided."
-                    _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
-                    return jsonify({
-                        "error": error_message_for_client,
-                        "play_integrity_response": decoded_integrity_token_response
-                    }), 400
-                else:
-                    # contentBinding was not provided by client, so missing api_request_hash is expected.
-                    app.logger.info("requestHash not found in Play Integrity API response, and client_content_binding was not provided. This is expected. Session ID: %s", session_id)
-            # Continue to the hash comparison logic which will only run if server_generated_hash is not None (due to client_content_binding being present)
-            # and api_request_hash is present (if client_content_binding was present).
+                if not api_request_hash:
+                    if client_content_binding: # Only an error if we expected to compare it
+                        app.logger.error("requestHash missing in Play Integrity API response, but client_content_binding was provided. Full response: %s", decoded_integrity_token_response)
+                        result_status = RESULT_FAILED
+                        error_message_for_client = "requestHash missing in API response when contentBinding was provided."
+                    else:
+                        # contentBinding was not provided by client, so missing api_request_hash is expected.
+                        app.logger.info("requestHash not found in Play Integrity API response, and client_content_binding was not provided. This is expected. Session ID: %s", session_id)
 
-            if client_content_binding and server_generated_hash != api_request_hash: # server_generated_hash will exist if client_content_binding did
-                # Also, if api_request_hash was missing when client_content_binding was present, we would have returned an error above.
-                # So, if we reach here and client_content_binding was provided, both hashes must be present.
-                app.logger.error(f"Server contentBinding hash mismatch. Session ID: {session_id}. Server generated: {server_generated_hash}, API: {api_request_hash}. Original client contentBinding: {client_content_binding}")
-                result_status = RESULT_FAILED
-                error_message_for_client = "Content binding hash mismatch."
-                _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
-                return jsonify({
-                    "error": error_message_for_client,
-                    "client_provided_value_hash_debug": server_generated_hash, # For debugging, consider removing in prod
-                    "api_provided_value_hash_debug": api_request_hash,     # For debugging, consider removing in prod
-                    "play_integrity_response": decoded_integrity_token_response
-                }), 400
+                # Perform hash comparison only if client_content_binding was provided and no error has occurred yet
+                if client_content_binding and result_status is None:
+                    if not api_request_hash:
+                        # This case should have been caught above, but as a safeguard:
+                        app.logger.error(f"Hash comparison step: api_request_hash is missing unexpectedly for session {session_id} when client_content_binding was present.")
+                        result_status = RESULT_FAILED # Should have been set before
+                        error_message_for_client = error_message_for_client or "Integrity check failed due to missing API request hash."
+                    elif server_generated_hash != api_request_hash:
+                        app.logger.error(f"Server contentBinding hash mismatch. Session ID: {session_id}. Server generated: {server_generated_hash}, API: {api_request_hash}. Original client contentBinding: {client_content_binding}")
+                        result_status = RESULT_FAILED
+                        error_message_for_client = "Content binding hash mismatch."
 
-            # Hash matches
+                # If no specific failure has occurred up to this point, it's a success.
+                # This check is important because previous steps might have logged info but not set result_status to FAILED.
+                if result_status is None:
+                    result_status = RESULT_SUCCESS
+
+            except google.auth.exceptions.DefaultCredentialsError as e_auth:
+                app.logger.error(f"Google Cloud Credentials error (standard): {e_auth}")
+                result_status = RESULT_ERROR
+                # decoded_integrity_token_response will remain None or as per API response if partially successful
+                error_message_for_client = "Server authentication configuration error (standard)"
+            except Exception as e_api:
+                app.logger.error(f"Error decoding/processing integrity token (standard) for session {session_id}: {e_api}")
+                result_status = RESULT_ERROR
+                error_message_for_client = "Failed to decode integrity token or process response (standard)"
+                # decoded_integrity_token_response might be set or None
+
+        # If result_status is still None after all checks (e.g. client_content_binding was false, and no API errors), it's a success.
+        if result_status is None:
             result_status = RESULT_SUCCESS
 
-        except google.auth.exceptions.DefaultCredentialsError as e_auth:
-            app.logger.error(f"Google Cloud Credentials error (standard): {e_auth}")
-            result_status = RESULT_ERROR
-            decoded_integrity_token_response = None
-            error_message_for_client = "Server authentication configuration error (standard)"
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
-            return jsonify({"error": error_message_for_client}), 500
-        except Exception as e_api:
-            app.logger.error(f"Error decoding/processing integrity token (standard) for session {session_id}: {e_api}")
-            result_status = RESULT_ERROR
-            error_message_for_client = "Failed to decode integrity token or process response (standard)"
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard") # decoded_integrity_token_response might be None
-            return jsonify({"error": error_message_for_client, "details": str(e_api)}), 500
+    except Exception as e_global:
+        # Catch any truly unexpected errors not handled by specific try-excepts above.
+        app.logger.error(f"Global error in verify_integrity_standard for session {session_id}: {e_global}")
+        result_status = RESULT_ERROR
+        error_message_for_client = "An unexpected server error occurred (standard)"
+        # decoded_integrity_token_response could be anything here, likely None or from a partial success.
 
-        # Store the attempt (Success, or Failed/Error if not returned earlier)
-        _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+    # Store the verification attempt
+    _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
 
+    # Construct and return the final response
+    if result_status == RESULT_SUCCESS:
         response_payload = {
-            "play_integrity_response": decoded_integrity_token_response,
+            "play_integrity_response": decoded_integrity_token_response, # Should be populated on success
             "device_info": data.get('device_info', {}),
             "security_info": data.get('security_info', {}),
             "google_play_developer_service_info": data.get('google_play_developer_service_info', {})
         }
-
-        if result_status == RESULT_SUCCESS:
-            return jsonify(response_payload), 200
-        else:
-            # This path should ideally not be reached if errors lead to earlier returns.
-            app.logger.warning(f"verify_integrity_standard reached end with non-SUCCESS status '{result_status}' without prior return. Session: {session_id}")
-            return jsonify({"error": error_message_for_client if error_message_for_client else "Verification failed (standard)", "play_integrity_response": decoded_integrity_token_response}), 400
-
-    except Exception as e_global: # Catch-all for any unhandled errors in the main try block
-        app.logger.error(f"Global error in verify_integrity_standard for session {session_id}: {e_global}")
-        _store_verification_attempt(session_id, data, RESULT_ERROR, None, "standard")
-        return jsonify({"error": "An unexpected server error occurred (standard)"}), 500
+        return jsonify(response_payload), 200
+    elif result_status == RESULT_FAILED:
+        error_payload = {"error": error_message_for_client}
+        if client_content_binding: # Add debug info only if contentBinding was used
+            if server_generated_hash:
+                 error_payload["client_provided_value_hash_debug"] = server_generated_hash
+            if api_request_hash: # api_request_hash is from API response
+                 error_payload["api_provided_value_hash_debug"] = api_request_hash
+        if decoded_integrity_token_response: # Include API response if available, e.g. for missing requestHash
+            error_payload["play_integrity_response"] = decoded_integrity_token_response
+        return jsonify(error_payload), 400
+    elif result_status == RESULT_ERROR:
+        error_payload = {"error": error_message_for_client}
+        if decoded_integrity_token_response: # Include API response if available
+             error_payload["play_integrity_response"] = decoded_integrity_token_response
+        # Add details from e_api or e_auth if captured and passed here, or rely on logs.
+        # For simplicity, the detailed exception 'details' from earlier returns are not explicitly passed here, rely on logs.
+        return jsonify(error_payload), 500
+    else: # Should not happen if result_status is always set
+        app.logger.error(f"verify_integrity_standard: Reached end with unhandled result_status '{result_status}' for session {session_id}. Defaulting to 500.")
+        return jsonify({"error": "An unknown server error occurred"}), 500
 
 
 if __name__ == '__main__':
