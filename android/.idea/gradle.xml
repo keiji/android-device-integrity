@@ -20,7 +20,6 @@
             <option value="$PROJECT_DIR$/repository/impl" />
             <option value="$PROJECT_DIR$/ui" />
             <option value="$PROJECT_DIR$/ui/agreement" />
-            <option value="$PROJECT_DIR$/ui/api-endpoint-settings" />
             <option value="$PROJECT_DIR$/ui/license" />
             <option value="$PROJECT_DIR$/ui/main" />
             <option value="$PROJECT_DIR$/ui/nav" />
