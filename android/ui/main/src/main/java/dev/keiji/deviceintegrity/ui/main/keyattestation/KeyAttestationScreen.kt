@@ -33,14 +33,14 @@ import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
 @Composable
 fun KeyAttestationScreen(
     uiState: KeyAttestationUiState,
-    onSelectedKeyTypeChange: (String) -> Unit,
+    onSelectedKeyTypeChange: (CryptoAlgorithm) -> Unit,
     onFetchNonceChallenge: () -> Unit,
     onGenerateKeyPair: () -> Unit,
     onRequestVerifyKeyAttestation: () -> Unit,
 ) {
     val scrollState = rememberScrollState()
     var keyTypeExpanded by remember { mutableStateOf(false) }
-    val keyTypes = listOf("EC", "ECDH", "RSA") // TODO: Move to ViewModel or constants
+    val keyTypes = CryptoAlgorithm.values().toList()
 
     Column(
         modifier = Modifier
@@ -77,7 +77,7 @@ fun KeyAttestationScreen(
                 onExpandedChange = { keyTypeExpanded = !keyTypeExpanded }
             ) {
                 TextField(
-                    value = uiState.selectedKeyType,
+                    value = uiState.selectedKeyType.label,
                     onValueChange = {}, // This remains empty as direct text input is not intended
                     readOnly = true,
                     label = { Text("Key Pair Type") },
@@ -91,11 +91,11 @@ fun KeyAttestationScreen(
                     expanded = keyTypeExpanded,
                     onDismissRequest = { keyTypeExpanded = false }
                 ) {
-                    keyTypes.forEach { selectionOption ->
+                    keyTypes.forEach { algorithm ->
                         DropdownMenuItem(
-                            text = { Text(selectionOption) },
+                            text = { Text(algorithm.label) },
                             onClick = {
-                                onSelectedKeyTypeChange(selectionOption)
+                                onSelectedKeyTypeChange(algorithm)
                                 keyTypeExpanded = false
                             }
                         )
@@ -142,10 +142,10 @@ private fun KeyAttestationScreenPreview() {
         uiState = KeyAttestationUiState(
             nonce = "PREVIEW_NONCE_67890",
             challenge = "PREVIEW_CHALLENGE_ABCDE",
-            selectedKeyType = "RSA",
+            selectedKeyType = CryptoAlgorithm.RSA,
             status = "Previewing KeyAttestation Screen..."
         ),
-        onSelectedKeyTypeChange = { System.out.println("Preview: Key type changed to $it") },
+        onSelectedKeyTypeChange = { System.out.println("Preview: Key type changed to ${it.label}") },
         onFetchNonceChallenge = { System.out.println("Preview: Fetch Nonce/Challenge clicked") },
         onGenerateKeyPair = { System.out.println("Preview: Generate KeyPair clicked") },
         onRequestVerifyKeyAttestation = { System.out.println("Preview: Request Verify KeyAttestation clicked") }
