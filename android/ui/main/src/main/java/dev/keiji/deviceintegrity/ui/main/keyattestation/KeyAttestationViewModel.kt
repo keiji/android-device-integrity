@@ -177,7 +177,7 @@ class KeyAttestationViewModel @Inject constructor(
                     // 4. API Call
                     val request = VerifyEcRequest(
                         sessionId = currentSessionId,
-                        signedDataBase64UrlEncoded = signedDataBase64UrlEncoded,
+                        signatureDataBase64UrlEncoded = signedDataBase64UrlEncoded,
                         nonceBBase64UrlEncoded = nonceBBase64UrlEncoded,
                         certificateChainBase64UrlEncoded = certificateChainBase64UrlEncoded
                     )

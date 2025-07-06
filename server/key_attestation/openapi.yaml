@@ -123,10 +123,10 @@ components:
           type: string
           description: Client session ID.
           example: "session-12345-abcde"
-        signed_data:
+        signature:
           type: string
           format: byte
-          description: Base64-encoded signed data.
+          description: Base64-encoded signature.
           example: "U2lnbmVkRGF0YTEyMzQ1Njc4OTA="
         nonce_b:
           type: string

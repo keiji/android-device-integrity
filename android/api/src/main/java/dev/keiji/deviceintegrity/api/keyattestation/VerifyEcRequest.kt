@@ -7,8 +7,8 @@ import kotlinx.serialization.SerialName
 data class VerifyEcRequest(
     @SerialName("session_id")
     val sessionId: String,
-    @SerialName("signed_data")
-    val signedDataBase64UrlEncoded: String,
+    @SerialName("signature")
+    val signatureDataBase64UrlEncoded: String,
     @SerialName("nonce_b")
     val nonceBBase64UrlEncoded: String,
     @SerialName("certificate_chain")
