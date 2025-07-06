@@ -51,8 +51,7 @@ def store_key_attestation_session(session_id, nonce_encoded, challenge_encoded):
         'sessionId': session_id,
         'nonce': nonce_encoded,
         'challenge': challenge_encoded,
-        'generated_at': now, # Changed from 'created_at'
-        # 'expiry_datetime': expiry_datetime # Field removed
+        'generated_at': now,
     })
     datastore_client.put(entity)
     logger.info(f"Stored key attestation session for sessionId: {session_id}")
@@ -66,7 +65,6 @@ def cleanup_expired_sessions():
         return
 
     try:
-        # now = datetime.now(timezone.utc) # Not directly used, expiry_time_check is used
         expiry_time_check = datetime.now(timezone.utc) - timedelta(minutes=NONCE_EXPIRY_MINUTES)
         query = datastore_client.query(kind=KEY_ATTESTATION_SESSION_KIND)
         query.add_filter('generated_at', '<', expiry_time_check) # Filter by generated_at
@@ -185,10 +183,6 @@ def verify_ec_attestation():
         logger.error(f"Error in /verify/ec endpoint: {e}")
         return jsonify({"error": "An unexpected error occurred"}), 500
 
-# Root endpoint removed
-
-# Register Blueprints - Removed
-# app.register_blueprint(key_attestation_v1_bp)
 
 if __name__ == '__main__':
     # This is used when running locally only.
