@@ -1,9 +1,9 @@
 package dev.keiji.deviceintegrity.api.keyattestation
 
-import dev.keiji.deviceintegrity.api.keyattestation.model.PrepareRequest
-import dev.keiji.deviceintegrity.api.keyattestation.model.PrepareResponse
-import dev.keiji.deviceintegrity.api.keyattestation.model.VerifyEcRequest
-import dev.keiji.deviceintegrity.api.keyattestation.model.VerifyEcResponse
+import dev.keiji.deviceintegrity.api.keyattestation.PrepareRequest // Updated import
+import dev.keiji.deviceintegrity.api.keyattestation.PrepareResponse // Updated import
+import dev.keiji.deviceintegrity.api.keyattestation.VerifyEcRequest // Updated import
+import dev.keiji.deviceintegrity.api.keyattestation.VerifyEcResponse // Updated import
 import retrofit2.http.Body
 import retrofit2.http.POST
 
