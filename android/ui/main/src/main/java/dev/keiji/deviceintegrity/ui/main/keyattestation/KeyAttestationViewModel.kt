@@ -8,9 +8,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch // Ensure this is imported
 
-// Removed KeyAttestationUiEvent and Channel as status is now part of UiState.
-// If one-time events are needed later, they can be re-added.
-
 class KeyAttestationViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(KeyAttestationUiState())
@@ -72,14 +69,4 @@ class KeyAttestationViewModel : ViewModel() {
             }
         }
     }
-
-    // Hex utility functions can be kept if they are planned for use later,
-    // but are not strictly necessary for the current placeholder logic.
-    // private fun ByteArray.toHexString() = joinToString("") { "%02x".format(it) }.uppercase()
-    // private fun String.decodeHex(): ByteArray {
-    //     check(length % 2 == 0) { "Must have an even length" }
-    //     return chunked(2)
-    //         .map { it.toInt(16).toByte() }
-    //         .toByteArray()
-    // }
 }
