@@ -19,12 +19,9 @@ except Exception as e:
     logger.error(f"Failed to initialize Datastore client: {e}")
     datastore_client = None
 
-# Define Blueprint for Key Attestation API v1
-key_attestation_v1_bp = Blueprint('key_attestation_v1', __name__, url_prefix='/v1')
-
 # Datastore Kind for Key Attestation Sessions
 KEY_ATTESTATION_SESSION_KIND = "KeyAttestationSession"
-SESSION_EXPIRY_MINUTES = 10
+NONCE_EXPIRY_MINUTES = 10 # Renamed from SESSION_EXPIRY_MINUTES
 
 # --- Helper Functions ---
 
@@ -46,7 +43,7 @@ def store_key_attestation_session(session_id, nonce_encoded, challenge_encoded):
         raise ConnectionError("Datastore client not initialized.")
 
     now = datetime.now(timezone.utc)
-    expiry_datetime = now + timedelta(minutes=SESSION_EXPIRY_MINUTES)
+    # expiry_datetime = now + timedelta(minutes=NONCE_EXPIRY_MINUTES) # Field removed
 
     key = datastore_client.key(KEY_ATTESTATION_SESSION_KIND, session_id)
     entity = datastore.Entity(key=key)
@@ -54,8 +51,8 @@ def store_key_attestation_session(session_id, nonce_encoded, challenge_encoded):
         'sessionId': session_id,
         'nonce': nonce_encoded,
         'challenge': challenge_encoded,
-        'created_at': now,
-        'expiry_datetime': expiry_datetime
+        'generated_at': now, # Changed from 'created_at'
+        # 'expiry_datetime': expiry_datetime # Field removed
     })
     datastore_client.put(entity)
     logger.info(f"Stored key attestation session for sessionId: {session_id}")
@@ -69,9 +66,10 @@ def cleanup_expired_sessions():
         return
 
     try:
-        now = datetime.now(timezone.utc)
+        # now = datetime.now(timezone.utc) # Not directly used, expiry_time_check is used
+        expiry_time_check = datetime.now(timezone.utc) - timedelta(minutes=NONCE_EXPIRY_MINUTES)
         query = datastore_client.query(kind=KEY_ATTESTATION_SESSION_KIND)
-        query.add_filter('expiry_datetime', '<', now)
+        query.add_filter('generated_at', '<', expiry_time_check) # Filter by generated_at
 
         expired_entities = list(query.fetch())
 
@@ -86,7 +84,7 @@ def cleanup_expired_sessions():
 
 # --- Endpoints ---
 
-@key_attestation_v1_bp.route('/prepare', methods=['POST'])
+@app.route('/v1/prepare', methods=['POST']) # Changed from Blueprint
 def prepare_attestation():
     """
     Prepares for key attestation by generating a nonce and challenge.
@@ -136,7 +134,7 @@ def prepare_attestation():
         logger.error(f"Error in /prepare endpoint: {e}")
         return jsonify({"error": "An unexpected error occurred"}), 500
 
-@key_attestation_v1_bp.route('/verify/ec', methods=['POST'])
+@app.route('/v1/verify/ec', methods=['POST']) # Changed from Blueprint
 def verify_ec_attestation():
     """
     Verifies the EC key attestation (mock implementation).
@@ -187,14 +185,10 @@ def verify_ec_attestation():
         logger.error(f"Error in /verify/ec endpoint: {e}")
         return jsonify({"error": "An unexpected error occurred"}), 500
 
-@app.route('/')
-def index():
-    # Redirect to openapi.yaml or provide a status
-    return jsonify({"status": "Key Attestation API is running. See /openapi.yaml for documentation."})
+# Root endpoint removed
 
-
-# Register Blueprints
-app.register_blueprint(key_attestation_v1_bp)
+# Register Blueprints - Removed
+# app.register_blueprint(key_attestation_v1_bp)
 
 if __name__ == '__main__':
     # This is used when running locally only.

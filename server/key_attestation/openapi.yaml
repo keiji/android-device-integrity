@@ -98,15 +98,15 @@ components:
     PrepareResponseBody:
       type: object
       required:
-        - nonce
-        - challenge
+        - nonceBase64UrlEncoded
+        - challengeBase64UrlEncoded
       properties:
-        nonce:
+        nonceBase64UrlEncoded:
           type: string
           format: byte
           description: Base64URL-encoded nonce.
           example: "SGVsbG8gd29ybGQhMTIzNDU2Nzg5MA=="
-        challenge:
+        challengeBase64UrlEncoded:
           type: string
           format: byte
           description: Base64URL-encoded challenge.
@@ -115,30 +115,31 @@ components:
       type: object
       required:
         - sessionId
-        - signedData
-        - nonceB
-        - certificateChain
+        - signedDataBase64Encoded
+        - nonceBBase64Encoded
+        - certificateChainBase64Encoded
       properties:
         sessionId:
           type: string
           description: Client session ID.
           example: "session-12345-abcde"
-        signedData:
+        signedDataBase64Encoded:
           type: string
           format: byte
           description: Base64-encoded signed data.
           example: "U2lnbmVkRGF0YTEyMzQ1Njc4OTA="
-        nonceB:
+        nonceBBase64Encoded:
           type: string
           format: byte
           description: Base64-encoded second nonce from client.
           example: "Tm9uY2VCMTIzNDU2Nzg5MA=="
-        certificateChain:
+        certificateChainBase64Encoded:
           type: array
           items:
             type: string
             format: byte
-          description: Array of Base64-encoded certificate strings.
+          description: Array of Base64-encoded certificate strings. # Description for the array itself
+          # item description is implicitly "Base64-encoded certificate strings" due to items.type and items.format
           example: ["Y2VydDE=", "Y2VydDI="]
     VerifyEcResponseBody:
       type: object

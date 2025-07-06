@@ -14,7 +14,7 @@ data class AttestationPropertiesMock(
 )
 
 @Serializable
-data class VerifyEcResponseBody(
+data class VerifyEcResponse(
     val sessionId: String,
     val isVerified: Boolean,
     val reason: String? = null,
