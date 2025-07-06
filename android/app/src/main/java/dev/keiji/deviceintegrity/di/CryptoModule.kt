@@ -10,15 +10,19 @@ import dev.keiji.deviceintegrity.crypto.contract.Verifier
 import dev.keiji.deviceintegrity.crypto.impl.EcSignerImpl
 import dev.keiji.deviceintegrity.crypto.impl.EcVerifierImpl
 
+import javax.inject.Singleton
+
 @Module
 @InstallIn(SingletonComponent::class)
-object CryptoModule {
+class CryptoModule {
 
     @EC
     @Provides
+    @Singleton // Added @Singleton here as well
     fun provideEcSigner(): Signer = EcSignerImpl()
 
     @EC
     @Provides
+    @Singleton // Added @Singleton here as well
     fun provideEcVerifier(): Verifier = EcVerifierImpl()
 }

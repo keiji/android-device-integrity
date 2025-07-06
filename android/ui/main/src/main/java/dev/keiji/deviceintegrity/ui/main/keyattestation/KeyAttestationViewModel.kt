@@ -1,8 +1,8 @@
 package dev.keiji.deviceintegrity.ui.main.keyattestation
 
-import android.util.Base64
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import java.util.Base64 // Replaced android.util.Base64
 import dev.keiji.deviceintegrity.api.keyattestation.KeyAttestationVerifyApiClient
 import dev.keiji.deviceintegrity.api.keyattestation.PrepareRequest
 import dev.keiji.deviceintegrity.api.keyattestation.VerifyEcRequest
@@ -17,11 +17,15 @@ import kotlinx.coroutines.launch // Ensure this is imported
 import kotlinx.coroutines.withContext
 import java.security.SecureRandom
 import java.util.UUID
+import javax.inject.Inject
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.keiji.deviceintegrity.di.qualifier.EC
 
-class KeyAttestationViewModel(
+@HiltViewModel
+class KeyAttestationViewModel @Inject constructor(
     private val keyPairRepository: KeyPairRepository,
     private val keyAttestationVerifyApiClient: KeyAttestationVerifyApiClient,
-    private val signer: Signer
+    @EC private val signer: Signer
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(KeyAttestationUiState())
@@ -89,10 +93,9 @@ class KeyAttestationViewModel(
 
             try {
                 // Decode the challenge from Base64Url
-                // Using NO_WRAP as KeyGenParameterSpec.Builder#setAttestationChallenge expects the raw challenge bytes.
                 // URL_SAFE is used because the server sends it as Base64UrlEncoded.
                 val decodedChallenge = withContext(Dispatchers.Default) {
-                    Base64.decode(currentChallenge, Base64.URL_SAFE or Base64.NO_WRAP)
+                    Base64.getUrlDecoder().decode(currentChallenge)
                 }
 
                 // Perform key generation on IO dispatcher
@@ -143,27 +146,27 @@ class KeyAttestationViewModel(
                     SecureRandom().nextBytes(nonceB)
 
                     // Server nonce is Base64URL Encoded
-                    val decodedServerNonce = Base64.decode(serverNonceB64Url, Base64.URL_SAFE or Base64.NO_WRAP)
+                    val decodedServerNonce = Base64.getUrlDecoder().decode(serverNonceB64Url)
                     val dataToSign = decodedServerNonce + nonceB
 
                     // 2. Signing
                     val privateKey = currentKeyPairData.keyPair.private
                     val signatureData = signer.sign(dataToSign, privateKey)
 
-                    // 3. Encoding for Request (Base64URL as per task)
-                    val base64Flags = Base64.URL_SAFE or Base64.NO_WRAP
-                    val signedDataBase64UrlEncoded = Base64.encodeToString(signatureData, base64Flags)
-                    val nonceBBase64UrlEncoded = Base64.encodeToString(nonceB, base64Flags)
+                    // 3. Encoding for Request (Base64URL as per task, without padding)
+                    val urlSafeEncoder = Base64.getUrlEncoder().withoutPadding()
+                    val signedDataBase64UrlEncoded = urlSafeEncoder.encodeToString(signatureData)
+                    val nonceBBase64UrlEncoded = urlSafeEncoder.encodeToString(nonceB)
                     val certificateChainBase64UrlEncoded = currentKeyPairData.certificates.map { cert ->
-                        Base64.encodeToString(cert.encoded, base64Flags)
+                        urlSafeEncoder.encodeToString(cert.encoded)
                     }
 
                     // 4. API Call
                     val request = VerifyEcRequest(
                         sessionId = currentSessionId,
-                        signedDataBase64Encoded = signedDataBase64UrlEncoded, // Field name is Base64Encoded, but task requires UrlEncoded
-                        nonceBBase64Encoded = nonceBBase64UrlEncoded, // Field name is Base64Encoded, but task requires UrlEncoded
-                        certificateChainBase64Encoded = certificateChainBase64UrlEncoded // Field name is Base64Encoded, but task requires UrlEncoded
+                        signedDataBase64UrlEncoded = signedDataBase64UrlEncoded,
+                        nonceBBase64UrlEncoded = nonceBBase64UrlEncoded,
+                        certificateChainBase64UrlEncoded = certificateChainBase64UrlEncoded
                     )
                     keyAttestationVerifyApiClient.verifyEc(request)
                 }

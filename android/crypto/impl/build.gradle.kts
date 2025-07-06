@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    // alias(libs.plugins.ksp) // ksp no longer needed if no Hilt modules here
+    // alias(libs.plugins.hilt) // Hilt plugin no longer needed here
 }
 
 android {
@@ -32,6 +34,9 @@ android {
 
 dependencies {
     api(project(":crypto:contract"))
+
+    // implementation(libs.hilt.android) // Hilt dependency no longer needed here
+    // ksp(libs.hilt.compiler) // Hilt ksp no longer needed here
 
     testImplementation(libs.junit)
 }
