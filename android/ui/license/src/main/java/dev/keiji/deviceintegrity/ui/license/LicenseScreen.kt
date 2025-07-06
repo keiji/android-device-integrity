@@ -70,12 +70,12 @@ fun LicenseItem(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = stringResource(R.string.license_item_license_label, licenseInfo.licenseName),
+                text = licenseInfo.licenseName,
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = stringResource(R.string.license_item_copyright_label, licenseInfo.copyrightHolder),
+                text = licenseInfo.copyrightHolder,
                 style = MaterialTheme.typography.bodyMedium
             )
             licenseInfo.licenseUrl?.also { licenseUrl ->

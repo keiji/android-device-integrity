@@ -29,6 +29,14 @@ The server exposes the following two endpoints:
             *   Other failures during the token verification process.
             *   The nonce being absent in the Play Integrity API's response.
 
+## Environment Variables
+
+### `PLAY_INTEGRITY_PACKAGE_NAME`
+
+This environment variable allows you to configure the Android package name that the server will use when calling the Google Play Integrity API. This is necessary if your Android app uses a different `applicationId` for different build variants (e.g., `dev.keiji.deviceintegrity.develop` for development builds).
+
+- **Default value:** `dev.keiji.deviceintegrity`
+
 ## OpenAPI Specification
 
 The API is documented using the OpenAPI v3 specification. The specification file can be found at [openapi.yaml](./openapi.yaml).
