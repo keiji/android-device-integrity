@@ -98,7 +98,7 @@ class KeyPairRepositoryImpl(
             specBuilder.setAttestationChallenge(challenge)
 
             keyPairGenerator.initialize(specBuilder.build())
-            keyPairGenerator.generateKeyPair()
+            val generatedKeyPair = keyPairGenerator.generateKeyPair() // Store the generated KeyPair
 
             val certificateChain = keyStore.getCertificateChain(localKeyAlias)
 
@@ -122,9 +122,15 @@ class KeyPairRepositoryImpl(
                 throw IllegalStateException("X509Certificate chain is empty for alias: $localKeyAlias")
             }
 
+            // Retrieve the KeyPair to include in KeyPairData.
+            // The KeyPairGenerator already returns the KeyPair, so we can use that.
+            // If we needed to fetch it again (e.g. if KeyPairGenerator didn't return it),
+            // we could use the internal getKeyPair(localKeyAlias) method,
+            // but it's better to use the directly generated one.
             return@withContext KeyPairData(
                 keyAlias = localKeyAlias,
-                certificates = x509Certificates
+                certificates = x509Certificates,
+                keyPair = generatedKeyPair // Include the generated KeyPair
             )
         }
 }
