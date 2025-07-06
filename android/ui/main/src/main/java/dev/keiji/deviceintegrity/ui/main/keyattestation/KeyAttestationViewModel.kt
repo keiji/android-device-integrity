@@ -167,7 +167,7 @@ class KeyAttestationViewModel @Inject constructor(
 
                     // 3. Encoding for Request (Base64URL as per task, without padding)
                     val urlSafeEncoder = Base64.UrlSafe
-                    val signedDataBase64UrlEncoded = urlSafeEncoder.encode(signatureData)
+                    val signatureDataBase64UrlEncoded = urlSafeEncoder.encode(signatureData) // Corrected local variable name
                     val nonceBBase64UrlEncoded = urlSafeEncoder.encode(nonceB)
                     val certificateChainBase64UrlEncoded =
                         currentKeyPairData.certificates.map { cert ->
@@ -177,7 +177,7 @@ class KeyAttestationViewModel @Inject constructor(
                     // 4. API Call
                     val request = VerifyEcRequest(
                         sessionId = currentSessionId,
-                        signatureDataBase64UrlEncoded = signedDataBase64UrlEncoded,
+                        signatureDataBase64UrlEncoded = signatureDataBase64UrlEncoded, // Using corrected local variable name
                         nonceBBase64UrlEncoded = nonceBBase64UrlEncoded,
                         certificateChainBase64UrlEncoded = certificateChainBase64UrlEncoded
                     )

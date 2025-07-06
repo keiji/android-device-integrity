@@ -115,7 +115,7 @@ components:
       type: object
       required:
         - session_id
-        - signed_data
+        - signature # Renamed from signed_data
         - nonce_b
         - certificate_chain
       properties:
@@ -126,7 +126,7 @@ components:
         signature:
           type: string
           format: byte
-          description: Base64-encoded signature.
+          description: Base64-URL-encoded signature. # Changed from Base64-encoded
           example: "U2lnbmVkRGF0YTEyMzQ1Njc4OTA="
         nonce_b:
           type: string
