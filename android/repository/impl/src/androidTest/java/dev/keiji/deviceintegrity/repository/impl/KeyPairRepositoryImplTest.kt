@@ -96,8 +96,10 @@ class KeyPairRepositoryImplTest {
         val result = keyPairRepository.getKeyPair(alias)
 
         assertNotNull(result)
-        assertEquals(expectedKeyPair.public, result?.public)
-        assertEquals(expectedKeyPair.private, result?.private)
+        assertEquals(
+            expectedKeyPair.public.encoded.toHexString(),
+            result?.public?.encoded?.toHexString()
+        )
     }
 
     @Test

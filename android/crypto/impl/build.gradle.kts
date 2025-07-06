@@ -38,4 +38,6 @@ dependencies {
     implementation(libs.javax.inject)
 
     testImplementation(libs.junit)
+
+    androidTestImplementation(libs.androidx.junit)
 }
