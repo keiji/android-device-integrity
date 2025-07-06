@@ -9,6 +9,7 @@ import dev.keiji.deviceintegrity.api.keyattestation.VerifyEcRequest
 import dev.keiji.deviceintegrity.crypto.contract.Signer
 import dev.keiji.deviceintegrity.crypto.contract.qualifier.EC
 import dev.keiji.deviceintegrity.repository.contract.KeyPairRepository
+import dev.keiji.deviceintegrity.ui.main.util.Base64Utils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +20,9 @@ import kotlinx.coroutines.withContext
 import java.security.SecureRandom
 import java.util.UUID
 import javax.inject.Inject
-import kotlin.io.encoding.Base64
+// kotlin.io.encoding.Base64 is not directly used anymore,
+// but Base64Utils uses it, so keeping it for context or if other Base64 types are needed.
+// import kotlin.io.encoding.Base64
 
 @HiltViewModel
 class KeyAttestationViewModel @Inject constructor(
@@ -104,9 +107,9 @@ class KeyAttestationViewModel @Inject constructor(
 
             try {
                 // Decode the challenge from Base64Url
-                // URL_SAFE is used because the server sends it as Base64UrlEncoded.
+                // Using UrlSafeNoPadding to ensure no padding is used/expected.
                 val decodedChallenge = withContext(Dispatchers.Default) {
-                    Base64.UrlSafe.decode(currentChallenge)
+                    Base64Utils.UrlSafeNoPadding.decode(currentChallenge)
                 }
 
                 // Perform key generation on IO dispatcher
@@ -158,20 +161,20 @@ class KeyAttestationViewModel @Inject constructor(
                     SecureRandom().nextBytes(nonceB)
 
                     // Server nonce is Base64URL Encoded
-                    val decodedServerNonce = Base64.UrlSafe.decode(serverNonceB64Url)
+                    // Using UrlSafeNoPadding to ensure no padding is used/expected.
+                    val decodedServerNonce = Base64Utils.UrlSafeNoPadding.decode(serverNonceB64Url)
                     val dataToSign = decodedServerNonce + nonceB
 
                     // 2. Signing
                     val privateKey = keyPair.private
                     val signatureData = signer.sign(dataToSign, privateKey)
 
-                    // 3. Encoding for Request (Base64URL as per task, without padding)
-                    val urlSafeEncoder = Base64.UrlSafe
-                    val signatureDataBase64UrlEncoded = urlSafeEncoder.encode(signatureData)
-                    val nonceBBase64UrlEncoded = urlSafeEncoder.encode(nonceB)
+                    // 3. Encoding for Request (Base64URL, without padding using Base64Utils)
+                    val signatureDataBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(signatureData)
+                    val nonceBBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(nonceB)
                     val certificateChainBase64UrlEncoded =
                         currentKeyPairData.certificates.map { cert ->
-                            urlSafeEncoder.encode(cert.encoded)
+                            Base64Utils.UrlSafeNoPadding.encode(cert.encoded)
                         }
 
                     // 4. API Call
