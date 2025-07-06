@@ -1,12 +1,15 @@
 // Forcing a rebuild to attempt to clear persistent cache issues.
 package dev.keiji.deviceintegrity.ui.main
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
-import dagger.hilt.android.AndroidEntryPoint
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -14,39 +17,33 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.stringResource
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import dagger.hilt.android.AndroidEntryPoint
+import dev.keiji.deviceintegrity.provider.contract.AppInfoProvider
 import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationScreen
+import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationViewModel
 import dev.keiji.deviceintegrity.ui.main.playintegrity.ClassicPlayIntegrityViewModel
 import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityScreen
 import dev.keiji.deviceintegrity.ui.main.playintegrity.StandardPlayIntegrityViewModel
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsScreen
-import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
-import android.content.Intent
-import android.net.Uri
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.platform.LocalContext
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import dev.keiji.deviceintegrity.provider.contract.AppInfoProvider
-import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationUiEvent
-import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationViewModel
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsUiEvent
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.keiji.deviceintegrity.ui.nav.contract.AgreementNavigator
 import dev.keiji.deviceintegrity.ui.nav.contract.LicenseNavigator
+import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -172,7 +169,11 @@ fun DeviceIntegrityApp(
 
                     KeyAttestationScreen(
                         uiState = uiState,
-                        onSelectedKeyTypeChange = { keyAttestationViewModel.onSelectedKeyTypeChange(it) },
+                        onSelectedKeyTypeChange = {
+                            keyAttestationViewModel.onSelectedKeyTypeChange(
+                                it
+                            )
+                        },
                         onFetchNonceChallenge = { keyAttestationViewModel.fetchNonceChallenge() },
                         onGenerateKeyPair = { keyAttestationViewModel.generateKeyPair() },
                         onRequestVerifyKeyAttestation = { keyAttestationViewModel.requestVerifyKeyAttestation() }
