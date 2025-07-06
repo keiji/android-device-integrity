@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.api.keyattestation // Changed package
+package dev.keiji.deviceintegrity.api.keyattestation
 
 import kotlinx.serialization.Serializable
 
