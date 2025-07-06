@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -89,6 +90,7 @@ fun DeviceIntegrityApp(
         val navController = rememberNavController()
         val context = LocalContext.current
         val isAgreed by mainViewModel.isAgreed.collectAsStateWithLifecycle()
+        val uiState by mainViewModel.uiState.collectAsState()
 
         val agreementLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.StartActivityForResult()
@@ -115,13 +117,9 @@ fun DeviceIntegrityApp(
                 NavigationBar {
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentDestination = navBackStackEntry?.destination
-                    bottomNavigationItems
-                        .filter { screen ->
-                            screen != AppScreen.KeyAttestation || Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
-                        }
-                        .forEach { screen ->
-                            NavigationBarItem(
-                                icon = {
+                    uiState.bottomNavigationItems.forEach { screen ->
+                        NavigationBarItem(
+                            icon = {
                                 Icon(
                                     painter = androidx.compose.ui.res.painterResource(id = screen.icon),
                                     contentDescription = stringResource(id = screen.label)
