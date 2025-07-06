@@ -39,7 +39,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/PrepareResponseBody'
         '400':
-          description: Bad Request (e.g., missing sessionId).
+          description: Bad Request (e.g., missing session_id).
           content:
             application/json:
               schema:
@@ -89,24 +89,24 @@ components:
     PrepareRequestBody:
       type: object
       required:
-        - sessionId
+        - session_id
       properties:
-        sessionId:
+        session_id:
           type: string
           description: Client session ID.
           example: "session-12345-abcde"
     PrepareResponseBody:
       type: object
       required:
-        - nonceBase64UrlEncoded
-        - challengeBase64UrlEncoded
+        - nonce
+        - challenge
       properties:
-        nonceBase64UrlEncoded:
+        nonce:
           type: string
           format: byte
           description: Base64URL-encoded nonce.
           example: "SGVsbG8gd29ybGQhMTIzNDU2Nzg5MA=="
-        challengeBase64UrlEncoded:
+        challenge:
           type: string
           format: byte
           description: Base64URL-encoded challenge.
@@ -114,44 +114,43 @@ components:
     VerifyEcRequestBody:
       type: object
       required:
-        - sessionId
-        - signedDataBase64Encoded
-        - nonceBBase64Encoded
-        - certificateChainBase64Encoded
+        - session_id
+        - signed_data
+        - nonce_b
+        - certificate_chain
       properties:
-        sessionId:
+        session_id:
           type: string
           description: Client session ID.
           example: "session-12345-abcde"
-        signedDataBase64Encoded:
+        signed_data:
           type: string
           format: byte
           description: Base64-encoded signed data.
           example: "U2lnbmVkRGF0YTEyMzQ1Njc4OTA="
-        nonceBBase64Encoded:
+        nonce_b:
           type: string
           format: byte
           description: Base64-encoded second nonce from client.
           example: "Tm9uY2VCMTIzNDU2Nzg5MA=="
-        certificateChainBase64Encoded:
+        certificate_chain:
           type: array
           items:
             type: string
             format: byte
-          description: Array of Base64-encoded certificate strings. # Description for the array itself
-          # item description is implicitly "Base64-encoded certificate strings" due to items.type and items.format
+          description: Array of Base64-encoded certificate strings.
           example: ["Y2VydDE=", "Y2VydDI="]
     VerifyEcResponseBody:
       type: object
       required:
-        - sessionId
-        - isVerified
+        - session_id
+        - is_verified
       properties:
-        sessionId:
+        session_id:
           type: string
           description: Client session ID.
           example: "session-12345-abcde"
-        isVerified:
+        is_verified:
           type: boolean
           description: Result of the verification.
           example: false
@@ -159,28 +158,26 @@ components:
           type: string
           description: Reason for verification failure (optional).
           example: "Mock implementation"
-        decodedCertificateChain:
+        decoded_certificate_chain:
           type: object
           description: Mocked decoded certificate chain details.
-          properties: # Added properties for clarity, even if just a mock
-            mockedDetail:
+          properties:
+            mocked_detail:
               type: string
               example: "This is a mock response for decoded certificate chain."
-          required: # Added required for clarity
-            - mockedDetail
-        attestationProperties:
+          required:
+            - mocked_detail
+        attestation_properties:
           type: object
           description: Mocked attestation properties.
-          properties: # Added properties for clarity
-            mockedSoftwareEnforced:
+          properties:
+            mocked_software_enforced:
               type: object
-              # Add further properties if known, else empty object is fine
-            mockedTeeEnforced:
+            mocked_tee_enforced:
               type: object
-              # Add further properties if known, else empty object is fine
-          required: # Added required for clarity
-            - mockedSoftwareEnforced
-            - mockedTeeEnforced
+          required:
+            - mocked_software_enforced
+            - mocked_tee_enforced
     ErrorResponse:
       type: object
       required:

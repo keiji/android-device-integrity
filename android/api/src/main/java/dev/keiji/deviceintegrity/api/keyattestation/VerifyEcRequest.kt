@@ -1,11 +1,16 @@
 package dev.keiji.deviceintegrity.api.keyattestation
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
 
 @Serializable
 data class VerifyEcRequest(
+    @SerialName("session_id")
     val sessionId: String,
-    val signedDataBase64UrlEncoded: String, // Base64URL Encoded
-    val nonceBBase64UrlEncoded: String, // Base64URL Encoded
-    val certificateChainBase64UrlEncoded: List<String> // List of Base64URL Encoded strings
+    @SerialName("signed_data")
+    val signedDataBase64UrlEncoded: String,
+    @SerialName("nonce_b")
+    val nonceBBase64UrlEncoded: String,
+    @SerialName("certificate_chain")
+    val certificateChainBase64UrlEncoded: List<String>
 )
