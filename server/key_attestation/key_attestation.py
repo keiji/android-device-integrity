@@ -136,7 +136,7 @@ def prepare_attestation():
 def verify_ec_attestation():
     """
     Verifies the EC key attestation (mock implementation).
-    Request body: { "session_id": "string", "signed_data": "string (Base64Encoded)", "nonce_b": "string (Base64Encoded)", "certificate_chain": ["string (Base64Encoded)"] }
+    Request body: { "session_id": "string", "signature": "string (Base64Encoded)", "nonce_b": "string (Base64Encoded)", "certificate_chain": ["string (Base64Encoded)"] }
     Response body: { "session_id": "string", "is_verified": false, "reason": "Mock implementation", "decoded_certificate_chain": { "mocked_detail": "This is a mock response for decoded certificate chain." }, "attestation_properties": { "mocked_software_enforced": {}, "mocked_tee_enforced": {} } }
     """
     try:
@@ -147,16 +147,16 @@ def verify_ec_attestation():
 
         # Validate required fields (presence only for this mock)
         session_id = data.get('session_id')
-        signed_data = data.get('signed_data')
+        signature = data.get('signature')
         nonce_b = data.get('nonce_b')
         certificate_chain = data.get('certificate_chain')
 
-        if not all([session_id, signed_data, nonce_b, certificate_chain]):
+        if not all([session_id, signature, nonce_b, certificate_chain]):
             logger.warning(f"Verify EC request for session {session_id} missing one or more required fields.")
-            return jsonify({"error": "Missing one or more required fields: session_id, signed_data, nonce_b, certificate_chain"}), 400
+            return jsonify({"error": "Missing one or more required fields: session_id, signature, nonce_b, certificate_chain"}), 400
 
         if not isinstance(session_id, str) or \
-           not isinstance(signed_data, str) or \
+           not isinstance(signature, str) or \
            not isinstance(nonce_b, str) or \
            not isinstance(certificate_chain, list):
             logger.warning(f"Verify EC request for session {session_id} has type mismatch for one or more fields.")
