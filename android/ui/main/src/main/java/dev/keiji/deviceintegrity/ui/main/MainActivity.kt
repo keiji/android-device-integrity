@@ -160,29 +160,22 @@ fun DeviceIntegrityApp(
                         onStandardRequestVerify = { standardViewModel.verifyToken() }
                     )
                 }
-                /*
                 composable(AppScreen.KeyAttestation.route) {
-                    val viewModel: KeyAttestationViewModel = hiltViewModel()
-                    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-                    val context = LocalContext.current
+                    val keyAttestationViewModel: KeyAttestationViewModel = hiltViewModel()
+                    val uiState by keyAttestationViewModel.uiState.collectAsStateWithLifecycle()
+                    // val context = LocalContext.current // Keep if needed for other purposes, remove if only for Toast
 
-                    LaunchedEffect(viewModel.eventFlow) {
-                        viewModel.eventFlow.collect { event ->
-                            when (event) {
-                                is KeyAttestationUiEvent.ShowToast -> {
-                                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        }
-                    }
+                    // LaunchedEffect for KeyAttestationUiEvent has been removed as the event system was removed.
+                    // Status and errors are now handled via uiState.status.
 
                     KeyAttestationScreen(
                         uiState = uiState,
-                        onNonceChange = viewModel::updateNonce,
-                        onSubmit = viewModel::submit
+                        onSelectedKeyTypeChange = { keyAttestationViewModel.onSelectedKeyTypeChange(it) },
+                        onFetchNonceChallenge = { keyAttestationViewModel.fetchNonceChallenge() },
+                        onGenerateKeyPair = { keyAttestationViewModel.generateKeyPair() },
+                        onRequestVerifyKeyAttestation = { keyAttestationViewModel.requestVerifyKeyAttestation() }
                     )
                 }
-                */
                 composable(AppScreen.Menu.route) {
                     val viewModel: SettingsViewModel = hiltViewModel()
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
