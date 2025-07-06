@@ -31,7 +31,7 @@ android {
 }
 
 dependencies {
-    api(project(":android:crypto:contract"))
+    api(project(":crypto:contract"))
 
     testImplementation(libs.junit)
 }
