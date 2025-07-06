@@ -13,9 +13,3 @@ sealed class AppScreen(
     object KeyAttestation : AppScreen("key_attestation", R.string.app_screen_key_attestation_label, R.drawable.ic_key)
     object Menu : AppScreen("menu", R.string.app_screen_menu_label, R.drawable.ic_menu)
 }
-
-val bottomNavigationItems = listOf(
-    AppScreen.PlayIntegrity,
-    AppScreen.KeyAttestation,
-    AppScreen.Menu
-)
