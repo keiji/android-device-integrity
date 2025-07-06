@@ -10,12 +10,15 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.security.SecureRandom
+import dev.keiji.deviceintegrity.domain.model.CryptoAlgorithm
 
 sealed interface KeyAttestationUiEvent {
     data class ShowToast(val message: String) : KeyAttestationUiEvent
 }
 
 class KeyAttestationViewModel : ViewModel() {
+    val availableAlgorithms: List<CryptoAlgorithm> = CryptoAlgorithm.values().toList()
+
     companion object {
         private const val MAX_NONCE_LENGTH_BYTES = 32
         private const val DEFAULT_NONCE_LENGTH_BYTES = 16 // Initial nonce length
