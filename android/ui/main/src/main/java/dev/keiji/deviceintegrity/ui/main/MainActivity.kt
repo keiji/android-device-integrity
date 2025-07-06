@@ -8,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -19,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -88,6 +90,7 @@ fun DeviceIntegrityApp(
         val navController = rememberNavController()
         val context = LocalContext.current
         val isAgreed by mainViewModel.isAgreed.collectAsStateWithLifecycle()
+        val uiState by mainViewModel.uiState.collectAsState()
 
         val agreementLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.StartActivityForResult()
@@ -114,7 +117,7 @@ fun DeviceIntegrityApp(
                 NavigationBar {
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentDestination = navBackStackEntry?.destination
-                    bottomNavigationItems.forEach { screen ->
+                    uiState.bottomNavigationItems.forEach { screen ->
                         NavigationBarItem(
                             icon = {
                                 Icon(
