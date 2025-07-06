@@ -1,3 +1,4 @@
+// Forcing a rebuild to attempt to clear persistent cache issues.
 package dev.keiji.deviceintegrity.ui.main
 
 import android.os.Bundle
