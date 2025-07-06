@@ -42,7 +42,7 @@ class KeyAttestationViewModel @Inject constructor(
     }
 
     // Event handler for Selected Key Type change
-    fun onSelectedKeyTypeChange(newKeyType: String) {
+    fun onSelectedKeyTypeChange(newKeyType: CryptoAlgorithm) {
         _uiState.update { it.copy(selectedKeyType = newKeyType) }
     }
 
