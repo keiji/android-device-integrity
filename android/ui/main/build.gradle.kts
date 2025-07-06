@@ -39,6 +39,7 @@ dependencies {
     implementation(project(":provider:contract"))
     implementation(project(":repository:contract"))
     implementation(project(":ui:nav:contract"))
+    implementation(project(":crypto:contract"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

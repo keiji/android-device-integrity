@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.di.qualifier
+package dev.keiji.deviceintegrity.crypto.contract.qualifier
 
 import javax.inject.Qualifier
 
