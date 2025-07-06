@@ -56,7 +56,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 integrityToken = "", // Clear previous integrity token
                 progressValue = PlayIntegrityProgressConstants.FULL_PROGRESS, // Start ProgressBar at full for nonce fetching
                 status = "Fetching nonce from server...",
-                    serverVerificationPayload = null,
+                serverVerificationPayload = null,
                 errorMessages = emptyList()
             )
         }
@@ -71,22 +71,31 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 while (currentStep < totalSteps) {
                     delay(PlayIntegrityProgressConstants.PROGRESS_UPDATE_INTERVAL_MS) // Wait
                     currentStep++
-                    val newProgress =
-                        PlayIntegrityProgressConstants.FULL_PROGRESS - (currentStep.toFloat() / totalSteps)
-                    _uiState.update { currentState ->
-                        currentState.copy(
-                            progressValue = newProgress.coerceAtLeast(PlayIntegrityProgressConstants.NO_PROGRESS)
-                        )
+                    // Calculate progress, but don't coerce to NO_PROGRESS here if it's the last step,
+                    // as we will immediately switch to INDETERMINATE_PROGRESS.
+                    // For intermediate steps, it can still be updated.
+                    if (currentStep < totalSteps) {
+                        val newProgress =
+                            PlayIntegrityProgressConstants.FULL_PROGRESS - (currentStep.toFloat() / totalSteps)
+                        _uiState.update { currentState ->
+                            currentState.copy(
+                                progressValue = newProgress.coerceAtLeast(PlayIntegrityProgressConstants.NO_PROGRESS)
+                            )
+                        }
                     }
                 }
 
-                _uiState.update { it.copy(status = "Finalizing nonce request...") }
+                // Directly update to indeterminate after the loop, ensuring no 0.0F state if loop completes.
+                _uiState.update { it.copy(
+                    progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS,
+                    status = "Finalizing nonce request..."
+                ) }
 
                 val response = playIntegrityRepository.getNonce(currentSessionId)
                 _uiState.update {
                     it.copy(
                         nonce = response.nonce,
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS, // Ensure NO_PROGRESS on success
                         status = "Nonce fetched: ${response.nonce}",
                         currentSessionId = currentSessionId
                     )
@@ -101,7 +110,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                     it.copy(
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         status = "Server error fetching nonce.",
-                        errorMessages = listOf("Server error: ${e.errorCode ?: "N/A"} - ${e.errorMessage ?: "Unknown"}")
+                        errorMessages = listOf("Server error: ${e.errorCode ?: "N/A"} - ${e.errorMessage ?: "Unknown"}"),
                     )
                 }
             } catch (e: IOException) { // Catch IOException
@@ -110,7 +119,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                     it.copy(
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         status = "Network error fetching nonce.",
-                        errorMessages = listOf(e.message ?: "Unknown network error.")
+                        errorMessages = listOf(e.message ?: "Unknown network error."),
                     )
                 }
             } catch (e: Exception) { // Catch other exceptions
@@ -119,7 +128,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                     it.copy(
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                         status = "Unknown error fetching nonce.",
-                        errorMessages = listOf(e.message ?: "An unexpected error occurred.")
+                        errorMessages = listOf(e.message ?: "An unexpected error occurred."),
                     )
                 }
             }

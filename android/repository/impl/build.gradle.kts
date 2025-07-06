@@ -74,6 +74,7 @@ dependencies {
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
     // Robolectric and other test dependencies if needed for this module specifically
     // For PreferencesRepositoryImplTest, Robolectric is used.
     // It's often better to have a separate test module or configure it if it's only for a few tests.

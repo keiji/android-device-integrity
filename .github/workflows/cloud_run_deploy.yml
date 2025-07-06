@@ -3,7 +3,7 @@ name: Deploy to Cloud Run
 on:
   push:
     branches:
-      - main
+      - release/server
     paths:
       - 'server/**'
 

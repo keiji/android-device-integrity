@@ -10,6 +10,9 @@ import dev.keiji.deviceintegrity.repository.contract.PreferencesRepository
 import dev.keiji.deviceintegrity.repository.impl.PreferencesRepositoryImpl
 import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository
 import dev.keiji.deviceintegrity.repository.impl.PlayIntegrityRepositoryImpl
+import dev.keiji.deviceintegrity.repository.contract.KeyPairRepository
+import dev.keiji.deviceintegrity.repository.impl.KeyPairRepositoryImpl
+import kotlinx.coroutines.Dispatchers
 import javax.inject.Singleton
 
 @Module
@@ -27,4 +30,12 @@ object RepositoryModule {
     fun providePlayIntegrityRepository(
         playIntegrityRepositoryImpl: PlayIntegrityRepositoryImpl
     ): PlayIntegrityRepository = playIntegrityRepositoryImpl
+
+    @Provides
+    @Singleton
+    fun provideKeyPairRepository(
+        @ApplicationContext context: Context,
+    ): KeyPairRepository {
+        return KeyPairRepositoryImpl(Dispatchers.IO, context)
+    }
 }

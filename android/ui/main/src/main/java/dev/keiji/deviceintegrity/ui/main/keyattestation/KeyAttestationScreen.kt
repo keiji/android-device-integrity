@@ -2,78 +2,136 @@ package dev.keiji.deviceintegrity.ui.main.keyattestation
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KeyAttestationScreen(
     uiState: KeyAttestationUiState,
-    onNonceChange: (String) -> Unit,
-    onSubmit: () -> Unit,
+    onSelectedKeyTypeChange: (String) -> Unit,
+    onFetchNonceChallenge: () -> Unit,
+    onGenerateKeyPair: () -> Unit,
+    onRequestVerifyKeyAttestation: () -> Unit,
 ) {
+    val scrollState = rememberScrollState()
+    var keyTypeExpanded by remember { mutableStateOf(false) }
+    val keyTypes = listOf("EC", "ECDH", "RSA") // TODO: Move to ViewModel or constants
+
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(scrollState)
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Top
     ) {
-        Text(text = "nonceを入力してください")
-
+        Text(text = "Step1. サーバーからNonce/Challengeを取得")
         Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = uiState.nonce,
-            onValueChange = { onNonceChange(it) }, // Use callback
-            label = { Text("Nonce (Hex)") },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.Characters,
-                autoCorrectEnabled = false,
-                keyboardType = KeyboardType.Ascii
-            ),
-            singleLine = true,
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         Button(
-            onClick = { onSubmit() }, // Use callback
+            onClick = onFetchNonceChallenge,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(ButtonHeight)
         ) {
-            Text(text = "送信")
+            Text(text = "Fetch Nonce/Challenge")
         }
 
-        if (uiState.isLoading) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Loading...")
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(text = "Nonce: ${uiState.nonce}")
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(text = "Challenge: ${uiState.challenge}")
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(text = "Step2. 生成するキーペアの種類を設定")
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Box(modifier = Modifier.fillMaxWidth()) {
+            ExposedDropdownMenuBox(
+                expanded = keyTypeExpanded,
+                onExpandedChange = { keyTypeExpanded = !keyTypeExpanded }
+            ) {
+                TextField(
+                    value = uiState.selectedKeyType,
+                    onValueChange = {}, // This remains empty as direct text input is not intended
+                    readOnly = true,
+                    label = { Text("Key Pair Type") },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = keyTypeExpanded)
+                    },
+                    colors = ExposedDropdownMenuDefaults.textFieldColors(),
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = keyTypeExpanded,
+                    onDismissRequest = { keyTypeExpanded = false }
+                ) {
+                    keyTypes.forEach { selectionOption ->
+                        DropdownMenuItem(
+                            text = { Text(selectionOption) },
+                            onClick = {
+                                onSelectedKeyTypeChange(selectionOption)
+                                keyTypeExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
         }
 
-        if (uiState.result.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(text = uiState.result)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(text = "Step3. キーペア（構成証明付き）を生成")
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(
+            onClick = onGenerateKeyPair,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(ButtonHeight)
+        ) {
+            Text(text = "Generate KeyPair")
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(text = "Step4. キーペアと構成証明を検証")
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(
+            onClick = onRequestVerifyKeyAttestation,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(ButtonHeight)
+        ) {
+            Text(text = "Request Verify KeyAttestation")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(text = uiState.status)
     }
 }
 
@@ -82,11 +140,14 @@ fun KeyAttestationScreen(
 private fun KeyAttestationScreenPreview() {
     KeyAttestationScreen(
         uiState = KeyAttestationUiState(
-            nonce = "PREVIEW_NONCE_12345",
-            isLoading = true,
-            result = "Previewing result text..."
+            nonce = "PREVIEW_NONCE_67890",
+            challenge = "PREVIEW_CHALLENGE_ABCDE",
+            selectedKeyType = "RSA",
+            status = "Previewing KeyAttestation Screen..."
         ),
-        onNonceChange = { System.out.println("Preview: Nonce changed to $it") },
-        onSubmit = { System.out.println("Preview: Submit clicked") }
+        onSelectedKeyTypeChange = { System.out.println("Preview: Key type changed to $it") },
+        onFetchNonceChallenge = { System.out.println("Preview: Fetch Nonce/Challenge clicked") },
+        onGenerateKeyPair = { System.out.println("Preview: Generate KeyPair clicked") },
+        onRequestVerifyKeyAttestation = { System.out.println("Preview: Request Verify KeyAttestation clicked") }
     )
 }

@@ -3,39 +3,82 @@ info:
   title: Key Attestation API Service
   version: v1
   description: |-
-    Provides endpoints for Key Attestation operations.
-    Currently includes a simple placeholder endpoint.
+    Provides endpoints for Key Attestation operations, including preparation and verification (mocked) for EC keys.
   contact:
     name: API Support
     url: http://www.example.com/support
     email: support@example.com
 
 tags:
-  - name: KeyAttestation
-    description: Operations related to Key Attestation.
+  - name: KeyAttestationV1
+    description: Operations related to Key Attestation v1
 
 servers:
-  - url: http://localhost:8080 # Replace with your actual server URL in production. This might be a different port or service for Key Attestation.
-    description: Development server
+  - url: /key-attestation # Assuming the service is hosted at /key-attestation and blueprint handles /v1/*
+    description: Key Attestation Service Base URL
 
 paths:
-  /key-attestation/:
-    get:
-      summary: Key Attestation Hello World
-      description: Returns a simple greeting from the Key Attestation service. This is a placeholder and will be updated with actual Key Attestation logic.
-      operationId: getKeyAttestationHello
+  /v1/prepare:
+    post:
+      summary: Prepare Key Attestation
+      description: Generates a nonce and challenge for Key Attestation.
+      operationId: prepareKeyAttestation
       tags:
-        - KeyAttestation
+        - KeyAttestationV1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrepareRequestBody'
       responses:
         '200':
-          description: Successful response
+          description: Successfully generated nonce and challenge.
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-                example: "Hello World from Key Attestation!"
+                $ref: '#/components/schemas/PrepareResponseBody'
+        '400':
+          description: Bad Request (e.g., missing sessionId).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
-          description: Internal server error
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/verify/ec:
+    post:
+      summary: Verify EC Key Attestation
+      description: Verifies the EC Key Attestation (mock implementation).
+      operationId: verifyEcKeyAttestation
+      tags:
+        - KeyAttestationV1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyEcRequestBody'
+      responses:
+        '200':
+          description: Successfully processed EC verification (mock response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyEcResponseBody'
+        '400':
+          description: Bad Request (e.g., missing parameters).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error.
           content:
             application/json:
               schema:
@@ -43,6 +86,101 @@ paths:
 
 components:
   schemas:
+    PrepareRequestBody:
+      type: object
+      required:
+        - sessionId
+      properties:
+        sessionId:
+          type: string
+          description: Client session ID.
+          example: "session-12345-abcde"
+    PrepareResponseBody:
+      type: object
+      required:
+        - nonceBase64UrlEncoded
+        - challengeBase64UrlEncoded
+      properties:
+        nonceBase64UrlEncoded:
+          type: string
+          format: byte
+          description: Base64URL-encoded nonce.
+          example: "SGVsbG8gd29ybGQhMTIzNDU2Nzg5MA=="
+        challengeBase64UrlEncoded:
+          type: string
+          format: byte
+          description: Base64URL-encoded challenge.
+          example: "Q2hhbGxlbmdlMTIzNDU2Nzg5MA=="
+    VerifyEcRequestBody:
+      type: object
+      required:
+        - sessionId
+        - signedDataBase64Encoded
+        - nonceBBase64Encoded
+        - certificateChainBase64Encoded
+      properties:
+        sessionId:
+          type: string
+          description: Client session ID.
+          example: "session-12345-abcde"
+        signedDataBase64Encoded:
+          type: string
+          format: byte
+          description: Base64-encoded signed data.
+          example: "U2lnbmVkRGF0YTEyMzQ1Njc4OTA="
+        nonceBBase64Encoded:
+          type: string
+          format: byte
+          description: Base64-encoded second nonce from client.
+          example: "Tm9uY2VCMTIzNDU2Nzg5MA=="
+        certificateChainBase64Encoded:
+          type: array
+          items:
+            type: string
+            format: byte
+          description: Array of Base64-encoded certificate strings. # Description for the array itself
+          # item description is implicitly "Base64-encoded certificate strings" due to items.type and items.format
+          example: ["Y2VydDE=", "Y2VydDI="]
+    VerifyEcResponseBody:
+      type: object
+      required:
+        - sessionId
+        - isVerified
+      properties:
+        sessionId:
+          type: string
+          description: Client session ID.
+          example: "session-12345-abcde"
+        isVerified:
+          type: boolean
+          description: Result of the verification.
+          example: false
+        reason:
+          type: string
+          description: Reason for verification failure (optional).
+          example: "Mock implementation"
+        decodedCertificateChain:
+          type: object
+          description: Mocked decoded certificate chain details.
+          properties: # Added properties for clarity, even if just a mock
+            mockedDetail:
+              type: string
+              example: "This is a mock response for decoded certificate chain."
+          required: # Added required for clarity
+            - mockedDetail
+        attestationProperties:
+          type: object
+          description: Mocked attestation properties.
+          properties: # Added properties for clarity
+            mockedSoftwareEnforced:
+              type: object
+              # Add further properties if known, else empty object is fine
+            mockedTeeEnforced:
+              type: object
+              # Add further properties if known, else empty object is fine
+          required: # Added required for clarity
+            - mockedSoftwareEnforced
+            - mockedTeeEnforced
     ErrorResponse:
       type: object
       required:
@@ -51,5 +189,5 @@ components:
         error:
           type: string
           description: A message describing the error.
-          example: "An error occurred" # Generic error for key attestation
+          example: "An error occurred"
   securitySchemes: {}

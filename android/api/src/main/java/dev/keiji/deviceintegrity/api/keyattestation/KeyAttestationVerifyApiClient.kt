@@ -1,21 +1,23 @@
 package dev.keiji.deviceintegrity.api.keyattestation
 
+import dev.keiji.deviceintegrity.api.keyattestation.PrepareRequest
+import dev.keiji.deviceintegrity.api.keyattestation.PrepareResponse
+import dev.keiji.deviceintegrity.api.keyattestation.VerifyEcRequest
+import dev.keiji.deviceintegrity.api.keyattestation.VerifyEcResponse
 import retrofit2.http.Body
 import retrofit2.http.POST
 
 interface KeyAttestationVerifyApiClient {
-    @POST("v1/verifyAttestation") // Dummy endpoint
-    suspend fun verifyAttestation(@Body request: KeyAttestationRequest): KeyAttestationResponse
+
+    // Ensure this path matches the server-side endpoint path
+    @POST("v1/prepare")
+    suspend fun prepare(
+        @Body requestBody: PrepareRequest
+    ): PrepareResponse
+
+    // Ensure this path matches the server-side endpoint path
+    @POST("v1/verify/ec")
+    suspend fun verifyEc(
+        @Body requestBody: VerifyEcRequest
+    ): VerifyEcResponse
 }
-
-// Dummy request object
-data class KeyAttestationRequest(
-    val attestationStatement: String,
-    val challenge: String
-)
-
-// Dummy response object
-data class KeyAttestationResponse(
-    val isValid: Boolean,
-    val errorMessages: List<String>? = null
-)
