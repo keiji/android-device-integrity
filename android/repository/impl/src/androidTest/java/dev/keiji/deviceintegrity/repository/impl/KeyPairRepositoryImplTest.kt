@@ -6,12 +6,8 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import dev.keiji.deviceintegrity.repository.contract.KeyPairData
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking // Using runBlocking for simplicity in instrumentation tests.
-                                   // TestCoroutineDispatcher might be more complex to set up here.
-import kotlinx.coroutines.test.StandardTestDispatcher // Or use runBlocking(Dispatchers.IO)
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.runTest
 import org.junit.After
