@@ -26,6 +26,10 @@ include(
     ":provider:impl"
 )
 include(
+    ":crypto:contract",
+    ":crypto:impl"
+)
+include(
     ":repository:contract",
     ":repository:impl"
 )

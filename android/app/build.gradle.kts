@@ -118,6 +118,8 @@ dependencies {
     implementation(project(":ui:license"))
     implementation(project(":provider:impl"))
     implementation(project(":provider:contract"))
+    implementation(project(":crypto:contract"))
+    implementation(project(":crypto:impl"))
     implementation(project(":repository:impl"))
     implementation(project(":ui:nav:impl"))
 
