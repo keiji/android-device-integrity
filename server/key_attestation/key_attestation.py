@@ -1,14 +1,205 @@
-from flask import Flask
+import base64
+import os
+from datetime import datetime, timezone, timedelta
+from flask import Flask, request, jsonify, Blueprint
+from google.cloud import datastore
+import logging
 
+# Initialize Flask app
 app = Flask(__name__)
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Initialize Datastore client
+try:
+    datastore_client = datastore.Client()
+    logger.info("Datastore client initialized successfully.")
+except Exception as e:
+    logger.error(f"Failed to initialize Datastore client: {e}")
+    datastore_client = None
+
+# Define Blueprint for Key Attestation API v1
+key_attestation_v1_bp = Blueprint('key_attestation_v1', __name__, url_prefix='/v1')
+
+# Datastore Kind for Key Attestation Sessions
+KEY_ATTESTATION_SESSION_KIND = "KeyAttestationSession"
+SESSION_EXPIRY_MINUTES = 10
+
+# --- Helper Functions ---
+
+def generate_random_bytes(length=32):
+    """Generates cryptographically secure random bytes."""
+    return os.urandom(length)
+
+def base64url_encode(data_bytes):
+    """Encodes bytes to a Base64URL string."""
+    return base64.urlsafe_b64encode(data_bytes).decode('utf-8').rstrip('=')
+
+def store_key_attestation_session(session_id, nonce_encoded, challenge_encoded):
+    """
+    Stores the key attestation session data in Datastore.
+    The entity key will be the session_id to ensure uniqueness and allow easy lookup.
+    """
+    if not datastore_client:
+        logger.error("Datastore client not available. Cannot store session.")
+        raise ConnectionError("Datastore client not initialized.")
+
+    now = datetime.now(timezone.utc)
+    expiry_datetime = now + timedelta(minutes=SESSION_EXPIRY_MINUTES)
+
+    key = datastore_client.key(KEY_ATTESTATION_SESSION_KIND, session_id)
+    entity = datastore.Entity(key=key)
+    entity.update({
+        'sessionId': session_id,
+        'nonce': nonce_encoded,
+        'challenge': challenge_encoded,
+        'created_at': now,
+        'expiry_datetime': expiry_datetime
+    })
+    datastore_client.put(entity)
+    logger.info(f"Stored key attestation session for sessionId: {session_id}")
+    # Consider calling cleanup_expired_sessions() here or via a scheduled job
+    cleanup_expired_sessions()
+
+def cleanup_expired_sessions():
+    """Removes expired key attestation session entities from Datastore."""
+    if not datastore_client:
+        logger.warning("Datastore client not available. Skipping cleanup of expired sessions.")
+        return
+
+    try:
+        now = datetime.now(timezone.utc)
+        query = datastore_client.query(kind=KEY_ATTESTATION_SESSION_KIND)
+        query.add_filter('expiry_datetime', '<', now)
+
+        expired_entities = list(query.fetch())
+
+        if expired_entities:
+            keys_to_delete = [entity.key for entity in expired_entities]
+            datastore_client.delete_multi(keys_to_delete)
+            logger.info(f"Cleaned up {len(keys_to_delete)} expired key attestation session entities.")
+        else:
+            logger.info("No expired key attestation session entities found to cleanup.")
+    except Exception as e:
+        logger.error(f"Error during Datastore cleanup of expired key attestation sessions: {e}")
+
+# --- Endpoints ---
+
+@key_attestation_v1_bp.route('/prepare', methods=['POST'])
+def prepare_attestation():
+    """
+    Prepares for key attestation by generating a nonce and challenge.
+    Request body: { "sessionId": "string" }
+    Response body: { "nonce": "string (Base64URLEncoded)", "challenge": "string (Base64URLEncoded)" }
+    """
+    if not datastore_client:
+        logger.error("Datastore client not available for /prepare endpoint.")
+        return jsonify({"error": "Datastore service not available"}), 503
+
+    try:
+        data = request.get_json()
+        if not data:
+            logger.warning("Prepare request missing JSON payload.")
+            return jsonify({"error": "Missing JSON payload"}), 400
+
+        session_id = data.get('sessionId')
+        if not session_id or not isinstance(session_id, str) or not session_id.strip():
+            logger.warning(f"Prepare request with invalid sessionId: {session_id}")
+            return jsonify({"error": "'sessionId' must be a non-empty string"}), 400
+
+        # Generate nonce and challenge
+        nonce_bytes = generate_random_bytes()
+        challenge_bytes = generate_random_bytes()
+
+        nonce_encoded = base64url_encode(nonce_bytes)
+        challenge_encoded = base64url_encode(challenge_bytes)
+
+        # Store session data in Datastore
+        try:
+            store_key_attestation_session(session_id, nonce_encoded, challenge_encoded)
+        except ConnectionError as e: # Catch if datastore_client was None during helper call
+             logger.error(f"Datastore connection error during store_key_attestation_session: {e}")
+             return jsonify({"error": "Failed to store session due to datastore connectivity"}), 503
+        except Exception as e:
+            logger.error(f"Failed to store key attestation session for sessionId {session_id}: {e}")
+            return jsonify({"error": "Failed to store session data"}), 500
+
+        response_data = {
+            "nonce": nonce_encoded,
+            "challenge": challenge_encoded
+        }
+        logger.info(f"Successfully prepared attestation for sessionId: {session_id}")
+        return jsonify(response_data), 200
+
+    except Exception as e:
+        logger.error(f"Error in /prepare endpoint: {e}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
+
+@key_attestation_v1_bp.route('/verify/ec', methods=['POST'])
+def verify_ec_attestation():
+    """
+    Verifies the EC key attestation (mock implementation).
+    Request body: { "sessionId": "string", "signedData": "string (Base64Encoded)", "nonceB": "string (Base64Encoded)", "certificateChain": ["string (Base64Encoded)"] }
+    Response body: { "sessionId": "string", "isVerified": false, "reason": "Mock implementation", "decodedCertificateChain": { "mockedDetail": "This is a mock response for decoded certificate chain." }, "attestationProperties": { "mockedSoftwareEnforced": {}, "mockedTeeEnforced": {} } }
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            logger.warning("Verify EC request missing JSON payload.")
+            return jsonify({"error": "Missing JSON payload"}), 400
+
+        # Validate required fields (presence only for this mock)
+        session_id = data.get('sessionId')
+        signed_data = data.get('signedData')
+        nonce_b = data.get('nonceB')
+        certificate_chain = data.get('certificateChain')
+
+        if not all([session_id, signed_data, nonce_b, certificate_chain]):
+            logger.warning(f"Verify EC request for session {session_id} missing one or more required fields.")
+            return jsonify({"error": "Missing one or more required fields: sessionId, signedData, nonceB, certificateChain"}), 400
+
+        if not isinstance(session_id, str) or \
+           not isinstance(signed_data, str) or \
+           not isinstance(nonce_b, str) or \
+           not isinstance(certificate_chain, list):
+            logger.warning(f"Verify EC request for session {session_id} has type mismatch for one or more fields.")
+            return jsonify({"error": "Type mismatch for one or more fields."}), 400
+
+
+        # Mock response
+        mock_response = {
+            "sessionId": session_id,
+            "isVerified": False,
+            "reason": "Mock implementation",
+            "decodedCertificateChain": {
+                "mockedDetail": "This is a mock response for decoded certificate chain."
+            },
+            "attestationProperties": {
+                "mockedSoftwareEnforced": {},
+                "mockedTeeEnforced": {}
+            }
+        }
+        logger.info(f"Successfully processed mock EC verification for sessionId: {session_id}")
+        return jsonify(mock_response), 200
+
+    except Exception as e:
+        logger.error(f"Error in /verify/ec endpoint: {e}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
 
 @app.route('/')
-def hello():
-    """Return a friendly HTTP greeting."""
-    return 'Hello World from Key Attestation!'
+def index():
+    # Redirect to openapi.yaml or provide a status
+    return jsonify({"status": "Key Attestation API is running. See /openapi.yaml for documentation."})
+
+
+# Register Blueprints
+app.register_blueprint(key_attestation_v1_bp)
 
 if __name__ == '__main__':
-    # This is used when running locally only. When deploying to Google App
-    # Engine, a webserver process such as Gunicorn will serve the app. This
-    # can be configured by adding an `entrypoint` to app.yaml.
-    app.run(host='127.0.0.1', port=8081, debug=True) # Port 8081 for local testing to avoid conflict
+    # This is used when running locally only.
+    # When deploying to Google App Engine, a webserver process such as Gunicorn will serve the app.
+    # This can be configured by adding an `entrypoint` to app.yaml.
+    # The PORT environment variable is provided by App Engine.
+    port = int(os.environ.get('PORT', 8081))
+    app.run(host='0.0.0.0', port=port, debug=True)
