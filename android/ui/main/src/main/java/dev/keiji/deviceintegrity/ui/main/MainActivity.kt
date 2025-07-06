@@ -160,6 +160,7 @@ fun DeviceIntegrityApp(
                         onStandardRequestVerify = { standardViewModel.verifyToken() }
                     )
                 }
+                /*
                 composable(AppScreen.KeyAttestation.route) {
                     val viewModel: KeyAttestationViewModel = hiltViewModel()
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -181,6 +182,7 @@ fun DeviceIntegrityApp(
                         onSubmit = viewModel::submit
                     )
                 }
+                */
                 composable(AppScreen.Menu.route) {
                     val viewModel: SettingsViewModel = hiltViewModel()
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
