@@ -48,13 +48,13 @@ def store_key_attestation_session(session_id, nonce_encoded, challenge_encoded):
     key = datastore_client.key(KEY_ATTESTATION_SESSION_KIND, session_id)
     entity = datastore.Entity(key=key)
     entity.update({
-        'sessionId': session_id,
+        'session_id': session_id,
         'nonce': nonce_encoded,
         'challenge': challenge_encoded,
         'generated_at': now,
     })
     datastore_client.put(entity)
-    logger.info(f"Stored key attestation session for sessionId: {session_id}")
+    logger.info(f"Stored key attestation session for session_id: {session_id}")
     # Consider calling cleanup_expired_sessions() here or via a scheduled job
     cleanup_expired_sessions()
 
@@ -86,7 +86,7 @@ def cleanup_expired_sessions():
 def prepare_attestation():
     """
     Prepares for key attestation by generating a nonce and challenge.
-    Request body: { "sessionId": "string" }
+    Request body: { "session_id": "string" }
     Response body: { "nonce": "string (Base64URLEncoded)", "challenge": "string (Base64URLEncoded)" }
     """
     if not datastore_client:
@@ -99,10 +99,10 @@ def prepare_attestation():
             logger.warning("Prepare request missing JSON payload.")
             return jsonify({"error": "Missing JSON payload"}), 400
 
-        session_id = data.get('sessionId')
+        session_id = data.get('session_id')
         if not session_id or not isinstance(session_id, str) or not session_id.strip():
-            logger.warning(f"Prepare request with invalid sessionId: {session_id}")
-            return jsonify({"error": "'sessionId' must be a non-empty string"}), 400
+            logger.warning(f"Prepare request with invalid session_id: {session_id}")
+            return jsonify({"error": "'session_id' must be a non-empty string"}), 400
 
         # Generate nonce and challenge
         nonce_bytes = generate_random_bytes()
@@ -136,8 +136,8 @@ def prepare_attestation():
 def verify_ec_attestation():
     """
     Verifies the EC key attestation (mock implementation).
-    Request body: { "sessionId": "string", "signedData": "string (Base64Encoded)", "nonceB": "string (Base64Encoded)", "certificateChain": ["string (Base64Encoded)"] }
-    Response body: { "sessionId": "string", "isVerified": false, "reason": "Mock implementation", "decodedCertificateChain": { "mockedDetail": "This is a mock response for decoded certificate chain." }, "attestationProperties": { "mockedSoftwareEnforced": {}, "mockedTeeEnforced": {} } }
+    Request body: { "session_id": "string", "signed_data": "string (Base64Encoded)", "nonce_b": "string (Base64Encoded)", "certificate_chain": ["string (Base64Encoded)"] }
+    Response body: { "session_id": "string", "is_verified": false, "reason": "Mock implementation", "decoded_certificate_chain": { "mocked_detail": "This is a mock response for decoded certificate chain." }, "attestation_properties": { "mocked_software_enforced": {}, "mocked_tee_enforced": {} } }
     """
     try:
         data = request.get_json()
@@ -146,14 +146,14 @@ def verify_ec_attestation():
             return jsonify({"error": "Missing JSON payload"}), 400
 
         # Validate required fields (presence only for this mock)
-        session_id = data.get('sessionId')
-        signed_data = data.get('signedData')
-        nonce_b = data.get('nonceB')
-        certificate_chain = data.get('certificateChain')
+        session_id = data.get('session_id')
+        signed_data = data.get('signed_data')
+        nonce_b = data.get('nonce_b')
+        certificate_chain = data.get('certificate_chain')
 
         if not all([session_id, signed_data, nonce_b, certificate_chain]):
             logger.warning(f"Verify EC request for session {session_id} missing one or more required fields.")
-            return jsonify({"error": "Missing one or more required fields: sessionId, signedData, nonceB, certificateChain"}), 400
+            return jsonify({"error": "Missing one or more required fields: session_id, signed_data, nonce_b, certificate_chain"}), 400
 
         if not isinstance(session_id, str) or \
            not isinstance(signed_data, str) or \
@@ -165,18 +165,18 @@ def verify_ec_attestation():
 
         # Mock response
         mock_response = {
-            "sessionId": session_id,
-            "isVerified": False,
+            "session_id": session_id,
+            "is_verified": False,
             "reason": "Mock implementation",
-            "decodedCertificateChain": {
-                "mockedDetail": "This is a mock response for decoded certificate chain."
+            "decoded_certificate_chain": {
+                "mocked_detail": "This is a mock response for decoded certificate chain."
             },
-            "attestationProperties": {
-                "mockedSoftwareEnforced": {},
-                "mockedTeeEnforced": {}
+            "attestation_properties": {
+                "mocked_software_enforced": {},
+                "mocked_tee_enforced": {}
             }
         }
-        logger.info(f"Successfully processed mock EC verification for sessionId: {session_id}")
+        logger.info(f"Successfully processed mock EC verification for session_id: {session_id}")
         return jsonify(mock_response), 200
 
     except Exception as e:

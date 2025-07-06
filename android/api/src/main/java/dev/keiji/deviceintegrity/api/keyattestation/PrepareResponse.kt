@@ -1,9 +1,12 @@
 package dev.keiji.deviceintegrity.api.keyattestation
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
 
 @Serializable
 data class PrepareResponse(
-    val nonceBase64UrlEncoded: String, // Base64URL Encoded
-    val challengeBase64UrlEncoded: String // Base64URL Encoded
+    @SerialName("nonce")
+    val nonceBase64UrlEncoded: String,
+    @SerialName("challenge")
+    val challengeBase64UrlEncoded: String
 )
