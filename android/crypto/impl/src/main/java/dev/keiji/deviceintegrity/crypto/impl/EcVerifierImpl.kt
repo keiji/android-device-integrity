@@ -5,10 +5,14 @@ import java.security.PublicKey
 import java.security.Signature
 
 class EcVerifierImpl : Verifier {
+    companion object {
+        private const val ALGORITHM_SHA256_WITH_ECDSA = "SHA256withECDSA"
+    }
+
     override fun verify(signature: ByteArray, plain: ByteArray, publicKey: PublicKey): Boolean {
-        val sig = Signature.getInstance("SHA256withECDSA")
-        sig.initVerify(publicKey)
-        sig.update(plain)
-        return sig.verify(signature)
+        val verifier = Signature.getInstance(ALGORITHM_SHA256_WITH_ECDSA)
+        verifier.initVerify(publicKey)
+        verifier.update(plain)
+        return verifier.verify(signature)
     }
 }
