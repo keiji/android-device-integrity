@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import android.os.Build
 import androidx.compose.foundation.layout.fillMaxSize
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.compose.foundation.layout.padding
@@ -114,9 +115,13 @@ fun DeviceIntegrityApp(
                 NavigationBar {
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentDestination = navBackStackEntry?.destination
-                    bottomNavigationItems.forEach { screen ->
-                        NavigationBarItem(
-                            icon = {
+                    bottomNavigationItems
+                        .filter { screen ->
+                            screen != AppScreen.KeyAttestation || Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
+                        }
+                        .forEach { screen ->
+                            NavigationBarItem(
+                                icon = {
                                 Icon(
                                     painter = androidx.compose.ui.res.painterResource(id = screen.icon),
                                     contentDescription = stringResource(id = screen.label)
@@ -160,7 +165,6 @@ fun DeviceIntegrityApp(
                         onStandardRequestVerify = { standardViewModel.verifyToken() }
                     )
                 }
-                /*
                 composable(AppScreen.KeyAttestation.route) {
                     val viewModel: KeyAttestationViewModel = hiltViewModel()
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -182,7 +186,6 @@ fun DeviceIntegrityApp(
                         onSubmit = viewModel::submit
                     )
                 }
-                */
                 composable(AppScreen.Menu.route) {
                     val viewModel: SettingsViewModel = hiltViewModel()
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
