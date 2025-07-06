@@ -9,12 +9,14 @@ import retrofit2.http.POST
 
 interface KeyAttestationVerifyApiClient {
 
-    @POST("v1/prepare") // Ensure this path matches the server-side blueprint + endpoint path
+    // Ensure this path matches the server-side endpoint path
+    @POST("v1/prepare")
     suspend fun prepare(
         @Body requestBody: PrepareRequest
     ): PrepareResponse
 
-    @POST("v1/verify/ec") // Ensure this path matches the server-side blueprint + endpoint path
+    // Ensure this path matches the server-side endpoint path
+    @POST("v1/verify/ec")
     suspend fun verifyEc(
         @Body requestBody: VerifyEcRequest
     ): VerifyEcResponse
