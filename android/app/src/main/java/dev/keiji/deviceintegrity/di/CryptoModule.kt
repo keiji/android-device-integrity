@@ -4,7 +4,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import dev.keiji.deviceintegrity.common.di.EC
+import dev.keiji.deviceintegrity.di.qualifier.EC
 import dev.keiji.deviceintegrity.crypto.contract.Signer
 import dev.keiji.deviceintegrity.crypto.contract.Verifier
 import dev.keiji.deviceintegrity.crypto.impl.EcSignerImpl

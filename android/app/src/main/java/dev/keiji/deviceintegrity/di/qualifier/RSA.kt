@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.common.di
+package dev.keiji.deviceintegrity.di.qualifier
 
 import javax.inject.Qualifier
 
