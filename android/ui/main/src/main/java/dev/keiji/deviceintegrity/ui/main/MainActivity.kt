@@ -165,7 +165,6 @@ fun DeviceIntegrityApp(
                     val uiState by keyAttestationViewModel.uiState.collectAsStateWithLifecycle()
                     // val context = LocalContext.current // Keep if needed for other purposes, remove if only for Toast
 
-                    // LaunchedEffect for KeyAttestationUiEvent has been removed as the event system was removed.
                     // Status and errors are now handled via uiState.status.
 
                     KeyAttestationScreen(
