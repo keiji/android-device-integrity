@@ -31,5 +31,4 @@ android {
 }
 
 dependencies {
-    implementation(project(":android:provider:contract"))
 }
