@@ -12,6 +12,9 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/api" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/crypto" />
+            <option value="$PROJECT_DIR$/crypto/contract" />
+            <option value="$PROJECT_DIR$/crypto/impl" />
             <option value="$PROJECT_DIR$/provider" />
             <option value="$PROJECT_DIR$/provider/contract" />
             <option value="$PROJECT_DIR$/provider/impl" />

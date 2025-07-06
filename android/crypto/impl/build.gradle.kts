@@ -35,8 +35,7 @@ android {
 dependencies {
     api(project(":crypto:contract"))
 
-    // implementation(libs.hilt.android) // Hilt dependency no longer needed here
-    // ksp(libs.hilt.compiler) // Hilt ksp no longer needed here
+    implementation(libs.javax.inject)
 
     testImplementation(libs.junit)
 }
