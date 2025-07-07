@@ -410,16 +410,9 @@ def get_attestation_extension_properties(certificate):
     elif hasattr(ext.value, 'value') and isinstance(ext.value.value, bytes): # For some cases where it might be wrapped
         key_description_bytes = ext.value.value
     elif isinstance(ext.value, bytes): # If cryptography returns OCTET STRING bytes directly
-         # This typically means the OCTET STRING wrapper itself needs to be stripped
-         # if ext.value is the full extensionvalue (tag, length, content).
-         # However, `get_extension_for_oid` usually gives the content of the OCTET STRING.
-         # We load it as OctetString to be sure we get the inner content.
-        try:
-            octet_string_val = asn1_core.OctetString.load(ext.value)
-            key_description_bytes = octet_string_val.native
-        except Exception as e:
-            logger.error(f"Attestation extension value is bytes, but not a valid OCTET STRING: {e}")
-            raise ValueError("Attestation extension value is not a valid OCTET STRING.")
+        # If ext.value is already the DER-encoded KeyDescription (content of the OCTET STRING),
+        # then assign it directly.
+        key_description_bytes = ext.value
     else:
         logger.error(f"Unexpected type for attestation extension value: {type(ext.value)}")
         raise ValueError("Unexpected type for attestation extension value.")
