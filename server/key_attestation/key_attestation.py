@@ -108,18 +108,23 @@ def get_key_attestation_session(session_id):
 
 def decode_certificate_chain(certificate_chain_b64):
     """
-    Decodes a list of Base64URLSafe encoded certificate strings into a list of X509Certificate objects.
+    Decodes a list of Base64 encoded certificate strings into a list of X509Certificate objects.
     """
     decoded_certs = []
     for i, cert_b64 in enumerate(certificate_chain_b64):
         try:
-            cert_bytes = base64url_decode(cert_b64)
+            # Ensure the input string is properly padded for standard Base64 decoding
+            padding = '=' * (4 - (len(cert_b64) % 4))
+            cert_bytes = base64.b64decode(cert_b64 + padding)
             cert = x509.load_der_x509_certificate(cert_bytes)
             decoded_certs.append(cert)
-        except ValueError as e:
-            logger.error(f"Failed to decode or parse certificate at index {i}: {e}")
-            raise ValueError(f"Invalid certificate string at index {i}")
-        except Exception as e: # Catch other cryptography parsing errors
+        except ValueError as e: # Handles errors from b64decode if padding is wrong or chars invalid
+            logger.error(f"Failed to decode Base64 certificate at index {i}: {e}")
+            raise ValueError(f"Invalid Base64 certificate string at index {i}")
+        except TypeError as e: # Handles errors from b64decode if input is not string-like
+            logger.error(f"Type error during Base64 decoding for certificate at index {i}: {e}")
+            raise ValueError(f"Invalid type for Base64 certificate string at index {i}")
+        except Exception as e: # Catch other cryptography parsing errors or unexpected issues
             logger.error(f"Error loading certificate at index {i} into X509 object: {e}")
             raise ValueError(f"Cannot parse certificate at index {i} into X509 object")
     if not decoded_certs:

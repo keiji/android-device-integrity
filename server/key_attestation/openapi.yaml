@@ -137,9 +137,9 @@ components:
           type: array
           items:
             type: string
-            format: byte
-          description: Array of Base64-encoded certificate strings.
-          example: ["Y2VydDE=", "Y2VydDI="]
+            format: base64 # Changed from byte (Base64URL) to base64
+          description: Array of standard Base64-encoded certificate strings.
+          example: ["Y2VydDE=", "Y2VydDI="] # Example remains valid for standard Base64
     VerifyEcResponseBody:
       type: object
       required:
