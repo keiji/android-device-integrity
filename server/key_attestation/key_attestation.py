@@ -9,7 +9,9 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec, rsa, padding as asym_padding
 from cryptography.exceptions import InvalidSignature
-from asn1crypto import core as asn1_core # For parsing ASN.1 structures
+from pyasn1.codec.der import decoder as der_decoder
+from pyasn1.type import univ
+from pyasn1.error import PyAsn1Error
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -239,156 +241,251 @@ def verify_certificate_chain(certificates):
 OID_ANDROID_KEY_ATTESTATION = x509.ObjectIdentifier("1.3.6.1.4.1.11129.2.1.17")
 
 # AuthorizationList tags (from Keymaster/KeyMint documentation)
-# These are context-specific tags within the AuthorizationList sequence.
-# We'll define a few common ones needed or for demonstration.
-# For a full implementation, all relevant tags from the documentation should be added.
+# https://source.android.com/docs/security/features/keystore/attestation?hl=ja#schema
 TAG_PURPOSE = 1
 TAG_ALGORITHM = 2
 TAG_KEY_SIZE = 3
 TAG_DIGEST = 5
 TAG_PADDING = 6
 TAG_EC_CURVE = 10
+
 TAG_RSA_PUBLIC_EXPONENT = 200
-TAG_ROLLBACK_RESISTANCE = 303 # v3+
+TAG_MGF_DIGEST = 203
+
+TAG_ROLLBACK_RESISTANCE = 303  # v3+
+TAG_EARLY_BOOT_ONLY = 305
+
 TAG_ACTIVE_DATETIME = 400
 TAG_ORIGINATION_EXPIRE_DATETIME = 401
 TAG_USAGE_EXPIRE_DATETIME = 402
+TAG_USAGE_COUNT_LIMIT = 405
+
 TAG_NO_AUTH_REQUIRED = 503
 TAG_USER_AUTH_TYPE = 504
 TAG_AUTH_TIMEOUT = 505
-TAG_ALLOW_WHILE_ON_BODY = 506 # v3+
-TAG_TRUSTED_USER_PRESENCE_REQUIRED = 507 # v3+
-TAG_TRUSTED_CONFIRMATION_REQUIRED = 508 # v3+
-TAG_UNLOCKED_DEVICE_REQUIRED = 509 # v3+
+TAG_ALLOW_WHILE_ON_BODY = 506  # v3+
+TAG_TRUSTED_USER_PRESENCE_REQUIRED = 507  # v3+
+TAG_TRUSTED_CONFIRMATION_REQUIRED = 508  # v3+
+TAG_UNLOCKED_DEVICE_REQUIRED = 509  # v3+
+
 TAG_CREATION_DATETIME = 701
 TAG_ORIGIN = 702
 TAG_ROOT_OF_TRUST = 704
 TAG_OS_VERSION = 705
 TAG_OS_PATCH_LEVEL = 706
-TAG_ATTESTATION_APPLICATION_ID = 709 # v2+
-TAG_ATTESTATION_ID_BRAND = 710 # v2+
-TAG_ATTESTATION_ID_DEVICE = 711 # v2+
+TAG_ATTESTATION_APPLICATION_ID = 709  # v2+
+TAG_ATTESTATION_ID_BRAND = 710  # v2+
+TAG_ATTESTATION_ID_DEVICE = 711  # v2+
+TAG_ATTESTATION_ID_PRODUCT = 712
+TAG_ATTESTATION_ID_SERIAL = 713
+TAG_ATTESTATION_ID_IMEI = 714
+TAG_ATTESTATION_ID_MEID = 715
+TAG_ATTESTATION_ID_MANUFACTURER = 716
+TAG_ATTESTATION_ID_MODEL = 717
+TAG_VENDOR_PATCH_LEVEL = 718
+TAG_BOOT_PATCH_LEVEL = 719
+TAG_DEVICE_UNIQUE_ATTESTATION = 720
+TAG_ATTESTATION_ID_SECOND_IMEI = 723
+TAG_MODULE_HASH = 724
 # ... and many more
 
-def parse_authorization_list(auth_list_bytes, attestation_version):
-    """
-    Parses an AuthorizationList SEQUENCE.
-    Returns a dictionary of parsed properties.
-    This is a simplified parser focusing on a few example tags.
-    A full implementation would need to handle all tags and types correctly.
-    """
-    parsed_props = {}
-    auth_list_sequence = asn1_core.Sequence.load(auth_list_bytes)
-    for item in auth_list_sequence:
-        if not isinstance(item, asn1_core.TaggedValue):
-            logger.warning(f"Unexpected item in AuthorizationList: {type(item)}. Skipping.")
+def parse_root_of_trust(root_of_trust_sequence):
+    parsed_data = {}
+
+    if not isinstance(root_of_trust_sequence, univ.Sequence):
+        return parsed_data
+
+    parsed_data['verified_boot_key'] = bytes(root_of_trust_sequence[0]).hex()
+    parsed_data['device_locked'] = bool(root_of_trust_sequence[1])
+    parsed_data['verified_boot_state'] = int(root_of_trust_sequence[2])
+    parsed_data['verified_boot_hash'] = bytes(root_of_trust_sequence[3]).hex()
+
+    return parsed_data
+
+
+def parse_attestation_application_id(attestation_application_id_bytes):
+    try:
+        attestation_application_id_sequence, _ = der_decoder.decode(attestation_application_id_bytes)
+    except PyAsn1Error as e:
+        logger.error(f"Failed to decode KeyDescription ASN.1 sequence with pyasn1: {e}")
+        raise ValueError("Malformed KeyDescription sequence.")
+
+    parsed_data = {}
+
+    if not isinstance(attestation_application_id_sequence, univ.SequenceOf):
+        return parsed_data
+
+    package_info_sequence = attestation_application_id_sequence[0][0]
+    if not isinstance(package_info_sequence, univ.Sequence):
+        return parsed_data
+
+    signature_set = attestation_application_id_sequence[1]
+    if not isinstance(signature_set, univ.SetOf):
+        return parsed_data
+
+    items = package_info_sequence.items()
+    for index, item in enumerate(items):
+        try:
+            value_component = item[1]
+        except (AttributeError, IndexError):
+            # itemがpyasn1オブジェクトでなかったり、TagSetが空だったりした場合のフォールバック
+            logger.warning(f"Could not get tag from item: {item}")
             continue
 
-        tag_number = item.tag
-        tag_value_bytes = item.payload # This is the DER encoded value of the EXPLICIT tag
+        if index == 0:
+            parsed_data['attestation_application_id'] = str(value_component)
+        elif index == 1:
+            parsed_data['attestation_application_version_code'] = int(value_component)
+
+    parsed_data['application_signature'] = bytes(signature_set[0]).hex()
+
+    return parsed_data
+
+
+def parse_authorization_list(auth_list_sequence, attestation_version):
+    """
+    Parses an AuthorizationList SEQUENCE using pyasn1.
+    Returns a dictionary of parsed properties.
+    """
+    parsed_props = {}
+    if not isinstance(auth_list_sequence, univ.Sequence):
+        return parsed_props
+
+    for item in auth_list_sequence.items():
+        try:
+            tag_set = item[1].tagSet
+            tag_number = tag_set.superTags[1].tagId
+            value_component = item[1]
+        except (AttributeError, IndexError):
+            # itemがpyasn1オブジェクトでなかったり、TagSetが空だったりした場合のフォールバック
+            logger.warning(f"Could not get tag from item: {item}")
+            continue
 
         try:
-            # The value inside EXPLICIT is another ASN.1 structure.
-            # For INTEGERs, it's just asn1_core.Integer.load(tag_value_bytes).native
-            # For SET OF INTEGERs, it's a Set containing Integers.
-            # For NULL, the presence of the tag is enough.
-
-            # Example parsing for a few tags:
             if tag_number == TAG_ATTESTATION_APPLICATION_ID:
-                # This itself is a SEQUENCE, needs further parsing if details are required.
-                # For now, just store its bytes.
-                parsed_props['attestation_application_id_bytes'] = asn1_core.OctetString.load(tag_value_bytes).native
+                parsed_props['attestation_application_id'] = parse_attestation_application_id(bytes(value_component))
             elif tag_number == TAG_OS_VERSION:
-                parsed_props['os_version'] = asn1_core.Integer.load(tag_value_bytes).native
+                parsed_props['os_version'] = int(value_component)
             elif tag_number == TAG_OS_PATCH_LEVEL:
-                parsed_props['os_patch_level'] = asn1_core.Integer.load(tag_value_bytes).native
-            elif tag_number == TAG_PURPOSE: # SET OF INTEGER
-                purposes = [p.native for p in asn1_core.SetOf(asn1_core.Integer).load(tag_value_bytes)]
+                parsed_props['os_patch_level'] = int(value_component)
+            elif tag_number == TAG_DIGEST:
+                digests = [int(p) for p in value_component]
+                parsed_props['digests'] = digests
+            elif tag_number == TAG_PURPOSE:  # SET OF INTEGER
+                purposes = [int(p) for p in value_component]
                 parsed_props['purpose'] = purposes
             elif tag_number == TAG_ALGORITHM:
-                 parsed_props['algorithm'] = asn1_core.Integer.load(tag_value_bytes).native
+                parsed_props['algorithm'] = int(value_component)
+            elif tag_number == TAG_EC_CURVE:
+                parsed_props['ec_curve'] = int(value_component)
+            elif tag_number == TAG_RSA_PUBLIC_EXPONENT:
+                parsed_props['rsa_public_exponent'] = int(value_component)
+            elif tag_number == TAG_MGF_DIGEST:
+                parsed_props['mgf_digest'] = [int(p) for p in value_component]
             elif tag_number == TAG_KEY_SIZE:
-                parsed_props['key_size'] = asn1_core.Integer.load(tag_value_bytes).native
-            elif tag_number == TAG_NO_AUTH_REQUIRED: # NULL
+                parsed_props['key_size'] = int(value_component)
+            elif tag_number == TAG_NO_AUTH_REQUIRED:  # NULL
                 parsed_props['no_auth_required'] = True
-            # Add more tag parsing as needed based on documentation for the specific attestation_version
+            elif tag_number == TAG_CREATION_DATETIME:
+                parsed_props['creation_datetime'] = int(value_component)
+            elif tag_number == TAG_ORIGIN:
+                parsed_props['origin'] = str(value_component)
+            elif tag_number == TAG_VENDOR_PATCH_LEVEL:
+                parsed_props['vendor_patch_level'] = int(value_component)
+            elif tag_number == TAG_BOOT_PATCH_LEVEL:
+                parsed_props['boot_patch_level'] = int(value_component)
+            elif tag_number == TAG_ATTESTATION_ID_BRAND:
+                parsed_props['attestation_id_brand'] = str(value_component)
+            elif tag_number == TAG_ATTESTATION_ID_DEVICE:
+                parsed_props['attestation_id_device'] = str(value_component)
+            elif tag_number == TAG_ATTESTATION_ID_PRODUCT:
+                parsed_props['attestation_id_product'] = str(value_component)
+            elif tag_number == TAG_ATTESTATION_ID_SERIAL:
+                parsed_props['attestation_id_serial'] = str(value_component)
+            elif tag_number == TAG_ATTESTATION_ID_MANUFACTURER:
+                parsed_props['attestation_id_manufacturer'] = str(value_component)
+            elif tag_number == TAG_ATTESTATION_ID_MODEL:
+                parsed_props['attestation_id_model'] = str(value_component)
+            elif tag_number == TAG_MODULE_HASH:
+                parsed_props['module_hash'] = base64.urlsafe_b64encode(bytes(value_component)).decode()
+            elif tag_number == TAG_ROOT_OF_TRUST:
+                parsed_props['root_of_trust'] = parse_root_of_trust(value_component)
+            else:
+                logger.warning("Unknown tag:%d, %s" % (tag_number, value_component))
 
-        except Exception as e:
-            logger.warning(f"Error parsing tag {tag_number} in AuthorizationList: {e}. Value bytes: {tag_value_bytes.hex()}")
-            # Continue parsing other tags
+        except (PyAsn1Error, ValueError) as e:
+            logger.warning(
+                f"Error parsing tag {tag_number} in AuthorizationList: {e}. Value component: {value_component}")
 
     return parsed_props
 
+
 def parse_key_description(key_desc_bytes):
     """
-    Parses the KeyDescription SEQUENCE from the attestation extension.
-    Returns a dictionary containing key properties, including attestationChallenge.
+    Parses the KeyDescription SEQUENCE from the attestation extension using pyasn1.
+    Returns a dictionary containing key properties.
     """
-    key_desc_sequence = asn1_core.Sequence.load(key_desc_bytes)
+    try:
+        key_desc_sequence, _ = der_decoder.decode(key_desc_bytes)
+    except PyAsn1Error as e:
+        logger.error(f"Failed to decode KeyDescription ASN.1 sequence with pyasn1: {e}")
+        raise ValueError("Malformed KeyDescription sequence.")
 
-    if key_desc_sequence is None:
-        logger.warning("Failed to load KeyDescription ASN.1 sequence. Input bytes may be malformed, empty, or not a sequence.")
-        return None
+    if not isinstance(key_desc_sequence, univ.Sequence):
+        raise ValueError("Decoded KeyDescription is not an ASN.1 SEQUENCE.")
 
     parsed_data = {}
-    # Order of fields in KeyDescription SEQUENCE (varies slightly by version, but first few are consistent)
-    # attestationVersion INTEGER,
-    # attestationSecurityLevel SecurityLevel (ENUMERATED),
-    # keyMintVersion / keymasterVersion INTEGER,
-    # keyMintSecurityLevel / keymasterSecurityLevel SecurityLevel (ENUMERATED),
-    # attestationChallenge OCTET_STRING,
-    # uniqueId OCTET_STRING OPTIONAL, (present if requested and available)
-    # softwareEnforced AuthorizationList,
-    # hardwareEnforced AuthorizationList,
-    # ... (version specific fields like deviceUniqueAttestation for v4)
-
     try:
-        parsed_data['attestation_version'] = key_desc_sequence[0].native
-        # SecurityLevel is ENUMERATED { Software (0), TrustedEnvironment (1), StrongBox (2) }
-        parsed_data['attestation_security_level'] = key_desc_sequence[1].native
-        parsed_data['keymint_or_keymaster_version'] = key_desc_sequence[2].native
-        parsed_data['keymint_or_keymaster_security_level'] = key_desc_sequence[3].native
-        parsed_data['attestation_challenge'] = key_desc_sequence[4].native # This is OCTET_STRING
+        parsed_data['attestation_version'] = int(key_desc_sequence[0])
+        parsed_data['attestation_security_level'] = int(key_desc_sequence[1])
+        parsed_data['keymint_or_keymaster_version'] = int(key_desc_sequence[2])
+        parsed_data['keymint_or_keymaster_security_level'] = int(key_desc_sequence[3])
+        # Ensure the challenge is stored as bytes, then encoded to base64url string later if needed for JSON
+        # The user's provided code does base64.urlsafe_b64encode(bytes(key_desc_sequence[4])).decode()
+        # However, the existing code stores it as raw bytes: parsed_data['attestation_challenge'] = key_desc_sequence[4].native
+        # The challenge matching logic later decodes the stored challenge (which is b64 from datastore)
+        # and compares with client_attestation_challenge_bytes.
+        # So, this should remain as bytes.
+        parsed_data['attestation_challenge'] = bytes(key_desc_sequence[4])
 
-        # uniqueId is optional and might not be at index 5 if absent.
-        # For simplicity, we assume standard order for now. A robust parser would check tags/OPTIONAL.
+
         idx = 5
-        if len(key_desc_sequence) > idx and isinstance(key_desc_sequence[idx], asn1_core.OctetString):
-             parsed_data['unique_id'] = key_desc_sequence[idx].native
-             idx +=1
-        else: # Or if tag indicates it's not uniqueId
-            parsed_data['unique_id'] = None # Or skip if not present
+        if len(key_desc_sequence) > idx and isinstance(key_desc_sequence[idx], univ.OctetString):
+            parsed_data['unique_id'] = bytes(key_desc_sequence[idx]).hex()
+            idx += 1
+        else:
+            parsed_data['unique_id'] = None
 
         if len(key_desc_sequence) > idx:
-            # softwareEnforced AuthorizationList (SEQUENCE)
-            # The elements of AuthorizationList are EXPLICIT tagged
-            parsed_data['software_enforced'] = parse_authorization_list(key_desc_sequence[idx].dump(), parsed_data['attestation_version'])
+            sw_enforced_seq = key_desc_sequence[idx]
+            parsed_data['software_enforced'] = parse_authorization_list(
+                sw_enforced_seq,
+                parsed_data.get('attestation_version')
+            )
             idx += 1
         else:
             parsed_data['software_enforced'] = {}
 
         if len(key_desc_sequence) > idx:
-            # hardwareEnforced AuthorizationList (SEQUENCE)
-            parsed_data['hardware_enforced'] = parse_authorization_list(key_desc_sequence[idx].dump(), parsed_data['attestation_version'])
+            hw_enforced_seq = key_desc_sequence[idx]
+            parsed_data['hardware_enforced'] = parse_authorization_list(
+                hw_enforced_seq,
+                parsed_data.get('attestation_version')
+            )
             idx += 1
         else:
             parsed_data['hardware_enforced'] = {}
 
-        # TODO: Handle version-specific fields like deviceUniqueAttestation (v4), moduleHash (v400)
-        # This would require checking attestation_version and parsing additional elements if present.
-        # Example for deviceUniqueAttestation (KeyDescription version 4, not KeyMint versions):
-        if parsed_data['attestation_version'] == 4 and len(key_desc_sequence) > idx:
-            if isinstance(key_desc_sequence[idx], asn1_core.Null): # Assuming it's the next field
-                 parsed_data['device_unique_attestation'] = True
+        if parsed_data.get('attestation_version') == 4 and len(key_desc_sequence) > idx:
+            if isinstance(key_desc_sequence[idx], univ.Null):
+                parsed_data['device_unique_attestation'] = True
 
-    except IndexError:
-        logger.error("Index out of bounds while parsing KeyDescription. Malformed or unexpected structure.")
-        raise ValueError("Malformed KeyDescription sequence.")
-    except Exception as e:
-        logger.error(f"Error parsing KeyDescription: {e}")
-        raise ValueError(f"Could not parse KeyDescription: {e}")
+    except (IndexError, ValueError, PyAsn1Error) as e:
+        logger.error(f"Error processing parsed KeyDescription sequence: {e}. Structure might be unexpected.")
+        raise ValueError("Malformed or unexpected KeyDescription structure.")
 
     return parsed_data
+
 
 def get_attestation_extension_properties(certificate):
     """
@@ -404,17 +501,11 @@ def get_attestation_extension_properties(certificate):
         logger.warning("Android Key Attestation extension (OID %s) not found.", OID_ANDROID_KEY_ATTESTATION)
         return None
 
-    # The extension value is an OCTET STRING, which itself contains the DER-encoded KeyDescription SEQUENCE.
-    # For UnrecognizedExtension, ext.value is already the DER bytes of the content.
-    # For known extensions parsed by cryptography, ext.value would be a high-level object.
-    # We expect UnrecognizedExtension or need to handle specific known extension type if cryptography parses it.
     if isinstance(ext.value, x509.UnrecognizedExtension):
-        key_description_bytes = ext.value.value # value of UnrecognizedExtension is the DER bytes
-    elif hasattr(ext.value, 'value') and isinstance(ext.value.value, bytes): # For some cases where it might be wrapped
+        # logger.info("Found x509.UnrecognizedExtension")
         key_description_bytes = ext.value.value
-    elif isinstance(ext.value, bytes): # If cryptography returns OCTET STRING bytes directly
-        # If ext.value is already the DER-encoded KeyDescription (content of the OCTET STRING),
-        # then assign it directly.
+    elif isinstance(ext.value, bytes):
+        # logger.info("Extension value is bytes")
         key_description_bytes = ext.value
     else:
         logger.error(f"Unexpected type for attestation extension value: {type(ext.value)}")
@@ -424,12 +515,15 @@ def get_attestation_extension_properties(certificate):
         logger.error("Attestation extension found but its value is empty.")
         return None
 
+    logger.info("KeyDescription length: %i bytes", len(key_description_bytes))
     try:
+        # This will now call the pyasn1 version of the parser
         attestation_properties = parse_key_description(key_description_bytes)
         return attestation_properties
     except ValueError as e:
         logger.error(f"Failed to parse KeyDescription from attestation extension: {e}")
-        raise # Re-raise to be caught by the endpoint handler
+        raise
+
 
 def cleanup_expired_sessions():
     """Removes expired key attestation session entities from Datastore."""
