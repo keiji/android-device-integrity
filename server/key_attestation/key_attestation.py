@@ -7,7 +7,7 @@ import logging
 import hmac # For constant-time comparison
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import ec, padding as asym_padding
+from cryptography.hazmat.primitives.asymmetric import ec, rsa, padding as asym_padding
 from cryptography.exceptions import InvalidSignature
 from asn1crypto import core as asn1_core # For parsing ASN.1 structures
 
@@ -157,16 +157,15 @@ def validate_attestation_signature(leaf_certificate, nonce_from_store_b64, nonce
             )
             logger.info("Attestation signature validated successfully.")
             return True
-        # TODO: Add support for RSA if necessary, though the endpoint is /ec
-        # elif isinstance(public_key, rsa.RSAPublicKey):
-        #     public_key.verify(
-        #         signature_bytes,
-        #         signed_data_bytes,
-        #         asym_padding.PKCS1v15(), # Or PSS, depending on what client uses
-        #         hashes.SHA256()
-        #     )
-        #     logger.info("Attestation signature validated successfully (RSA).")
-        # return True
+        elif isinstance(public_key, rsa.RSAPublicKey):
+            public_key.verify(
+                signature_bytes,
+                signed_data_bytes,
+                asym_padding.PKCS1v15(), # Or PSS, depending on what client uses
+                hashes.SHA256()
+            )
+            logger.info("Attestation signature validated successfully (RSA).")
+            return True
         else:
             logger.error(f"Unsupported public key type for signature verification: {type(public_key)}")
             raise ValueError("Unsupported public key type in leaf certificate for signature verification.")
@@ -210,14 +209,13 @@ def verify_certificate_chain(certificates):
                     subject_cert.tbs_certificate_bytes,
                     ec.ECDSA(subject_cert.signature_hash_algorithm) # Use hash algorithm from subject cert
                 )
-            # TODO: Add RSA support if necessary
-            # elif isinstance(issuer_public_key, rsa.RSAPublicKey):
-            #     issuer_public_key.verify(
-            #         subject_cert.signature,
-            #         subject_cert.tbs_certificate_bytes,
-            #         asym_padding.PKCS1v15(), # Assuming PKCS1v15 for cert signatures
-            #         subject_cert.signature_hash_algorithm
-            #     )
+            elif isinstance(issuer_public_key, rsa.RSAPublicKey):
+                issuer_public_key.verify(
+                    subject_cert.signature,
+                    subject_cert.tbs_certificate_bytes,
+                    asym_padding.PKCS1v15(), # Assuming PKCS1v15 for cert signatures
+                    subject_cert.signature_hash_algorithm
+                )
             else:
                 logger.error(f"Unsupported public key type in issuer certificate for chain validation: {type(issuer_public_key)}")
                 raise ValueError(f"Certificate chain validation failed: Unsupported public key type in issuer certificate at index {i+1}.")
