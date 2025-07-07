@@ -323,6 +323,10 @@ def parse_key_description(key_desc_bytes):
     """
     key_desc_sequence = asn1_core.Sequence.load(key_desc_bytes)
 
+    if key_desc_sequence is None:
+        logger.warning("Failed to load KeyDescription ASN.1 sequence. Input bytes may be malformed, empty, or not a sequence.")
+        return None
+
     parsed_data = {}
     # Order of fields in KeyDescription SEQUENCE (varies slightly by version, but first few are consistent)
     # attestationVersion INTEGER,
