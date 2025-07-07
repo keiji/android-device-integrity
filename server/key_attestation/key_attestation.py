@@ -4,6 +4,12 @@ from datetime import datetime, timezone, timedelta
 from flask import Flask, request, jsonify, Blueprint
 from google.cloud import datastore
 import logging
+import hmac # For constant-time comparison
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import ec, padding as asym_padding
+from cryptography.exceptions import InvalidSignature
+from asn1crypto import core as asn1_core # For parsing ASN.1 structures
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -33,6 +39,11 @@ def base64url_encode(data_bytes):
     """Encodes bytes to a Base64URL string."""
     return base64.urlsafe_b64encode(data_bytes).decode('utf-8').rstrip('=')
 
+def base64url_decode(base64url_string):
+    """Decodes a Base64URL string to bytes."""
+    padding = '=' * (4 - (len(base64url_string) % 4))
+    return base64.urlsafe_b64decode(base64url_string + padding)
+
 def store_key_attestation_session(session_id, nonce_encoded, challenge_encoded):
     """
     Stores the key attestation session data in Datastore.
@@ -57,6 +68,370 @@ def store_key_attestation_session(session_id, nonce_encoded, challenge_encoded):
     logger.info(f"Stored key attestation session for session_id: {session_id}")
     # Consider calling cleanup_expired_sessions() here or via a scheduled job
     cleanup_expired_sessions()
+
+def get_key_attestation_session(session_id):
+    """
+    Retrieves and validates key attestation session data from Datastore.
+    Returns the session entity if valid and not expired, otherwise None.
+    """
+    if not datastore_client:
+        logger.error("Datastore client not available. Cannot retrieve session.")
+        # Consider raising an exception here if this is an unrecoverable state
+        return None
+
+    key = datastore_client.key(KEY_ATTESTATION_SESSION_KIND, session_id)
+    entity = datastore_client.get(key)
+
+    if not entity:
+        logger.warning(f"Session not found for session_id: {session_id}")
+        return None
+
+    # Check for expiration
+    generated_at = entity.get('generated_at')
+    if not generated_at: # Should not happen if stored correctly
+        logger.error(f"Session {session_id} is missing 'generated_at' timestamp.")
+        return None
+
+    # Ensure generated_at is offset-aware for comparison
+    if generated_at.tzinfo is None:
+        generated_at = generated_at.replace(tzinfo=timezone.utc)
+
+    expiry_datetime = generated_at + timedelta(minutes=NONCE_EXPIRY_MINUTES)
+    if datetime.now(timezone.utc) > expiry_datetime:
+        logger.warning(f"Session expired for session_id: {session_id}. Generated at: {generated_at}, Expired at: {expiry_datetime}")
+        # Optionally delete the expired entity here or rely on cleanup_expired_sessions
+        # datastore_client.delete(key)
+        return None
+
+    logger.info(f"Successfully retrieved and validated session for session_id: {session_id}")
+    return entity
+
+def decode_certificate_chain(certificate_chain_b64):
+    """
+    Decodes a list of Base64URLSafe encoded certificate strings into a list of X509Certificate objects.
+    """
+    decoded_certs = []
+    for i, cert_b64 in enumerate(certificate_chain_b64):
+        try:
+            cert_bytes = base64url_decode(cert_b64)
+            cert = x509.load_der_x509_certificate(cert_bytes)
+            decoded_certs.append(cert)
+        except ValueError as e:
+            logger.error(f"Failed to decode or parse certificate at index {i}: {e}")
+            raise ValueError(f"Invalid certificate string at index {i}")
+        except Exception as e: # Catch other cryptography parsing errors
+            logger.error(f"Error loading certificate at index {i} into X509 object: {e}")
+            raise ValueError(f"Cannot parse certificate at index {i} into X509 object")
+    if not decoded_certs:
+        raise ValueError("Certificate chain is empty after decoding.")
+    return decoded_certs
+
+def validate_attestation_signature(leaf_certificate, nonce_from_store_b64, nonce_b_b64, signature_b64):
+    """
+    Validates the attestation signature.
+    - Decodes nonces and signature.
+    - Constructs the data that was signed (nonce_from_store || nonce_b).
+    - Verifies the signature using the public key from the leaf certificate.
+    """
+    try:
+        nonce_from_store_bytes = base64url_decode(nonce_from_store_b64)
+        nonce_b_bytes = base64url_decode(nonce_b_b64)
+        signature_bytes = base64url_decode(signature_b64)
+    except Exception as e:
+        logger.error(f"Failed to base64url_decode one of the signature components: {e}")
+        raise ValueError("Invalid base64url encoding for nonce, nonce_b, or signature.")
+
+    signed_data_bytes = nonce_from_store_bytes + nonce_b_bytes
+
+    public_key = leaf_certificate.public_key()
+
+    try:
+        # Assuming EC public key, as per "verify/ec"
+        # For EC keys, verify() expects the raw signature bytes (r and s concatenated).
+        # The hash algorithm is typically SHA256 for Android Key Attestation with EC.
+        if isinstance(public_key, ec.EllipticCurvePublicKey):
+            public_key.verify(
+                signature_bytes,
+                signed_data_bytes,
+                ec.ECDSA(hashes.SHA256()) # Assuming SHA256, common for attestation
+            )
+            logger.info("Attestation signature validated successfully.")
+            return True
+        # TODO: Add support for RSA if necessary, though the endpoint is /ec
+        # elif isinstance(public_key, rsa.RSAPublicKey):
+        #     public_key.verify(
+        #         signature_bytes,
+        #         signed_data_bytes,
+        #         asym_padding.PKCS1v15(), # Or PSS, depending on what client uses
+        #         hashes.SHA256()
+        #     )
+        #     logger.info("Attestation signature validated successfully (RSA).")
+        # return True
+        else:
+            logger.error(f"Unsupported public key type for signature verification: {type(public_key)}")
+            raise ValueError("Unsupported public key type in leaf certificate for signature verification.")
+    except InvalidSignature:
+        logger.warning("Attestation signature verification failed: InvalidSignature.")
+        raise ValueError("Attestation signature verification failed.")
+    except Exception as e:
+        logger.error(f"Error during attestation signature verification: {e}")
+        raise ValueError(f"An unexpected error occurred during signature verification: {e}")
+
+def verify_certificate_chain(certificates):
+    """
+    Verifies the certificate chain.
+    - Each certificate (except the last) is signed by the next certificate in the chain.
+    - Does not verify the root against a trust store (as per requirements).
+    """
+    if len(certificates) < 1: # Should have been caught by decode_certificate_chain
+        raise ValueError("Certificate chain is empty, cannot verify.")
+    if len(certificates) == 1:
+        # Single certificate in chain (self-signed or needs external trust anchor).
+        # For attestation, usually there's at least a leaf and an attestation CA.
+        # Depending on policy, a single cert might be acceptable if it's a known attestation root,
+        # but the requirement is to verify chain signatures if multiple certs exist.
+        # For now, we consider a single cert chain as "verified" in terms of its internal links.
+        logger.info("Certificate chain has only one certificate. No internal chain validation to perform.")
+        return True
+
+    for i in range(len(certificates) - 1):
+        subject_cert = certificates[i]
+        issuer_cert = certificates[i+1]
+
+        issuer_public_key = issuer_cert.public_key()
+
+        try:
+            # The signature hash algorithm is part of the subject_cert.signature_hash_algorithm
+            # The public key algorithm from issuer_public_key and signature algorithm from subject_cert
+            # are used by the verify() method.
+            if isinstance(issuer_public_key, ec.EllipticCurvePublicKey):
+                issuer_public_key.verify(
+                    subject_cert.signature,
+                    subject_cert.tbs_certificate_bytes,
+                    ec.ECDSA(subject_cert.signature_hash_algorithm) # Use hash algorithm from subject cert
+                )
+            # TODO: Add RSA support if necessary
+            # elif isinstance(issuer_public_key, rsa.RSAPublicKey):
+            #     issuer_public_key.verify(
+            #         subject_cert.signature,
+            #         subject_cert.tbs_certificate_bytes,
+            #         asym_padding.PKCS1v15(), # Assuming PKCS1v15 for cert signatures
+            #         subject_cert.signature_hash_algorithm
+            #     )
+            else:
+                logger.error(f"Unsupported public key type in issuer certificate for chain validation: {type(issuer_public_key)}")
+                raise ValueError(f"Certificate chain validation failed: Unsupported public key type in issuer certificate at index {i+1}.")
+
+            logger.info(f"Verified certificate {i}'s signature with certificate {i+1}'s public key.")
+        except InvalidSignature:
+            logger.warning(f"Certificate chain validation failed: Cert {i} not signed by cert {i+1}.")
+            raise ValueError(f"Certificate chain validation failed: Certificate at index {i} is not signed by certificate at index {i+1}.")
+        except Exception as e:
+            logger.error(f"Error during certificate chain validation (cert {i} by cert {i+1}): {e}")
+            raise ValueError(f"An unexpected error occurred during certificate chain validation: {e}")
+
+    logger.info("Certificate chain verified successfully.")
+    return True
+
+# --- ASN.1 Constants and Parsing ---
+# OID for Android Key Attestation extension
+OID_ANDROID_KEY_ATTESTATION = x509.ObjectIdentifier("1.3.6.1.4.1.11129.2.1.17")
+
+# AuthorizationList tags (from Keymaster/KeyMint documentation)
+# These are context-specific tags within the AuthorizationList sequence.
+# We'll define a few common ones needed or for demonstration.
+# For a full implementation, all relevant tags from the documentation should be added.
+TAG_PURPOSE = 1
+TAG_ALGORITHM = 2
+TAG_KEY_SIZE = 3
+TAG_DIGEST = 5
+TAG_PADDING = 6
+TAG_EC_CURVE = 10
+TAG_RSA_PUBLIC_EXPONENT = 200
+TAG_ROLLBACK_RESISTANCE = 303 # v3+
+TAG_ACTIVE_DATETIME = 400
+TAG_ORIGINATION_EXPIRE_DATETIME = 401
+TAG_USAGE_EXPIRE_DATETIME = 402
+TAG_NO_AUTH_REQUIRED = 503
+TAG_USER_AUTH_TYPE = 504
+TAG_AUTH_TIMEOUT = 505
+TAG_ALLOW_WHILE_ON_BODY = 506 # v3+
+TAG_TRUSTED_USER_PRESENCE_REQUIRED = 507 # v3+
+TAG_TRUSTED_CONFIRMATION_REQUIRED = 508 # v3+
+TAG_UNLOCKED_DEVICE_REQUIRED = 509 # v3+
+TAG_CREATION_DATETIME = 701
+TAG_ORIGIN = 702
+TAG_ROOT_OF_TRUST = 704
+TAG_OS_VERSION = 705
+TAG_OS_PATCH_LEVEL = 706
+TAG_ATTESTATION_APPLICATION_ID = 709 # v2+
+TAG_ATTESTATION_ID_BRAND = 710 # v2+
+TAG_ATTESTATION_ID_DEVICE = 711 # v2+
+# ... and many more
+
+def parse_authorization_list(auth_list_bytes, attestation_version):
+    """
+    Parses an AuthorizationList SEQUENCE.
+    Returns a dictionary of parsed properties.
+    This is a simplified parser focusing on a few example tags.
+    A full implementation would need to handle all tags and types correctly.
+    """
+    parsed_props = {}
+    auth_list_sequence = asn1_core.Sequence.load(auth_list_bytes)
+    for item in auth_list_sequence:
+        if not isinstance(item, asn1_core.TaggedValue):
+            logger.warning(f"Unexpected item in AuthorizationList: {type(item)}. Skipping.")
+            continue
+
+        tag_number = item.tag
+        tag_value_bytes = item.payload # This is the DER encoded value of the EXPLICIT tag
+
+        try:
+            # The value inside EXPLICIT is another ASN.1 structure.
+            # For INTEGERs, it's just asn1_core.Integer.load(tag_value_bytes).native
+            # For SET OF INTEGERs, it's a Set containing Integers.
+            # For NULL, the presence of the tag is enough.
+
+            # Example parsing for a few tags:
+            if tag_number == TAG_ATTESTATION_APPLICATION_ID:
+                # This itself is a SEQUENCE, needs further parsing if details are required.
+                # For now, just store its bytes.
+                parsed_props['attestation_application_id_bytes'] = asn1_core.OctetString.load(tag_value_bytes).native
+            elif tag_number == TAG_OS_VERSION:
+                parsed_props['os_version'] = asn1_core.Integer.load(tag_value_bytes).native
+            elif tag_number == TAG_OS_PATCH_LEVEL:
+                parsed_props['os_patch_level'] = asn1_core.Integer.load(tag_value_bytes).native
+            elif tag_number == TAG_PURPOSE: # SET OF INTEGER
+                purposes = [p.native for p in asn1_core.SetOf(asn1_core.Integer).load(tag_value_bytes)]
+                parsed_props['purpose'] = purposes
+            elif tag_number == TAG_ALGORITHM:
+                 parsed_props['algorithm'] = asn1_core.Integer.load(tag_value_bytes).native
+            elif tag_number == TAG_KEY_SIZE:
+                parsed_props['key_size'] = asn1_core.Integer.load(tag_value_bytes).native
+            elif tag_number == TAG_NO_AUTH_REQUIRED: # NULL
+                parsed_props['no_auth_required'] = True
+            # Add more tag parsing as needed based on documentation for the specific attestation_version
+
+        except Exception as e:
+            logger.warning(f"Error parsing tag {tag_number} in AuthorizationList: {e}. Value bytes: {tag_value_bytes.hex()}")
+            # Continue parsing other tags
+
+    return parsed_props
+
+def parse_key_description(key_desc_bytes):
+    """
+    Parses the KeyDescription SEQUENCE from the attestation extension.
+    Returns a dictionary containing key properties, including attestationChallenge.
+    """
+    key_desc_sequence = asn1_core.Sequence.load(key_desc_bytes)
+
+    parsed_data = {}
+    # Order of fields in KeyDescription SEQUENCE (varies slightly by version, but first few are consistent)
+    # attestationVersion INTEGER,
+    # attestationSecurityLevel SecurityLevel (ENUMERATED),
+    # keyMintVersion / keymasterVersion INTEGER,
+    # keyMintSecurityLevel / keymasterSecurityLevel SecurityLevel (ENUMERATED),
+    # attestationChallenge OCTET_STRING,
+    # uniqueId OCTET_STRING OPTIONAL, (present if requested and available)
+    # softwareEnforced AuthorizationList,
+    # hardwareEnforced AuthorizationList,
+    # ... (version specific fields like deviceUniqueAttestation for v4)
+
+    try:
+        parsed_data['attestation_version'] = key_desc_sequence[0].native
+        # SecurityLevel is ENUMERATED { Software (0), TrustedEnvironment (1), StrongBox (2) }
+        parsed_data['attestation_security_level'] = key_desc_sequence[1].native
+        parsed_data['keymint_or_keymaster_version'] = key_desc_sequence[2].native
+        parsed_data['keymint_or_keymaster_security_level'] = key_desc_sequence[3].native
+        parsed_data['attestation_challenge'] = key_desc_sequence[4].native # This is OCTET_STRING
+
+        # uniqueId is optional and might not be at index 5 if absent.
+        # For simplicity, we assume standard order for now. A robust parser would check tags/OPTIONAL.
+        idx = 5
+        if len(key_desc_sequence) > idx and isinstance(key_desc_sequence[idx], asn1_core.OctetString):
+             parsed_data['unique_id'] = key_desc_sequence[idx].native
+             idx +=1
+        else: # Or if tag indicates it's not uniqueId
+            parsed_data['unique_id'] = None # Or skip if not present
+
+        if len(key_desc_sequence) > idx:
+            # softwareEnforced AuthorizationList (SEQUENCE)
+            # The elements of AuthorizationList are EXPLICIT tagged
+            parsed_data['software_enforced'] = parse_authorization_list(key_desc_sequence[idx].dump(), parsed_data['attestation_version'])
+            idx += 1
+        else:
+            parsed_data['software_enforced'] = {}
+
+        if len(key_desc_sequence) > idx:
+            # hardwareEnforced AuthorizationList (SEQUENCE)
+            parsed_data['hardware_enforced'] = parse_authorization_list(key_desc_sequence[idx].dump(), parsed_data['attestation_version'])
+            idx += 1
+        else:
+            parsed_data['hardware_enforced'] = {}
+
+        # TODO: Handle version-specific fields like deviceUniqueAttestation (v4), moduleHash (v400)
+        # This would require checking attestation_version and parsing additional elements if present.
+        # Example for deviceUniqueAttestation (KeyDescription version 4, not KeyMint versions):
+        if parsed_data['attestation_version'] == 4 and len(key_desc_sequence) > idx:
+            if isinstance(key_desc_sequence[idx], asn1_core.Null): # Assuming it's the next field
+                 parsed_data['device_unique_attestation'] = True
+
+    except IndexError:
+        logger.error("Index out of bounds while parsing KeyDescription. Malformed or unexpected structure.")
+        raise ValueError("Malformed KeyDescription sequence.")
+    except Exception as e:
+        logger.error(f"Error parsing KeyDescription: {e}")
+        raise ValueError(f"Could not parse KeyDescription: {e}")
+
+    return parsed_data
+
+def get_attestation_extension_properties(certificate):
+    """
+    Finds and parses the Android Key Attestation extension from a certificate.
+    Returns a dictionary of properties or None if not found/parsed.
+    """
+    try:
+        ext = certificate.extensions.get_extension_for_oid(OID_ANDROID_KEY_ATTESTATION)
+        if not ext:
+            logger.warning("Android Key Attestation extension not found in certificate.")
+            return None
+    except x509.ExtensionNotFound:
+        logger.warning("Android Key Attestation extension (OID %s) not found.", OID_ANDROID_KEY_ATTESTATION)
+        return None
+
+    # The extension value is an OCTET STRING, which itself contains the DER-encoded KeyDescription SEQUENCE.
+    # For UnrecognizedExtension, ext.value is already the DER bytes of the content.
+    # For known extensions parsed by cryptography, ext.value would be a high-level object.
+    # We expect UnrecognizedExtension or need to handle specific known extension type if cryptography parses it.
+    if isinstance(ext.value, x509.UnrecognizedExtension):
+        key_description_bytes = ext.value.value # value of UnrecognizedExtension is the DER bytes
+    elif hasattr(ext.value, 'value') and isinstance(ext.value.value, bytes): # For some cases where it might be wrapped
+        key_description_bytes = ext.value.value
+    elif isinstance(ext.value, bytes): # If cryptography returns OCTET STRING bytes directly
+         # This typically means the OCTET STRING wrapper itself needs to be stripped
+         # if ext.value is the full extensionvalue (tag, length, content).
+         # However, `get_extension_for_oid` usually gives the content of the OCTET STRING.
+         # We load it as OctetString to be sure we get the inner content.
+        try:
+            octet_string_val = asn1_core.OctetString.load(ext.value)
+            key_description_bytes = octet_string_val.native
+        except Exception as e:
+            logger.error(f"Attestation extension value is bytes, but not a valid OCTET STRING: {e}")
+            raise ValueError("Attestation extension value is not a valid OCTET STRING.")
+    else:
+        logger.error(f"Unexpected type for attestation extension value: {type(ext.value)}")
+        raise ValueError("Unexpected type for attestation extension value.")
+
+    if not key_description_bytes:
+        logger.error("Attestation extension found but its value is empty.")
+        return None
+
+    try:
+        attestation_properties = parse_key_description(key_description_bytes)
+        return attestation_properties
+    except ValueError as e:
+        logger.error(f"Failed to parse KeyDescription from attestation extension: {e}")
+        raise # Re-raise to be caught by the endpoint handler
 
 def cleanup_expired_sessions():
     """Removes expired key attestation session entities from Datastore."""
@@ -145,42 +520,123 @@ def verify_ec_attestation():
             logger.warning("Verify EC request missing JSON payload.")
             return jsonify({"error": "Missing JSON payload"}), 400
 
-        # Validate required fields (presence only for this mock)
+        # --- 1. Validate Input and Session ---
         session_id = data.get('session_id')
-        signature = data.get('signature')
-        nonce_b = data.get('nonce_b')
-        certificate_chain = data.get('certificate_chain')
+        signature_b64 = data.get('signature') # Renamed to avoid conflict with cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePublicKey.sign
+        nonce_b_b64 = data.get('nonce_b')
+        certificate_chain_b64 = data.get('certificate_chain')
 
-        if not all([session_id, signature, nonce_b, certificate_chain]):
-            logger.warning(f"Verify EC request for session {session_id} missing one or more required fields.")
+        if not all([session_id, signature_b64, nonce_b_b64, certificate_chain_b64]):
+            logger.warning(f"Verify EC request for session '{session_id}' missing one or more required fields.")
             return jsonify({"error": "Missing one or more required fields: session_id, signature, nonce_b, certificate_chain"}), 400
 
         if not isinstance(session_id, str) or \
-           not isinstance(signature, str) or \
-           not isinstance(nonce_b, str) or \
-           not isinstance(certificate_chain, list):
-            logger.warning(f"Verify EC request for session {session_id} has type mismatch for one or more fields.")
-            return jsonify({"error": "Type mismatch for one or more fields."}), 400
+           not isinstance(signature_b64, str) or \
+           not isinstance(nonce_b_b64, str) or \
+           not isinstance(certificate_chain_b64, list) or \
+           not all(isinstance(cert, str) for cert in certificate_chain_b64):
+            logger.warning(f"Verify EC request for session '{session_id}' has type mismatch for one or more fields.")
+            return jsonify({"error": "Type mismatch for one or more fields. Ensure session_id, signature, nonce_b are strings and certificate_chain is a list of strings."}), 400
 
+        if not datastore_client:
+            logger.error("Datastore client not available for /verify/ec endpoint.")
+            return jsonify({"error": "Datastore service not available"}), 503
 
-        # Mock response
-        mock_response = {
+        session_entity = get_key_attestation_session(session_id)
+        if not session_entity:
+            logger.warning(f"Session ID '{session_id}' not found, expired, or invalid.")
+            return jsonify({"error": "Session ID not found, expired, or invalid."}), 403 # Forbidden or Not Found
+
+        # Retrieve nonce and challenge from the session entity
+        # These are already base64url encoded as per store_key_attestation_session
+        nonce_from_store_b64 = session_entity.get('nonce')
+        challenge_from_store_b64 = session_entity.get('challenge')
+
+        if not nonce_from_store_b64 or not challenge_from_store_b64:
+            logger.error(f"Session '{session_id}' is missing nonce or challenge in Datastore.")
+            return jsonify({"error": "Corrupted session data."}), 500
+
+        logger.info(f"Session validation successful for session_id: {session_id}")
+
+        # --- 2. Decode Certificate Chain ---
+        try:
+            certificates = decode_certificate_chain(certificate_chain_b64)
+            logger.info(f"Successfully decoded certificate chain for session_id: {session_id}. Chain length: {len(certificates)}")
+        except ValueError as e:
+            logger.warning(f"Failed to decode certificate chain for session {session_id}: {e}")
+            return jsonify({"error": f"Invalid certificate chain: {e}"}), 400
+
+        # --- 3. Signature Validation ---
+        try:
+            validate_attestation_signature(
+                certificates[0], # Leaf certificate
+                nonce_from_store_b64,
+                nonce_b_b64,
+                signature_b64
+            )
+            logger.info(f"Attestation signature validated successfully for session_id: {session_id}")
+        except ValueError as e:
+            logger.warning(f"Attestation signature validation failed for session {session_id}: {e}")
+            return jsonify({"error": f"Attestation signature validation failed: {e}"}), 400 # Or 401/403 depending on preference
+
+        # --- 4. Certificate Chain Verification ---
+        try:
+            verify_certificate_chain(certificates)
+            logger.info(f"Certificate chain verified successfully for session_id: {session_id}")
+        except ValueError as e:
+            logger.warning(f"Certificate chain verification failed for session {session_id}: {e}")
+            return jsonify({"error": f"Certificate chain verification failed: {e}"}), 400
+
+        # --- 5. ASN.1 Parsing of Attestation Extension ---
+        attestation_properties = None
+        try:
+            # The attestation extension is in the leaf certificate (certificates[0])
+            attestation_properties = get_attestation_extension_properties(certificates[0])
+            if not attestation_properties or 'attestation_challenge' not in attestation_properties:
+                logger.warning(f"Failed to parse attestation extension or missing challenge for session {session_id}.")
+                return jsonify({"error": "Failed to parse key attestation extension or attestation challenge not found."}), 400
+            logger.info(f"Successfully parsed attestation extension for session_id: {session_id}. Version: {attestation_properties.get('attestation_version')}")
+        except ValueError as e:
+            logger.warning(f"ASN.1 parsing of attestation extension failed for session {session_id}: {e}")
+            logger.warning(f"ASN.1 parsing of attestation extension failed for session {session_id}: {e}")
+            return jsonify({"error": f"ASN.1 parsing failed: {e}"}), 400
+
+        # --- 6. Challenge Matching ---
+        try:
+            challenge_from_store_bytes = base64url_decode(challenge_from_store_b64)
+        except Exception as e:
+            logger.error(f"Failed to base64url_decode challenge_from_store_b64 for session {session_id}: {e}")
+            return jsonify({"error": "Internal server error: Could not decode stored challenge."}), 500
+
+        client_attestation_challenge_bytes = attestation_properties.get('attestation_challenge') # Already bytes
+
+        if not client_attestation_challenge_bytes or \
+           not hmac.compare_digest(challenge_from_store_bytes, client_attestation_challenge_bytes):
+            logger.warning(f"Challenge mismatch for session {session_id}. Store: '{challenge_from_store_b64}', Cert: '{base64url_encode(client_attestation_challenge_bytes or b'')}'")
+            return jsonify({"error": "Attestation challenge mismatch."}), 400 # Or 403 Forbidden
+
+        logger.info(f"Attestation challenge matched successfully for session_id: {session_id}")
+
+        # If all checks pass, the attestation is considered verified.
+        final_response = {
             "session_id": session_id,
-            "is_verified": False,
-            "reason": "Mock implementation",
-            "decoded_certificate_chain": {
-                "mocked_detail": "This is a mock response for decoded certificate chain."
-            },
-            "attestation_properties": {
-                "mocked_software_enforced": {},
-                "mocked_tee_enforced": {}
-            }
+            "is_verified": True,
+            "reason": "Key attestation verified successfully.",
+            "attestation_version": attestation_properties.get('attestation_version'),
+            "attestation_security_level": attestation_properties.get('attestation_security_level'),
+            "keymint_version": attestation_properties.get('keymint_or_keymaster_version'),
+            "keymint_security_level": attestation_properties.get('keymint_or_keymaster_security_level'),
+            "software_enforced_properties": attestation_properties.get('software_enforced', {}),
+            "tee_enforced_properties": attestation_properties.get('hardware_enforced', {}) # Renamed from hardware_enforced for clarity
         }
-        logger.info(f"Successfully processed mock EC verification for session_id: {session_id}")
-        return jsonify(mock_response), 200
+        logger.info(f"Successfully verified EC key attestation for session_id: {session_id}")
+        return jsonify(final_response), 200
 
+    except ValueError as e: # Catch specific errors for tailored responses
+        logger.warning(f"ValueError in /verify/ec for session {session_id}: {e}")
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
-        logger.error(f"Error in /verify/ec endpoint: {e}")
+        logger.error(f"Error in /verify/ec endpoint for session {session_id}: {e}", exc_info=True)
         return jsonify({"error": "An unexpected error occurred"}), 500
 
 
