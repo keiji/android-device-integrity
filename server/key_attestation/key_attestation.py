@@ -113,12 +113,10 @@ def decode_certificate_chain(certificate_chain_b64):
     decoded_certs = []
     for i, cert_b64 in enumerate(certificate_chain_b64):
         try:
-            # Ensure the input string is properly padded for standard Base64 decoding
-            padding = '=' * (4 - (len(cert_b64) % 4))
-            cert_bytes = base64.b64decode(cert_b64 + padding)
+            cert_bytes = base64.b64decode(cert_b64) # Rely on b64decode to handle padding
             cert = x509.load_der_x509_certificate(cert_bytes)
             decoded_certs.append(cert)
-        except ValueError as e: # Handles errors from b64decode if padding is wrong or chars invalid
+        except ValueError as e: # Handles errors from b64decode if input is invalid (e.g. bad chars, incorrect padding if strict)
             logger.error(f"Failed to decode Base64 certificate at index {i}: {e}")
             raise ValueError(f"Invalid Base64 certificate string at index {i}")
         except TypeError as e: # Handles errors from b64decode if input is not string-like

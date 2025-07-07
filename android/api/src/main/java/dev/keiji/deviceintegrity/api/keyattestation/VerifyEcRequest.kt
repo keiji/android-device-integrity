@@ -12,5 +12,5 @@ data class VerifyEcRequest(
     @SerialName("nonce_b")
     val nonceBBase64UrlEncoded: String,
     @SerialName("certificate_chain")
-    val certificateChainBase64Encoded: List<String> // Changed from certificateChainBase64UrlEncoded
+    val certificateChainBase64Encoded: List<String>
 )

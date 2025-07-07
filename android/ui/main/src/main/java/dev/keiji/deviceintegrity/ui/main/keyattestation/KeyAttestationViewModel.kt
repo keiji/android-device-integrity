@@ -20,9 +20,7 @@ import kotlinx.coroutines.withContext
 import java.security.SecureRandom
 import java.util.UUID
 import javax.inject.Inject
-// kotlin.io.encoding.Base64 is not directly used anymore,
-// but Base64Utils uses it, so keeping it for context or if other Base64 types are needed.
-// import kotlin.io.encoding.Base64
+import kotlin.io.encoding.Base64
 
 @HiltViewModel
 class KeyAttestationViewModel @Inject constructor(
@@ -172,9 +170,9 @@ class KeyAttestationViewModel @Inject constructor(
                     // 3. Encoding for Request (Base64URL, without padding using Base64Utils)
                     val signatureDataBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(signatureData)
                     val nonceBBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(nonceB)
-                    val certificateChainBase64UrlEncoded =
+                    val certificateChainBase64Encoded =
                         currentKeyPairData.certificates.map { cert ->
-                            Base64Utils.UrlSafeNoPadding.encode(cert.encoded)
+                            Base64.Default.encode(cert.encoded)
                         }
 
                     // 4. API Call
@@ -182,7 +180,7 @@ class KeyAttestationViewModel @Inject constructor(
                         sessionId = currentSessionId,
                         signatureDataBase64UrlEncoded = signatureDataBase64UrlEncoded,
                         nonceBBase64UrlEncoded = nonceBBase64UrlEncoded,
-                        certificateChainBase64UrlEncoded = certificateChainBase64UrlEncoded
+                        certificateChainBase64Encoded = certificateChainBase64Encoded
                     )
                     keyAttestationVerifyApiClient.verifyEc(request)
                 }
