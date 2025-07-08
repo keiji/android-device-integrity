@@ -344,7 +344,8 @@ def verify_integrity_classic():
 
         # If we reach here, processing was successful or handled error with a return.
         # For success, result_status is RESULT_SUCCESS.
-        _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic", reason="Verification successful" if result_status == RESULT_SUCCESS else (error_message_for_client if error_message_for_client else "Verification failed"))
+        final_reason_classic = "Verification successful" if result_status == RESULT_SUCCESS else (error_message_for_client if error_message_for_client else "Verification failed")
+        _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic", reason=final_reason_classic)
 
         response_payload = {
             "play_integrity_response": decoded_integrity_token_response,
@@ -487,7 +488,8 @@ def verify_integrity_standard():
             return jsonify({"error": error_message_for_client, "details": str(e_api)}), 500
 
         # Store the attempt (Success, or Failed/Error if not returned earlier)
-        _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard", reason="Verification successful" if result_status == RESULT_SUCCESS else (error_message_for_client if error_message_for_client else "Verification failed (standard)"))
+        final_reason_standard = "Verification successful" if result_status == RESULT_SUCCESS else (error_message_for_client if error_message_for_client else "Verification failed (standard)")
+        _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard", reason=final_reason_standard)
 
         response_payload = {
             "play_integrity_response": decoded_integrity_token_response,
