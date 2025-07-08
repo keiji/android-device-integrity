@@ -51,10 +51,6 @@ class KeyAttestationViewModel @Inject constructor(
     private val _copyEventChannel = Channel<String>()
     val copyEventFlow = _copyEventChannel.receiveAsFlow()
 
-    fun setTextToShare(text: String) {
-        _uiState.update { it.copy(textToShare = text) }
-    }
-
     fun onSelectedKeyTypeChange(newKeyType: CryptoAlgorithm) {
         _uiState.update { it.copy(selectedKeyType = newKeyType) }
     }
@@ -208,12 +204,10 @@ class KeyAttestationViewModel @Inject constructor(
                     resultItems.addAll(convertDeviceInfoToAttestationItems(response.deviceInfo))
                     resultItems.addAll(convertSecurityInfoToAttestationItems(response.securityInfo))
 
-                    val resultText = AttestationResultFormatter.formatAttestationResults(resultItems)
                     _uiState.update {
                         it.copy(
                             status = "Verification successful.", // General status
-                            verificationResultItems = resultItems,
-                            textToShare = resultText
+                            verificationResultItems = resultItems
                         )
                     }
                 } else {
@@ -330,19 +324,21 @@ class KeyAttestationViewModel @Inject constructor(
     }
 
     fun onCopyResultsClicked() {
-        val text = uiState.value.textToShare
-        if (text.isNotEmpty()) {
+        val items = uiState.value.verificationResultItems
+        if (items.isNotEmpty()) {
+            val textToCopy = AttestationResultFormatter.formatAttestationResults(items)
             viewModelScope.launch {
-                _copyEventChannel.send(text)
+                _copyEventChannel.send(textToCopy)
             }
         }
     }
 
     fun onShareResultsClicked() {
-        val text = uiState.value.textToShare
-        if (text.isNotEmpty()) {
+        val items = uiState.value.verificationResultItems
+        if (items.isNotEmpty()) {
+            val textToShare = AttestationResultFormatter.formatAttestationResults(items)
             viewModelScope.launch {
-                _shareEventChannel.send(text)
+                _shareEventChannel.send(textToShare)
             }
         }
     }

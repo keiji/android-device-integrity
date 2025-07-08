@@ -196,16 +196,12 @@ fun DeviceIntegrityApp(
 
                     KeyAttestationScreen(
                         uiState = keyAttestationUiState,
-                        onSelectedKeyTypeChange = {
-                            keyAttestationViewModel.onSelectedKeyTypeChange(
-                                it
-                            )
-                        },
+                        onSelectedKeyTypeChange = { keyAttestationViewModel.onSelectedKeyTypeChange(it) },
                         onFetchNonceChallenge = { keyAttestationViewModel.fetchNonceChallenge() },
                         onGenerateKeyPair = { keyAttestationViewModel.generateKeyPair() },
                         onRequestVerifyKeyAttestation = { keyAttestationViewModel.requestVerifyKeyAttestation() },
-                        onCopyResults = { keyAttestationViewModel.onCopyResultsClicked() },
-                        onShareResults = { keyAttestationViewModel.onShareResultsClicked() }
+                        onClickCopy = { keyAttestationViewModel.onCopyResultsClicked() },
+                        onClickShare = { keyAttestationViewModel.onShareResultsClicked() }
                     )
                 }
                 composable(AppScreen.Menu.route) {

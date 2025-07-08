@@ -41,22 +41,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KeyAttestationScreen(
-    uiState: KeyAttestationUiState,
+    uiState: KeyAttestationUiState, // uiState collected and passed from MainActivity
     onSelectedKeyTypeChange: (CryptoAlgorithm) -> Unit,
     onFetchNonceChallenge: () -> Unit,
     onGenerateKeyPair: () -> Unit,
     onRequestVerifyKeyAttestation: () -> Unit,
-    onCopyResults: () -> Unit,
-    onShareResults: () -> Unit,
+    onClickCopy: () -> Unit,
+    onClickShare: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     var keyTypeExpanded by remember { mutableStateOf(false) }
-    val context = LocalContext.current
     val keyTypes = CryptoAlgorithm.values().toList()
 
     Column(
@@ -166,15 +166,15 @@ fun KeyAttestationScreen(
                                 MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.weight(1f)
                 )
-                if (uiState.verificationResultItems.isNotEmpty() && uiState.textToShare.isNotEmpty()) {
+                if (uiState.verificationResultItems.isNotEmpty()) {
                     Row {
-                        IconButton(onClick = onCopyResults) {
+                        IconButton(onClick = onClickCopy) {
                             Icon(
                                 imageVector = Icons.Filled.ContentCopy,
                                 contentDescription = "Copy Results"
                             )
                         }
-                        IconButton(onClick = onShareResults) {
+                        IconButton(onClick = onClickShare) {
                             Icon(
                                 imageVector = Icons.Filled.Share,
                                 contentDescription = "Share Results"
@@ -281,7 +281,7 @@ private fun KeyAttestationScreenPreview() {
         onFetchNonceChallenge = { System.out.println("Preview: Fetch Nonce/Challenge clicked") },
         onGenerateKeyPair = { System.out.println("Preview: Generate KeyPair clicked") },
         onRequestVerifyKeyAttestation = { System.out.println("Preview: Request Verify KeyAttestation clicked") },
-        onCopyResults = { System.out.println("Preview: Copy results clicked") },
-        onShareResults = { System.out.println("Preview: Share results clicked") }
+        onClickCopy = { System.out.println("Preview: onClickCopy called") },
+        onClickShare = { System.out.println("Preview: onClickShare called") }
     )
 }
