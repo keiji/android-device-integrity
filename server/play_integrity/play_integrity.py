@@ -113,7 +113,7 @@ def cleanup_expired_nonces():
         # Log the error, but don't let cleanup failure break the main functionality
         app.logger.error(f"Error during Datastore cleanup of expired nonces: {e}")
 
-def _store_verification_attempt(session_id, client_request_data, result, decoded_token_response, verification_type_str):
+def _store_verification_attempt(session_id, client_request_data, result, decoded_token_response, verification_type_str, reason: str | None):
     """
     Stores the result of a verification attempt in Datastore.
     """
@@ -151,6 +151,7 @@ def _store_verification_attempt(session_id, client_request_data, result, decoded
             'created_at': now,
             'verification_type': verification_type_str,
             'result': result if result else RESULT_FAILED, # Default to FAILED if not set
+            'reason': reason,
             'api_response': decoded_token_response # This can be None
         }
         payload_entity.update(entity_data)
@@ -213,24 +214,24 @@ def verify_integrity_classic():
             result_status = RESULT_FAILED
             error_message_for_client = "Missing JSON payload"
             # Log to Datastore before returning
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic", reason=error_message_for_client)
             return jsonify({"error": error_message_for_client}), 400
 
         # session_id and integrity_token are critical for proceeding.
         if not session_id:
             result_status = RESULT_FAILED
             error_message_for_client = "Missing 'session_id' in request"
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic", reason=error_message_for_client)
             return jsonify({"error": error_message_for_client}), 400
         if not isinstance(session_id, str) or not session_id.strip():
             result_status = RESULT_FAILED
             error_message_for_client = "'session_id' must be a non-empty string"
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic", reason=error_message_for_client)
             return jsonify({"error": error_message_for_client}), 400
         if not integrity_token:
             result_status = RESULT_FAILED
             error_message_for_client = "Missing 'token' in request"
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic", reason=error_message_for_client)
             return jsonify({"error": error_message_for_client}), 400
 
         # Retrieve nonce from Datastore using session_id
@@ -241,7 +242,7 @@ def verify_integrity_classic():
             app.logger.warning(f"No nonce found for session_id: {session_id}")
             result_status = RESULT_FAILED
             error_message_for_client = "Invalid session_id: Session ID not found or nonce expired."
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic", reason=error_message_for_client)
             return jsonify({"error": error_message_for_client}), 400
 
         stored_nonce = entity.get('nonce')
@@ -251,7 +252,7 @@ def verify_integrity_classic():
             app.logger.error(f"Nonce value missing in Datastore entity for session_id: {session_id}")
             result_status = RESULT_FAILED # Or ERROR depending on how critical this is
             error_message_for_client = "Internal server error: Failed to retrieve nonce details."
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic", reason=error_message_for_client)
             return jsonify({"error": error_message_for_client}), 500
 
         if expiry_datetime and expiry_datetime < datetime.now(timezone.utc):
@@ -263,7 +264,7 @@ def verify_integrity_classic():
                 app.logger.info(f"Deleted expired nonce for session_id: {session_id} during verification.")
             except Exception as e_del:
                 app.logger.error(f"Failed to delete expired nonce for session_id {session_id}: {e_del}")
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic", reason=error_message_for_client)
             return jsonify({"error": error_message_for_client}), 400
 
         # Attempt to decode the integrity token
@@ -287,7 +288,7 @@ def verify_integrity_classic():
                 result_status = RESULT_FAILED # Or ERROR, as API response is malformed for our needs
                 error_message_for_client = "Nonce missing in API response."
                 # Store attempt before returning
-                _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+                _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic", reason=error_message_for_client)
                 return jsonify({
                     "error": error_message_for_client,
                     "play_integrity_response": decoded_integrity_token_response
@@ -311,7 +312,7 @@ def verify_integrity_classic():
                 app.logger.error(f"Nonce mismatch for session_id: {session_id}. Stored: {final_stored_nonce_to_compare}, API: {final_api_nonce_to_compare}. Full API response: {decoded_integrity_token_response}")
                 result_status = RESULT_FAILED
                 error_message_for_client = "Nonce mismatch."
-                _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+                _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic", reason=error_message_for_client)
                 return jsonify({
                     "error": error_message_for_client,
                     "play_integrity_response": decoded_integrity_token_response
@@ -330,7 +331,7 @@ def verify_integrity_classic():
             result_status = RESULT_ERROR # This is a server-side configuration error
             decoded_integrity_token_response = None # No response from Play Integrity API
             error_message_for_client = "Server authentication configuration error"
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic", reason=error_message_for_client)
             return jsonify({"error": error_message_for_client}), 500
         except Exception as e_api: # Catch other exceptions from Play Integrity API call or subsequent processing
             app.logger.error(f"Error decoding integrity token or processing its response for session {session_id}: {e_api}")
@@ -338,12 +339,13 @@ def verify_integrity_classic():
             # decoded_integrity_token_response might be None or partially filled if error occurred after API call
             # If e_api is from .execute(), decoded_integrity_token_response would not have been set.
             error_message_for_client = "Failed to decode integrity token or process response"
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic", reason=error_message_for_client)
             return jsonify({"error": error_message_for_client, "details": mask_server_url(str(e_api))}), 500
 
         # If we reach here, processing was successful or handled error with a return.
         # For success, result_status is RESULT_SUCCESS.
-        _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic")
+        final_reason_classic = "Verification successful" if result_status == RESULT_SUCCESS else (error_message_for_client if error_message_for_client else "Verification failed")
+        _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "classic", reason=final_reason_classic)
 
         response_payload = {
             "play_integrity_response": decoded_integrity_token_response,
@@ -364,7 +366,7 @@ def verify_integrity_classic():
         app.logger.error(f"Global error in verify_integrity_classic for session {session_id}: {e_global}")
         # Ensure storing an attempt even for global errors, if session_id is available
         # If session_id is None here, it means error occurred before session_id was parsed.
-        _store_verification_attempt(session_id, data, RESULT_ERROR, None, "classic")
+        _store_verification_attempt(session_id, data, RESULT_ERROR, None, "classic", reason="An unexpected server error occurred")
         return jsonify({"error": "An unexpected server error occurred"}), 500
 
 # --- verify_integrity_standard endpoint ---
@@ -386,23 +388,23 @@ def verify_integrity_standard():
         if not data:
             result_status = RESULT_FAILED
             error_message_for_client = "Missing JSON payload"
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard", reason=error_message_for_client)
             return jsonify({"error": error_message_for_client}), 400
 
         if not integrity_token:
             result_status = RESULT_FAILED
             error_message_for_client = "Missing 'token' in request"
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard", reason=error_message_for_client)
             return jsonify({"error": error_message_for_client}), 400
         if not session_id:
             result_status = RESULT_FAILED
             error_message_for_client = "Missing 'session_id' in request"
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard", reason=error_message_for_client)
             return jsonify({"error": error_message_for_client}), 400
         if not isinstance(session_id, str) or not session_id.strip():
             result_status = RESULT_FAILED
             error_message_for_client = "'session_id' must be a non-empty string"
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard", reason=error_message_for_client)
             return jsonify({"error": error_message_for_client}), 400
 
         # Hash and Base64URL encode the (session_id + client_content_binding)
@@ -417,7 +419,7 @@ def verify_integrity_standard():
                 app.logger.error(f"Error hashing/encoding (session_id + contentBinding) for session_id '{session_id}': {e_hash}")
                 result_status = RESULT_FAILED # Consider this a failure in preparing for verification
                 error_message_for_client = "Failed to process contentBinding for hash"
-                _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+                _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard", reason=error_message_for_client)
                 return jsonify({"error": error_message_for_client}), 500 # Internal server issue
         else:
             app.logger.info(f"No client_content_binding provided for session_id '{session_id}'. Skipping server hash generation.")
@@ -443,7 +445,7 @@ def verify_integrity_standard():
                     app.logger.error("requestHash missing in Play Integrity API response, but client_content_binding was provided. Full response: %s", decoded_integrity_token_response)
                     result_status = RESULT_FAILED
                     error_message_for_client = "requestHash missing in API response when contentBinding was provided."
-                    _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+                    _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard", reason=error_message_for_client)
                     return jsonify({
                         "error": error_message_for_client,
                         "play_integrity_response": decoded_integrity_token_response
@@ -460,7 +462,7 @@ def verify_integrity_standard():
                 app.logger.error(f"Server contentBinding hash mismatch. Session ID: {session_id}. Server generated: {server_generated_hash}, API: {api_request_hash}. Original client contentBinding: {client_content_binding}")
                 result_status = RESULT_FAILED
                 error_message_for_client = "Content binding hash mismatch."
-                _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+                _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard", reason=error_message_for_client)
                 return jsonify({
                     "error": error_message_for_client,
                     "client_provided_value_hash_debug": server_generated_hash, # For debugging, consider removing in prod
@@ -476,17 +478,18 @@ def verify_integrity_standard():
             result_status = RESULT_ERROR
             decoded_integrity_token_response = None
             error_message_for_client = "Server authentication configuration error (standard)"
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard", reason=error_message_for_client)
             return jsonify({"error": error_message_for_client}), 500
         except Exception as e_api:
             app.logger.error(f"Error decoding/processing integrity token (standard) for session {session_id}: {e_api}")
             result_status = RESULT_ERROR
             error_message_for_client = "Failed to decode integrity token or process response (standard)"
-            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard") # decoded_integrity_token_response might be None
+            _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard", reason=error_message_for_client) # decoded_integrity_token_response might be None
             return jsonify({"error": error_message_for_client, "details": str(e_api)}), 500
 
         # Store the attempt (Success, or Failed/Error if not returned earlier)
-        _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard")
+        final_reason_standard = "Verification successful" if result_status == RESULT_SUCCESS else (error_message_for_client if error_message_for_client else "Verification failed (standard)")
+        _store_verification_attempt(session_id, data, result_status, decoded_integrity_token_response, "standard", reason=final_reason_standard)
 
         response_payload = {
             "play_integrity_response": decoded_integrity_token_response,
@@ -504,7 +507,7 @@ def verify_integrity_standard():
 
     except Exception as e_global: # Catch-all for any unhandled errors in the main try block
         app.logger.error(f"Global error in verify_integrity_standard for session {session_id}: {e_global}")
-        _store_verification_attempt(session_id, data, RESULT_ERROR, None, "standard")
+        _store_verification_attempt(session_id, data, RESULT_ERROR, None, "standard", reason="An unexpected server error occurred (standard)")
         return jsonify({"error": "An unexpected server error occurred (standard)"}), 500
 
 
