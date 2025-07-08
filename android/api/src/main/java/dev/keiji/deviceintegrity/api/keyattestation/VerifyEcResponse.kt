@@ -60,25 +60,31 @@ data class AuthorizationList(
 )
 
 @Serializable
-data class VerifyEcResponse(
+data class AttestationInfo(
     @SerialName("attestation_security_level")
     val attestationSecurityLevel: Int,
     @SerialName("attestation_version")
     val attestationVersion: Int,
-    @SerialName("is_verified")
-    val isVerified: Boolean,
     @SerialName("keymint_security_level")
     val keymintSecurityLevel: Int,
     @SerialName("keymint_version")
     val keymintVersion: Int,
+    @SerialName("software_enforced_properties")
+    val softwareEnforcedProperties: AuthorizationList,
+    @SerialName("hardware_enforced_properties")
+    val hardwareEnforcedProperties: AuthorizationList?
+)
+
+@Serializable
+data class VerifyEcResponse(
+    @SerialName("is_verified")
+    val isVerified: Boolean,
     @SerialName("reason")
     val reason: String? = null,
     @SerialName("session_id")
     val sessionId: String,
-    @SerialName("software_enforced_properties")
-    val softwareEnforcedProperties: AuthorizationList,
-    @SerialName("tee_enforced_properties")
-    val teeEnforcedProperties: AuthorizationList?,
+    @SerialName("attestation_info")
+    val attestationInfo: AttestationInfo,
     @SerialName("device_info")
     val deviceInfo: DeviceInfo,
     @SerialName("security_info")
