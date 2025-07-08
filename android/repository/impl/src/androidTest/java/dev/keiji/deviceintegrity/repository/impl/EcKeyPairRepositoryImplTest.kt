@@ -20,11 +20,11 @@ import java.security.KeyStore
 
 @ExperimentalCoroutinesApi
 @RunWith(AndroidJUnit4::class)
-class KeyPairRepositoryImplTest {
+class EcKeyPairRepositoryImplTest {
 
     private lateinit var context: Context
     private lateinit var keyStore: KeyStore
-    private lateinit var keyPairRepository: KeyPairRepositoryImpl
+    private lateinit var keyPairRepository: EcKeyPairRepositoryImpl
 
     // Using Dispatchers.IO directly as it's an instrumentation test.
     // For more control, a TestCoroutineDispatcher setup for instrumentation tests would be needed.
@@ -41,10 +41,10 @@ class KeyPairRepositoryImplTest {
         keyStore = KeyStore.getInstance("AndroidKeyStore")
         keyStore.load(null)
 
-        // It's important that KeyPairRepositoryImpl uses Dispatchers.IO or a dispatcher we can control.
+        // It's important that EcKeyPairRepositoryImpl uses Dispatchers.IO or a dispatcher we can control.
         // The Impl is hardcoded to use a dispatcher passed in constructor.
         // For this test, we pass our testDispatcher.
-        keyPairRepository = KeyPairRepositoryImpl(testDispatcher, context)
+        keyPairRepository = EcKeyPairRepositoryImpl(testDispatcher, context)
 
         // Clean up any aliases from previous runs to ensure test isolation
         cleanupTestKeys()
@@ -135,7 +135,7 @@ class KeyPairRepositoryImplTest {
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
             // This success path test expects to run on N+ because of the challenge requirement.
-            // The method KeyPairRepositoryImpl.generateKeyPair throws if SDK < N.
+            // The method EcKeyPairRepositoryImpl.generateKeyPair throws if SDK < N.
             // So, if we are on pre-N, this test should not proceed to call generateKeyPair.
             // The exception for pre-N is tested in another dedicated test.
             println("Skipping generateKeyPair_successfullyGeneratesKey test on pre-N SDK (${Build.VERSION.SDK_INT}) as it requires challenge.")
