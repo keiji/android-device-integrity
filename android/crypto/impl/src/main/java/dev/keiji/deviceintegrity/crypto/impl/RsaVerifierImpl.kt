@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.crypto.impl.verifier
+package dev.keiji.deviceintegrity.crypto.impl
 
 import dev.keiji.deviceintegrity.crypto.contract.Verifier
 import java.security.PublicKey

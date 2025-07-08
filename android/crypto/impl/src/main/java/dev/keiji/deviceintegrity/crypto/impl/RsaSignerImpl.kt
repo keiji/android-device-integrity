@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.crypto.impl.signer
+package dev.keiji.deviceintegrity.crypto.impl
 
 import dev.keiji.deviceintegrity.crypto.contract.Signer
 import java.security.PrivateKey
