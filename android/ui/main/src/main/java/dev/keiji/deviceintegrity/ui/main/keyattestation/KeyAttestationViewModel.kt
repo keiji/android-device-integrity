@@ -1,10 +1,6 @@
 package dev.keiji.deviceintegrity.ui.main.keyattestation
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import android.content.Intent
-import android.widget.Toast
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.keiji.deviceintegrity.api.DeviceInfo
@@ -18,6 +14,7 @@ import dev.keiji.deviceintegrity.repository.contract.EcKeyPairRepository
 import dev.keiji.deviceintegrity.ui.main.util.Base64Utils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
