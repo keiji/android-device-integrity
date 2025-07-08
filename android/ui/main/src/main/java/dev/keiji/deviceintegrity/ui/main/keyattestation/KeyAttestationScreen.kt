@@ -12,13 +12,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.draw.alpha
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -131,19 +136,96 @@ fun KeyAttestationScreen(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-        Text(text = uiState.status)
+
+        // Display general status
+        if (uiState.status.isNotEmpty()) {
+            Text(
+                text = uiState.status,
+                style = if (uiState.verificationResultItems.isNotEmpty() && uiState.status.contains("successful", ignoreCase = true))
+                            MaterialTheme.typography.titleMedium
+                        else if (uiState.status.contains("failed", ignoreCase = true) || uiState.status.contains("error", ignoreCase = true))
+                            MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.error)
+                        else
+                            MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+
+        // Display structured verification results
+        if (uiState.verificationResultItems.isNotEmpty()) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    uiState.verificationResultItems.forEachIndexed { index, item ->
+                        val textStyle = if (item.isHeader) {
+                            MaterialTheme.typography.titleSmall
+                        } else {
+                            MaterialTheme.typography.bodyMedium
+                        }
+                        val itemPadding = when (item.indentLevel) {
+                            1 -> Modifier.padding(start = 16.dp)
+                            2 -> Modifier.padding(start = 32.dp)
+                            else -> Modifier
+                        }
+
+                        Column(modifier = itemPadding) {
+                            if (item.isHeader) {
+                                Text(
+                                    text = item.label,
+                                    style = textStyle,
+                                    modifier = Modifier.padding(top = if (index > 0) 8.dp else 0.dp, bottom = 4.dp)
+                                )
+                            } else {
+                                Text(
+                                    text = "${item.label}: ${item.value}",
+                                    style = textStyle,
+                                    modifier = Modifier.padding(vertical = 2.dp)
+                                )
+                            }
+                        }
+                        if (item.isHeader && item.indentLevel == 0 && index < uiState.verificationResultItems.lastIndex) {
+                             Divider(modifier = Modifier.padding(vertical = 6.dp))
+                        } else if (!item.isHeader && index < uiState.verificationResultItems.lastIndex && uiState.verificationResultItems[index+1].indentLevel <= item.indentLevel && !uiState.verificationResultItems[index+1].isHeader) {
+                            // Optional: finer grained divider, only if next item is not a header and at same or lower indent
+                            // Divider(modifier = Modifier.padding(start = (item.indentLevel * 16).dp, top = 2.dp, bottom = 2.dp).alpha(0.5f))
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
 @Preview
 @Composable
 private fun KeyAttestationScreenPreview() {
+    val previewItems = listOf(
+        AttestationInfoItem("Session ID", "preview-session-id"),
+        AttestationInfoItem("Is Verified", "true"),
+        AttestationInfoItem("Attestation Version", "4"),
+        AttestationInfoItem("Attestation Security Level", "1"),
+        AttestationInfoItem("KeyMint Version", "1"),
+        AttestationInfoItem("KeyMint Security Level", "1"),
+        AttestationInfoItem("Software Enforced Properties", "", isHeader = true),
+        AttestationInfoItem("Attestation Application ID", "", indentLevel = 1, isHeader = true),
+        AttestationInfoItem("Application ID", "com.example.preview", indentLevel = 2),
+        AttestationInfoItem("Version Code", "101", indentLevel = 2),
+        AttestationInfoItem("Signature", "aabbccddeeff...", indentLevel = 2),
+        AttestationInfoItem("Creation Datetime", "2023-01-01T10:00:00.000Z", indentLevel = 1),
+        AttestationInfoItem("Algorithm", "1", indentLevel = 1),
+        AttestationInfoItem("TEE Enforced Properties", "", isHeader = true),
+        AttestationInfoItem("Origin", "0", indentLevel = 1),
+    )
     KeyAttestationScreen(
         uiState = KeyAttestationUiState(
             nonce = "PREVIEW_NONCE_67890",
             challenge = "PREVIEW_CHALLENGE_ABCDE",
             selectedKeyType = CryptoAlgorithm.RSA,
-            status = "Previewing KeyAttestation Screen..."
+            status = "Verification successful.",
+            verificationResultItems = previewItems
         ),
         onSelectedKeyTypeChange = { System.out.println("Preview: Key type changed to ${it.label}") },
         onFetchNonceChallenge = { System.out.println("Preview: Fetch Nonce/Challenge clicked") },

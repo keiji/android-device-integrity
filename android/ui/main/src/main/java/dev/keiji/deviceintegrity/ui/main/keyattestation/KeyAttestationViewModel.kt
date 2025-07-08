@@ -3,9 +3,7 @@ package dev.keiji.deviceintegrity.ui.main.keyattestation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.keiji.deviceintegrity.api.keyattestation.KeyAttestationVerifyApiClient
-import dev.keiji.deviceintegrity.api.keyattestation.PrepareRequest
-import dev.keiji.deviceintegrity.api.keyattestation.VerifyEcRequest
+import dev.keiji.deviceintegrity.api.keyattestation.*
 import dev.keiji.deviceintegrity.crypto.contract.Signer
 import dev.keiji.deviceintegrity.crypto.contract.qualifier.EC
 import dev.keiji.deviceintegrity.repository.contract.KeyPairRepository
@@ -18,6 +16,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.security.SecureRandom
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 import java.util.UUID
 import javax.inject.Inject
 import kotlin.io.encoding.Base64
@@ -32,29 +34,18 @@ class KeyAttestationViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(KeyAttestationUiState())
     val uiState: StateFlow<KeyAttestationUiState> = _uiState.asStateFlow()
 
-    // Event handler for Nonce change
-    fun onNonceChange(newNonce: String) {
-        _uiState.update { it.copy(nonce = newNonce) }
-    }
-
-    // Event handler for Challenge change
-    fun onChallengeChange(newChallenge: String) {
-        _uiState.update { it.copy(challenge = newChallenge) }
-    }
-
-    // Event handler for Selected Key Type change
     fun onSelectedKeyTypeChange(newKeyType: CryptoAlgorithm) {
         _uiState.update { it.copy(selectedKeyType = newKeyType) }
     }
 
-    // Action to fetch Nonce/Challenge
     fun fetchNonceChallenge() {
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
                     status = "Fetching Nonce/Challenge...",
                     nonce = "",
-                    challenge = ""
+                    challenge = "",
+                    verificationResultItems = emptyList() // Clear previous results
                 )
             }
             try {
@@ -62,8 +53,6 @@ class KeyAttestationViewModel @Inject constructor(
                 _uiState.update { it.copy(sessionId = newSessionId) }
 
                 val request = PrepareRequest(sessionId = newSessionId)
-
-                // Perform network call on IO dispatcher
                 val response = withContext(Dispatchers.IO) {
                     keyAttestationVerifyApiClient.prepare(request)
                 }
@@ -79,21 +68,20 @@ class KeyAttestationViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         status = "Failed to fetch Nonce/Challenge: ${e.message}",
-                        sessionId = null // Clear sessionId on failure
+                        sessionId = null
                     )
                 }
-                // Optionally log the exception e.g. Timber.e(e, "fetchNonceChallenge failed")
             }
         }
     }
 
-    // Action to generate KeyPair
     fun generateKeyPair() {
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
                     status = "Generating KeyPair...",
-                    generatedKeyPairData = null
+                    generatedKeyPairData = null,
+                    verificationResultItems = emptyList() // Clear previous results
                 )
             }
 
@@ -104,13 +92,9 @@ class KeyAttestationViewModel @Inject constructor(
             }
 
             try {
-                // Decode the challenge from Base64Url
-                // Using UrlSafeNoPadding to ensure no padding is used/expected.
                 val decodedChallenge = withContext(Dispatchers.Default) {
                     Base64Utils.UrlSafeNoPadding.decode(currentChallenge)
                 }
-
-                // Perform key generation on IO dispatcher
                 val keyPairDataResult = withContext(Dispatchers.IO) {
                     keyPairRepository.generateKeyPair(decodedChallenge)
                 }
@@ -123,19 +107,22 @@ class KeyAttestationViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(status = "Failed to generate KeyPair: ${e.message}") }
-                // Optionally log the exception
             }
         }
     }
 
-    // Action to request verification of KeyAttestation
     fun requestVerifyKeyAttestation() {
         viewModelScope.launch {
-            _uiState.update { it.copy(status = "Verifying KeyAttestation...") }
+            _uiState.update {
+                it.copy(
+                    status = "Verifying KeyAttestation...",
+                    verificationResultItems = emptyList() // Clear previous results
+                )
+            }
 
             val currentSessionId = uiState.value.sessionId
             val currentKeyPairData = uiState.value.generatedKeyPairData
-            val serverNonceB64Url = uiState.value.nonce // This is server's nonce from prepare step
+            val serverNonceB64Url = uiState.value.nonce
 
             if (currentSessionId == null) {
                 _uiState.update { it.copy(status = "SessionId is missing. Fetch Nonce/Challenge first.") }
@@ -152,30 +139,19 @@ class KeyAttestationViewModel @Inject constructor(
             }
 
             try {
-                // Perform encoding, signing, and network call on appropriate dispatchers
                 val response = withContext(Dispatchers.IO) {
-                    // 1. Nonce Handling
                     val nonceB = ByteArray(32)
                     SecureRandom().nextBytes(nonceB)
-
-                    // Server nonce is Base64URL Encoded
-                    // Using UrlSafeNoPadding to ensure no padding is used/expected.
                     val decodedServerNonce = Base64Utils.UrlSafeNoPadding.decode(serverNonceB64Url)
                     val dataToSign = decodedServerNonce + nonceB
-
-                    // 2. Signing
                     val privateKey = keyPair.private
                     val signatureData = signer.sign(dataToSign, privateKey)
-
-                    // 3. Encoding for Request (Base64URL, without padding using Base64Utils)
                     val signatureDataBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(signatureData)
                     val nonceBBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(nonceB)
                     val certificateChainBase64Encoded =
                         currentKeyPairData.certificates.map { cert ->
                             Base64.Default.encode(cert.encoded)
                         }
-
-                    // 4. API Call
                     val request = VerifyEcRequest(
                         sessionId = currentSessionId,
                         signatureDataBase64UrlEncoded = signatureDataBase64UrlEncoded,
@@ -186,76 +162,12 @@ class KeyAttestationViewModel @Inject constructor(
                 }
 
                 if (response.isVerified) {
-                    val statusBuilder = StringBuilder()
-                    statusBuilder.appendLine("Verification successful.")
-                    statusBuilder.appendLine("Session ID: ${response.sessionId}")
-                    statusBuilder.appendLine("Is Verified: ${response.isVerified}")
-                    statusBuilder.appendLine("Attestation Security Level: ${response.attestationSecurityLevel}")
-                    statusBuilder.appendLine("Attestation Version: ${response.attestationVersion}")
-                    statusBuilder.appendLine("KeyMint Security Level: ${response.keymintSecurityLevel}")
-                    statusBuilder.appendLine("KeyMint Version: ${response.keymintVersion}")
-                    statusBuilder.appendLine("Reason: ${response.reason ?: "N/A"}")
-
-                    statusBuilder.appendLine("\nSoftware Enforced Properties:")
-                    response.softwareEnforcedProperties?.let { props ->
-                        statusBuilder.appendLine("  Attestation Application ID:")
-                        props.attestationApplicationId?.let { appId ->
-                            statusBuilder.appendLine("    Application Signature: ${appId.applicationSignature ?: "N/A"}")
-                            statusBuilder.appendLine("    Attestation Application ID: ${appId.attestationApplicationId ?: "N/A"}")
-                            statusBuilder.appendLine("    Attestation Application Version Code: ${appId.attestationApplicationVersionCode ?: "N/A"}")
-                        } ?: statusBuilder.appendLine("    N/A")
-                        statusBuilder.appendLine("  Creation Datetime: ${props.creationDatetime ?: "N/A"}")
-                        statusBuilder.appendLine("  Algorithm: ${props.algorithm ?: "N/A"}")
-                        statusBuilder.appendLine("  Boot Patch Level: ${props.bootPatchLevel ?: "N/A"}")
-                        statusBuilder.appendLine("  Digests: ${props.digests?.joinToString() ?: "N/A"}")
-                        statusBuilder.appendLine("  EC Curve: ${props.ecCurve ?: "N/A"}")
-                        statusBuilder.appendLine("  Key Size: ${props.keySize ?: "N/A"}")
-                        statusBuilder.appendLine("  No Auth Required: ${props.noAuthRequired ?: "N/A"}")
-                        statusBuilder.appendLine("  Origin: ${props.origin ?: "N/A"}")
-                        statusBuilder.appendLine("  OS Patch Level: ${props.osPatchLevel ?: "N/A"}")
-                        statusBuilder.appendLine("  OS Version: ${props.osVersion ?: "N/A"}")
-                        statusBuilder.appendLine("  Purpose: ${props.purpose?.joinToString() ?: "N/A"}")
-                        props.rootOfTrust?.let { rot ->
-                            statusBuilder.appendLine("  Root of Trust:")
-                            statusBuilder.appendLine("    Device Locked: ${rot.deviceLocked ?: "N/A"}")
-                            statusBuilder.appendLine("    Verified Boot Hash: ${rot.verifiedBootHash ?: "N/A"}")
-                            statusBuilder.appendLine("    Verified Boot Key: ${rot.verifiedBootKey ?: "N/A"}")
-                            statusBuilder.appendLine("    Verified Boot State: ${rot.verifiedBootState ?: "N/A"}")
-                        } ?: statusBuilder.appendLine("  Root of Trust: N/A")
-                        statusBuilder.appendLine("  Vendor Patch Level: ${props.vendorPatchLevel ?: "N/A"}")
-                    } ?: statusBuilder.appendLine("  N/A")
-
-                    statusBuilder.appendLine("\nTEE Enforced Properties:")
-                    response.teeEnforcedProperties?.let { props ->
-                        statusBuilder.appendLine("  Attestation Application ID:")
-                        props.attestationApplicationId?.let { appId ->
-                            statusBuilder.appendLine("    Application Signature: ${appId.applicationSignature ?: "N/A"}")
-                            statusBuilder.appendLine("    Attestation Application ID: ${appId.attestationApplicationId ?: "N/A"}")
-                            statusBuilder.appendLine("    Attestation Application Version Code: ${appId.attestationApplicationVersionCode ?: "N/A"}")
-                        } ?: statusBuilder.appendLine("    N/A")
-                        statusBuilder.appendLine("  Creation Datetime: ${props.creationDatetime ?: "N/A"}")
-                        statusBuilder.appendLine("  Algorithm: ${props.algorithm ?: "N/A"}")
-                        statusBuilder.appendLine("  Boot Patch Level: ${props.bootPatchLevel ?: "N/A"}")
-                        statusBuilder.appendLine("  Digests: ${props.digests?.joinToString() ?: "N/A"}")
-                        statusBuilder.appendLine("  EC Curve: ${props.ecCurve ?: "N/A"}")
-                        statusBuilder.appendLine("  Key Size: ${props.keySize ?: "N/A"}")
-                        statusBuilder.appendLine("  No Auth Required: ${props.noAuthRequired ?: "N/A"}")
-                        statusBuilder.appendLine("  Origin: ${props.origin ?: "N/A"}")
-                        statusBuilder.appendLine("  OS Patch Level: ${props.osPatchLevel ?: "N/A"}")
-                        statusBuilder.appendLine("  OS Version: ${props.osVersion ?: "N/A"}")
-                        statusBuilder.appendLine("  Purpose: ${props.purpose?.joinToString() ?: "N/A"}")
-                        props.rootOfTrust?.let { rot ->
-                            statusBuilder.appendLine("  Root of Trust:")
-                            statusBuilder.appendLine("    Device Locked: ${rot.deviceLocked ?: "N/A"}")
-                            statusBuilder.appendLine("    Verified Boot Hash: ${rot.verifiedBootHash ?: "N/A"}")
-                            statusBuilder.appendLine("    Verified Boot Key: ${rot.verifiedBootKey ?: "N/A"}")
-                            statusBuilder.appendLine("    Verified Boot State: ${rot.verifiedBootState ?: "N/A"}")
-                        } ?: statusBuilder.appendLine("  Root of Trust: N/A")
-                        statusBuilder.appendLine("  Vendor Patch Level: ${props.vendorPatchLevel ?: "N/A"}")
-                    } ?: statusBuilder.appendLine("  N/A")
-
+                    val resultItems = buildVerificationResultList(response)
                     _uiState.update {
-                        it.copy(status = statusBuilder.toString())
+                        it.copy(
+                            status = "Verification successful.", // General status
+                            verificationResultItems = resultItems
+                        )
                     }
                 } else {
                     _uiState.update {
@@ -265,8 +177,78 @@ class KeyAttestationViewModel @Inject constructor(
 
             } catch (e: Exception) {
                 _uiState.update { it.copy(status = "Failed to verify KeyAttestation: ${e.message}") }
-                // Optionally log the exception
             }
         }
+    }
+
+    private fun buildVerificationResultList(response: VerifyEcResponse): List<AttestationInfoItem> {
+        val items = mutableListOf<AttestationInfoItem>()
+
+        items.add(AttestationInfoItem("Session ID", response.sessionId))
+        items.add(AttestationInfoItem("Is Verified", response.isVerified.toString()))
+        response.reason?.let { items.add(AttestationInfoItem("Reason", it)) }
+        items.add(AttestationInfoItem("Attestation Version", response.attestationVersion.toString()))
+        items.add(AttestationInfoItem("Attestation Security Level", response.attestationSecurityLevel.toString()))
+        items.add(AttestationInfoItem("KeyMint Version", response.keymintVersion.toString()))
+        items.add(AttestationInfoItem("KeyMint Security Level", response.keymintSecurityLevel.toString()))
+
+        addAuthorizationListItems(items, "Software Enforced Properties", response.softwareEnforcedProperties)
+        response.teeEnforcedProperties?.let {
+            addAuthorizationListItems(items, "TEE Enforced Properties", it)
+        }
+
+        return items
+    }
+
+    private fun addAuthorizationListItems(
+        items: MutableList<AttestationInfoItem>,
+        header: String,
+        props: AuthorizationList?
+    ) {
+        props ?: return
+        items.add(AttestationInfoItem(header, "", isHeader = true))
+
+        props.attestationApplicationId?.let { appId ->
+            items.add(AttestationInfoItem("Attestation Application ID", "", indentLevel = 1, isHeader = true))
+            appId.attestationApplicationId.let { items.add(AttestationInfoItem("Application ID", it, indentLevel = 2)) }
+            appId.attestationApplicationVersionCode?.let { items.add(AttestationInfoItem("Version Code", it.toString(), indentLevel = 2)) }
+            appId.applicationSignature.let { items.add(AttestationInfoItem("Signature", it, indentLevel = 2)) }
+        }
+        props.creationDatetime?.let { items.add(AttestationInfoItem("Creation Datetime", formatEpochMilliToISO8601(it), indentLevel = 1)) }
+        props.algorithm?.let { items.add(AttestationInfoItem("Algorithm", it.toString(), indentLevel = 1)) }
+        props.origin?.let { items.add(AttestationInfoItem("Origin", it, indentLevel = 1)) }
+        props.ecCurve?.let { items.add(AttestationInfoItem("EC Curve", it.toString(), indentLevel = 1)) }
+        props.keySize?.let { items.add(AttestationInfoItem("Key Size", it.toString(), indentLevel = 1)) }
+        props.purpose?.let { items.add(AttestationInfoItem("Purposes", it.joinToString(), indentLevel = 1)) }
+        props.digests?.let { items.add(AttestationInfoItem("Digests", it.joinToString(), indentLevel = 1)) }
+        props.noAuthRequired?.let { items.add(AttestationInfoItem("No Auth Required", it.toString(), indentLevel = 1)) }
+
+        props.rootOfTrust?.let { rot ->
+            items.add(AttestationInfoItem("Root of Trust", "", indentLevel = 1, isHeader = true))
+            rot.deviceLocked?.let { items.add(AttestationInfoItem("Device Locked", it.toString(), indentLevel = 2)) }
+            rot.verifiedBootState?.let { items.add(AttestationInfoItem("Verified Boot State", it.toString(), indentLevel = 2)) }
+            rot.verifiedBootHash?.let { items.add(AttestationInfoItem("Verified Boot Hash", it, indentLevel = 2)) }
+            rot.verifiedBootKey?.let { items.add(AttestationInfoItem("Verified Boot Key", it, indentLevel = 2)) }
+        }
+
+        props.osPatchLevel?.let { items.add(AttestationInfoItem("OS Patch Level", it.toString(), indentLevel = 1)) }
+        props.vendorPatchLevel?.let { items.add(AttestationInfoItem("Vendor Patch Level", it.toString(), indentLevel = 1)) }
+        props.bootPatchLevel?.let { items.add(AttestationInfoItem("Boot Patch Level", it.toString(), indentLevel = 1)) }
+    }
+
+    private fun formatEpochMilliToISO8601(epochMilli: Long): String {
+        val date = Date(epochMilli)
+        // Replaced XXX with ZZZZZ for API level 23 compatibility.
+        // ZZZZZ produces a format like "GMT-07:00" or "UTC" if UTC.
+        // For UTC, it will be "UTC", to get "Z", one might need to replace "UTC" with "Z" manually.
+        // However, the requirement is ISO/IEC 8601, and "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ" is compliant.
+        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ", Locale.US)
+        format.timeZone = TimeZone.getTimeZone("UTC")
+        var formattedDate = format.format(date)
+        // Replace "UTC" with "Z" for the common ISO 8601 UTC designator
+        if (formattedDate.endsWith("UTC")) {
+            formattedDate = formattedDate.substring(0, formattedDate.length - 3) + "Z"
+        }
+        return formattedDate
     }
 }
