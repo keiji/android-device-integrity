@@ -30,7 +30,7 @@ import kotlin.io.encoding.Base64
 
 @HiltViewModel
 class KeyAttestationViewModel @Inject constructor(
-    private val keyPairRepository: EcKeyPairRepository,
+    private val ecKeyPairRepository: EcKeyPairRepository,
     private val keyAttestationVerifyApiClient: KeyAttestationVerifyApiClient,
     private val deviceInfoProvider: DeviceInfoProvider,
     private val deviceSecurityStateProvider: DeviceSecurityStateProvider,
@@ -102,7 +102,7 @@ class KeyAttestationViewModel @Inject constructor(
                     Base64Utils.UrlSafeNoPadding.decode(currentChallenge)
                 }
                 val keyPairDataResult = withContext(Dispatchers.IO) {
-                    keyPairRepository.generateKeyPair(decodedChallenge)
+                    ecKeyPairRepository.generateKeyPair(decodedChallenge)
                 }
 
                 _uiState.update {
