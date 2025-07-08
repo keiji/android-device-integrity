@@ -1,6 +1,10 @@
 package dev.keiji.deviceintegrity.ui.main.keyattestation
 
-import androidx.lifecycle.ViewModel
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import android.widget.Toast
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.keiji.deviceintegrity.api.DeviceInfo
@@ -13,9 +17,10 @@ import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.repository.contract.EcKeyPairRepository
 import dev.keiji.deviceintegrity.ui.main.util.Base64Utils
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -39,6 +44,16 @@ class KeyAttestationViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(KeyAttestationUiState())
     val uiState: StateFlow<KeyAttestationUiState> = _uiState.asStateFlow()
+
+    private val _shareEventChannel = Channel<String>()
+    val shareEventFlow = _shareEventChannel.receiveAsFlow()
+
+    private val _copyEventChannel = Channel<String>()
+    val copyEventFlow = _copyEventChannel.receiveAsFlow()
+
+    fun setTextToShare(text: String) {
+        _uiState.update { it.copy(textToShare = text) }
+    }
 
     fun onSelectedKeyTypeChange(newKeyType: CryptoAlgorithm) {
         _uiState.update { it.copy(selectedKeyType = newKeyType) }
@@ -193,10 +208,12 @@ class KeyAttestationViewModel @Inject constructor(
                     resultItems.addAll(convertDeviceInfoToAttestationItems(response.deviceInfo))
                     resultItems.addAll(convertSecurityInfoToAttestationItems(response.securityInfo))
 
+                    val resultText = AttestationResultFormatter.formatAttestationResults(resultItems)
                     _uiState.update {
                         it.copy(
                             status = "Verification successful.", // General status
-                            verificationResultItems = resultItems
+                            verificationResultItems = resultItems,
+                            textToShare = resultText
                         )
                     }
                 } else {
@@ -310,5 +327,23 @@ class KeyAttestationViewModel @Inject constructor(
             formattedDate = formattedDate.substring(0, formattedDate.length - 3) + "Z"
         }
         return formattedDate
+    }
+
+    fun onCopyResultsClicked() {
+        val text = uiState.value.textToShare
+        if (text.isNotEmpty()) {
+            viewModelScope.launch {
+                _copyEventChannel.send(text)
+            }
+        }
+    }
+
+    fun onShareResultsClicked() {
+        val text = uiState.value.textToShare
+        if (text.isNotEmpty()) {
+            viewModelScope.launch {
+                _shareEventChannel.send(text)
+            }
+        }
     }
 }

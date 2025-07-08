@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,23 +14,31 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.draw.alpha
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
@@ -42,9 +51,12 @@ fun KeyAttestationScreen(
     onFetchNonceChallenge: () -> Unit,
     onGenerateKeyPair: () -> Unit,
     onRequestVerifyKeyAttestation: () -> Unit,
+    onCopyResults: () -> Unit,
+    onShareResults: () -> Unit,
 ) {
     val scrollState = rememberScrollState()
     var keyTypeExpanded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     val keyTypes = CryptoAlgorithm.values().toList()
 
     Column(
@@ -139,15 +151,38 @@ fun KeyAttestationScreen(
 
         // Display general status
         if (uiState.status.isNotEmpty()) {
-            Text(
-                text = uiState.status,
-                style = if (uiState.verificationResultItems.isNotEmpty() && uiState.status.contains("successful", ignoreCase = true))
-                            MaterialTheme.typography.titleMedium
-                        else if (uiState.status.contains("failed", ignoreCase = true) || uiState.status.contains("error", ignoreCase = true))
-                            MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.error)
-                        else
-                            MaterialTheme.typography.bodyMedium
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = uiState.status,
+                    style = if (uiState.verificationResultItems.isNotEmpty() && uiState.status.contains("successful", ignoreCase = true))
+                                MaterialTheme.typography.titleMedium
+                            else if (uiState.status.contains("failed", ignoreCase = true) || uiState.status.contains("error", ignoreCase = true))
+                                MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.error)
+                            else
+                                MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f)
+                )
+                if (uiState.verificationResultItems.isNotEmpty() && uiState.textToShare.isNotEmpty()) {
+                    Row {
+                        IconButton(onClick = onCopyResults) {
+                            Icon(
+                                imageVector = Icons.Filled.ContentCopy,
+                                contentDescription = "Copy Results"
+                            )
+                        }
+                        IconButton(onClick = onShareResults) {
+                            Icon(
+                                imageVector = Icons.Filled.Share,
+                                contentDescription = "Share Results"
+                            )
+                        }
+                    }
+                }
+            }
             Spacer(modifier = Modifier.height(8.dp))
         }
 
@@ -245,6 +280,8 @@ private fun KeyAttestationScreenPreview() {
         onSelectedKeyTypeChange = { System.out.println("Preview: Key type changed to ${it.label}") },
         onFetchNonceChallenge = { System.out.println("Preview: Fetch Nonce/Challenge clicked") },
         onGenerateKeyPair = { System.out.println("Preview: Generate KeyPair clicked") },
-        onRequestVerifyKeyAttestation = { System.out.println("Preview: Request Verify KeyAttestation clicked") }
+        onRequestVerifyKeyAttestation = { System.out.println("Preview: Request Verify KeyAttestation clicked") },
+        onCopyResults = { System.out.println("Preview: Copy results clicked") },
+        onShareResults = { System.out.println("Preview: Share results clicked") }
     )
 }
