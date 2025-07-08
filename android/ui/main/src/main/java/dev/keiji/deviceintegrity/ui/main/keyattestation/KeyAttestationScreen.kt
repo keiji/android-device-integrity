@@ -197,38 +197,8 @@ fun KeyAttestationScreen(
             }
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Display Device Info
-            if (uiState.deviceInfoText.isNotEmpty()) {
-                Text(text = "Device Info:", style = MaterialTheme.typography.titleMedium)
-                Spacer(modifier = Modifier.height(4.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Text(
-                        text = uiState.deviceInfoText,
-                        modifier = Modifier.padding(12.dp),
-                        style = MaterialTheme.typography.bodySmall // Use a smaller font for potentially long text
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-
-            // Display Security Info
-            if (uiState.securityInfoText.isNotEmpty()) {
-                Text(text = "Security Info:", style = MaterialTheme.typography.titleMedium)
-                Spacer(modifier = Modifier.height(4.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Text(
-                        text = uiState.securityInfoText,
-                        modifier = Modifier.padding(12.dp),
-                        style = MaterialTheme.typography.bodySmall // Use a smaller font for potentially long text
-                    )
-                }
-            }
+            // Device Info and Security Info are now part of verificationResultItems
+            // So, the dedicated display sections below are no longer needed.
         }
     }
 }
@@ -252,6 +222,17 @@ private fun KeyAttestationScreenPreview() {
         AttestationInfoItem("Algorithm", "1", indentLevel = 1),
         AttestationInfoItem("TEE Enforced Properties", "", isHeader = true),
         AttestationInfoItem("Origin", "0", indentLevel = 1),
+
+        // Sample Device Info
+        AttestationInfoItem("Device Info", "", isHeader = true, indentLevel = 0),
+        AttestationInfoItem("Brand", "Google", indentLevel = 1),
+        AttestationInfoItem("Model", "Pixel Preview", indentLevel = 1),
+        AttestationInfoItem("SDK Int", "33", indentLevel = 1),
+
+        // Sample Security Info
+        AttestationInfoItem("Security Info", "", isHeader = true, indentLevel = 0),
+        AttestationInfoItem("Is Device Lock Enabled", "true", indentLevel = 1),
+        AttestationInfoItem("Has Strongbox", "true", indentLevel = 1),
     )
     KeyAttestationScreen(
         uiState = KeyAttestationUiState(
