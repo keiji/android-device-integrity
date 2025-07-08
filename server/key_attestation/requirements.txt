@@ -4,4 +4,4 @@ google-cloud-datastore>=2.5.0,<3.0.0 # For Google Cloud Datastore access
 google-api-python-client>=2.0.0,<3.0.0 # For calling Google APIs, including Play Integrity
 google-auth>=2.0.0,<3.0.0 # For authentication with Google Cloud services
 cryptography>=45.0.5,<46.0.0 # For X.509 certificate parsing and signature verification
-pyasn1>=0.5.1,<0.6.0 # For parsing ASN.1 structures
+pyasn1>=0.5.1,<0.7.0 # For parsing ASN.1 structures
