@@ -10,7 +10,7 @@ import dev.keiji.deviceintegrity.crypto.contract.Signer
 import dev.keiji.deviceintegrity.crypto.contract.qualifier.EC
 import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
-import dev.keiji.deviceintegrity.repository.contract.KeyPairRepository
+import dev.keiji.deviceintegrity.repository.contract.EcKeyPairRepository
 import dev.keiji.deviceintegrity.ui.main.util.Base64Utils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,7 +30,7 @@ import kotlin.io.encoding.Base64
 
 @HiltViewModel
 class KeyAttestationViewModel @Inject constructor(
-    private val keyPairRepository: KeyPairRepository,
+    private val ecKeyPairRepository: EcKeyPairRepository,
     private val keyAttestationVerifyApiClient: KeyAttestationVerifyApiClient,
     private val deviceInfoProvider: DeviceInfoProvider,
     private val deviceSecurityStateProvider: DeviceSecurityStateProvider,
@@ -102,7 +102,7 @@ class KeyAttestationViewModel @Inject constructor(
                     Base64Utils.UrlSafeNoPadding.decode(currentChallenge)
                 }
                 val keyPairDataResult = withContext(Dispatchers.IO) {
-                    keyPairRepository.generateKeyPair(decodedChallenge)
+                    ecKeyPairRepository.generateKeyPair(decodedChallenge)
                 }
 
                 _uiState.update {
