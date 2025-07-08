@@ -1,6 +1,7 @@
 import os
 import base64
 from datetime import datetime, timezone, timedelta
+from typing import Optional
 from flask import Flask, request, jsonify
 from google.cloud import datastore
 from google.oauth2 import service_account
@@ -113,7 +114,7 @@ def cleanup_expired_nonces():
         # Log the error, but don't let cleanup failure break the main functionality
         app.logger.error(f"Error during Datastore cleanup of expired nonces: {e}")
 
-def _store_verification_attempt(session_id, client_request_data, result, decoded_token_response, verification_type_str, reason: str | None):
+def _store_verification_attempt(session_id, client_request_data, result, decoded_token_response, verification_type_str, reason: Optional[str]):
     """
     Stores the result of a verification attempt in Datastore.
     """
