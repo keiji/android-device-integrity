@@ -197,37 +197,62 @@ class KeyAttestationViewModel @Inject constructor(
                     statusBuilder.appendLine("Reason: ${response.reason ?: "N/A"}")
 
                     statusBuilder.appendLine("\nSoftware Enforced Properties:")
-                    response.softwareEnforcedProperties.let { props ->
+                    response.softwareEnforcedProperties?.let { props ->
                         statusBuilder.appendLine("  Attestation Application ID:")
-                        props.attestationApplicationId.let { appId ->
-                            statusBuilder.appendLine("    Application Signature: ${appId.applicationSignature}")
-                            statusBuilder.appendLine("    Attestation Application ID: ${appId.attestationApplicationId}")
-                            statusBuilder.appendLine("    Attestation Application Version Code: ${appId.attestationApplicationVersionCode}")
-                        }
-                        statusBuilder.appendLine("  Creation Datetime: ${props.creationDatetime}")
-                    }
+                        props.attestationApplicationId?.let { appId ->
+                            statusBuilder.appendLine("    Application Signature: ${appId.applicationSignature ?: "N/A"}")
+                            statusBuilder.appendLine("    Attestation Application ID: ${appId.attestationApplicationId ?: "N/A"}")
+                            statusBuilder.appendLine("    Attestation Application Version Code: ${appId.attestationApplicationVersionCode ?: "N/A"}")
+                        } ?: statusBuilder.appendLine("    N/A")
+                        statusBuilder.appendLine("  Creation Datetime: ${props.creationDatetime ?: "N/A"}")
+                        statusBuilder.appendLine("  Algorithm: ${props.algorithm ?: "N/A"}")
+                        statusBuilder.appendLine("  Boot Patch Level: ${props.bootPatchLevel ?: "N/A"}")
+                        statusBuilder.appendLine("  Digests: ${props.digests?.joinToString() ?: "N/A"}")
+                        statusBuilder.appendLine("  EC Curve: ${props.ecCurve ?: "N/A"}")
+                        statusBuilder.appendLine("  Key Size: ${props.keySize ?: "N/A"}")
+                        statusBuilder.appendLine("  No Auth Required: ${props.noAuthRequired ?: "N/A"}")
+                        statusBuilder.appendLine("  Origin: ${props.origin ?: "N/A"}")
+                        statusBuilder.appendLine("  OS Patch Level: ${props.osPatchLevel ?: "N/A"}")
+                        statusBuilder.appendLine("  OS Version: ${props.osVersion ?: "N/A"}")
+                        statusBuilder.appendLine("  Purpose: ${props.purpose?.joinToString() ?: "N/A"}")
+                        props.rootOfTrust?.let { rot ->
+                            statusBuilder.appendLine("  Root of Trust:")
+                            statusBuilder.appendLine("    Device Locked: ${rot.deviceLocked ?: "N/A"}")
+                            statusBuilder.appendLine("    Verified Boot Hash: ${rot.verifiedBootHash ?: "N/A"}")
+                            statusBuilder.appendLine("    Verified Boot Key: ${rot.verifiedBootKey ?: "N/A"}")
+                            statusBuilder.appendLine("    Verified Boot State: ${rot.verifiedBootState ?: "N/A"}")
+                        } ?: statusBuilder.appendLine("  Root of Trust: N/A")
+                        statusBuilder.appendLine("  Vendor Patch Level: ${props.vendorPatchLevel ?: "N/A"}")
+                    } ?: statusBuilder.appendLine("  N/A")
 
                     statusBuilder.appendLine("\nTEE Enforced Properties:")
-                    response.teeEnforcedProperties.let { props ->
-                        statusBuilder.appendLine("  Algorithm: ${props.algorithm}")
-                        statusBuilder.appendLine("  Boot Patch Level: ${props.bootPatchLevel}")
-                        statusBuilder.appendLine("  Digests: ${props.digests.joinToString()}")
-                        statusBuilder.appendLine("  EC Curve: ${props.ecCurve}")
-                        statusBuilder.appendLine("  Key Size: ${props.keySize}")
-                        statusBuilder.appendLine("  No Auth Required: ${props.noAuthRequired}")
-                        statusBuilder.appendLine("  Origin: ${props.origin}")
-                        statusBuilder.appendLine("  OS Patch Level: ${props.osPatchLevel}")
-                        statusBuilder.appendLine("  OS Version: ${props.osVersion}")
-                        statusBuilder.appendLine("  Purpose: ${props.purpose.joinToString()}")
-                        props.rootOfTrust.let { rot ->
+                    response.teeEnforcedProperties?.let { props ->
+                        statusBuilder.appendLine("  Attestation Application ID:")
+                        props.attestationApplicationId?.let { appId ->
+                            statusBuilder.appendLine("    Application Signature: ${appId.applicationSignature ?: "N/A"}")
+                            statusBuilder.appendLine("    Attestation Application ID: ${appId.attestationApplicationId ?: "N/A"}")
+                            statusBuilder.appendLine("    Attestation Application Version Code: ${appId.attestationApplicationVersionCode ?: "N/A"}")
+                        } ?: statusBuilder.appendLine("    N/A")
+                        statusBuilder.appendLine("  Creation Datetime: ${props.creationDatetime ?: "N/A"}")
+                        statusBuilder.appendLine("  Algorithm: ${props.algorithm ?: "N/A"}")
+                        statusBuilder.appendLine("  Boot Patch Level: ${props.bootPatchLevel ?: "N/A"}")
+                        statusBuilder.appendLine("  Digests: ${props.digests?.joinToString() ?: "N/A"}")
+                        statusBuilder.appendLine("  EC Curve: ${props.ecCurve ?: "N/A"}")
+                        statusBuilder.appendLine("  Key Size: ${props.keySize ?: "N/A"}")
+                        statusBuilder.appendLine("  No Auth Required: ${props.noAuthRequired ?: "N/A"}")
+                        statusBuilder.appendLine("  Origin: ${props.origin ?: "N/A"}")
+                        statusBuilder.appendLine("  OS Patch Level: ${props.osPatchLevel ?: "N/A"}")
+                        statusBuilder.appendLine("  OS Version: ${props.osVersion ?: "N/A"}")
+                        statusBuilder.appendLine("  Purpose: ${props.purpose?.joinToString() ?: "N/A"}")
+                        props.rootOfTrust?.let { rot ->
                             statusBuilder.appendLine("  Root of Trust:")
-                            statusBuilder.appendLine("    Device Locked: ${rot.deviceLocked}")
-                            statusBuilder.appendLine("    Verified Boot Hash: ${rot.verifiedBootHash}")
-                            statusBuilder.appendLine("    Verified Boot Key: ${rot.verifiedBootKey}")
-                            statusBuilder.appendLine("    Verified Boot State: ${rot.verifiedBootState}")
-                        }
-                        statusBuilder.appendLine("  Vendor Patch Level: ${props.vendorPatchLevel}")
-                    }
+                            statusBuilder.appendLine("    Device Locked: ${rot.deviceLocked ?: "N/A"}")
+                            statusBuilder.appendLine("    Verified Boot Hash: ${rot.verifiedBootHash ?: "N/A"}")
+                            statusBuilder.appendLine("    Verified Boot Key: ${rot.verifiedBootKey ?: "N/A"}")
+                            statusBuilder.appendLine("    Verified Boot State: ${rot.verifiedBootState ?: "N/A"}")
+                        } ?: statusBuilder.appendLine("  Root of Trust: N/A")
+                        statusBuilder.appendLine("  Vendor Patch Level: ${props.vendorPatchLevel ?: "N/A"}")
+                    } ?: statusBuilder.appendLine("  N/A")
 
                     _uiState.update {
                         it.copy(status = statusBuilder.toString())
