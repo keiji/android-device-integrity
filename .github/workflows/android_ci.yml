@@ -22,12 +22,8 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "buildCheck"
-  buildCheck:
-    # The type of runner that the job will run on
+  buildAndTest:
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
@@ -59,33 +55,6 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
         working-directory: ./android
-
-  androidTest:
-    needs: buildCheck
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Cache Gradle packages
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ hashFiles('**/*.gradle*') }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: |
-            gradle-${{ hashFiles('**/*.gradle*') }}-
-            gradle-
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x android/gradlew
-        working-directory: ./
 
       - name: Enable KVM for Android emulator
         run: |
