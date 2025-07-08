@@ -186,8 +186,76 @@ class KeyAttestationViewModel @Inject constructor(
                 }
 
                 if (response.isVerified) {
+                    val statusBuilder = StringBuilder()
+                    statusBuilder.appendLine("Verification successful.")
+                    statusBuilder.appendLine("Session ID: ${response.sessionId}")
+                    statusBuilder.appendLine("Is Verified: ${response.isVerified}")
+                    statusBuilder.appendLine("Attestation Security Level: ${response.attestationSecurityLevel}")
+                    statusBuilder.appendLine("Attestation Version: ${response.attestationVersion}")
+                    statusBuilder.appendLine("KeyMint Security Level: ${response.keymintSecurityLevel}")
+                    statusBuilder.appendLine("KeyMint Version: ${response.keymintVersion}")
+                    statusBuilder.appendLine("Reason: ${response.reason ?: "N/A"}")
+
+                    statusBuilder.appendLine("\nSoftware Enforced Properties:")
+                    response.softwareEnforcedProperties?.let { props ->
+                        statusBuilder.appendLine("  Attestation Application ID:")
+                        props.attestationApplicationId?.let { appId ->
+                            statusBuilder.appendLine("    Application Signature: ${appId.applicationSignature ?: "N/A"}")
+                            statusBuilder.appendLine("    Attestation Application ID: ${appId.attestationApplicationId ?: "N/A"}")
+                            statusBuilder.appendLine("    Attestation Application Version Code: ${appId.attestationApplicationVersionCode ?: "N/A"}")
+                        } ?: statusBuilder.appendLine("    N/A")
+                        statusBuilder.appendLine("  Creation Datetime: ${props.creationDatetime ?: "N/A"}")
+                        statusBuilder.appendLine("  Algorithm: ${props.algorithm ?: "N/A"}")
+                        statusBuilder.appendLine("  Boot Patch Level: ${props.bootPatchLevel ?: "N/A"}")
+                        statusBuilder.appendLine("  Digests: ${props.digests?.joinToString() ?: "N/A"}")
+                        statusBuilder.appendLine("  EC Curve: ${props.ecCurve ?: "N/A"}")
+                        statusBuilder.appendLine("  Key Size: ${props.keySize ?: "N/A"}")
+                        statusBuilder.appendLine("  No Auth Required: ${props.noAuthRequired ?: "N/A"}")
+                        statusBuilder.appendLine("  Origin: ${props.origin ?: "N/A"}")
+                        statusBuilder.appendLine("  OS Patch Level: ${props.osPatchLevel ?: "N/A"}")
+                        statusBuilder.appendLine("  OS Version: ${props.osVersion ?: "N/A"}")
+                        statusBuilder.appendLine("  Purpose: ${props.purpose?.joinToString() ?: "N/A"}")
+                        props.rootOfTrust?.let { rot ->
+                            statusBuilder.appendLine("  Root of Trust:")
+                            statusBuilder.appendLine("    Device Locked: ${rot.deviceLocked ?: "N/A"}")
+                            statusBuilder.appendLine("    Verified Boot Hash: ${rot.verifiedBootHash ?: "N/A"}")
+                            statusBuilder.appendLine("    Verified Boot Key: ${rot.verifiedBootKey ?: "N/A"}")
+                            statusBuilder.appendLine("    Verified Boot State: ${rot.verifiedBootState ?: "N/A"}")
+                        } ?: statusBuilder.appendLine("  Root of Trust: N/A")
+                        statusBuilder.appendLine("  Vendor Patch Level: ${props.vendorPatchLevel ?: "N/A"}")
+                    } ?: statusBuilder.appendLine("  N/A")
+
+                    statusBuilder.appendLine("\nTEE Enforced Properties:")
+                    response.teeEnforcedProperties?.let { props ->
+                        statusBuilder.appendLine("  Attestation Application ID:")
+                        props.attestationApplicationId?.let { appId ->
+                            statusBuilder.appendLine("    Application Signature: ${appId.applicationSignature ?: "N/A"}")
+                            statusBuilder.appendLine("    Attestation Application ID: ${appId.attestationApplicationId ?: "N/A"}")
+                            statusBuilder.appendLine("    Attestation Application Version Code: ${appId.attestationApplicationVersionCode ?: "N/A"}")
+                        } ?: statusBuilder.appendLine("    N/A")
+                        statusBuilder.appendLine("  Creation Datetime: ${props.creationDatetime ?: "N/A"}")
+                        statusBuilder.appendLine("  Algorithm: ${props.algorithm ?: "N/A"}")
+                        statusBuilder.appendLine("  Boot Patch Level: ${props.bootPatchLevel ?: "N/A"}")
+                        statusBuilder.appendLine("  Digests: ${props.digests?.joinToString() ?: "N/A"}")
+                        statusBuilder.appendLine("  EC Curve: ${props.ecCurve ?: "N/A"}")
+                        statusBuilder.appendLine("  Key Size: ${props.keySize ?: "N/A"}")
+                        statusBuilder.appendLine("  No Auth Required: ${props.noAuthRequired ?: "N/A"}")
+                        statusBuilder.appendLine("  Origin: ${props.origin ?: "N/A"}")
+                        statusBuilder.appendLine("  OS Patch Level: ${props.osPatchLevel ?: "N/A"}")
+                        statusBuilder.appendLine("  OS Version: ${props.osVersion ?: "N/A"}")
+                        statusBuilder.appendLine("  Purpose: ${props.purpose?.joinToString() ?: "N/A"}")
+                        props.rootOfTrust?.let { rot ->
+                            statusBuilder.appendLine("  Root of Trust:")
+                            statusBuilder.appendLine("    Device Locked: ${rot.deviceLocked ?: "N/A"}")
+                            statusBuilder.appendLine("    Verified Boot Hash: ${rot.verifiedBootHash ?: "N/A"}")
+                            statusBuilder.appendLine("    Verified Boot Key: ${rot.verifiedBootKey ?: "N/A"}")
+                            statusBuilder.appendLine("    Verified Boot State: ${rot.verifiedBootState ?: "N/A"}")
+                        } ?: statusBuilder.appendLine("  Root of Trust: N/A")
+                        statusBuilder.appendLine("  Vendor Patch Level: ${props.vendorPatchLevel ?: "N/A"}")
+                    } ?: statusBuilder.appendLine("  N/A")
+
                     _uiState.update {
-                        it.copy(status = "Verification successful. Session: ${response.sessionId}, Verified: ${response.isVerified}")
+                        it.copy(status = statusBuilder.toString())
                     }
                 } else {
                     _uiState.update {
