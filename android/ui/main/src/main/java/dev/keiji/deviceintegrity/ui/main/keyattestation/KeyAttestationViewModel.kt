@@ -3,9 +3,13 @@ package dev.keiji.deviceintegrity.ui.main.keyattestation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.keiji.deviceintegrity.api.DeviceInfo
+import dev.keiji.deviceintegrity.api.SecurityInfo
 import dev.keiji.deviceintegrity.api.keyattestation.*
 import dev.keiji.deviceintegrity.crypto.contract.Signer
 import dev.keiji.deviceintegrity.crypto.contract.qualifier.EC
+import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
+import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.repository.contract.KeyPairRepository
 import dev.keiji.deviceintegrity.ui.main.util.Base64Utils
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +32,8 @@ import kotlin.io.encoding.Base64
 class KeyAttestationViewModel @Inject constructor(
     private val keyPairRepository: KeyPairRepository,
     private val keyAttestationVerifyApiClient: KeyAttestationVerifyApiClient,
+    private val deviceInfoProvider: DeviceInfoProvider,
+    private val deviceSecurityStateProvider: DeviceSecurityStateProvider,
     @EC private val signer: Signer
 ) : ViewModel() {
 
@@ -156,7 +162,27 @@ class KeyAttestationViewModel @Inject constructor(
                         sessionId = currentSessionId,
                         signatureDataBase64UrlEncoded = signatureDataBase64UrlEncoded,
                         nonceBBase64UrlEncoded = nonceBBase64UrlEncoded,
-                        certificateChainBase64Encoded = certificateChainBase64Encoded
+                        certificateChainBase64Encoded = certificateChainBase64Encoded,
+                        deviceInfo = DeviceInfo(
+                            brand = deviceInfoProvider.BRAND,
+                            model = deviceInfoProvider.MODEL,
+                            device = deviceInfoProvider.DEVICE,
+                            product = deviceInfoProvider.PRODUCT,
+                            manufacturer = deviceInfoProvider.MANUFACTURER,
+                            hardware = deviceInfoProvider.HARDWARE,
+                            board = deviceInfoProvider.BOARD,
+                            bootloader = deviceInfoProvider.BOOTLOADER,
+                            versionRelease = deviceInfoProvider.VERSION_RELEASE,
+                            sdkInt = deviceInfoProvider.SDK_INT,
+                            fingerprint = deviceInfoProvider.FINGERPRINT,
+                            securityPatch = deviceInfoProvider.SECURITY_PATCH
+                        ),
+                        securityInfo = SecurityInfo(
+                            isDeviceLockEnabled = deviceSecurityStateProvider.isDeviceLockEnabled,
+                            isBiometricsEnabled = deviceSecurityStateProvider.isBiometricsEnabled,
+                            hasClass3Authenticator = deviceSecurityStateProvider.hasClass3Authenticator,
+                            hasStrongbox = deviceSecurityStateProvider.hasStrongBox
+                        )
                     )
                     keyAttestationVerifyApiClient.verifyEc(request)
                 }
