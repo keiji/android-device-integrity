@@ -1,5 +1,6 @@
 import base64
 import os
+import json # Added for serializing data for Datastore
 from datetime import datetime, timezone, timedelta
 from flask import Flask, request, jsonify, Blueprint
 from google.cloud import datastore
@@ -29,6 +30,7 @@ except Exception as e:
 
 # Datastore Kind for Key Attestation Sessions
 KEY_ATTESTATION_SESSION_KIND = "KeyAttestationSession"
+KEY_ATTESTATION_RESULT_KIND = "KeyAttestationResult" # New Datastore Kind
 NONCE_EXPIRY_MINUTES = 10 # Renamed from SESSION_EXPIRY_MINUTES
 
 # --- Helper Functions ---
@@ -551,6 +553,34 @@ def cleanup_expired_sessions():
     except Exception as e:
         logger.error(f"Error during Datastore cleanup of expired key attestation sessions: {e}")
 
+def store_key_attestation_result(session_id, result, reason, payload_data_json_str, attestation_data_json_str):
+    """Stores the key attestation verification result in Datastore."""
+    if not datastore_client:
+        logger.error("Datastore client not available. Cannot store attestation result.")
+        # Depending on policy, might raise an error or just log and return
+        return
+
+    try:
+        # Use session_id as the key name for the entity for easy lookup if needed,
+        # or generate a unique ID if session_id might not be unique across all results
+        # (e.g., if a session can have multiple verification attempts).
+        # For simplicity, assuming session_id is sufficient for now.
+        key = datastore_client.key(KEY_ATTESTATION_RESULT_KIND, session_id)
+        entity = datastore.Entity(key=key)
+        entity.update({
+            'session_id': session_id,
+            'created_at': datetime.now(timezone.utc),
+            'result': result,  # e.g., "verified", "failed"
+            'reason': reason,  # Detailed reason for failure, or success message
+            'payload_data': payload_data_json_str, # JSON string
+            'attestation_data': attestation_data_json_str # JSON string
+        })
+        datastore_client.put(entity)
+        logger.info(f"Stored key attestation result for session_id: {session_id}")
+    except Exception as e:
+        logger.error(f"Failed to store key attestation result for session_id {session_id}: {e}")
+
+
 # --- Endpoints ---
 
 @app.route('/v1/prepare', methods=['POST']) # Changed from Blueprint
@@ -614,17 +644,43 @@ def verify_ec_attestation():
         data = request.get_json()
         if not data:
             logger.warning("Verify EC request missing JSON payload.")
+            # Cannot get session_id if data is None, so pass a placeholder or handle differently
+            store_key_attestation_result(
+                "unknown_session", "failed", "Missing JSON payload",
+                "{}", "{}"
+            )
             return jsonify({"error": "Missing JSON payload"}), 400
 
         # --- 1. Validate Input and Session ---
-        session_id = data.get('session_id')
-        signature_b64 = data.get('signature') # Renamed to avoid conflict with cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePublicKey.sign
+        session_id = data.get('session_id') # session_id must exist for meaningful logging/storage
+        signature_b64 = data.get('signature')
         nonce_b_b64 = data.get('nonce_b')
         certificate_chain_b64 = data.get('certificate_chain')
+        device_info_from_request = data.get('device_info', {})
+        security_info_from_request = data.get('security_info', {})
 
-        if not all([session_id, signature_b64, nonce_b_b64, certificate_chain_b64]):
-            logger.warning(f"Verify EC request for session '{session_id}' missing one or more required fields.")
-            return jsonify({"error": "Missing one or more required fields: session_id, signature, nonce_b, certificate_chain"}), 400
+        payload_data_for_datastore = {
+            "device_info": device_info_from_request,
+            "security_info": security_info_from_request
+        }
+        payload_data_json_str = json.dumps(payload_data_for_datastore)
+
+        if not session_id: # Explicitly check for session_id for storing results
+            logger.warning("Verify EC request missing session_id.")
+            store_key_attestation_result(
+                "missing_session_id", "failed", "Missing session_id in request",
+                payload_data_json_str, "{}"
+            )
+            return jsonify({"error": "Missing 'session_id'"}), 400
+
+
+        if not all([signature_b64, nonce_b_b64, certificate_chain_b64]):
+            logger.warning(f"Verify EC request for session '{session_id}' missing one or more required fields (signature, nonce_b, certificate_chain).")
+            store_key_attestation_result(
+                session_id, "failed", "Missing one or more required fields: signature, nonce_b, certificate_chain",
+                payload_data_json_str, "{}"
+            )
+            return jsonify({"error": "Missing one or more required fields: signature, nonce_b, certificate_chain"}), 400
 
         if not isinstance(session_id, str) or \
            not isinstance(signature_b64, str) or \
@@ -632,27 +688,40 @@ def verify_ec_attestation():
            not isinstance(certificate_chain_b64, list) or \
            not all(isinstance(cert, str) for cert in certificate_chain_b64):
             logger.warning(f"Verify EC request for session '{session_id}' has type mismatch for one or more fields.")
+            store_key_attestation_result(
+                session_id, "failed", "Type mismatch for one or more fields.",
+                payload_data_json_str, "{}"
+            )
             return jsonify({"error": "Type mismatch for one or more fields. Ensure session_id, signature, nonce_b are strings and certificate_chain is a list of strings."}), 400
 
         if not datastore_client:
             logger.error("Datastore client not available for /verify/ec endpoint.")
+            # Cannot store result if datastore is down.
             return jsonify({"error": "Datastore service not available"}), 503
 
         session_entity = get_key_attestation_session(session_id)
         if not session_entity:
             logger.warning(f"Session ID '{session_id}' not found, expired, or invalid.")
-            return jsonify({"error": "Session ID not found, expired, or invalid."}), 403 # Forbidden or Not Found
+            store_key_attestation_result(
+                session_id, "failed", "Session ID not found, expired, or invalid.",
+                payload_data_json_str, "{}"
+            )
+            return jsonify({"error": "Session ID not found, expired, or invalid."}), 403
 
-        # Retrieve nonce and challenge from the session entity
-        # These are already base64url encoded as per store_key_attestation_session
         nonce_from_store_b64 = session_entity.get('nonce')
         challenge_from_store_b64 = session_entity.get('challenge')
 
         if not nonce_from_store_b64 or not challenge_from_store_b64:
             logger.error(f"Session '{session_id}' is missing nonce or challenge in Datastore.")
+            store_key_attestation_result(
+                session_id, "failed", "Corrupted session data in Datastore.",
+                payload_data_json_str, "{}"
+            )
             return jsonify({"error": "Corrupted session data."}), 500
 
         logger.info(f"Session validation successful for session_id: {session_id}")
+
+        attestation_properties = None # Initialize for broader scope
 
         # --- 2. Decode Certificate Chain ---
         try:
@@ -660,6 +729,7 @@ def verify_ec_attestation():
             logger.info(f"Successfully decoded certificate chain for session_id: {session_id}. Chain length: {len(certificates)}")
         except ValueError as e:
             logger.warning(f"Failed to decode certificate chain for session {session_id}: {e}")
+            store_key_attestation_result(session_id, "failed", f"Invalid certificate chain: {e}", payload_data_json_str, "{}")
             return jsonify({"error": f"Invalid certificate chain: {e}"}), 400
 
         # --- 3. Signature Validation ---
@@ -673,7 +743,8 @@ def verify_ec_attestation():
             logger.info(f"Attestation signature validated successfully for session_id: {session_id}")
         except ValueError as e:
             logger.warning(f"Attestation signature validation failed for session {session_id}: {e}")
-            return jsonify({"error": f"Attestation signature validation failed: {e}"}), 400 # Or 401/403 depending on preference
+            store_key_attestation_result(session_id, "failed", f"Attestation signature validation failed: {e}", payload_data_json_str, "{}")
+            return jsonify({"error": f"Attestation signature validation failed: {e}"}), 400
 
         # --- 4. Certificate Chain Verification ---
         try:
@@ -681,35 +752,41 @@ def verify_ec_attestation():
             logger.info(f"Certificate chain verified successfully for session_id: {session_id}")
         except ValueError as e:
             logger.warning(f"Certificate chain verification failed for session {session_id}: {e}")
+            store_key_attestation_result(session_id, "failed", f"Certificate chain verification failed: {e}", payload_data_json_str, "{}")
             return jsonify({"error": f"Certificate chain verification failed: {e}"}), 400
 
         # --- 5. ASN.1 Parsing of Attestation Extension ---
-        attestation_properties = None
         try:
-            # The attestation extension is in the leaf certificate (certificates[0])
             attestation_properties = get_attestation_extension_properties(certificates[0])
             if not attestation_properties or 'attestation_challenge' not in attestation_properties:
                 logger.warning(f"Failed to parse attestation extension or missing challenge for session {session_id}.")
+                # attestation_properties might be None or partially filled, so dump it as is.
+                attestation_data_json_str = json.dumps(attestation_properties or {})
+                store_key_attestation_result(session_id, "failed", "Failed to parse key attestation extension or attestation challenge not found.", payload_data_json_str, attestation_data_json_str)
                 return jsonify({"error": "Failed to parse key attestation extension or attestation challenge not found."}), 400
             logger.info(f"Successfully parsed attestation extension for session_id: {session_id}. Version: {attestation_properties.get('attestation_version')}")
-        except ValueError as e:
+        except ValueError as e: # This catches errors from get_attestation_extension_properties
             logger.warning(f"ASN.1 parsing of attestation extension failed for session {session_id}: {e}")
-            logger.warning(f"ASN.1 parsing of attestation extension failed for session {session_id}: {e}")
+            attestation_data_json_str = json.dumps(attestation_properties or {}) # attestation_properties might be None here
+            store_key_attestation_result(session_id, "failed", f"ASN.1 parsing failed: {e}", payload_data_json_str, attestation_data_json_str)
             return jsonify({"error": f"ASN.1 parsing failed: {e}"}), 400
 
         # --- 6. Challenge Matching ---
+        attestation_data_json_str_for_error = json.dumps(attestation_properties or {}) # Prepare for potential error logging
         try:
             challenge_from_store_bytes = base64url_decode(challenge_from_store_b64)
         except Exception as e:
             logger.error(f"Failed to base64url_decode challenge_from_store_b64 for session {session_id}: {e}")
+            store_key_attestation_result(session_id, "failed", "Internal server error: Could not decode stored challenge.", payload_data_json_str, attestation_data_json_str_for_error)
             return jsonify({"error": "Internal server error: Could not decode stored challenge."}), 500
 
-        client_attestation_challenge_bytes = attestation_properties.get('attestation_challenge') # Already bytes
+        client_attestation_challenge_bytes = attestation_properties.get('attestation_challenge')
 
         if not client_attestation_challenge_bytes or \
            not hmac.compare_digest(challenge_from_store_bytes, client_attestation_challenge_bytes):
             logger.warning(f"Challenge mismatch for session {session_id}. Store: '{challenge_from_store_b64}', Cert: '{base64url_encode(client_attestation_challenge_bytes or b'')}'")
-            return jsonify({"error": "Attestation challenge mismatch."}), 400 # Or 403 Forbidden
+            store_key_attestation_result(session_id, "failed", "Attestation challenge mismatch.", payload_data_json_str, attestation_data_json_str_for_error)
+            return jsonify({"error": "Attestation challenge mismatch."}), 400
 
         logger.info(f"Attestation challenge matched successfully for session_id: {session_id}")
 
@@ -718,23 +795,46 @@ def verify_ec_attestation():
             "session_id": session_id,
             "is_verified": True,
             "reason": "Key attestation verified successfully.",
-            "attestation_version": attestation_properties.get('attestation_version'),
-            "attestation_security_level": attestation_properties.get('attestation_security_level'),
-            "keymint_version": attestation_properties.get('keymint_or_keymaster_version'),
-            "keymint_security_level": attestation_properties.get('keymint_or_keymaster_security_level'),
-            "software_enforced_properties": attestation_properties.get('software_enforced', {}),
-            "tee_enforced_properties": attestation_properties.get('hardware_enforced', {}), # Renamed from hardware_enforced for clarity
-            "device_info": data.get('device_info', {}), # Get from request
-            "security_info": data.get('security_info', {}) # Get from request
+            "attestation_info": {
+                "attestation_version": attestation_properties.get('attestation_version'),
+                "attestation_security_level": attestation_properties.get('attestation_security_level'),
+                "keymint_version": attestation_properties.get('keymint_or_keymaster_version'),
+                "keymint_security_level": attestation_properties.get('keymint_or_keymaster_security_level'),
+                "software_enforced_properties": attestation_properties.get('software_enforced', {}),
+                "hardware_enforced_properties": attestation_properties.get('hardware_enforced', {})
+            },
+            "device_info": device_info_from_request,
+            "security_info": security_info_from_request
         }
+
+        # Structure for Datastore should also reflect this nesting for consistency
+        attestation_data_for_datastore = {
+            "attestation_info": final_response["attestation_info"]
+        }
+        attestation_data_json_str_success = json.dumps(attestation_data_for_datastore)
+        store_key_attestation_result(
+            session_id, "verified", final_response["reason"],
+            payload_data_json_str, attestation_data_json_str_success
+        )
+
         logger.info(f"Successfully verified EC key attestation for session_id: {session_id}")
         return jsonify(final_response), 200
 
-    except ValueError as e: # Catch specific errors for tailored responses
-        logger.warning(f"ValueError in /verify/ec for session {session_id}: {e}")
+    except ValueError as e: # Catch specific ValueErrors not caught by inner blocks
+        # This block might be hit if `data.get_json()` fails and returns something non-JSON,
+        # or other unexpected ValueErrors. session_id might not be available.
+        current_session_id = locals().get("session_id", "unknown_session_value_error")
+        payload_str = locals().get("payload_data_json_str", "{}")
+        att_props_str = json.dumps(locals().get("attestation_properties") or {})
+        logger.warning(f"ValueError in /verify/ec for session {current_session_id}: {e}")
+        store_key_attestation_result(current_session_id, "failed", str(e), payload_str, att_props_str)
         return jsonify({"error": str(e)}), 400
-    except Exception as e:
-        logger.error(f"Error in /verify/ec endpoint for session {session_id}: {e}", exc_info=True)
+    except Exception as e: # Catch all other unexpected exceptions
+        current_session_id = locals().get("session_id", "unknown_session_exception")
+        payload_str = locals().get("payload_data_json_str", "{}")
+        att_props_str = json.dumps(locals().get("attestation_properties") or {})
+        logger.error(f"Error in /verify/ec endpoint for session {current_session_id}: {e}", exc_info=True)
+        store_key_attestation_result(current_session_id, "failed", "An unexpected error occurred.", payload_str, att_props_str)
         return jsonify({"error": "An unexpected error occurred"}), 500
 
 

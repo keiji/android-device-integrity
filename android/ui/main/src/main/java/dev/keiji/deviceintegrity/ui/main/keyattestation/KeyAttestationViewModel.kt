@@ -253,14 +253,17 @@ class KeyAttestationViewModel @Inject constructor(
         items.add(AttestationInfoItem("Session ID", response.sessionId))
         items.add(AttestationInfoItem("Is Verified", response.isVerified.toString()))
         response.reason?.let { items.add(AttestationInfoItem("Reason", it)) }
-        items.add(AttestationInfoItem("Attestation Version", response.attestationVersion.toString()))
-        items.add(AttestationInfoItem("Attestation Security Level", response.attestationSecurityLevel.toString()))
-        items.add(AttestationInfoItem("KeyMint Version", response.keymintVersion.toString()))
-        items.add(AttestationInfoItem("KeyMint Security Level", response.keymintSecurityLevel.toString()))
 
-        addAuthorizationListItems(items, "Software Enforced Properties", response.softwareEnforcedProperties)
-        response.teeEnforcedProperties?.let {
-            addAuthorizationListItems(items, "TEE Enforced Properties", it)
+        // Access properties from the new attestationInfo object
+        val attestationInfo = response.attestationInfo
+        items.add(AttestationInfoItem("Attestation Version", attestationInfo.attestationVersion.toString()))
+        items.add(AttestationInfoItem("Attestation Security Level", attestationInfo.attestationSecurityLevel.toString()))
+        items.add(AttestationInfoItem("KeyMint Version", attestationInfo.keymintVersion.toString()))
+        items.add(AttestationInfoItem("KeyMint Security Level", attestationInfo.keymintSecurityLevel.toString()))
+
+        addAuthorizationListItems(items, "Software Enforced Properties", attestationInfo.softwareEnforcedProperties)
+        attestationInfo.hardwareEnforcedProperties?.let {
+            addAuthorizationListItems(items, "Hardware Enforced Properties", it)
         }
 
         return items
