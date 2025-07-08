@@ -11,8 +11,8 @@ import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInf
 import dev.keiji.deviceintegrity.repository.contract.StandardPlayIntegrityTokenRepository
 import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository // Added
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException // Corrected path
-import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
-import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo
+import dev.keiji.deviceintegrity.api.DeviceInfo
+import dev.keiji.deviceintegrity.api.SecurityInfo
 import dev.keiji.deviceintegrity.ui.main.common.DEBUG_VERIFY_TOKEN_DELAY_MS
 import dev.keiji.deviceintegrity.ui.main.common.VERIFY_TOKEN_DELAY_MS
 import kotlinx.coroutines.delay

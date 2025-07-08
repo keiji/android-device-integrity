@@ -21,8 +21,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import dev.keiji.deviceintegrity.ui.main.R
-import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
-import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo
+import dev.keiji.deviceintegrity.api.DeviceInfo
+import dev.keiji.deviceintegrity.api.SecurityInfo
 import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal
 import java.text.SimpleDateFormat
 import java.util.Date

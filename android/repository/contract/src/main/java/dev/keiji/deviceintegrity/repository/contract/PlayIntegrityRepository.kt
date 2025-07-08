@@ -2,8 +2,8 @@ package dev.keiji.deviceintegrity.repository.contract
 
 import dev.keiji.deviceintegrity.api.playintegrity.NonceResponse
 import dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload
-import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
-import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo
+import dev.keiji.deviceintegrity.api.DeviceInfo
+import dev.keiji.deviceintegrity.api.SecurityInfo
 import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfo
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
 

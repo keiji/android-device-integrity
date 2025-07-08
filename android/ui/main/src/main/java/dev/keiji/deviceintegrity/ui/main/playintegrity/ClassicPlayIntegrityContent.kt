@@ -23,12 +23,12 @@ import dev.keiji.deviceintegrity.api.playintegrity.AppAccessRiskVerdict
 import dev.keiji.deviceintegrity.api.playintegrity.AppIntegrity
 import dev.keiji.deviceintegrity.api.playintegrity.DeviceAttributes
 import dev.keiji.deviceintegrity.api.playintegrity.DeviceIntegrity
-import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
+import dev.keiji.deviceintegrity.api.DeviceInfo
 import dev.keiji.deviceintegrity.api.playintegrity.EnvironmentDetails
 import dev.keiji.deviceintegrity.api.playintegrity.PlayIntegrityResponseWrapper
 import dev.keiji.deviceintegrity.api.playintegrity.RecentDeviceActivity
 import dev.keiji.deviceintegrity.api.playintegrity.RequestDetails
-import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo
+import dev.keiji.deviceintegrity.api.SecurityInfo
 import dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload
 import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal
 import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfo

@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.api.playintegrity
+package dev.keiji.deviceintegrity.api
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

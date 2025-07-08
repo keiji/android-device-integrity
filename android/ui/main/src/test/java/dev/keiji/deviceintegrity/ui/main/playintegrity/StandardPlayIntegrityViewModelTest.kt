@@ -1,8 +1,8 @@
 package dev.keiji.deviceintegrity.ui.main.playintegrity
 
-import dev.keiji.deviceintegrity.api.playintegrity.DeviceInfo
+import dev.keiji.deviceintegrity.api.DeviceInfo
 import dev.keiji.deviceintegrity.api.playintegrity.PlayIntegrityResponseWrapper
-import dev.keiji.deviceintegrity.api.playintegrity.SecurityInfo
+import dev.keiji.deviceintegrity.api.SecurityInfo
 import dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload
 import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal
 import dev.keiji.deviceintegrity.provider.contract.AppInfoProvider

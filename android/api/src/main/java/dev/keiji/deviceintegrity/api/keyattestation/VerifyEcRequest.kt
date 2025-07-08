@@ -1,5 +1,7 @@
 package dev.keiji.deviceintegrity.api.keyattestation
 
+import dev.keiji.deviceintegrity.api.DeviceInfo
+import dev.keiji.deviceintegrity.api.SecurityInfo
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 
@@ -12,5 +14,9 @@ data class VerifyEcRequest(
     @SerialName("nonce_b")
     val nonceBBase64UrlEncoded: String,
     @SerialName("certificate_chain")
-    val certificateChainBase64Encoded: List<String>
+    val certificateChainBase64Encoded: List<String>,
+    @SerialName("device_info")
+    val deviceInfo: DeviceInfo? = null,
+    @SerialName("security_info")
+    val securityInfo: SecurityInfo? = null
 )
