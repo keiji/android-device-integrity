@@ -48,6 +48,19 @@ def base64url_decode(base64url_string):
     padding = '=' * (4 - (len(base64url_string) % 4))
     return base64.urlsafe_b64decode(base64url_string + padding)
 
+def convert_bytes_to_hex_str(data):
+    """
+    Recursively converts bytes in a dictionary or list to hex strings.
+    """
+    if isinstance(data, dict):
+        return {k: convert_bytes_to_hex_str(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [convert_bytes_to_hex_str(i) for i in data]
+    elif isinstance(data, bytes):
+        return data.hex()
+    else:
+        return data
+
 def store_key_attestation_session(session_id, nonce_encoded, challenge_encoded):
     """
     Stores the key attestation session data in Datastore.
@@ -761,18 +774,24 @@ def verify_ec_attestation():
             if not attestation_properties or 'attestation_challenge' not in attestation_properties:
                 logger.warning(f"Failed to parse attestation extension or missing challenge for session {session_id}.")
                 # attestation_properties might be None or partially filled, so dump it as is.
-                attestation_data_json_str = json.dumps(attestation_properties or {})
+                sanitized_att_props = convert_bytes_to_hex_str(attestation_properties or {})
+                attestation_data_json_str = json.dumps(sanitized_att_props)
                 store_key_attestation_result(session_id, "failed", "Failed to parse key attestation extension or attestation challenge not found.", payload_data_json_str, attestation_data_json_str)
                 return jsonify({"error": "Failed to parse key attestation extension or attestation challenge not found."}), 400
             logger.info(f"Successfully parsed attestation extension for session_id: {session_id}. Version: {attestation_properties.get('attestation_version')}")
         except ValueError as e: # This catches errors from get_attestation_extension_properties
             logger.warning(f"ASN.1 parsing of attestation extension failed for session {session_id}: {e}")
-            attestation_data_json_str = json.dumps(attestation_properties or {}) # attestation_properties might be None here
+            # attestation_properties could be None if get_attestation_extension_properties raised early,
+            # or it could be partially filled if parse_key_description failed midway.
+            sanitized_att_props = convert_bytes_to_hex_str(attestation_properties or {})
+            attestation_data_json_str = json.dumps(sanitized_att_props)
             store_key_attestation_result(session_id, "failed", f"ASN.1 parsing failed: {e}", payload_data_json_str, attestation_data_json_str)
             return jsonify({"error": f"ASN.1 parsing failed: {e}"}), 400
 
         # --- 6. Challenge Matching ---
-        attestation_data_json_str_for_error = json.dumps(attestation_properties or {}) # Prepare for potential error logging
+        # Prepare for potential error logging - attestation_properties should be fully populated here if no prior error.
+        sanitized_att_props_for_error = convert_bytes_to_hex_str(attestation_properties or {})
+        attestation_data_json_str_for_error = json.dumps(sanitized_att_props_for_error)
         try:
             challenge_from_store_bytes = base64url_decode(challenge_from_store_b64)
         except Exception as e:
@@ -825,14 +844,18 @@ def verify_ec_attestation():
         # or other unexpected ValueErrors. session_id might not be available.
         current_session_id = locals().get("session_id", "unknown_session_value_error")
         payload_str = locals().get("payload_data_json_str", "{}")
-        att_props_str = json.dumps(locals().get("attestation_properties") or {})
+        raw_att_props = locals().get("attestation_properties") or {}
+        sanitized_att_props = convert_bytes_to_hex_str(raw_att_props)
+        att_props_str = json.dumps(sanitized_att_props)
         logger.warning(f"ValueError in /verify/ec for session {current_session_id}: {e}")
         store_key_attestation_result(current_session_id, "failed", str(e), payload_str, att_props_str)
         return jsonify({"error": str(e)}), 400
     except Exception as e: # Catch all other unexpected exceptions
         current_session_id = locals().get("session_id", "unknown_session_exception")
         payload_str = locals().get("payload_data_json_str", "{}")
-        att_props_str = json.dumps(locals().get("attestation_properties") or {})
+        raw_att_props = locals().get("attestation_properties") or {}
+        sanitized_att_props = convert_bytes_to_hex_str(raw_att_props)
+        att_props_str = json.dumps(sanitized_att_props)
         logger.error(f"Error in /verify/ec endpoint for session {current_session_id}: {e}", exc_info=True)
         store_key_attestation_result(current_session_id, "failed", "An unexpected error occurred.", payload_str, att_props_str)
         return jsonify({"error": "An unexpected error occurred"}), 500
