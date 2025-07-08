@@ -1,14 +1,17 @@
-// Forcing a rebuild to attempt to clear persistent cache issues.
 package dev.keiji.deviceintegrity.ui.main
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -165,21 +168,40 @@ fun DeviceIntegrityApp(
                 }
                 composable(AppScreen.KeyAttestation.route) {
                     val keyAttestationViewModel: KeyAttestationViewModel = hiltViewModel()
-                    val uiState by keyAttestationViewModel.uiState.collectAsStateWithLifecycle()
-                    // val context = LocalContext.current // Keep if needed for other purposes, remove if only for Toast
+                    val keyAttestationUiState by keyAttestationViewModel.uiState.collectAsStateWithLifecycle()
+                    val currentContext = LocalContext.current
 
-                    // Status and errors are now handled via uiState.status.
+                    LaunchedEffect(keyAttestationViewModel.shareEventFlow) {
+                        keyAttestationViewModel.shareEventFlow.collect { textToShare ->
+                            val sendIntent: Intent = Intent().apply {
+                                action = Intent.ACTION_SEND
+                                putExtra(Intent.EXTRA_TEXT, textToShare)
+                                type = "text/plain"
+                            }
+                            val shareIntent = Intent.createChooser(sendIntent, null)
+                            currentContext.startActivity(shareIntent)
+                        }
+                    }
+
+                    LaunchedEffect(keyAttestationViewModel.copyEventFlow) {
+                        keyAttestationViewModel.copyEventFlow.collect { textToCopy ->
+                            val clipboard =
+                                currentContext.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            val clip = ClipData.newPlainText("Key Attestation Result", textToCopy)
+                            clipboard.setPrimaryClip(clip)
+                            Toast.makeText(currentContext, "Copied to clipboard", Toast.LENGTH_SHORT)
+                                .show()
+                        }
+                    }
 
                     KeyAttestationScreen(
-                        uiState = uiState,
-                        onSelectedKeyTypeChange = {
-                            keyAttestationViewModel.onSelectedKeyTypeChange(
-                                it
-                            )
-                        },
+                        uiState = keyAttestationUiState,
+                        onSelectedKeyTypeChange = { keyAttestationViewModel.onSelectedKeyTypeChange(it) },
                         onFetchNonceChallenge = { keyAttestationViewModel.fetchNonceChallenge() },
                         onGenerateKeyPair = { keyAttestationViewModel.generateKeyPair() },
-                        onRequestVerifyKeyAttestation = { keyAttestationViewModel.requestVerifyKeyAttestation() }
+                        onRequestVerifyKeyAttestation = { keyAttestationViewModel.requestVerifyKeyAttestation() },
+                        onClickCopy = { keyAttestationViewModel.onCopyResultsClicked() },
+                        onClickShare = { keyAttestationViewModel.onShareResultsClicked() }
                     )
                 }
                 composable(AppScreen.Menu.route) {

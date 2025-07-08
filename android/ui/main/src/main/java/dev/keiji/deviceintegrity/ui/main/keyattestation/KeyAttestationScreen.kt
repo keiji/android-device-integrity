@@ -1,9 +1,9 @@
 package dev.keiji.deviceintegrity.ui.main.keyattestation
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,29 +19,34 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.draw.alpha
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
+import dev.keiji.deviceintegrity.ui.main.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KeyAttestationScreen(
-    uiState: KeyAttestationUiState,
+    uiState: KeyAttestationUiState, // uiState collected and passed from MainActivity
     onSelectedKeyTypeChange: (CryptoAlgorithm) -> Unit,
     onFetchNonceChallenge: () -> Unit,
     onGenerateKeyPair: () -> Unit,
     onRequestVerifyKeyAttestation: () -> Unit,
+    onClickCopy: () -> Unit,
+    onClickShare: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     var keyTypeExpanded by remember { mutableStateOf(false) }
@@ -90,7 +95,9 @@ fun KeyAttestationScreen(
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = keyTypeExpanded)
                     },
                     colors = ExposedDropdownMenuDefaults.textFieldColors(),
-                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
                 )
                 ExposedDropdownMenu(
                     expanded = keyTypeExpanded,
@@ -139,15 +146,38 @@ fun KeyAttestationScreen(
 
         // Display general status
         if (uiState.status.isNotEmpty()) {
-            Text(
-                text = uiState.status,
-                style = if (uiState.verificationResultItems.isNotEmpty() && uiState.status.contains("successful", ignoreCase = true))
-                            MaterialTheme.typography.titleMedium
-                        else if (uiState.status.contains("failed", ignoreCase = true) || uiState.status.contains("error", ignoreCase = true))
-                            MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.error)
-                        else
-                            MaterialTheme.typography.bodyMedium
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = uiState.status,
+                    style = if (uiState.verificationResultItems.isNotEmpty() && uiState.status.contains("successful", ignoreCase = true))
+                                MaterialTheme.typography.titleMedium
+                            else if (uiState.status.contains("failed", ignoreCase = true) || uiState.status.contains("error", ignoreCase = true))
+                                MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.error)
+                            else
+                                MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f)
+                )
+                if (uiState.verificationResultItems.isNotEmpty()) {
+                    Row {
+                        IconButton(onClick = onClickCopy) {
+                            Icon(
+                                painterResource(R.drawable.ic_content_copy),
+                                contentDescription = "Copy Results"
+                            )
+                        }
+                        IconButton(onClick = onClickShare) {
+                            Icon(
+                                painterResource(R.drawable.ic_share),
+                                contentDescription = "Share Results"
+                            )
+                        }
+                    }
+                }
+            }
             Spacer(modifier = Modifier.height(8.dp))
         }
 
@@ -245,6 +275,8 @@ private fun KeyAttestationScreenPreview() {
         onSelectedKeyTypeChange = { System.out.println("Preview: Key type changed to ${it.label}") },
         onFetchNonceChallenge = { System.out.println("Preview: Fetch Nonce/Challenge clicked") },
         onGenerateKeyPair = { System.out.println("Preview: Generate KeyPair clicked") },
-        onRequestVerifyKeyAttestation = { System.out.println("Preview: Request Verify KeyAttestation clicked") }
+        onRequestVerifyKeyAttestation = { System.out.println("Preview: Request Verify KeyAttestation clicked") },
+        onClickCopy = { System.out.println("Preview: onClickCopy called") },
+        onClickShare = { System.out.println("Preview: onClickShare called") }
     )
 }

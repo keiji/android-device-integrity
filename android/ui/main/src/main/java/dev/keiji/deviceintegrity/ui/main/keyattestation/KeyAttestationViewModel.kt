@@ -13,9 +13,11 @@ import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.repository.contract.EcKeyPairRepository
 import dev.keiji.deviceintegrity.ui.main.util.Base64Utils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -39,6 +41,12 @@ class KeyAttestationViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(KeyAttestationUiState())
     val uiState: StateFlow<KeyAttestationUiState> = _uiState.asStateFlow()
+
+    private val _shareEventChannel = Channel<String>()
+    val shareEventFlow = _shareEventChannel.receiveAsFlow()
+
+    private val _copyEventChannel = Channel<String>()
+    val copyEventFlow = _copyEventChannel.receiveAsFlow()
 
     fun onSelectedKeyTypeChange(newKeyType: CryptoAlgorithm) {
         _uiState.update { it.copy(selectedKeyType = newKeyType) }
@@ -310,5 +318,25 @@ class KeyAttestationViewModel @Inject constructor(
             formattedDate = formattedDate.substring(0, formattedDate.length - 3) + "Z"
         }
         return formattedDate
+    }
+
+    fun onCopyResultsClicked() {
+        val items = uiState.value.verificationResultItems
+        if (items.isNotEmpty()) {
+            val textToCopy = AttestationResultFormatter.formatAttestationResults(items)
+            viewModelScope.launch {
+                _copyEventChannel.send(textToCopy)
+            }
+        }
+    }
+
+    fun onShareResultsClicked() {
+        val items = uiState.value.verificationResultItems
+        if (items.isNotEmpty()) {
+            val textToShare = AttestationResultFormatter.formatAttestationResults(items)
+            viewModelScope.launch {
+                _shareEventChannel.send(textToShare)
+            }
+        }
     }
 }
