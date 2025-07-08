@@ -724,8 +724,8 @@ def verify_ec_attestation():
             "keymint_security_level": attestation_properties.get('keymint_or_keymaster_security_level'),
             "software_enforced_properties": attestation_properties.get('software_enforced', {}),
             "tee_enforced_properties": attestation_properties.get('hardware_enforced', {}), # Renamed from hardware_enforced for clarity
-            "device_info": attestation_properties.get('hardware_enforced', {}),
-            "security_info": attestation_properties.get('software_enforced', {})
+            "device_info": data.get('device_info', {}), # Get from request
+            "security_info": data.get('security_info', {}) # Get from request
         }
         logger.info(f"Successfully verified EC key attestation for session_id: {session_id}")
         return jsonify(final_response), 200

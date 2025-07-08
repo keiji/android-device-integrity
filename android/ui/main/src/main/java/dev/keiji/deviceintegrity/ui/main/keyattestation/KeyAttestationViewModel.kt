@@ -189,8 +189,8 @@ class KeyAttestationViewModel @Inject constructor(
 
                 if (response.isVerified) {
                     val resultItems = buildVerificationResultList(response)
-                    val deviceInfoText = convertAuthorizationListToString(response.deviceInfo)
-                    val securityInfoText = convertAuthorizationListToString(response.securityInfo)
+                    val deviceInfoText = convertDeviceInfoToString(response.deviceInfo)
+                    val securityInfoText = convertSecurityInfoToString(response.securityInfo)
                     _uiState.update {
                         it.copy(
                             status = "Verification successful.", // General status
@@ -211,11 +211,30 @@ class KeyAttestationViewModel @Inject constructor(
         }
     }
 
-    private fun convertAuthorizationListToString(authorizationList: AuthorizationList?): String {
-        authorizationList ?: return "N/A"
-        // A simple way to convert to string. For a more structured output, consider using a JSON library
-        // or manually iterating and formatting each field.
-        return authorizationList.toString()
+    private fun convertDeviceInfoToString(deviceInfo: DeviceInfo): String {
+        return """
+            Brand: ${deviceInfo.brand}
+            Model: ${deviceInfo.model}
+            Device: ${deviceInfo.device}
+            Product: ${deviceInfo.product}
+            Manufacturer: ${deviceInfo.manufacturer}
+            Hardware: ${deviceInfo.hardware}
+            Board: ${deviceInfo.board}
+            Bootloader: ${deviceInfo.bootloader}
+            Version Release: ${deviceInfo.versionRelease}
+            SDK Int: ${deviceInfo.sdkInt}
+            Fingerprint: ${deviceInfo.fingerprint}
+            Security Patch: ${deviceInfo.securityPatch}
+        """.trimIndent()
+    }
+
+    private fun convertSecurityInfoToString(securityInfo: SecurityInfo): String {
+        return """
+            Is Device Lock Enabled: ${securityInfo.isDeviceLockEnabled}
+            Is Biometrics Enabled: ${securityInfo.isBiometricsEnabled}
+            Has Class3 Authenticator: ${securityInfo.hasClass3Authenticator}
+            Has Strongbox: ${securityInfo.hasStrongbox}
+        """.trimIndent()
     }
 
     private fun buildVerificationResultList(response: VerifyEcResponse): List<AttestationInfoItem> {

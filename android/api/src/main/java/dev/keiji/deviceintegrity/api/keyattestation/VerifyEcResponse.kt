@@ -1,5 +1,7 @@
 package dev.keiji.deviceintegrity.api.keyattestation
 
+import dev.keiji.deviceintegrity.api.DeviceInfo
+import dev.keiji.deviceintegrity.api.SecurityInfo
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -78,7 +80,7 @@ data class VerifyEcResponse(
     @SerialName("tee_enforced_properties")
     val teeEnforcedProperties: AuthorizationList?,
     @SerialName("device_info")
-    val deviceInfo: AuthorizationList?,
+    val deviceInfo: DeviceInfo,
     @SerialName("security_info")
-    val securityInfo: AuthorizationList?
+    val securityInfo: SecurityInfo
 )
