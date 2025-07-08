@@ -337,7 +337,11 @@ def parse_attestation_application_id(attestation_application_id_bytes):
         elif index == 1:
             parsed_data['attestation_application_version_code'] = int(value_component)
 
-    parsed_data['application_signature'] = bytes(signature_set[0]).hex()
+    signatures = []
+    for index, item in enumerate(signature_set):
+        signatures.append(bytes(item).hex())
+
+    parsed_data['application_signatures'] = signatures
 
     return parsed_data
 
