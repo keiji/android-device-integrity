@@ -5,8 +5,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AttestationApplicationId(
-    @SerialName("application_signature")
-    val applicationSignature: String,
+    @SerialName("application_signatures")
+    val applicationSignatures: List<String>,
     @SerialName("attestation_application_id")
     val attestationApplicationId: String,
     @SerialName("attestation_application_version_code")
