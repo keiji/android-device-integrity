@@ -195,6 +195,40 @@ fun KeyAttestationScreen(
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Display Device Info
+            if (uiState.deviceInfoText.isNotEmpty()) {
+                Text(text = "Device Info:", style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(4.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Text(
+                        text = uiState.deviceInfoText,
+                        modifier = Modifier.padding(12.dp),
+                        style = MaterialTheme.typography.bodySmall // Use a smaller font for potentially long text
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            // Display Security Info
+            if (uiState.securityInfoText.isNotEmpty()) {
+                Text(text = "Security Info:", style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(4.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Text(
+                        text = uiState.securityInfoText,
+                        modifier = Modifier.padding(12.dp),
+                        style = MaterialTheme.typography.bodySmall // Use a smaller font for potentially long text
+                    )
+                }
+            }
         }
     }
 }

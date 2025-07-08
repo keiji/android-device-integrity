@@ -189,10 +189,14 @@ class KeyAttestationViewModel @Inject constructor(
 
                 if (response.isVerified) {
                     val resultItems = buildVerificationResultList(response)
+                    val deviceInfoText = convertAuthorizationListToString(response.deviceInfo)
+                    val securityInfoText = convertAuthorizationListToString(response.securityInfo)
                     _uiState.update {
                         it.copy(
                             status = "Verification successful.", // General status
-                            verificationResultItems = resultItems
+                            verificationResultItems = resultItems,
+                            deviceInfoText = deviceInfoText,
+                            securityInfoText = securityInfoText
                         )
                     }
                 } else {
@@ -205,6 +209,13 @@ class KeyAttestationViewModel @Inject constructor(
                 _uiState.update { it.copy(status = "Failed to verify KeyAttestation: ${e.message}") }
             }
         }
+    }
+
+    private fun convertAuthorizationListToString(authorizationList: AuthorizationList?): String {
+        authorizationList ?: return "N/A"
+        // A simple way to convert to string. For a more structured output, consider using a JSON library
+        // or manually iterating and formatting each field.
+        return authorizationList.toString()
     }
 
     private fun buildVerificationResultList(response: VerifyEcResponse): List<AttestationInfoItem> {

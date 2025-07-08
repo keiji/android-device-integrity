@@ -76,5 +76,9 @@ data class VerifyEcResponse(
     @SerialName("software_enforced_properties")
     val softwareEnforcedProperties: AuthorizationList,
     @SerialName("tee_enforced_properties")
-    val teeEnforcedProperties: AuthorizationList?
+    val teeEnforcedProperties: AuthorizationList?,
+    @SerialName("device_info")
+    val deviceInfo: AuthorizationList?,
+    @SerialName("security_info")
+    val securityInfo: AuthorizationList?
 )
