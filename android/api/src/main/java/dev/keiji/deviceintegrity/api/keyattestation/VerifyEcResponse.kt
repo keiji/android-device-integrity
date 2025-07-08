@@ -1,63 +1,60 @@
 package dev.keiji.deviceintegrity.api.keyattestation
 
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 @Serializable
 data class AttestationApplicationId(
     @SerialName("application_signature")
-    val applicationSignature: String?, // Made nullable
+    val applicationSignature: String,
     @SerialName("attestation_application_id")
-    val attestationApplicationId: String?, // Made nullable
+    val attestationApplicationId: String,
     @SerialName("attestation_application_version_code")
-    val attestationApplicationVersionCode: Int? // Made nullable
+    val attestationApplicationVersionCode: Int
 )
 
 @Serializable
 data class RootOfTrust(
     @SerialName("device_locked")
-    val deviceLocked: Boolean?, // Made nullable
+    val deviceLocked: Boolean,
     @SerialName("verified_boot_hash")
-    val verifiedBootHash: String?, // Made nullable
+    val verifiedBootHash: String,
     @SerialName("verified_boot_key")
-    val verifiedBootKey: String?, // Made nullable
+    val verifiedBootKey: String,
     @SerialName("verified_boot_state")
-    val verifiedBootState: Int? // Made nullable
+    val verifiedBootState: Int
 )
 
 @Serializable
 data class AuthorizationList(
-    // Fields from SoftwareEnforced
     @SerialName("attestation_application_id")
-    val attestationApplicationId: AttestationApplicationId?,
+    val attestationApplicationId: AttestationApplicationId? = null,
     @SerialName("creation_datetime")
-    val creationDatetime: Long?,
-
-    // Fields from TeeEnforced
+    val creationDatetime: Long? = null,
     @SerialName("algorithm")
-    val algorithm: Int?,
+    val algorithm: Int? = null,
     @SerialName("boot_patch_level")
-    val bootPatchLevel: Int?,
+    val bootPatchLevel: Int? = null,
     @SerialName("digests")
-    val digests: List<Int>?,
+    val digests: List<Int>? = null,
     @SerialName("ec_curve")
-    val ecCurve: Int?,
+    val ecCurve: Int? = null,
     @SerialName("key_size")
-    val keySize: Int?,
+    val keySize: Int? = null,
     @SerialName("no_auth_required")
-    val noAuthRequired: Boolean?,
+    val noAuthRequired: Boolean? = null,
     @SerialName("origin")
-    val origin: String?,
+    val origin: String? = null,
     @SerialName("os_patch_level")
-    val osPatchLevel: Int?,
+    val osPatchLevel: Int? = null,
     @SerialName("os_version")
-    val osVersion: Int?,
+    val osVersion: Int? = null,
     @SerialName("purpose")
-    val purpose: List<Int>?,
+    val purpose: List<Int>? = null,
     @SerialName("root_of_trust")
-    val rootOfTrust: RootOfTrust?,
+    val rootOfTrust: RootOfTrust? = null,
     @SerialName("vendor_patch_level")
-    val vendorPatchLevel: Int?
+    val vendorPatchLevel: Int? = null
 )
 
 @Serializable
@@ -77,7 +74,7 @@ data class VerifyEcResponse(
     @SerialName("session_id")
     val sessionId: String,
     @SerialName("software_enforced_properties")
-    val softwareEnforcedProperties: AuthorizationList?, // Changed to AuthorizationList?
+    val softwareEnforcedProperties: AuthorizationList,
     @SerialName("tee_enforced_properties")
-    val teeEnforcedProperties: AuthorizationList? // Changed to AuthorizationList?
+    val teeEnforcedProperties: AuthorizationList?
 )
