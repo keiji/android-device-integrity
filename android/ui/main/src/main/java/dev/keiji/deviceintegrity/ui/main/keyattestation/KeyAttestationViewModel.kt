@@ -238,7 +238,9 @@ class KeyAttestationViewModel @Inject constructor(
             items.add(AttestationInfoItem("Attestation Application ID", "", indentLevel = 1, isHeader = true))
             appId.attestationApplicationId.let { items.add(AttestationInfoItem("Application ID", it, indentLevel = 2)) }
             appId.attestationApplicationVersionCode?.let { items.add(AttestationInfoItem("Version Code", it.toString(), indentLevel = 2)) }
-            appId.applicationSignature.let { items.add(AttestationInfoItem("Signature", it, indentLevel = 2)) }
+            appId.applicationSignatures.forEachIndexed { index, signature ->
+                items.add(AttestationInfoItem("Signature[${index}]", signature, indentLevel = 2))
+            }
         }
         props.creationDatetime?.let { items.add(AttestationInfoItem("Creation Datetime", formatEpochMilliToISO8601(it), indentLevel = 1)) }
         props.algorithm?.let { items.add(AttestationInfoItem("Algorithm", it.toString(), indentLevel = 1)) }
