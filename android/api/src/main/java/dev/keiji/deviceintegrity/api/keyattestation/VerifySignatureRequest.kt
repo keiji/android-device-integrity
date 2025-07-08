@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 
 @Serializable
-data class VerifyEcRequest(
+data class VerifySignatureRequest(
     @SerialName("session_id")
     val sessionId: String,
     @SerialName("signature")

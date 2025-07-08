@@ -646,17 +646,17 @@ def prepare_attestation():
         logger.error(f"Error in /prepare endpoint: {e}")
         return jsonify({"error": "An unexpected error occurred"}), 500
 
-@app.route('/v1/verify/ec', methods=['POST']) # Changed from Blueprint
-def verify_ec_attestation():
+@app.route('/v1/verify/signature', methods=['POST']) # Changed from Blueprint
+def verify_signature_attestation():
     """
-    Verifies the EC key attestation (mock implementation).
+    Verifies the Key Attestation Signature (mock implementation).
     Request body: { "session_id": "string", "signature": "string (Base64Encoded)", "nonce_b": "string (Base64Encoded)", "certificate_chain": ["string (Base64Encoded)"] }
     Response body: { "session_id": "string", "is_verified": false, "reason": "Mock implementation", "decoded_certificate_chain": { "mocked_detail": "This is a mock response for decoded certificate chain." }, "attestation_properties": { "mocked_software_enforced": {}, "mocked_tee_enforced": {} } }
     """
     try:
         data = request.get_json()
         if not data:
-            logger.warning("Verify EC request missing JSON payload.")
+            logger.warning("Verify Signature request missing JSON payload.")
             # Cannot get session_id if data is None, so pass a placeholder or handle differently
             store_key_attestation_result(
                 "unknown_session", "failed", "Missing JSON payload",
@@ -679,7 +679,7 @@ def verify_ec_attestation():
         payload_data_json_str = json.dumps(payload_data_for_datastore)
 
         if not session_id: # Explicitly check for session_id for storing results
-            logger.warning("Verify EC request missing session_id.")
+            logger.warning("Verify Signature request missing session_id.")
             store_key_attestation_result(
                 "missing_session_id", "failed", "Missing session_id in request",
                 payload_data_json_str, "{}"
@@ -688,7 +688,7 @@ def verify_ec_attestation():
 
 
         if not all([signature_b64, nonce_b_b64, certificate_chain_b64]):
-            logger.warning(f"Verify EC request for session '{session_id}' missing one or more required fields (signature, nonce_b, certificate_chain).")
+            logger.warning(f"Verify Signature request for session '{session_id}' missing one or more required fields (signature, nonce_b, certificate_chain).")
             store_key_attestation_result(
                 session_id, "failed", "Missing one or more required fields: signature, nonce_b, certificate_chain",
                 payload_data_json_str, "{}"
@@ -700,7 +700,7 @@ def verify_ec_attestation():
            not isinstance(nonce_b_b64, str) or \
            not isinstance(certificate_chain_b64, list) or \
            not all(isinstance(cert, str) for cert in certificate_chain_b64):
-            logger.warning(f"Verify EC request for session '{session_id}' has type mismatch for one or more fields.")
+            logger.warning(f"Verify Signature request for session '{session_id}' has type mismatch for one or more fields.")
             store_key_attestation_result(
                 session_id, "failed", "Type mismatch for one or more fields.",
                 payload_data_json_str, "{}"
@@ -708,7 +708,7 @@ def verify_ec_attestation():
             return jsonify({"error": "Type mismatch for one or more fields. Ensure session_id, signature, nonce_b are strings and certificate_chain is a list of strings."}), 400
 
         if not datastore_client:
-            logger.error("Datastore client not available for /verify/ec endpoint.")
+            logger.error("Datastore client not available for /verify/signature endpoint.")
             # Cannot store result if datastore is down.
             return jsonify({"error": "Datastore service not available"}), 503
 
@@ -836,7 +836,7 @@ def verify_ec_attestation():
             payload_data_json_str, attestation_data_json_str_success
         )
 
-        logger.info(f"Successfully verified EC key attestation for session_id: {session_id}")
+        logger.info(f"Successfully verified Key Attestation Signature for session_id: {session_id}")
         return jsonify(final_response), 200
 
     except ValueError as e: # Catch specific ValueErrors not caught by inner blocks
@@ -844,19 +844,23 @@ def verify_ec_attestation():
         # or other unexpected ValueErrors. session_id might not be available.
         current_session_id = locals().get("session_id", "unknown_session_value_error")
         payload_str = locals().get("payload_data_json_str", "{}")
+
         raw_att_props = locals().get("attestation_properties") or {}
         sanitized_att_props = convert_bytes_to_hex_str(raw_att_props)
         att_props_str = json.dumps(sanitized_att_props)
-        logger.warning(f"ValueError in /verify/ec for session {current_session_id}: {e}")
+        logger.warning(f"ValueError in /verify/signature for session {current_session_id}: {e}")
+
         store_key_attestation_result(current_session_id, "failed", str(e), payload_str, att_props_str)
         return jsonify({"error": str(e)}), 400
     except Exception as e: # Catch all other unexpected exceptions
         current_session_id = locals().get("session_id", "unknown_session_exception")
         payload_str = locals().get("payload_data_json_str", "{}")
+
         raw_att_props = locals().get("attestation_properties") or {}
         sanitized_att_props = convert_bytes_to_hex_str(raw_att_props)
         att_props_str = json.dumps(sanitized_att_props)
-        logger.error(f"Error in /verify/ec endpoint for session {current_session_id}: {e}", exc_info=True)
+        logger.error(f"Error in /verify/signature endpoint for session {current_session_id}: {e}", exc_info=True)
+
         store_key_attestation_result(current_session_id, "failed", "An unexpected error occurred.", payload_str, att_props_str)
         return jsonify({"error": "An unexpected error occurred"}), 500
 

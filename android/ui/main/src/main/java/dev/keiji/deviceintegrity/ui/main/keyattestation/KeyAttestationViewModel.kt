@@ -166,7 +166,7 @@ class KeyAttestationViewModel @Inject constructor(
                         currentKeyPairData.certificates.map { cert ->
                             Base64.Default.encode(cert.encoded)
                         }
-                    val request = VerifyEcRequest(
+                    val request = VerifySignatureRequest(
                         sessionId = currentSessionId,
                         signatureDataBase64UrlEncoded = signatureDataBase64UrlEncoded,
                         nonceBBase64UrlEncoded = nonceBBase64UrlEncoded,
@@ -192,7 +192,7 @@ class KeyAttestationViewModel @Inject constructor(
                             hasStrongbox = deviceSecurityStateProvider.hasStrongBox
                         )
                     )
-                    keyAttestationVerifyApiClient.verifyEc(request)
+                    keyAttestationVerifyApiClient.verifySignature(request)
                 }
 
                 if (response.isVerified) {
@@ -247,7 +247,7 @@ class KeyAttestationViewModel @Inject constructor(
         return items
     }
 
-    private fun buildVerificationResultList(response: VerifyEcResponse): MutableList<AttestationInfoItem> {
+    private fun buildVerificationResultList(response: VerifySignatureResponse): MutableList<AttestationInfoItem> {
         val items = mutableListOf<AttestationInfoItem>()
 
         items.add(AttestationInfoItem("Session ID", response.sessionId))

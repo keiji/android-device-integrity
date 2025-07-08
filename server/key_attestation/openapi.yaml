@@ -51,11 +51,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /v1/verify/ec:
+  /v1/verify/signature:
     post:
-      summary: Verify EC Key Attestation
-      description: Verifies the EC Key Attestation (mock implementation).
-      operationId: verifyEcKeyAttestation
+      summary: Verify Key Attestation Signature
+      description: Verifies the Key Attestation Signature (mock implementation).
+      operationId: verifySignatureKeyAttestation
       tags:
         - KeyAttestationV1
       requestBody:
@@ -63,14 +63,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/VerifyEcRequestBody'
+              $ref: '#/components/schemas/VerifySignatureRequestBody'
       responses:
         '200':
-          description: Successfully processed EC verification (mock response).
+          description: Successfully processed signature verification (mock response).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VerifyEcResponseBody'
+                $ref: '#/components/schemas/VerifySignatureResponseBody'
         '400':
           description: Bad Request (e.g., missing parameters).
           content:
@@ -111,7 +111,7 @@ components:
           format: byte
           description: Base64URL-encoded challenge.
           example: "Q2hhbGxlbmdlMTIzNDU2Nzg5MA=="
-    VerifyEcRequestBody:
+    VerifySignatureRequestBody:
       type: object
       required:
         - session_id
@@ -140,7 +140,7 @@ components:
             format: base64
           description: Array of standard Base64-encoded certificate strings.
           example: ["Y2VydDE=", "Y2VydDI="]
-    VerifyEcResponseBody:
+    VerifySignatureResponseBody:
       type: object
       required:
         - session_id
