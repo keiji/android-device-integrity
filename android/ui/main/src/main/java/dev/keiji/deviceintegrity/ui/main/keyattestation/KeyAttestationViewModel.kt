@@ -189,14 +189,14 @@ class KeyAttestationViewModel @Inject constructor(
 
                 if (response.isVerified) {
                     val resultItems = buildVerificationResultList(response)
-                    val deviceInfoText = convertDeviceInfoToString(response.deviceInfo)
-                    val securityInfoText = convertSecurityInfoToString(response.securityInfo)
+                    // Append Device Info and Security Info to the main list
+                    resultItems.addAll(convertDeviceInfoToAttestationItems(response.deviceInfo))
+                    resultItems.addAll(convertSecurityInfoToAttestationItems(response.securityInfo))
+
                     _uiState.update {
                         it.copy(
                             status = "Verification successful.", // General status
-                            verificationResultItems = resultItems,
-                            deviceInfoText = deviceInfoText,
-                            securityInfoText = securityInfoText
+                            verificationResultItems = resultItems
                         )
                     }
                 } else {
@@ -211,33 +211,35 @@ class KeyAttestationViewModel @Inject constructor(
         }
     }
 
-    private fun convertDeviceInfoToString(deviceInfo: DeviceInfo): String {
-        return """
-            Brand: ${deviceInfo.brand}
-            Model: ${deviceInfo.model}
-            Device: ${deviceInfo.device}
-            Product: ${deviceInfo.product}
-            Manufacturer: ${deviceInfo.manufacturer}
-            Hardware: ${deviceInfo.hardware}
-            Board: ${deviceInfo.board}
-            Bootloader: ${deviceInfo.bootloader}
-            Version Release: ${deviceInfo.versionRelease}
-            SDK Int: ${deviceInfo.sdkInt}
-            Fingerprint: ${deviceInfo.fingerprint}
-            Security Patch: ${deviceInfo.securityPatch}
-        """.trimIndent()
+    private fun convertDeviceInfoToAttestationItems(deviceInfo: DeviceInfo): List<AttestationInfoItem> {
+        val items = mutableListOf<AttestationInfoItem>()
+        items.add(AttestationInfoItem("Device Info", "", isHeader = true, indentLevel = 0))
+        items.add(AttestationInfoItem("Brand", deviceInfo.brand, indentLevel = 1))
+        items.add(AttestationInfoItem("Model", deviceInfo.model, indentLevel = 1))
+        items.add(AttestationInfoItem("Device", deviceInfo.device, indentLevel = 1))
+        items.add(AttestationInfoItem("Product", deviceInfo.product, indentLevel = 1))
+        items.add(AttestationInfoItem("Manufacturer", deviceInfo.manufacturer, indentLevel = 1))
+        items.add(AttestationInfoItem("Hardware", deviceInfo.hardware, indentLevel = 1))
+        items.add(AttestationInfoItem("Board", deviceInfo.board, indentLevel = 1))
+        items.add(AttestationInfoItem("Bootloader", deviceInfo.bootloader, indentLevel = 1))
+        items.add(AttestationInfoItem("Version Release", deviceInfo.versionRelease, indentLevel = 1))
+        items.add(AttestationInfoItem("SDK Int", deviceInfo.sdkInt.toString(), indentLevel = 1))
+        items.add(AttestationInfoItem("Fingerprint", deviceInfo.fingerprint, indentLevel = 1))
+        items.add(AttestationInfoItem("Security Patch", deviceInfo.securityPatch, indentLevel = 1))
+        return items
     }
 
-    private fun convertSecurityInfoToString(securityInfo: SecurityInfo): String {
-        return """
-            Is Device Lock Enabled: ${securityInfo.isDeviceLockEnabled}
-            Is Biometrics Enabled: ${securityInfo.isBiometricsEnabled}
-            Has Class3 Authenticator: ${securityInfo.hasClass3Authenticator}
-            Has Strongbox: ${securityInfo.hasStrongbox}
-        """.trimIndent()
+    private fun convertSecurityInfoToAttestationItems(securityInfo: SecurityInfo): List<AttestationInfoItem> {
+        val items = mutableListOf<AttestationInfoItem>()
+        items.add(AttestationInfoItem("Security Info", "", isHeader = true, indentLevel = 0))
+        items.add(AttestationInfoItem("Is Device Lock Enabled", securityInfo.isDeviceLockEnabled.toString(), indentLevel = 1))
+        items.add(AttestationInfoItem("Is Biometrics Enabled", securityInfo.isBiometricsEnabled.toString(), indentLevel = 1))
+        items.add(AttestationInfoItem("Has Class3 Authenticator", securityInfo.hasClass3Authenticator.toString(), indentLevel = 1))
+        items.add(AttestationInfoItem("Has Strongbox", securityInfo.hasStrongbox.toString(), indentLevel = 1))
+        return items
     }
 
-    private fun buildVerificationResultList(response: VerifyEcResponse): List<AttestationInfoItem> {
+    private fun buildVerificationResultList(response: VerifyEcResponse): MutableList<AttestationInfoItem> {
         val items = mutableListOf<AttestationInfoItem>()
 
         items.add(AttestationInfoItem("Session ID", response.sessionId))

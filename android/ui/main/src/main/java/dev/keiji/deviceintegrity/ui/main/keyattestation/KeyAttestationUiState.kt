@@ -16,7 +16,6 @@ data class KeyAttestationUiState(
     val status: String = "", // Keep for general status messages (e.g., "Fetching...", "Failed...")
     val verificationResultItems: List<AttestationInfoItem> = emptyList(), // New field for structured results
     val sessionId: String? = null,
-    val generatedKeyPairData: KeyPairData? = null,
-    val deviceInfoText: String = "",
-    val securityInfoText: String = ""
+    val generatedKeyPairData: KeyPairData? = null
+    // deviceInfoText and securityInfoText are removed as their content will be part of verificationResultItems
 )
