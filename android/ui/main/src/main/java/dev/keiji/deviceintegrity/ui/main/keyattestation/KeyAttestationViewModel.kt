@@ -189,10 +189,14 @@ class KeyAttestationViewModel @Inject constructor(
 
                 if (response.isVerified) {
                     val resultItems = buildVerificationResultList(response)
+                    val deviceInfoText = convertDeviceInfoToString(response.deviceInfo)
+                    val securityInfoText = convertSecurityInfoToString(response.securityInfo)
                     _uiState.update {
                         it.copy(
                             status = "Verification successful.", // General status
-                            verificationResultItems = resultItems
+                            verificationResultItems = resultItems,
+                            deviceInfoText = deviceInfoText,
+                            securityInfoText = securityInfoText
                         )
                     }
                 } else {
@@ -205,6 +209,32 @@ class KeyAttestationViewModel @Inject constructor(
                 _uiState.update { it.copy(status = "Failed to verify KeyAttestation: ${e.message}") }
             }
         }
+    }
+
+    private fun convertDeviceInfoToString(deviceInfo: DeviceInfo): String {
+        return """
+            Brand: ${deviceInfo.brand}
+            Model: ${deviceInfo.model}
+            Device: ${deviceInfo.device}
+            Product: ${deviceInfo.product}
+            Manufacturer: ${deviceInfo.manufacturer}
+            Hardware: ${deviceInfo.hardware}
+            Board: ${deviceInfo.board}
+            Bootloader: ${deviceInfo.bootloader}
+            Version Release: ${deviceInfo.versionRelease}
+            SDK Int: ${deviceInfo.sdkInt}
+            Fingerprint: ${deviceInfo.fingerprint}
+            Security Patch: ${deviceInfo.securityPatch}
+        """.trimIndent()
+    }
+
+    private fun convertSecurityInfoToString(securityInfo: SecurityInfo): String {
+        return """
+            Is Device Lock Enabled: ${securityInfo.isDeviceLockEnabled}
+            Is Biometrics Enabled: ${securityInfo.isBiometricsEnabled}
+            Has Class3 Authenticator: ${securityInfo.hasClass3Authenticator}
+            Has Strongbox: ${securityInfo.hasStrongbox}
+        """.trimIndent()
     }
 
     private fun buildVerificationResultList(response: VerifyEcResponse): List<AttestationInfoItem> {
