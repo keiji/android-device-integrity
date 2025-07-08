@@ -12,8 +12,8 @@ interface KeyAttestationVerifyApiClient {
     ): PrepareResponse
 
     // Ensure this path matches the server-side endpoint path
-    @POST("v1/verify/ec")
-    suspend fun verifyEc(
-        @Body requestBody: VerifyEcRequest
-    ): VerifyEcResponse
+    @POST("v1/verify/signature")
+    suspend fun verifySignature(
+        @Body requestBody: VerifySignatureRequest
+    ): VerifySignatureResponse
 }

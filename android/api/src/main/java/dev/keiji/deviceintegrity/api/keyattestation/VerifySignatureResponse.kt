@@ -76,7 +76,7 @@ data class AttestationInfo(
 )
 
 @Serializable
-data class VerifyEcResponse(
+data class VerifySignatureResponse(
     @SerialName("is_verified")
     val isVerified: Boolean,
     @SerialName("reason")
