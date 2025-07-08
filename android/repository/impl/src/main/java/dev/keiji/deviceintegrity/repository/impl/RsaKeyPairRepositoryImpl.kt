@@ -17,7 +17,7 @@ import java.util.UUID
 import javax.inject.Inject
 
 class RsaKeyPairRepositoryImpl @Inject constructor(
-    @IoDispatcher private val dispatcher: CoroutineDispatcher,
+    private val dispatcher: CoroutineDispatcher,
     private val context: Context
 ) : RsaKeyPairRepository {
 
