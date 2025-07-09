@@ -9,11 +9,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -21,6 +23,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -52,6 +55,8 @@ fun KeyAttestationScreen(
     var keyTypeExpanded by remember { mutableStateOf(false) }
     val keyTypes = CryptoAlgorithm.values().toList()
 
+    val isHorizontalProgressVisible = uiState.progressValue > PlayIntegrityProgressConstants.NO_PROGRESS && uiState.progressValue < PlayIntegrityProgressConstants.FULL_PROGRESS
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -62,137 +67,161 @@ fun KeyAttestationScreen(
     ) {
         Text(text = "Step1. サーバーからNonce/Challengeを取得")
         Spacer(modifier = Modifier.height(8.dp))
-        Button(
-            onClick = onFetchNonceChallenge,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(ButtonHeight)
-        ) {
-            Text(text = "Fetch Nonce/Challenge")
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-        if (uiState.isNonceVisible) {
-            Text(text = "Nonce: ${uiState.nonce}")
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        if (uiState.isChallengeVisible) {
-            Text(text = "Challenge: ${uiState.challenge}")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(text = "Step 2. 鍵のアルゴリズムを設定")
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Box(modifier = Modifier.fillMaxWidth()) {
-            ExposedDropdownMenuBox(
-                expanded = keyTypeExpanded,
-                onExpandedChange = { if (uiState.isStep2KeySelectionEnabled) keyTypeExpanded = !keyTypeExpanded }
+            Button(
+                onClick = onFetchNonceChallenge,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(ButtonHeight),
+                enabled = uiState.isStep1FetchNonceChallengeEnabled
             ) {
-                TextField(
-                    value = uiState.selectedKeyType.label,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Key Algorithm") },
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = keyTypeExpanded)
-                    },
-                    colors = ExposedDropdownMenuDefaults.textFieldColors(),
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth(),
-                    enabled = uiState.isStep2KeySelectionEnabled
-                )
-                ExposedDropdownMenu(
+                Text(text = "Fetch Nonce/Challenge")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            if (uiState.isNonceVisible) {
+                Text(text = "Nonce: ${uiState.nonce}")
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            if (uiState.isChallengeVisible) {
+                Text(text = "Challenge: ${uiState.challenge}")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(text = "Step 2. 鍵のアルゴリズムを設定")
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Box(modifier = Modifier.fillMaxWidth()) {
+                ExposedDropdownMenuBox(
                     expanded = keyTypeExpanded,
-                    onDismissRequest = { keyTypeExpanded = false }
+                    onExpandedChange = {
+                        if (uiState.isStep2KeySelectionEnabled) { // isStep2KeySelectionEnabled already considers isLoading
+                            keyTypeExpanded = !keyTypeExpanded
+                        }
+                    }
                 ) {
-                    keyTypes.forEach { algorithm ->
-                        DropdownMenuItem(
-                            text = { Text(algorithm.label) },
-                            onClick = {
-                                onSelectedKeyTypeChange(algorithm)
-                                keyTypeExpanded = false
-                            },
-                            enabled = uiState.isStep2KeySelectionEnabled
-                        )
+                    TextField(
+                        value = uiState.selectedKeyType.label,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Key Algorithm") },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = keyTypeExpanded)
+                        },
+                        colors = ExposedDropdownMenuDefaults.textFieldColors(),
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth(),
+                        enabled = uiState.isStep2KeySelectionEnabled
+                    )
+                    ExposedDropdownMenu(
+                        expanded = keyTypeExpanded,
+                        onDismissRequest = { keyTypeExpanded = false }
+                    ) {
+                        keyTypes.forEach { algorithm ->
+                            DropdownMenuItem(
+                                text = { Text(algorithm.label) },
+                                onClick = {
+                                    onSelectedKeyTypeChange(algorithm)
+                                    keyTypeExpanded = false
+                                },
+                                enabled = uiState.isStep2KeySelectionEnabled
+                            )
+                        }
                     }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        Text(text = "Step3. キーペア（構成証明付き）を生成")
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(
-            onClick = onGenerateKeyPair,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(ButtonHeight),
-            enabled = uiState.isStep3GenerateKeyPairEnabled
-        ) {
-            Text(text = "Generate KeyPair")
-        }
+            Text(text = "Step3. キーペア（構成証明付き）を生成")
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = onGenerateKeyPair,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(ButtonHeight),
+                enabled = uiState.isStep3GenerateKeyPairEnabled
+            ) {
+                Text(text = "Generate KeyPair")
+            }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        Text(text = "Step4. キーペアと構成証明を検証")
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(
-            onClick = onRequestVerifyKeyAttestation,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(ButtonHeight),
-            enabled = uiState.isStep4VerifyAttestationEnabled
-        ) {
-            Text(text = "Request Verify KeyAttestation")
-        }
+            Text(text = "Step4. キーペアと構成証明を検証")
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = onRequestVerifyKeyAttestation,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(ButtonHeight),
+                enabled = uiState.isStep4VerifyAttestationEnabled
+            ) {
+                Text(text = "Request Verify KeyAttestation")
+            }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        // Display general status
-        if (uiState.status.isNotEmpty()) {
+            // Progress Indicator
+            if (isHorizontalProgressVisible) {
+                LinearProgressIndicator(
+                    progress = uiState.progressValue,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            // Display general status or CircularProgressIndicator
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = if (uiState.progressValue == PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS) Arrangement.Center else Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = uiState.status,
-                    style = if (uiState.verificationResultItems.isNotEmpty() && uiState.status.contains("successful", ignoreCase = true))
-                                MaterialTheme.typography.titleMedium
-                            else if (uiState.status.contains("failed", ignoreCase = true) || uiState.status.contains("error", ignoreCase = true))
-                                MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.error)
-                            else
-                                MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.weight(1f)
-                )
-                if (uiState.verificationResultItems.isNotEmpty()) {
-                    Row {
-                        IconButton(onClick = onClickCopy) {
-                            Icon(
-                                painterResource(R.drawable.ic_content_copy),
-                                contentDescription = "Copy Results"
+                if (uiState.progressValue == PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp)) // Small, centered
+                } else if (uiState.status.isNotEmpty()) {
+                    Text(
+                        text = uiState.status,
+                        style = if (uiState.verificationResultItems.isNotEmpty() && uiState.status.contains(
+                                "successful",
+                                ignoreCase = true
                             )
-                        }
-                        IconButton(onClick = onClickShare) {
-                            Icon(
-                                painterResource(R.drawable.ic_share),
-                                contentDescription = "Share Results"
+                        )
+                            MaterialTheme.typography.titleMedium
+                        else if (uiState.status.contains("failed", ignoreCase = true) || uiState.status.contains(
+                                "error",
+                                ignoreCase = true
                             )
+                        )
+                            MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.error)
+                        else
+                            MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (uiState.verificationResultItems.isNotEmpty() && !uiState.isLoading) { // Use isLoading for copy/share
+                        Row {
+                            IconButton(onClick = onClickCopy, enabled = !uiState.isLoading) {
+                                Icon(
+                                    painterResource(R.drawable.ic_content_copy),
+                                    contentDescription = "Copy Results"
+                                )
+                            }
+                            IconButton(onClick = onClickShare, enabled = !uiState.isLoading) {
+                                Icon(
+                                    painterResource(R.drawable.ic_share),
+                                    contentDescription = "Share Results"
+                                )
+                            }
                         }
                     }
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
-        }
 
 
-        // Display structured verification results
-        if (uiState.verificationResultItems.isNotEmpty()) {
-            Card(
+            // Display structured verification results
+            if (uiState.verificationResultItems.isNotEmpty()) {
+                Card(
                 modifier = Modifier.fillMaxWidth(),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
@@ -234,9 +263,6 @@ fun KeyAttestationScreen(
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
-
-            // Device Info and Security Info are now part of verificationResultItems
-            // So, the dedicated display sections below are no longer needed.
         }
     }
 }

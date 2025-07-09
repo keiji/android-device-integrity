@@ -2,3 +2,6 @@ package dev.keiji.deviceintegrity.ui.main.common
 
 const val VERIFY_TOKEN_DELAY_MS = 5000L
 const val DEBUG_VERIFY_TOKEN_DELAY_MS = 2000L
+
+const val KEY_ATTESTATION_PREPARATION_WAIT_MILLIS = 5000L
+const val KEY_ATTESTATION_VERIFICATION_WAIT_MILLIS = 5000L
