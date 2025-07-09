@@ -430,7 +430,7 @@ components:
           type: string
           format: byte # Base64URL Encoded
           description: Hash of the KeyMint module if available.
-          example: "someBase64UrlEncodedHashValue"
+          example: "dGVzdF9oYXNo"
           nullable: true
       description: Contains properties of the key attestation. Fields are optional based on key characteristics.
 
