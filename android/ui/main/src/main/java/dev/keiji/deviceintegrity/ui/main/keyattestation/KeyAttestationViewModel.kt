@@ -6,13 +6,15 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.keiji.deviceintegrity.api.DeviceInfo
 import dev.keiji.deviceintegrity.api.SecurityInfo
-import dev.keiji.deviceintegrity.api.keyattestation.*
+import dev.keiji.deviceintegrity.api.keyattestation.* // Import all keyattestation classes
 import dev.keiji.deviceintegrity.crypto.contract.Signer
 import dev.keiji.deviceintegrity.crypto.contract.qualifier.EC
 import dev.keiji.deviceintegrity.crypto.contract.qualifier.RSA
 import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.repository.contract.KeyPairRepository
+import dev.keiji.deviceintegrity.repository.contract.KeyAttestationRepository
+import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
 import dev.keiji.deviceintegrity.ui.main.util.Base64Utils
 import dev.keiji.deviceintegrity.ui.main.util.DateFormatUtil
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +26,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.IOException
 import java.security.SecureRandom
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -36,7 +39,7 @@ import kotlin.io.encoding.Base64
 @HiltViewModel
 class KeyAttestationViewModel @Inject constructor(
     private val keyPairRepository: KeyPairRepository,
-    private val keyAttestationVerifyApiClient: KeyAttestationVerifyApiClient,
+    private val keyAttestationRepository: KeyAttestationRepository,
     private val deviceInfoProvider: DeviceInfoProvider,
     private val deviceSecurityStateProvider: DeviceSecurityStateProvider,
     @EC private val ecSigner: Signer,
@@ -53,30 +56,27 @@ class KeyAttestationViewModel @Inject constructor(
     val copyEventFlow = _copyEventChannel.receiveAsFlow()
 
     fun onSelectedKeyTypeChange(newKeyType: CryptoAlgorithm) {
-        // Delete existing key pair and reset UI
         uiState.value.generatedKeyPairData?.keyAlias?.let { alias ->
             viewModelScope.launch {
                 try {
                     keyPairRepository.removeKeyPair(alias)
                 } catch (e: Exception) {
                     Log.e("KeyAttestationViewModel", "Failed to delete key pair", e)
-                    // Optionally update UI with error, though the main goal is to reset
                 }
             }
         }
         _uiState.update {
             it.copy(
                 selectedKeyType = newKeyType,
-                generatedKeyPairData = null, // Reset key pair data
-                verificationResultItems = emptyList(), // Clear verification results
-                status = "Key algorithm changed. Please generate a new key pair." // Inform user
+                generatedKeyPairData = null,
+                verificationResultItems = emptyList(),
+                status = "Key algorithm changed. Please generate a new key pair."
             )
         }
     }
 
     fun fetchNonceChallenge() {
         viewModelScope.launch {
-            // Delete existing key pair and reset UI before fetching nonce
             uiState.value.generatedKeyPairData?.keyAlias?.let { alias ->
                 try {
                     keyPairRepository.removeKeyPair(alias)
@@ -89,19 +89,17 @@ class KeyAttestationViewModel @Inject constructor(
                     status = "Fetching Nonce/Challenge...",
                     nonce = "",
                     challenge = "",
-                    generatedKeyPairData = null, // Reset key pair data
-                    verificationResultItems = emptyList() // Clear previous results
+                    generatedKeyPairData = null,
+                    verificationResultItems = emptyList()
                 )
             }
+
+            val newSessionId = UUID.randomUUID().toString()
+            _uiState.update { it.copy(sessionId = newSessionId) }
+
+            val request = PrepareRequest(sessionId = newSessionId)
             try {
-                val newSessionId = UUID.randomUUID().toString()
-                _uiState.update { it.copy(sessionId = newSessionId) }
-
-                val request = PrepareRequest(sessionId = newSessionId)
-                val response = withContext(Dispatchers.IO) {
-                    keyAttestationVerifyApiClient.prepare(request)
-                }
-
+                val response = keyAttestationRepository.prepare(request)
                 _uiState.update {
                     it.copy(
                         nonce = response.nonceBase64UrlEncoded,
@@ -109,10 +107,28 @@ class KeyAttestationViewModel @Inject constructor(
                         status = "Nonce/Challenge fetched successfully."
                     )
                 }
-            } catch (e: Exception) {
+            } catch (e: ServerException) {
+                Log.w("KeyAttestationViewModel", "ServerException fetching nonce/challenge", e)
+                val message = e.errorMessage ?: e.localizedMessage ?: "Unknown server error"
                 _uiState.update {
                     it.copy(
-                        status = "Failed to fetch Nonce/Challenge: ${e.message}",
+                        status = "Failed to fetch Nonce/Challenge: Server Error ${e.errorCode ?: ""}: $message",
+                        sessionId = null
+                    )
+                }
+            } catch (e: IOException) {
+                Log.w("KeyAttestationViewModel", "IOException fetching nonce/challenge", e)
+                _uiState.update {
+                    it.copy(
+                        status = "Failed to fetch Nonce/Challenge: Network Error: ${e.localizedMessage}",
+                        sessionId = null
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e("KeyAttestationViewModel", "Exception fetching nonce/challenge", e)
+                _uiState.update {
+                    it.copy(
+                        status = "Failed to fetch Nonce/Challenge: ${e.localizedMessage}",
                         sessionId = null
                     )
                 }
@@ -136,7 +152,7 @@ class KeyAttestationViewModel @Inject constructor(
                 return@launch
             }
 
-            try { // Single try block for the entire operation
+            try {
                 val decodedChallenge = withContext(Dispatchers.Default) {
                     Base64Utils.UrlSafeNoPadding.decode(currentChallenge)
                 }
@@ -149,14 +165,13 @@ class KeyAttestationViewModel @Inject constructor(
                     }
                 }
 
-                // keyPairDataResult is asserted non-null here as success (no exception) implies it.
                 _uiState.update {
                     it.copy(
                         generatedKeyPairData = keyPairDataResult,
                         status = "KeyPair generated successfully. Alias: ${keyPairDataResult.keyAlias}"
                     )
                 }
-            } catch (e: Exception) { // Single catch block for all exceptions
+            } catch (e: Exception) {
                 Log.e("KeyAttestationViewModel", "Failed to generate KeyPair", e)
                 _uiState.update { it.copy(status = "Failed to generate KeyPair: ${e.message}", generatedKeyPairData = null) }
             }
@@ -168,7 +183,7 @@ class KeyAttestationViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     status = "Verifying KeyAttestation...",
-                    verificationResultItems = emptyList() // Clear previous results
+                    verificationResultItems = emptyList()
                 )
             }
 
@@ -190,65 +205,64 @@ class KeyAttestationViewModel @Inject constructor(
                 return@launch
             }
 
-            try {
-                val response = withContext(Dispatchers.IO) {
-                    val nonceB = ByteArray(32)
-                    SecureRandom().nextBytes(nonceB)
-                    val decodedServerNonce = Base64Utils.UrlSafeNoPadding.decode(serverNonceB64Url)
-                    val dataToSign = decodedServerNonce + nonceB
-                    val privateKey = keyPair.private
+            val nonceB = ByteArray(32)
+            SecureRandom().nextBytes(nonceB)
+            val decodedServerNonce = Base64Utils.UrlSafeNoPadding.decode(serverNonceB64Url)
+            val dataToSign = decodedServerNonce + nonceB
+            val privateKey = keyPair.private
 
-                    val selectedSigner = when (uiState.value.selectedKeyType) {
-                        CryptoAlgorithm.EC -> ecSigner
-                        CryptoAlgorithm.RSA -> rsaSigner
-                        CryptoAlgorithm.ECDH -> throw IllegalStateException("ECDH is not supported for signing.")
-                    }
-                    val signatureData = selectedSigner.sign(dataToSign, privateKey)
-
-                    val signatureDataBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(signatureData)
-                    val nonceBBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(nonceB)
-                    val certificateChainBase64Encoded =
-                        currentKeyPairData.certificates.map { cert ->
-                            Base64.Default.encode(cert.encoded)
-                        }
-                    val request = VerifySignatureRequest(
-                        sessionId = currentSessionId,
-                        signatureDataBase64UrlEncoded = signatureDataBase64UrlEncoded,
-                        nonceBBase64UrlEncoded = nonceBBase64UrlEncoded,
-                        certificateChainBase64Encoded = certificateChainBase64Encoded,
-                        deviceInfo = DeviceInfo(
-                            brand = deviceInfoProvider.BRAND,
-                            model = deviceInfoProvider.MODEL,
-                            device = deviceInfoProvider.DEVICE,
-                            product = deviceInfoProvider.PRODUCT,
-                            manufacturer = deviceInfoProvider.MANUFACTURER,
-                            hardware = deviceInfoProvider.HARDWARE,
-                            board = deviceInfoProvider.BOARD,
-                            bootloader = deviceInfoProvider.BOOTLOADER,
-                            versionRelease = deviceInfoProvider.VERSION_RELEASE,
-                            sdkInt = deviceInfoProvider.SDK_INT,
-                            fingerprint = deviceInfoProvider.FINGERPRINT,
-                            securityPatch = deviceInfoProvider.SECURITY_PATCH
-                        ),
-                        securityInfo = SecurityInfo(
-                            isDeviceLockEnabled = deviceSecurityStateProvider.isDeviceLockEnabled,
-                            isBiometricsEnabled = deviceSecurityStateProvider.isBiometricsEnabled,
-                            hasClass3Authenticator = deviceSecurityStateProvider.hasClass3Authenticator,
-                            hasStrongbox = deviceSecurityStateProvider.hasStrongBox
-                        )
-                    )
-                    keyAttestationVerifyApiClient.verifySignature(request)
+            val selectedSigner = when (uiState.value.selectedKeyType) {
+                CryptoAlgorithm.EC -> ecSigner
+                CryptoAlgorithm.RSA -> rsaSigner
+                CryptoAlgorithm.ECDH -> {
+                    _uiState.update { it.copy(status = "ECDH is not supported for signing.") }
+                    return@launch
                 }
+            }
+            val signatureData = selectedSigner.sign(dataToSign, privateKey)
 
+            val signatureDataBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(signatureData)
+            val nonceBBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(nonceB)
+            val certificateChainBase64Encoded =
+                currentKeyPairData.certificates.map { cert ->
+                    Base64.Default.encode(cert.encoded)
+                }
+            val request = VerifySignatureRequest(
+                sessionId = currentSessionId,
+                signatureDataBase64UrlEncoded = signatureDataBase64UrlEncoded,
+                nonceBBase64UrlEncoded = nonceBBase64UrlEncoded,
+                certificateChainBase64Encoded = certificateChainBase64Encoded,
+                deviceInfo = DeviceInfo(
+                    brand = deviceInfoProvider.BRAND,
+                    model = deviceInfoProvider.MODEL,
+                    device = deviceInfoProvider.DEVICE,
+                    product = deviceInfoProvider.PRODUCT,
+                    manufacturer = deviceInfoProvider.MANUFACTURER,
+                    hardware = deviceInfoProvider.HARDWARE,
+                    board = deviceInfoProvider.BOARD,
+                    bootloader = deviceInfoProvider.BOOTLOADER,
+                    versionRelease = deviceInfoProvider.VERSION_RELEASE,
+                    sdkInt = deviceInfoProvider.SDK_INT,
+                    fingerprint = deviceInfoProvider.FINGERPRINT,
+                    securityPatch = deviceInfoProvider.SECURITY_PATCH
+                ),
+                securityInfo = SecurityInfo(
+                    isDeviceLockEnabled = deviceSecurityStateProvider.isDeviceLockEnabled,
+                    isBiometricsEnabled = deviceSecurityStateProvider.isBiometricsEnabled,
+                    hasClass3Authenticator = deviceSecurityStateProvider.hasClass3Authenticator,
+                    hasStrongbox = deviceSecurityStateProvider.hasStrongBox
+                )
+            )
+
+            try {
+                val response = keyAttestationRepository.verifySignature(request)
                 if (response.isVerified) {
                     val resultItems = buildVerificationResultList(response)
-                    // Append Device Info and Security Info to the main list
                     resultItems.addAll(convertDeviceInfoToAttestationItems(response.deviceInfo))
                     resultItems.addAll(convertSecurityInfoToAttestationItems(response.securityInfo))
-
                     _uiState.update {
                         it.copy(
-                            status = "Verification successful.", // General status
+                            status = "Verification successful.",
                             verificationResultItems = resultItems
                         )
                     }
@@ -257,9 +271,22 @@ class KeyAttestationViewModel @Inject constructor(
                         it.copy(status = "Verification failed. Reason: ${response.reason ?: "Unknown"}")
                     }
                 }
-
+            } catch (e: ServerException) {
+                Log.w("KeyAttestationViewModel", "ServerException verifying signature", e)
+                val message = e.errorMessage ?: e.localizedMessage ?: "Unknown server error"
+                _uiState.update {
+                    it.copy(status = "Failed to verify KeyAttestation: Server Error ${e.errorCode ?: ""}: $message")
+                }
+            } catch (e: IOException) {
+                Log.w("KeyAttestationViewModel", "IOException verifying signature", e)
+                _uiState.update {
+                    it.copy(status = "Failed to verify KeyAttestation: Network Error: ${e.localizedMessage}")
+                }
             } catch (e: Exception) {
-                _uiState.update { it.copy(status = "Failed to verify KeyAttestation: ${e.message}") }
+                Log.e("KeyAttestationViewModel", "Exception verifying signature", e)
+                _uiState.update {
+                    it.copy(status = "Failed to verify KeyAttestation: ${e.localizedMessage}")
+                }
             }
         }
     }
@@ -299,7 +326,6 @@ class KeyAttestationViewModel @Inject constructor(
         items.add(AttestationInfoItem("Is Verified", response.isVerified.toString()))
         response.reason?.let { items.add(AttestationInfoItem("Reason", it)) }
 
-        // Access properties from the new attestationInfo object
         val attestationInfo = response.attestationInfo
         items.add(AttestationInfoItem("Attestation Version", attestationInfo.attestationVersion.toString()))
         items.add(AttestationInfoItem("Attestation Security Level", attestationInfo.attestationSecurityLevel.toString()))
