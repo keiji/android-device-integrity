@@ -29,14 +29,13 @@ data class RootOfTrust(
 
 @Serializable
 data class AuthorizationList(
-    // Existing fields (order adjusted for grouping, `digest` renamed from `digests`)
     @SerialName("purpose")
     val purpose: List<Int>? = null,
     @SerialName("algorithm")
     val algorithm: Int? = null,
     @SerialName("key_size")
     val keySize: Int? = null,
-    @SerialName("digest") // Renamed from digests
+    @SerialName("digest")
     val digest: List<Int>? = null,
     @SerialName("padding")
     val padding: List<Int>? = null,
@@ -57,13 +56,13 @@ data class AuthorizationList(
     @SerialName("usage_expire_date_time")
     val usageExpireDateTime: Long? = null,
     @SerialName("usage_count_limit")
-    val usageCountLimit: Long? = null, // Changed from Int? to Long?
+    val usageCountLimit: Int? = null,
     @SerialName("no_auth_required")
     val noAuthRequired: Boolean? = null,
     @SerialName("user_auth_type")
     val userAuthType: Int? = null,
     @SerialName("auth_timeout")
-    val authTimeout: Long? = null, // Changed from Int? to Long?
+    val authTimeout: Int? = null,
     @SerialName("allow_while_on_body")
     val allowWhileOnBody: Boolean? = null,
     @SerialName("trusted_user_presence_required")
@@ -82,7 +81,7 @@ data class AuthorizationList(
     val osVersion: Int? = null,
     @SerialName("os_patch_level")
     val osPatchLevel: Int? = null,
-    @SerialName("attestation_application_id") // This field's type AttestationApplicationId? is kept as is.
+    @SerialName("attestation_application_id")
     val attestationApplicationId: AttestationApplicationId? = null,
     @SerialName("attestation_id_brand")
     val attestationIdBrand: String? = null,
