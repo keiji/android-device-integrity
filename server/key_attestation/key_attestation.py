@@ -263,11 +263,12 @@ TAG_KEY_SIZE = 3
 TAG_DIGEST = 5
 TAG_PADDING = 6
 TAG_EC_CURVE = 10
+# TAG_PADDING is already defined above with value 6
 
 TAG_RSA_PUBLIC_EXPONENT = 200
-TAG_MGF_DIGEST = 203
+TAG_MGF_DIGEST = 203 # Added based on initial list, was missing from existing constants
 
-TAG_ROLLBACK_RESISTANCE = 303  # v3+
+TAG_ROLLBACK_RESISTANCE = 303
 TAG_EARLY_BOOT_ONLY = 305
 
 TAG_ACTIVE_DATETIME = 400
@@ -278,10 +279,10 @@ TAG_USAGE_COUNT_LIMIT = 405
 TAG_NO_AUTH_REQUIRED = 503
 TAG_USER_AUTH_TYPE = 504
 TAG_AUTH_TIMEOUT = 505
-TAG_ALLOW_WHILE_ON_BODY = 506  # v3+
-TAG_TRUSTED_USER_PRESENCE_REQUIRED = 507  # v3+
-TAG_TRUSTED_CONFIRMATION_REQUIRED = 508  # v3+
-TAG_UNLOCKED_DEVICE_REQUIRED = 509  # v3+
+TAG_ALLOW_WHILE_ON_BODY = 506
+TAG_TRUSTED_USER_PRESENCE_REQUIRED = 507
+TAG_TRUSTED_CONFIRMATION_REQUIRED = 508
+TAG_UNLOCKED_DEVICE_REQUIRED = 509
 
 TAG_CREATION_DATETIME = 701
 TAG_ORIGIN = 702
@@ -299,8 +300,10 @@ TAG_ATTESTATION_ID_MANUFACTURER = 716
 TAG_ATTESTATION_ID_MODEL = 717
 TAG_VENDOR_PATCH_LEVEL = 718
 TAG_BOOT_PATCH_LEVEL = 719
-TAG_DEVICE_UNIQUE_ATTESTATION = 720
-TAG_ATTESTATION_ID_SECOND_IMEI = 723
+TAG_DEVICE_UNIQUE_ATTESTATION = 720 # Already exists
+TAG_ATTESTATION_ID_IMEI = 714 # Added
+TAG_ATTESTATION_ID_MEID = 715 # Added
+TAG_ATTESTATION_ID_SECOND_IMEI = 723 # Already exists
 TAG_MODULE_HASH = 724
 # ... and many more
 
@@ -429,6 +432,42 @@ def parse_authorization_list(auth_list_sequence, attestation_version):
                 parsed_props['module_hash'] = base64.urlsafe_b64encode(bytes(value_component)).decode()
             elif tag_number == TAG_ROOT_OF_TRUST:
                 parsed_props['root_of_trust'] = parse_root_of_trust(value_component)
+            # Newly added fields
+            elif tag_number == TAG_PADDING: # SET OF INTEGER
+                parsed_props['padding'] = [int(p) for p in value_component]
+            elif tag_number == TAG_ROLLBACK_RESISTANCE: # NULL
+                parsed_props['rollback_resistance'] = True
+            elif tag_number == TAG_EARLY_BOOT_ONLY: # NULL
+                parsed_props['early_boot_only'] = True
+            elif tag_number == TAG_ACTIVE_DATETIME: # INTEGER
+                parsed_props['active_datetime'] = int(value_component)
+            elif tag_number == TAG_ORIGINATION_EXPIRE_DATETIME: # INTEGER
+                parsed_props['origination_expire_datetime'] = int(value_component)
+            elif tag_number == TAG_USAGE_EXPIRE_DATETIME: # INTEGER
+                parsed_props['usage_expire_datetime'] = int(value_component)
+            elif tag_number == TAG_USAGE_COUNT_LIMIT: # INTEGER
+                parsed_props['usage_count_limit'] = int(value_component)
+            elif tag_number == TAG_USER_AUTH_TYPE: # INTEGER
+                # This is a bitmask, so keep it as an integer
+                parsed_props['user_auth_type'] = int(value_component)
+            elif tag_number == TAG_AUTH_TIMEOUT: # INTEGER
+                parsed_props['auth_timeout'] = int(value_component)
+            elif tag_number == TAG_ALLOW_WHILE_ON_BODY: # NULL
+                parsed_props['allow_while_on_body'] = True
+            elif tag_number == TAG_TRUSTED_USER_PRESENCE_REQUIRED: # NULL
+                parsed_props['trusted_user_presence_required'] = True
+            elif tag_number == TAG_TRUSTED_CONFIRMATION_REQUIRED: # NULL
+                parsed_props['trusted_confirmation_required'] = True
+            elif tag_number == TAG_UNLOCKED_DEVICE_REQUIRED: # NULL
+                parsed_props['unlocked_device_required'] = True
+            elif tag_number == TAG_ATTESTATION_ID_IMEI: # OCTET_STRING
+                parsed_props['attestation_id_imei'] = str(value_component)
+            elif tag_number == TAG_ATTESTATION_ID_MEID: # OCTET_STRING
+                parsed_props['attestation_id_meid'] = str(value_component)
+            elif tag_number == TAG_DEVICE_UNIQUE_ATTESTATION: # NULL
+                parsed_props['device_unique_attestation'] = True
+            elif tag_number == TAG_ATTESTATION_ID_SECOND_IMEI: # OCTET_STRING
+                parsed_props['attestation_id_second_imei'] = str(value_component)
             else:
                 logger.warning("Unknown tag:%d, %s" % (tag_number, value_component))
 
