@@ -790,8 +790,9 @@ def verify_signature_attestation():
 
         # --- 6. Challenge Matching ---
         # Prepare for potential error logging - attestation_properties should be fully populated here if no prior error.
-        sanitized_att_props_for_error = convert_bytes_to_hex_str(attestation_properties or {})
+        sanitized_att_props_for_error = convert_bytes_to_hex_str(attestation_properties or {}) # For error logging if challenge match fails
         attestation_data_json_str_for_error = json.dumps(sanitized_att_props_for_error)
+
         try:
             challenge_from_store_bytes = base64url_decode(challenge_from_store_b64)
         except Exception as e:
@@ -799,17 +800,29 @@ def verify_signature_attestation():
             store_key_attestation_result(session_id, "failed", "Internal server error: Could not decode stored challenge.", payload_data_json_str, attestation_data_json_str_for_error)
             return jsonify({"error": "Internal server error: Could not decode stored challenge."}), 500
 
-        client_attestation_challenge_bytes = attestation_properties.get('attestation_challenge')
+        client_attestation_challenge_bytes = attestation_properties.get('attestation_challenge') # This is already bytes
 
         if not client_attestation_challenge_bytes or \
            not hmac.compare_digest(challenge_from_store_bytes, client_attestation_challenge_bytes):
-            logger.warning(f"Challenge mismatch for session {session_id}. Store: '{challenge_from_store_b64}', Cert: '{base64url_encode(client_attestation_challenge_bytes or b'')}'")
+            # Log the hex representation of bytes for easier comparison if needed, and the b64url version for what client sent
+            logger.warning(f"Challenge mismatch for session {session_id}. Store (bytes_hex): '{challenge_from_store_bytes.hex()}', Cert (bytes_hex): '{client_attestation_challenge_bytes.hex() if client_attestation_challenge_bytes else 'None'}'")
             store_key_attestation_result(session_id, "failed", "Attestation challenge mismatch.", payload_data_json_str, attestation_data_json_str_for_error)
             return jsonify({"error": "Attestation challenge mismatch."}), 400
 
         logger.info(f"Attestation challenge matched successfully for session_id: {session_id}")
 
         # If all checks pass, the attestation is considered verified.
+        # Encode the challenge for the JSON response.
+        attestation_challenge_b64url = base64url_encode(client_attestation_challenge_bytes)
+
+        # Prepare software and hardware enforced properties by converting any bytes to hex strings for JSON compatibility.
+        # The attestation_properties dictionary might contain raw bytes in software_enforced/hardware_enforced.
+        # convert_bytes_to_hex_str will handle this.
+        software_enforced_serializable = convert_bytes_to_hex_str(attestation_properties.get('software_enforced', {}))
+        # Ensure hardware_enforced_serializable is an empty dict {} if not present or None, instead of null
+        hardware_enforced_from_props = attestation_properties.get('hardware_enforced')
+        hardware_enforced_serializable = convert_bytes_to_hex_str(hardware_enforced_from_props if hardware_enforced_from_props is not None else {})
+
         final_response = {
             "session_id": session_id,
             "is_verified": True,
@@ -819,21 +832,24 @@ def verify_signature_attestation():
                 "attestation_security_level": attestation_properties.get('attestation_security_level'),
                 "keymint_version": attestation_properties.get('keymint_or_keymaster_version'),
                 "keymint_security_level": attestation_properties.get('keymint_or_keymaster_security_level'),
-                "software_enforced_properties": attestation_properties.get('software_enforced', {}),
-                "hardware_enforced_properties": attestation_properties.get('hardware_enforced', {})
+                "attestation_challenge": attestation_challenge_b64url, # Already a string
+                "software_enforced_properties": software_enforced_serializable, # Now fully serializable
+                "hardware_enforced_properties": hardware_enforced_serializable  # Now fully serializable
             },
-            "device_info": device_info_from_request,
-            "security_info": security_info_from_request
+            "device_info": device_info_from_request, # Assumed to be serializable
+            "security_info": security_info_from_request # Assumed to be serializable
         }
 
-        # Structure for Datastore should also reflect this nesting for consistency
+        # For Datastore: the `final_response["attestation_info"]` is already prepared and serializable.
+        # No need to call convert_bytes_to_hex_str again on the whole thing if individual parts are handled.
         attestation_data_for_datastore = {
-            "attestation_info": final_response["attestation_info"]
+            "attestation_info": final_response["attestation_info"] # This is now fully serializable
         }
         attestation_data_json_str_success = json.dumps(attestation_data_for_datastore)
+
         store_key_attestation_result(
             session_id, "verified", final_response["reason"],
-            payload_data_json_str, attestation_data_json_str_success
+            payload_data_json_str, attestation_data_json_str_success # Storing the serializable version
         )
 
         logger.info(f"Successfully verified Key Attestation Signature for session_id: {session_id}")

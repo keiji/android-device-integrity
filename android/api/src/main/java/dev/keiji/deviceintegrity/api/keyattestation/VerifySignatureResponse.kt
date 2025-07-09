@@ -69,10 +69,12 @@ data class AttestationInfo(
     val keymintSecurityLevel: Int,
     @SerialName("keymint_version")
     val keymintVersion: Int,
+    @SerialName("attestation_challenge")
+    val attestationChallenge: String,
     @SerialName("software_enforced_properties")
     val softwareEnforcedProperties: AuthorizationList,
     @SerialName("hardware_enforced_properties")
-    val hardwareEnforcedProperties: AuthorizationList?
+    val hardwareEnforcedProperties: AuthorizationList
 )
 
 @Serializable

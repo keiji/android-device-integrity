@@ -260,11 +260,10 @@ class KeyAttestationViewModel @Inject constructor(
         items.add(AttestationInfoItem("Attestation Security Level", attestationInfo.attestationSecurityLevel.toString()))
         items.add(AttestationInfoItem("KeyMint Version", attestationInfo.keymintVersion.toString()))
         items.add(AttestationInfoItem("KeyMint Security Level", attestationInfo.keymintSecurityLevel.toString()))
+        items.add(AttestationInfoItem("Attestation Challenge", attestationInfo.attestationChallenge))
 
         addAuthorizationListItems(items, "Software Enforced Properties", attestationInfo.softwareEnforcedProperties)
-        attestationInfo.hardwareEnforcedProperties?.let {
-            addAuthorizationListItems(items, "Hardware Enforced Properties", it)
-        }
+        addAuthorizationListItems(items, "Hardware Enforced Properties", attestationInfo.hardwareEnforcedProperties)
 
         return items
     }

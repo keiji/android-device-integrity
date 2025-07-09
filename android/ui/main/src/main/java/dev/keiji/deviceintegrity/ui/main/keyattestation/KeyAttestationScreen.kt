@@ -243,6 +243,7 @@ private fun KeyAttestationScreenPreview() {
         AttestationInfoItem("Attestation Security Level", "1"),
         AttestationInfoItem("KeyMint Version", "1"),
         AttestationInfoItem("KeyMint Security Level", "1"),
+        AttestationInfoItem("Attestation Challenge", "PREVIEW_ATTESTATION_CHALLENGE_XYZ123"),
         AttestationInfoItem("Software Enforced Properties", "", isHeader = true),
         AttestationInfoItem("Attestation Application ID", "", indentLevel = 1, isHeader = true),
         AttestationInfoItem("Application ID", "com.example.preview", indentLevel = 2),

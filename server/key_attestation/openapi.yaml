@@ -157,27 +157,227 @@ components:
         reason:
           type: string
           description: Reason for verification failure (optional).
-          example: "Mock implementation"
-        decoded_certificate_chain:
-          type: object
-          description: Mocked decoded certificate chain details.
-          properties:
-            mocked_detail:
-              type: string
-              example: "This is a mock response for decoded certificate chain."
-          required:
-            - mocked_detail
-        attestation_properties:
-          type: object
-          description: Mocked attestation properties.
-          properties:
-            mocked_software_enforced:
-              type: object
-            mocked_tee_enforced:
-              type: object
-          required:
-            - mocked_software_enforced
-            - mocked_tee_enforced
+          example: "Key attestation verified successfully."
+        attestation_info:
+          $ref: '#/components/schemas/AttestationInfo'
+        device_info:
+          $ref: '#/components/schemas/DeviceInfo'
+        security_info:
+          $ref: '#/components/schemas/SecurityInfo'
+
+    AttestationApplicationId:
+      type: object
+      required:
+        - application_signatures
+        - attestation_application_id
+      properties:
+        application_signatures:
+          type: array
+          items:
+            type: string
+            example: "aabbccddeeff..."
+          description: List of application signatures.
+        attestation_application_id:
+          type: string
+          description: The application ID.
+          example: "com.example.app"
+        attestation_application_version_code: # Optional in Kotlin, but if present, it's an int
+          type: integer
+          format: int32
+          description: Version code of the application.
+          example: 101
+          nullable: true # Explicitly marking as nullable if it can be absent
+
+    RootOfTrust:
+      type: object
+      required:
+        - device_locked
+        - verified_boot_hash
+        - verified_boot_key
+        - verified_boot_state
+      properties:
+        device_locked:
+          type: boolean
+          description: Whether the device is locked.
+        verified_boot_hash:
+          type: string
+          format: byte # Assuming this is a hex string representing bytes, common for hashes
+          description: Verified boot hash.
+          example: "deadbeef..."
+        verified_boot_key:
+          type: string
+          format: byte # Assuming this is a hex string
+          description: Verified boot key.
+          example: "cafebabe..."
+        verified_boot_state:
+          type: integer
+          format: int32 # Assuming standard integer for state codes
+          description: Verified boot state.
+          example: 0
+
+    AuthorizationList:
+      type: object
+      # No fields are universally required in AuthorizationList as per Android spec; presence depends on key generation options
+      properties:
+        attestation_application_id:
+          $ref: '#/components/schemas/AttestationApplicationId'
+          nullable: true
+        creation_datetime:
+          type: integer
+          format: int64
+          description: Key creation timestamp (epoch milliseconds).
+          example: 1672531200000
+          nullable: true
+        algorithm:
+          type: integer
+          format: int32
+          description: Key algorithm.
+          example: 3 # EC
+          nullable: true
+        boot_patch_level:
+          type: integer
+          format: int32 # YYYYMMDD
+          description: Bootloader patch level.
+          example: 20230305
+          nullable: true
+        digests:
+          type: array
+          items:
+            type: integer
+            format: int32
+          description: Allowed digest algorithms.
+          nullable: true
+        ec_curve:
+          type: integer
+          format: int32
+          description: EC curve identifier.
+          example: 1 # P-256
+          nullable: true
+        key_size:
+          type: integer
+          format: int32
+          description: Key size in bits.
+          example: 256
+          nullable: true
+        no_auth_required:
+          type: boolean
+          description: Whether no user authentication is required.
+          nullable: true
+        origin:
+          type: string # Should be integer in spec, but example uses string
+          description: Key origin (e.g., generated, imported).
+          example: "0" # Generated
+          nullable: true
+        os_patch_level:
+          type: integer
+          format: int32 # YYYYMMDD
+          description: OS patch level.
+          example: 20230405
+          nullable: true
+        os_version:
+          type: integer # Example "0" in spec, but usually major version like 13
+          format: int32
+          description: OS version.
+          example: 13
+          nullable: true
+        purpose:
+          type: array
+          items:
+            type: integer
+            format: int32
+          description: Key usage purposes.
+          nullable: true
+        root_of_trust:
+          $ref: '#/components/schemas/RootOfTrust'
+          nullable: true
+        vendor_patch_level:
+          type: integer
+          format: int32 # YYYYMMDD
+          description: Vendor patch level.
+          example: 20230201
+          nullable: true
+      description: Contains properties of the key attestation. Fields are optional based on key characteristics.
+
+    AttestationInfo:
+      type: object
+      required:
+        - attestation_security_level
+        - attestation_version
+        - keymint_security_level
+        - keymint_version
+        - attestation_challenge # Now required
+        - software_enforced_properties
+        - hardware_enforced_properties # Now required
+      properties:
+        attestation_security_level:
+          type: integer
+          format: int32
+          example: 1 # StrongBox
+        attestation_version:
+          type: integer
+          format: int32
+          example: 4
+        keymint_security_level:
+          type: integer
+          format: int32
+          example: 1 # StrongBox
+        keymint_version:
+          type: integer
+          format: int32
+          example: 200 # KeyMint version, e.g., Android 12+
+        attestation_challenge:
+          type: string
+          format: byte # Base64URL encoded
+          description: The challenge value from the attestation certificate, base64url encoded.
+          example: "base64url_encoded_challenge_string"
+        software_enforced_properties:
+          $ref: '#/components/schemas/AuthorizationList'
+        hardware_enforced_properties:
+          $ref: '#/components/schemas/AuthorizationList' # Not nullable itself, can be an empty object {}
+
+    DeviceInfo:
+      type: object
+      # All fields are typically strings, SDK_INT is int. Assuming all are sent.
+      required:
+        - brand
+        - model
+        - device
+        - product
+        - manufacturer
+        - hardware
+        - board
+        - bootloader
+        - version_release
+        - sdk_int
+        - fingerprint
+        - security_patch
+      properties:
+        brand: { type: string, example: "Google" }
+        model: { type: string, example: "Pixel 7" }
+        device: { type: string, example: "panther" }
+        product: { type: string, example: "panther_us" }
+        manufacturer: { type: string, example: "Google" }
+        hardware: { type: string, example: "gs201" }
+        board: { type: string, example: "slider" }
+        bootloader: { type: string, example: "slider-1.0-..." }
+        version_release: { type: string, example: "13" }
+        sdk_int: { type: integer, format: int32, example: 33 }
+        fingerprint: { type: string, example: "google/panther/panther:13/..." }
+        security_patch: { type: string, example: "2023-05-01" }
+
+    SecurityInfo:
+      type: object
+      required:
+        - is_device_lock_enabled
+        - is_biometrics_enabled
+        - has_class_3_authenticator
+        - has_strongbox
+      properties:
+        is_device_lock_enabled: { type: boolean, example: true }
+        is_biometrics_enabled: { type: boolean, example: true }
+        has_class_3_authenticator: { type: boolean, example: true }
+        has_strongbox: { type: boolean, example: true }
+
     ErrorResponse:
       type: object
       required:
