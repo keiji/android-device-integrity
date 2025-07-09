@@ -294,6 +294,144 @@ components:
           description: Vendor patch level.
           example: 20230201
           nullable: true
+        padding:
+          type: array
+          items:
+            type: integer
+            format: int32
+          description: Allowed padding modes (e.g., PKCS1, PSS, OAEP).
+          example: [1, 2]
+          nullable: true
+        rollback_resistance:
+          type: boolean # Representing NULL type, true if present
+          description: Indicates if rollback resistance is active. True if the tag is present.
+          example: true
+          nullable: true
+        early_boot_only:
+          type: boolean # Representing NULL type, true if present
+          description: Indicates if the key can only be used during early boot. True if the tag is present.
+          example: true
+          nullable: true
+        active_datetime:
+          type: integer
+          format: int64 # Epoch milliseconds
+          description: Date and time after which the key is valid.
+          example: 1678886400000
+          nullable: true
+        origination_expire_datetime:
+          type: integer
+          format: int64 # Epoch milliseconds
+          description: Date and time after which the key can no longer be used for origination (signing/encryption).
+          example: 1710508800000
+          nullable: true
+        usage_expire_datetime:
+          type: integer
+          format: int64 # Epoch milliseconds
+          description: Date and time after which the key can no longer be used for any purpose.
+          example: 1710508800000
+          nullable: true
+        usage_count_limit:
+          type: integer
+          format: int64
+          description: Maximum number of times the key can be used.
+          example: 1000
+          nullable: true
+        user_auth_type:
+          type: integer # Bitmask
+          format: int32
+          description: Bitmask of allowed user authentication types (e.g., fingerprint, password).
+          example: 3 # (Password | Fingerprint)
+          nullable: true
+        auth_timeout:
+          type: integer
+          format: int32 # Seconds
+          description: User authentication validity duration in seconds.
+          example: 300
+          nullable: true
+        allow_while_on_body:
+          type: boolean # Representing NULL type, true if present
+          description: Allows key use while the device is on-body. True if the tag is present.
+          example: true
+          nullable: true
+        trusted_user_presence_required:
+          type: boolean # Representing NULL type, true if present
+          description: Requires trusted user presence for key use. True if the tag is present.
+          example: true
+          nullable: true
+        trusted_confirmation_required:
+          type: boolean # Representing NULL type, true if present
+          description: Requires trusted confirmation for key use. True if the tag is present.
+          example: true
+          nullable: true
+        unlocked_device_required:
+          type: boolean # Representing NULL type, true if present
+          description: Requires the device to be unlocked for key use. True if the tag is present.
+          example: true
+          nullable: true
+        attestation_id_brand:
+          type: string
+          description: Brand of the device.
+          example: "Google"
+          nullable: true
+        attestation_id_device:
+          type: string
+          description: Device name.
+          example: "Pixel"
+          nullable: true
+        attestation_id_product:
+          type: string
+          description: Product name.
+          example: "raven"
+          nullable: true
+        attestation_id_serial:
+          type: string
+          description: Serial number of the device.
+          example: "SERIAL12345"
+          nullable: true
+        attestation_id_imei:
+          type: string
+          description: IMEI of the device.
+          example: "350000000000000"
+          nullable: true
+        attestation_id_meid:
+          type: string
+          description: MEID of the device.
+          example: "A0000000000000"
+          nullable: true
+        attestation_id_manufacturer:
+          type: string
+          description: Manufacturer of the device.
+          example: "Google"
+          nullable: true
+        attestation_id_model:
+          type: string
+          description: Model of the device.
+          example: "Pixel 6 Pro"
+          nullable: true
+        device_unique_attestation:
+          type: boolean # Representing NULL type, true if present
+          description: Indicates if the attestation is device-unique. True if the tag is present.
+          example: true
+          nullable: true
+        attestation_id_second_imei:
+          type: string
+          description: Second IMEI of the device, if available.
+          example: "350000000000001"
+          nullable: true
+        mgf_digest: # Was missing from existing OpenAPI but present in Python
+          type: array
+          items:
+            type: integer
+            format: int32
+          description: Allowed MGF digest algorithms for RSA PSS/OAEP.
+          example: [4] # SHA256
+          nullable: true
+        module_hash: # Was missing from existing OpenAPI but present in Python
+          type: string
+          format: byte # Base64URL Encoded
+          description: Hash of the KeyMint module if available.
+          example: "someBase64UrlEncodedHashValue"
+          nullable: true
       description: Contains properties of the key attestation. Fields are optional based on key characteristics.
 
     AttestationInfo:
