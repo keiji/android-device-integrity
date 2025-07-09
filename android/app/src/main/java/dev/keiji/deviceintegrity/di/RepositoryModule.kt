@@ -8,12 +8,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dev.keiji.deviceintegrity.repository.contract.PreferencesRepository
 import dev.keiji.deviceintegrity.repository.impl.PreferencesRepositoryImpl
-import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository
-import dev.keiji.deviceintegrity.repository.impl.PlayIntegrityRepositoryImpl
-import dev.keiji.deviceintegrity.repository.contract.EcKeyPairRepository
-import dev.keiji.deviceintegrity.repository.contract.RsaKeyPairRepository
-import dev.keiji.deviceintegrity.repository.impl.EcKeyPairRepositoryImpl
-import dev.keiji.deviceintegrity.repository.impl.RsaKeyPairRepositoryImpl
+import dev.keiji.deviceintegrity.repository.contract.KeyPairRepository
+import dev.keiji.deviceintegrity.repository.impl.KeyPairRepositoryImpl
 import kotlinx.coroutines.Dispatchers
 import javax.inject.Singleton
 
@@ -35,17 +31,7 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideEcKeyPairRepository(
-        @ApplicationContext context: Context,
-    ): EcKeyPairRepository {
-        return EcKeyPairRepositoryImpl(Dispatchers.IO, context)
-    }
-
-    @Provides
-    @Singleton
-    fun provideRsaKeyPairRepository(
-        @ApplicationContext context: Context,
-    ): RsaKeyPairRepository {
-        return RsaKeyPairRepositoryImpl(Dispatchers.IO, context)
+    fun provideKeyPairRepository(): KeyPairRepository {
+        return KeyPairRepositoryImpl(Dispatchers.IO)
     }
 }
