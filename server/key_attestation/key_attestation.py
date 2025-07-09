@@ -566,6 +566,20 @@ def cleanup_expired_sessions():
     except Exception as e:
         logger.error(f"Error during Datastore cleanup of expired key attestation sessions: {e}")
 
+def delete_key_attestation_session(session_id):
+    """Deletes a specific key attestation session entity from Datastore."""
+    if not datastore_client:
+        logger.warning(f"Datastore client not available. Cannot delete session {session_id}.")
+        return # Or raise an error, depending on desired behavior
+
+    try:
+        key = datastore_client.key(KEY_ATTESTATION_SESSION_KIND, session_id)
+        datastore_client.delete(key)
+        logger.info(f"Successfully deleted key attestation session for session_id: {session_id}")
+    except Exception as e:
+        logger.error(f"Error deleting key attestation session {session_id} from Datastore: {e}")
+        # Optionally re-raise or handle more gracefully
+
 def store_key_attestation_result(session_id, result, reason, payload_data_json_str, attestation_data_json_str):
     """Stores the key attestation verification result in Datastore."""
     if not datastore_client:
@@ -662,6 +676,7 @@ def verify_signature_attestation():
                 "unknown_session", "failed", "Missing JSON payload",
                 "{}", "{}"
             )
+            # No session_id available to delete if payload is missing.
             return jsonify({"error": "Missing JSON payload"}), 400
 
         # --- 1. Validate Input and Session ---
@@ -684,6 +699,7 @@ def verify_signature_attestation():
                 "missing_session_id", "failed", "Missing session_id in request",
                 payload_data_json_str, "{}"
             )
+            # Cannot delete session if session_id is missing.
             return jsonify({"error": "Missing 'session_id'"}), 400
 
 
@@ -709,7 +725,7 @@ def verify_signature_attestation():
 
         if not datastore_client:
             logger.error("Datastore client not available for /verify/signature endpoint.")
-            # Cannot store result if datastore is down.
+            # Cannot store result or delete session if datastore is down.
             return jsonify({"error": "Datastore service not available"}), 503
 
         session_entity = get_key_attestation_session(session_id)
@@ -719,6 +735,7 @@ def verify_signature_attestation():
                 session_id, "failed", "Session ID not found, expired, or invalid.",
                 payload_data_json_str, "{}"
             )
+            # Session already doesn't exist or is invalid, no deletion needed.
             return jsonify({"error": "Session ID not found, expired, or invalid."}), 403
 
         nonce_from_store_b64 = session_entity.get('nonce')
@@ -743,6 +760,7 @@ def verify_signature_attestation():
         except ValueError as e:
             logger.warning(f"Failed to decode certificate chain for session {session_id}: {e}")
             store_key_attestation_result(session_id, "failed", f"Invalid certificate chain: {e}", payload_data_json_str, "{}")
+            delete_key_attestation_session(session_id)
             return jsonify({"error": f"Invalid certificate chain: {e}"}), 400
 
         # --- 3. Signature Validation ---
@@ -757,6 +775,7 @@ def verify_signature_attestation():
         except ValueError as e:
             logger.warning(f"Attestation signature validation failed for session {session_id}: {e}")
             store_key_attestation_result(session_id, "failed", f"Attestation signature validation failed: {e}", payload_data_json_str, "{}")
+            delete_key_attestation_session(session_id)
             return jsonify({"error": f"Attestation signature validation failed: {e}"}), 400
 
         # --- 4. Certificate Chain Verification ---
@@ -766,6 +785,7 @@ def verify_signature_attestation():
         except ValueError as e:
             logger.warning(f"Certificate chain verification failed for session {session_id}: {e}")
             store_key_attestation_result(session_id, "failed", f"Certificate chain verification failed: {e}", payload_data_json_str, "{}")
+            delete_key_attestation_session(session_id)
             return jsonify({"error": f"Certificate chain verification failed: {e}"}), 400
 
         # --- 5. ASN.1 Parsing of Attestation Extension ---
@@ -777,6 +797,7 @@ def verify_signature_attestation():
                 sanitized_att_props = convert_bytes_to_hex_str(attestation_properties or {})
                 attestation_data_json_str = json.dumps(sanitized_att_props)
                 store_key_attestation_result(session_id, "failed", "Failed to parse key attestation extension or attestation challenge not found.", payload_data_json_str, attestation_data_json_str)
+                # delete_key_attestation_session(session_id) # Removed as per user feedback
                 return jsonify({"error": "Failed to parse key attestation extension or attestation challenge not found."}), 400
             logger.info(f"Successfully parsed attestation extension for session_id: {session_id}. Version: {attestation_properties.get('attestation_version')}")
         except ValueError as e: # This catches errors from get_attestation_extension_properties
@@ -786,6 +807,7 @@ def verify_signature_attestation():
             sanitized_att_props = convert_bytes_to_hex_str(attestation_properties or {})
             attestation_data_json_str = json.dumps(sanitized_att_props)
             store_key_attestation_result(session_id, "failed", f"ASN.1 parsing failed: {e}", payload_data_json_str, attestation_data_json_str)
+            # delete_key_attestation_session(session_id) # Removed as per user feedback
             return jsonify({"error": f"ASN.1 parsing failed: {e}"}), 400
 
         # --- 6. Challenge Matching ---
@@ -798,6 +820,8 @@ def verify_signature_attestation():
         except Exception as e:
             logger.error(f"Failed to base64url_decode challenge_from_store_b64 for session {session_id}: {e}")
             store_key_attestation_result(session_id, "failed", "Internal server error: Could not decode stored challenge.", payload_data_json_str, attestation_data_json_str_for_error)
+            # This is an internal server issue, not a client-side attestation data validation failure.
+            # This is an internal server issue, not a client-side attestation data validation failure.
             return jsonify({"error": "Internal server error: Could not decode stored challenge."}), 500
 
         client_attestation_challenge_bytes = attestation_properties.get('attestation_challenge') # This is already bytes
@@ -807,6 +831,7 @@ def verify_signature_attestation():
             # Log the hex representation of bytes for easier comparison if needed, and the b64url version for what client sent
             logger.warning(f"Challenge mismatch for session {session_id}. Store (bytes_hex): '{challenge_from_store_bytes.hex()}', Cert (bytes_hex): '{client_attestation_challenge_bytes.hex() if client_attestation_challenge_bytes else 'None'}'")
             store_key_attestation_result(session_id, "failed", "Attestation challenge mismatch.", payload_data_json_str, attestation_data_json_str_for_error)
+            delete_key_attestation_session(session_id) # This IS a specified failure case for deletion.
             return jsonify({"error": "Attestation challenge mismatch."}), 400
 
         logger.info(f"Attestation challenge matched successfully for session_id: {session_id}")
@@ -851,6 +876,7 @@ def verify_signature_attestation():
             session_id, "verified", final_response["reason"],
             payload_data_json_str, attestation_data_json_str_success # Storing the serializable version
         )
+        delete_key_attestation_session(session_id) # Delete session after successful verification and result storage
 
         logger.info(f"Successfully verified Key Attestation Signature for session_id: {session_id}")
         return jsonify(final_response), 200
