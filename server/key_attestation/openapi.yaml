@@ -203,12 +203,12 @@ components:
           type: string
           format: byte # Assuming this is a hex string representing bytes, common for hashes
           description: Verified boot hash.
-          example: "deadbeef..."
+          example: "ZGVhZGJlZWY=" # "deadbeef"
         verified_boot_key:
           type: string
           format: byte # Assuming this is a hex string
           description: Verified boot key.
-          example: "cafebabe..."
+          example: "Y2FmZWJhYmU=" # "cafebabe"
         verified_boot_state:
           type: integer
           format: int32 # Assuming standard integer for state codes
@@ -221,7 +221,6 @@ components:
       properties:
         attestation_application_id:
           $ref: '#/components/schemas/AttestationApplicationId'
-          nullable: true
         creation_datetime:
           type: integer
           format: int64
@@ -289,7 +288,6 @@ components:
           nullable: true
         root_of_trust:
           $ref: '#/components/schemas/RootOfTrust'
-          nullable: true
         vendor_patch_level:
           type: integer
           format: int32 # YYYYMMDD
@@ -329,7 +327,7 @@ components:
           type: string
           format: byte # Base64URL encoded
           description: The challenge value from the attestation certificate, base64url encoded.
-          example: "base64url_encoded_challenge_string"
+          example: "Y2hhbGxlbmdlX3N0cmluZw==" # "challenge_string"
         software_enforced_properties:
           $ref: '#/components/schemas/AuthorizationList'
         hardware_enforced_properties:
