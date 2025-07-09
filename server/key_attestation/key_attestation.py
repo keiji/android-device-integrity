@@ -408,7 +408,7 @@ def parse_authorization_list(auth_list_sequence, attestation_version):
             elif tag_number == TAG_CREATION_DATETIME:
                 parsed_props['creation_datetime'] = int(value_component)
             elif tag_number == TAG_ORIGIN:
-                parsed_props['origin'] = str(value_component)
+                parsed_props['origin'] = int(value_component)
             elif tag_number == TAG_VENDOR_PATCH_LEVEL:
                 parsed_props['vendor_patch_level'] = int(value_component)
             elif tag_number == TAG_BOOT_PATCH_LEVEL:

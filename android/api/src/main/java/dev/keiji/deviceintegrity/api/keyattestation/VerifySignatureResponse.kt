@@ -46,7 +46,7 @@ data class AuthorizationList(
     @SerialName("no_auth_required")
     val noAuthRequired: Boolean? = null,
     @SerialName("origin")
-    val origin: String? = null,
+    val origin: Int? = null,
     @SerialName("os_patch_level")
     val osPatchLevel: Int? = null,
     @SerialName("os_version")
