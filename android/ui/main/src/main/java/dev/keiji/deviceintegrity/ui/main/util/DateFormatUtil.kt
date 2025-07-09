@@ -9,10 +9,10 @@ object DateFormatUtil {
     fun formatEpochMilliToISO8601(epochMilli: Long?): String {
         if (epochMilli == null) return "N/A"
         val date = Date(epochMilli)
-        // Use "XXX" for ISO 8601 time zone format (e.g., +09:00, -07:00, Z)
-        // Locale.US is often used for consistency in formatting, but Locale.getDefault() could also be considered
-        // if localized month/day names were part of the format, which they are not here.
-        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.US)
+        // Use "ZZZZZ" for compatibility (as noted in original KeyAttestationViewModel comments for API 23)
+        // This produces a format like "GMT-07:00" or "GMT+09:00".
+        // Locale.US is kept from the original KeyAttestationViewModel's implementation.
+        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ", Locale.US)
         format.timeZone = TimeZone.getDefault() // Use device's local timezone
         return format.format(date)
     }
