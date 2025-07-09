@@ -109,21 +109,44 @@ class KeyAttestationViewModel @Inject constructor(
                 val decodedChallenge = withContext(Dispatchers.Default) {
                     Base64Utils.UrlSafeNoPadding.decode(currentChallenge)
                 }
-                val keyPairDataResult = withContext(Dispatchers.IO) {
+                val keyPairDataResult: KeyPairData? = withContext(Dispatchers.IO) {
                     when (uiState.value.selectedKeyType) {
                         CryptoAlgorithm.RSA -> keyPairRepository.generateRsaKeyPair(decodedChallenge)
                         CryptoAlgorithm.EC -> keyPairRepository.generateEcKeyPair(decodedChallenge)
+                        CryptoAlgorithm.ECDH -> {
+                            Log.w("KeyAttestationViewModel", "ECDH key generation is not supported.")
+                            // Update status directly as this runs in IO context, _uiState.update might be tricky here.
+                            // Instead, we'll let the null result be handled outside.
+                            null
+                        }
+                        else -> {
+                            Log.w("KeyAttestationViewModel", "Unsupported key type selected: ${uiState.value.selectedKeyType}")
+                            null
+                        }
                     }
                 }
 
-                _uiState.update {
-                    it.copy(
-                        generatedKeyPairData = keyPairDataResult,
-                        status = "KeyPair generated successfully. Alias: ${keyPairDataResult.keyAlias}"
-                    )
+                if (keyPairDataResult != null) {
+                    _uiState.update {
+                        it.copy(
+                            generatedKeyPairData = keyPairDataResult,
+                            status = "KeyPair generated successfully. Alias: ${keyPairDataResult.keyAlias}"
+                        )
+                    }
+                } else {
+                    // Handle cases where keyPairDataResult is null (e.g., ECDH or other unsupported types)
+                    // The status message can be more specific if needed, based on selectedKeyType
+                    _uiState.update {
+                        val message = if (uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) {
+                            "ECDH is not supported for key pair generation."
+                        } else {
+                            "Unsupported key type selected for generation."
+                        }
+                        it.copy(status = message, generatedKeyPairData = null)
+                    }
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(status = "Failed to generate KeyPair: ${e.message}") }
+                _uiState.update { it.copy(status = "Failed to generate KeyPair: ${e.message}", generatedKeyPairData = null) }
             }
         }
     }
