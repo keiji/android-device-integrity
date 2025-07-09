@@ -82,7 +82,7 @@ fun KeyAttestationScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text(text = "Step2. 生成するキーペアの種類を設定")
+        Text(text = "Step 2. 鍵のアルゴリズムを設定")
         Spacer(modifier = Modifier.height(8.dp))
 
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -94,7 +94,7 @@ fun KeyAttestationScreen(
                     value = uiState.selectedKeyType.label,
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Key Pair Type") },
+                    label = { Text("Key Algorithm") },
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = keyTypeExpanded)
                     },

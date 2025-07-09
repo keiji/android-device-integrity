@@ -9,6 +9,7 @@ import dev.keiji.deviceintegrity.api.SecurityInfo
 import dev.keiji.deviceintegrity.api.keyattestation.*
 import dev.keiji.deviceintegrity.crypto.contract.Signer
 import dev.keiji.deviceintegrity.crypto.contract.qualifier.EC
+import dev.keiji.deviceintegrity.crypto.contract.qualifier.RSA
 import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.repository.contract.KeyPairRepository
@@ -37,7 +38,8 @@ class KeyAttestationViewModel @Inject constructor(
     private val keyAttestationVerifyApiClient: KeyAttestationVerifyApiClient,
     private val deviceInfoProvider: DeviceInfoProvider,
     private val deviceSecurityStateProvider: DeviceSecurityStateProvider,
-    @EC private val signer: Signer
+    @EC private val ecSigner: Signer,
+    @RSA private val rsaSigner: Signer
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(KeyAttestationUiState())
@@ -50,16 +52,43 @@ class KeyAttestationViewModel @Inject constructor(
     val copyEventFlow = _copyEventChannel.receiveAsFlow()
 
     fun onSelectedKeyTypeChange(newKeyType: CryptoAlgorithm) {
-        _uiState.update { it.copy(selectedKeyType = newKeyType) }
+        // Delete existing key pair and reset UI
+        uiState.value.generatedKeyPairData?.keyAlias?.let { alias ->
+            viewModelScope.launch {
+                try {
+                    keyPairRepository.deleteKeyPair(alias)
+                } catch (e: Exception) {
+                    Log.e("KeyAttestationViewModel", "Failed to delete key pair", e)
+                    // Optionally update UI with error, though the main goal is to reset
+                }
+            }
+        }
+        _uiState.update {
+            it.copy(
+                selectedKeyType = newKeyType,
+                generatedKeyPairData = null, // Reset key pair data
+                verificationResultItems = emptyList(), // Clear verification results
+                status = "Key algorithm changed. Please generate a new key pair." // Inform user
+            )
+        }
     }
 
     fun fetchNonceChallenge() {
         viewModelScope.launch {
+            // Delete existing key pair and reset UI before fetching nonce
+            uiState.value.generatedKeyPairData?.keyAlias?.let { alias ->
+                try {
+                    keyPairRepository.deleteKeyPair(alias)
+                } catch (e: Exception) {
+                    Log.e("KeyAttestationViewModel", "Failed to delete key pair on fetching nonce", e)
+                }
+            }
             _uiState.update {
                 it.copy(
                     status = "Fetching Nonce/Challenge...",
                     nonce = "",
                     challenge = "",
+                    generatedKeyPairData = null, // Reset key pair data
                     verificationResultItems = emptyList() // Clear previous results
                 )
             }
@@ -167,7 +196,14 @@ class KeyAttestationViewModel @Inject constructor(
                     val decodedServerNonce = Base64Utils.UrlSafeNoPadding.decode(serverNonceB64Url)
                     val dataToSign = decodedServerNonce + nonceB
                     val privateKey = keyPair.private
-                    val signatureData = signer.sign(dataToSign, privateKey)
+
+                    val selectedSigner = when (uiState.value.selectedKeyType) {
+                        CryptoAlgorithm.EC -> ecSigner
+                        CryptoAlgorithm.RSA -> rsaSigner
+                        CryptoAlgorithm.ECDH -> throw IllegalStateException("ECDH is not supported for signing.")
+                    }
+                    val signatureData = selectedSigner.sign(dataToSign, privateKey)
+
                     val signatureDataBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(signatureData)
                     val nonceBBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(nonceB)
                     val certificateChainBase64Encoded =
