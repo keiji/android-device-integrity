@@ -263,10 +263,9 @@ TAG_KEY_SIZE = 3
 TAG_DIGEST = 5
 TAG_PADDING = 6
 TAG_EC_CURVE = 10
-# TAG_PADDING is already defined above with value 6
 
 TAG_RSA_PUBLIC_EXPONENT = 200
-TAG_MGF_DIGEST = 203 # Added based on initial list, was missing from existing constants
+TAG_MGF_DIGEST = 203
 
 TAG_ROLLBACK_RESISTANCE = 303
 TAG_EARLY_BOOT_ONLY = 305
@@ -300,10 +299,10 @@ TAG_ATTESTATION_ID_MANUFACTURER = 716
 TAG_ATTESTATION_ID_MODEL = 717
 TAG_VENDOR_PATCH_LEVEL = 718
 TAG_BOOT_PATCH_LEVEL = 719
-TAG_DEVICE_UNIQUE_ATTESTATION = 720 # Already exists
-TAG_ATTESTATION_ID_IMEI = 714 # Added
-TAG_ATTESTATION_ID_MEID = 715 # Added
-TAG_ATTESTATION_ID_SECOND_IMEI = 723 # Already exists
+TAG_DEVICE_UNIQUE_ATTESTATION = 720
+TAG_ATTESTATION_ID_IMEI = 714
+TAG_ATTESTATION_ID_MEID = 715
+TAG_ATTESTATION_ID_SECOND_IMEI = 723
 TAG_MODULE_HASH = 724
 # ... and many more
 
@@ -432,7 +431,6 @@ def parse_authorization_list(auth_list_sequence, attestation_version):
                 parsed_props['module_hash'] = base64.urlsafe_b64encode(bytes(value_component)).decode()
             elif tag_number == TAG_ROOT_OF_TRUST:
                 parsed_props['root_of_trust'] = parse_root_of_trust(value_component)
-            # Newly added fields
             elif tag_number == TAG_PADDING: # SET OF INTEGER
                 parsed_props['padding'] = [int(p) for p in value_component]
             elif tag_number == TAG_ROLLBACK_RESISTANCE: # NULL
