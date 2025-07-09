@@ -286,7 +286,7 @@ class KeyAttestationViewModel @Inject constructor(
         }
         props.creationDatetime?.let { items.add(AttestationInfoItem("Creation Datetime", formatEpochMilliToISO8601(it), indentLevel = 1)) }
         props.algorithm?.let { items.add(AttestationInfoItem("Algorithm", it.toString(), indentLevel = 1)) }
-        props.origin?.let { items.add(AttestationInfoItem("Origin", it, indentLevel = 1)) }
+        props.origin?.let { items.add(AttestationInfoItem("Origin", it.toString(), indentLevel = 1)) }
         props.ecCurve?.let { items.add(AttestationInfoItem("EC Curve", it.toString(), indentLevel = 1)) }
         props.keySize?.let { items.add(AttestationInfoItem("Key Size", it.toString(), indentLevel = 1)) }
         props.purpose?.let { items.add(AttestationInfoItem("Purposes", it.joinToString(), indentLevel = 1)) }
