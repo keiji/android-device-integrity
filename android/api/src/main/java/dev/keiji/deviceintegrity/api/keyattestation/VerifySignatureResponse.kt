@@ -29,34 +29,86 @@ data class RootOfTrust(
 
 @Serializable
 data class AuthorizationList(
-    @SerialName("attestation_application_id")
-    val attestationApplicationId: AttestationApplicationId? = null,
-    @SerialName("creation_datetime")
-    val creationDatetime: Long? = null,
-    @SerialName("algorithm")
-    val algorithm: Int? = null,
-    @SerialName("boot_patch_level")
-    val bootPatchLevel: Int? = null,
-    @SerialName("digests")
-    val digests: List<Int>? = null,
-    @SerialName("ec_curve")
-    val ecCurve: Int? = null,
-    @SerialName("key_size")
-    val keySize: Int? = null,
-    @SerialName("no_auth_required")
-    val noAuthRequired: Boolean? = null,
-    @SerialName("origin")
-    val origin: Int? = null,
-    @SerialName("os_patch_level")
-    val osPatchLevel: Int? = null,
-    @SerialName("os_version")
-    val osVersion: Int? = null,
     @SerialName("purpose")
     val purpose: List<Int>? = null,
+    @SerialName("algorithm")
+    val algorithm: Int? = null,
+    @SerialName("key_size")
+    val keySize: Int? = null,
+    @SerialName("digest")
+    val digest: List<Int>? = null,
+    @SerialName("padding")
+    val padding: List<Int>? = null,
+    @SerialName("ec_curve")
+    val ecCurve: Int? = null,
+    @SerialName("rsa_public_exponent")
+    val rsaPublicExponent: Long? = null,
+    @SerialName("mgf_digest")
+    val mgfDigest: List<Int>? = null,
+    @SerialName("rollback_resistance")
+    val rollbackResistance: Boolean? = null,
+    @SerialName("early_boot_only")
+    val earlyBootOnly: Boolean? = null,
+    @SerialName("active_date_time")
+    val activeDateTime: Long? = null,
+    @SerialName("origination_expire_date_time")
+    val originationExpireDateTime: Long? = null,
+    @SerialName("usage_expire_date_time")
+    val usageExpireDateTime: Long? = null,
+    @SerialName("usage_count_limit")
+    val usageCountLimit: Int? = null,
+    @SerialName("no_auth_required")
+    val noAuthRequired: Boolean? = null,
+    @SerialName("user_auth_type")
+    val userAuthType: Int? = null,
+    @SerialName("auth_timeout")
+    val authTimeout: Int? = null,
+    @SerialName("allow_while_on_body")
+    val allowWhileOnBody: Boolean? = null,
+    @SerialName("trusted_user_presence_required")
+    val trustedUserPresenceRequired: Boolean? = null,
+    @SerialName("trusted_confirmation_required")
+    val trustedConfirmationRequired: Boolean? = null,
+    @SerialName("unlocked_device_required")
+    val unlockedDeviceRequired: Boolean? = null,
+    @SerialName("creation_datetime")
+    val creationDatetime: Long? = null,
+    @SerialName("origin")
+    val origin: Int? = null,
     @SerialName("root_of_trust")
     val rootOfTrust: RootOfTrust? = null,
+    @SerialName("os_version")
+    val osVersion: Int? = null,
+    @SerialName("os_patch_level")
+    val osPatchLevel: Int? = null,
+    @SerialName("attestation_application_id")
+    val attestationApplicationId: AttestationApplicationId? = null,
+    @SerialName("attestation_id_brand")
+    val attestationIdBrand: String? = null,
+    @SerialName("attestation_id_device")
+    val attestationIdDevice: String? = null,
+    @SerialName("attestation_id_product")
+    val attestationIdProduct: String? = null,
+    @SerialName("attestation_id_serial")
+    val attestationIdSerial: String? = null,
+    @SerialName("attestation_id_imei")
+    val attestationIdImei: String? = null,
+    @SerialName("attestation_id_meid")
+    val attestationIdMeid: String? = null,
+    @SerialName("attestation_id_manufacturer")
+    val attestationIdManufacturer: String? = null,
+    @SerialName("attestation_id_model")
+    val attestationIdModel: String? = null,
     @SerialName("vendor_patch_level")
-    val vendorPatchLevel: Int? = null
+    val vendorPatchLevel: Int? = null,
+    @SerialName("boot_patch_level")
+    val bootPatchLevel: Int? = null,
+    @SerialName("device_unique_attestation")
+    val deviceUniqueAttestation: Boolean? = null,
+    @SerialName("attestation_id_second_imei")
+    val attestationIdSecondImei: String? = null,
+    @SerialName("module_hash")
+    val moduleHash: String? = null
 )
 
 @Serializable
