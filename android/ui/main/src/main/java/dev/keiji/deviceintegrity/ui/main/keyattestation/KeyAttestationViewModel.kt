@@ -1,5 +1,6 @@
 package dev.keiji.deviceintegrity.ui.main.keyattestation
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -10,7 +11,7 @@ import dev.keiji.deviceintegrity.crypto.contract.Signer
 import dev.keiji.deviceintegrity.crypto.contract.qualifier.EC
 import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
-import dev.keiji.deviceintegrity.repository.contract.EcKeyPairRepository
+import dev.keiji.deviceintegrity.repository.contract.KeyPairRepository
 import dev.keiji.deviceintegrity.ui.main.util.Base64Utils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -32,7 +33,7 @@ import kotlin.io.encoding.Base64
 
 @HiltViewModel
 class KeyAttestationViewModel @Inject constructor(
-    private val ecKeyPairRepository: EcKeyPairRepository,
+    private val keyPairRepository: KeyPairRepository,
     private val keyAttestationVerifyApiClient: KeyAttestationVerifyApiClient,
     private val deviceInfoProvider: DeviceInfoProvider,
     private val deviceSecurityStateProvider: DeviceSecurityStateProvider,
@@ -95,7 +96,7 @@ class KeyAttestationViewModel @Inject constructor(
                 it.copy(
                     status = "Generating KeyPair...",
                     generatedKeyPairData = null,
-                    verificationResultItems = emptyList() // Clear previous results
+                    verificationResultItems = emptyList()
                 )
             }
 
@@ -105,22 +106,29 @@ class KeyAttestationViewModel @Inject constructor(
                 return@launch
             }
 
-            try {
+            try { // Single try block for the entire operation
                 val decodedChallenge = withContext(Dispatchers.Default) {
                     Base64Utils.UrlSafeNoPadding.decode(currentChallenge)
                 }
+
                 val keyPairDataResult = withContext(Dispatchers.IO) {
-                    ecKeyPairRepository.generateKeyPair(decodedChallenge)
+                    when (uiState.value.selectedKeyType) {
+                        CryptoAlgorithm.RSA -> keyPairRepository.generateRsaKeyPair(decodedChallenge)
+                        CryptoAlgorithm.EC -> keyPairRepository.generateEcKeyPair(decodedChallenge)
+                        CryptoAlgorithm.ECDH -> throw UnsupportedOperationException("ECDH key generation is not yet implemented.")
+                    }
                 }
 
+                // keyPairDataResult is asserted non-null here as success (no exception) implies it.
                 _uiState.update {
                     it.copy(
                         generatedKeyPairData = keyPairDataResult,
                         status = "KeyPair generated successfully. Alias: ${keyPairDataResult.keyAlias}"
                     )
                 }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(status = "Failed to generate KeyPair: ${e.message}") }
+            } catch (e: Exception) { // Single catch block for all exceptions
+                Log.e("KeyAttestationViewModel", "Failed to generate KeyPair", e)
+                _uiState.update { it.copy(status = "Failed to generate KeyPair: ${e.message}", generatedKeyPairData = null) }
             }
         }
     }

@@ -2,8 +2,9 @@ package dev.keiji.deviceintegrity.repository.contract
 
 import java.security.KeyPair
 
-interface EcKeyPairRepository {
+interface KeyPairRepository {
     suspend fun getKeyPair(alias: String): KeyPair?
     suspend fun removeKeyPair(alias: String)
-    suspend fun generateKeyPair(challenge: ByteArray): KeyPairData
+    suspend fun generateEcKeyPair(challenge: ByteArray): KeyPairData
+    suspend fun generateRsaKeyPair(challenge: ByteArray): KeyPairData
 }
