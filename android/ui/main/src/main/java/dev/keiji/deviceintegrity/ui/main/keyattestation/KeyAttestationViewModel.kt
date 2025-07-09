@@ -95,7 +95,7 @@ class KeyAttestationViewModel @Inject constructor(
                 it.copy(
                     status = "Generating KeyPair...",
                     generatedKeyPairData = null,
-                    verificationResultItems = emptyList() // Clear previous results
+                    verificationResultItems = emptyList()
                 )
             }
 
@@ -105,36 +105,29 @@ class KeyAttestationViewModel @Inject constructor(
                 return@launch
             }
 
-            try {
+            try { // Single try block for the entire operation
                 val decodedChallenge = withContext(Dispatchers.Default) {
                     Base64Utils.UrlSafeNoPadding.decode(currentChallenge)
                 }
-                var keyPairDataResult: KeyPairData? = null // Initialize to null
-                try {
-                    val decodedChallenge = withContext(Dispatchers.Default) { // Moved decode into try block
-                        Base64Utils.UrlSafeNoPadding.decode(currentChallenge)
-                    }
 
-                    keyPairDataResult = withContext(Dispatchers.IO) {
-                        when (uiState.value.selectedKeyType) {
-                            CryptoAlgorithm.RSA -> keyPairRepository.generateRsaKeyPair(decodedChallenge)
-                            CryptoAlgorithm.EC -> keyPairRepository.generateEcKeyPair(decodedChallenge)
-                            CryptoAlgorithm.ECDH -> throw UnsupportedOperationException("ECDH key generation is not yet implemented.")
-                        }
+                val keyPairDataResult = withContext(Dispatchers.IO) {
+                    when (uiState.value.selectedKeyType) {
+                        CryptoAlgorithm.RSA -> keyPairRepository.generateRsaKeyPair(decodedChallenge)
+                        CryptoAlgorithm.EC -> keyPairRepository.generateEcKeyPair(decodedChallenge)
+                        CryptoAlgorithm.ECDH -> throw UnsupportedOperationException("ECDH key generation is not yet implemented.")
                     }
-
-                    // If successful, update UI
-                    _uiState.update {
-                        it.copy(
-                            generatedKeyPairData = keyPairDataResult, // This will be non-null if no exception
-                            status = "KeyPair generated successfully. Alias: ${keyPairDataResult!!.keyAlias}" // keyPairDataResult is asserted non-null here as success implies it.
-                        )
-                    }
-
-                } catch (e: Exception) { // Single catch block for all exceptions in the try
-                    Log.e("KeyAttestationViewModel", "Failed to generate KeyPair or decode challenge", e)
-                    _uiState.update { it.copy(status = "Failed to generate KeyPair: ${e.message}", generatedKeyPairData = null) }
                 }
+
+                // keyPairDataResult is asserted non-null here as success (no exception) implies it.
+                _uiState.update {
+                    it.copy(
+                        generatedKeyPairData = keyPairDataResult,
+                        status = "KeyPair generated successfully. Alias: ${keyPairDataResult.keyAlias}"
+                    )
+                }
+            } catch (e: Exception) { // Single catch block for all exceptions
+                Log.e("KeyAttestationViewModel", "Failed to generate KeyPair", e)
+                _uiState.update { it.copy(status = "Failed to generate KeyPair: ${e.message}", generatedKeyPairData = null) }
             }
         }
     }
