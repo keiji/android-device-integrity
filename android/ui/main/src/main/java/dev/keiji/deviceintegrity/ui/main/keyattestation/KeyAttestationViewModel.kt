@@ -56,7 +56,7 @@ class KeyAttestationViewModel @Inject constructor(
         uiState.value.generatedKeyPairData?.keyAlias?.let { alias ->
             viewModelScope.launch {
                 try {
-                    keyPairRepository.deleteKeyPair(alias)
+                    keyPairRepository.removeKeyPair(alias)
                 } catch (e: Exception) {
                     Log.e("KeyAttestationViewModel", "Failed to delete key pair", e)
                     // Optionally update UI with error, though the main goal is to reset
@@ -78,7 +78,7 @@ class KeyAttestationViewModel @Inject constructor(
             // Delete existing key pair and reset UI before fetching nonce
             uiState.value.generatedKeyPairData?.keyAlias?.let { alias ->
                 try {
-                    keyPairRepository.deleteKeyPair(alias)
+                    keyPairRepository.removeKeyPair(alias)
                 } catch (e: Exception) {
                     Log.e("KeyAttestationViewModel", "Failed to delete key pair on fetching nonce", e)
                 }
