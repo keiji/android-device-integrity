@@ -294,7 +294,6 @@ components:
           description: Vendor patch level.
           example: 20230201
           nullable: true
-        # Newly added fields from user request
         padding:
           type: array
           items:
