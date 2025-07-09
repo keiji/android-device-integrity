@@ -298,20 +298,49 @@ class KeyAttestationViewModel @Inject constructor(
         props.ecCurve?.let { items.add(AttestationInfoItem("EC Curve", it.toString(), indentLevel = 1)) }
         props.keySize?.let { items.add(AttestationInfoItem("Key Size", it.toString(), indentLevel = 1)) }
         props.purpose?.let { items.add(AttestationInfoItem("Purposes", it.joinToString(), indentLevel = 1)) }
-        props.digests?.let { items.add(AttestationInfoItem("Digests", it.joinToString(), indentLevel = 1)) }
+        // Changed from digests to digest
+        props.digest?.let { items.add(AttestationInfoItem("Digest", it.joinToString(), indentLevel = 1)) }
+        props.padding?.let { items.add(AttestationInfoItem("Padding", it.joinToString(), indentLevel = 1)) }
+        props.rsaPublicExponent?.let { items.add(AttestationInfoItem("RSA Public Exponent", it.toString(), indentLevel = 1)) }
+        props.mgfDigest?.let { items.add(AttestationInfoItem("MGF Digest", it.joinToString(), indentLevel = 1)) }
+        props.rollbackResistance?.let { items.add(AttestationInfoItem("Rollback Resistance", it.toString(), indentLevel = 1)) }
+        props.earlyBootOnly?.let { items.add(AttestationInfoItem("Early Boot Only", it.toString(), indentLevel = 1)) }
+        props.activeDateTime?.let { items.add(AttestationInfoItem("Active Datetime", formatEpochMilliToISO8601(it), indentLevel = 1)) }
+        props.originationExpireDateTime?.let { items.add(AttestationInfoItem("Origination Expire Datetime", formatEpochMilliToISO8601(it), indentLevel = 1)) }
+        props.usageExpireDateTime?.let { items.add(AttestationInfoItem("Usage Expire Datetime", formatEpochMilliToISO8601(it), indentLevel = 1)) }
+        props.usageCountLimit?.let { items.add(AttestationInfoItem("Usage Count Limit", it.toString(), indentLevel = 1)) }
         props.noAuthRequired?.let { items.add(AttestationInfoItem("No Auth Required", it.toString(), indentLevel = 1)) }
+        props.userAuthType?.let { items.add(AttestationInfoItem("User Auth Type", it.toString(), indentLevel = 1)) }
+        props.authTimeout?.let { items.add(AttestationInfoItem("Auth Timeout", it.toString(), indentLevel = 1)) }
+        props.allowWhileOnBody?.let { items.add(AttestationInfoItem("Allow While On Body", it.toString(), indentLevel = 1)) }
+        props.trustedUserPresenceRequired?.let { items.add(AttestationInfoItem("Trusted User Presence Required", it.toString(), indentLevel = 1)) }
+        props.trustedConfirmationRequired?.let { items.add(AttestationInfoItem("Trusted Confirmation Required", it.toString(), indentLevel = 1)) }
+        props.unlockedDeviceRequired?.let { items.add(AttestationInfoItem("Unlocked Device Required", it.toString(), indentLevel = 1)) }
 
         props.rootOfTrust?.let { rot ->
             items.add(AttestationInfoItem("Root of Trust", "", indentLevel = 1, isHeader = true))
-            rot.deviceLocked?.let { items.add(AttestationInfoItem("Device Locked", it.toString(), indentLevel = 2)) }
+            rot.deviceLocked?.let { items.add(AttestationInfoItem("Device Locked", it.toString(), indentLevel = 2)) } // Assuming deviceLocked is Boolean
             rot.verifiedBootState?.let { items.add(AttestationInfoItem("Verified Boot State", it.toString(), indentLevel = 2)) }
             rot.verifiedBootHash?.let { items.add(AttestationInfoItem("Verified Boot Hash", it, indentLevel = 2)) }
             rot.verifiedBootKey?.let { items.add(AttestationInfoItem("Verified Boot Key", it, indentLevel = 2)) }
         }
 
+        props.osVersion?.let { items.add(AttestationInfoItem("OS Version", it.toString(), indentLevel = 1)) } // Added osVersion
         props.osPatchLevel?.let { items.add(AttestationInfoItem("OS Patch Level", it.toString(), indentLevel = 1)) }
+        // attestationApplicationId is already handled above
+        props.attestationIdBrand?.let { items.add(AttestationInfoItem("Attestation ID Brand", it, indentLevel = 1)) }
+        props.attestationIdDevice?.let { items.add(AttestationInfoItem("Attestation ID Device", it, indentLevel = 1)) }
+        props.attestationIdProduct?.let { items.add(AttestationInfoItem("Attestation ID Product", it, indentLevel = 1)) }
+        props.attestationIdSerial?.let { items.add(AttestationInfoItem("Attestation ID Serial", it, indentLevel = 1)) }
+        props.attestationIdImei?.let { items.add(AttestationInfoItem("Attestation ID IMEI", it, indentLevel = 1)) }
+        props.attestationIdMeid?.let { items.add(AttestationInfoItem("Attestation ID MEID", it, indentLevel = 1)) }
+        props.attestationIdManufacturer?.let { items.add(AttestationInfoItem("Attestation ID Manufacturer", it, indentLevel = 1)) }
+        props.attestationIdModel?.let { items.add(AttestationInfoItem("Attestation ID Model", it, indentLevel = 1)) }
         props.vendorPatchLevel?.let { items.add(AttestationInfoItem("Vendor Patch Level", it.toString(), indentLevel = 1)) }
         props.bootPatchLevel?.let { items.add(AttestationInfoItem("Boot Patch Level", it.toString(), indentLevel = 1)) }
+        props.deviceUniqueAttestation?.let { items.add(AttestationInfoItem("Device Unique Attestation", it.toString(), indentLevel = 1)) }
+        props.attestationIdSecondImei?.let { items.add(AttestationInfoItem("Attestation ID Second IMEI", it, indentLevel = 1)) }
+        props.moduleHash?.let { items.add(AttestationInfoItem("Module Hash", it, indentLevel = 1)) }
     }
 
     private fun formatEpochMilliToISO8601(epochMilli: Long): String {
