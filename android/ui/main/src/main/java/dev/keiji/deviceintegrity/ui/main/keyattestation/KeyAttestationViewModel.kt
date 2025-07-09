@@ -16,6 +16,7 @@ import dev.keiji.deviceintegrity.repository.contract.KeyPairRepository
 import dev.keiji.deviceintegrity.repository.contract.KeyAttestationRepository
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
 import dev.keiji.deviceintegrity.ui.main.util.Base64Utils
+import dev.keiji.deviceintegrity.ui.main.util.DateFormatUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -354,7 +355,7 @@ class KeyAttestationViewModel @Inject constructor(
                 items.add(AttestationInfoItem("Signature[${index}]", signature, indentLevel = 2))
             }
         }
-        props.creationDatetime?.let { items.add(AttestationInfoItem("Creation Datetime", formatEpochMilliToISO8601(it), indentLevel = 1)) }
+        props.creationDatetime?.let { items.add(AttestationInfoItem("Creation Datetime", DateFormatUtil.formatEpochMilliToISO8601(it), indentLevel = 1)) }
         props.algorithm?.let { items.add(AttestationInfoItem("Algorithm", it.toString(), indentLevel = 1)) }
         props.origin?.let { items.add(AttestationInfoItem("Origin", it.toString(), indentLevel = 1)) }
         props.ecCurve?.let { items.add(AttestationInfoItem("EC Curve", it.toString(), indentLevel = 1)) }
@@ -366,9 +367,9 @@ class KeyAttestationViewModel @Inject constructor(
         props.mgfDigest?.let { items.add(AttestationInfoItem("MGF Digest", it.joinToString(), indentLevel = 1)) }
         props.rollbackResistance?.let { items.add(AttestationInfoItem("Rollback Resistance", it.toString(), indentLevel = 1)) }
         props.earlyBootOnly?.let { items.add(AttestationInfoItem("Early Boot Only", it.toString(), indentLevel = 1)) }
-        props.activeDateTime?.let { items.add(AttestationInfoItem("Active Datetime", formatEpochMilliToISO8601(it), indentLevel = 1)) }
-        props.originationExpireDateTime?.let { items.add(AttestationInfoItem("Origination Expire Datetime", formatEpochMilliToISO8601(it), indentLevel = 1)) }
-        props.usageExpireDateTime?.let { items.add(AttestationInfoItem("Usage Expire Datetime", formatEpochMilliToISO8601(it), indentLevel = 1)) }
+        props.activeDateTime?.let { items.add(AttestationInfoItem("Active Datetime", DateFormatUtil.formatEpochMilliToISO8601(it), indentLevel = 1)) }
+        props.originationExpireDateTime?.let { items.add(AttestationInfoItem("Origination Expire Datetime", DateFormatUtil.formatEpochMilliToISO8601(it), indentLevel = 1)) }
+        props.usageExpireDateTime?.let { items.add(AttestationInfoItem("Usage Expire Datetime", DateFormatUtil.formatEpochMilliToISO8601(it), indentLevel = 1)) }
         props.usageCountLimit?.let { items.add(AttestationInfoItem("Usage Count Limit", it.toString(), indentLevel = 1)) }
         props.noAuthRequired?.let { items.add(AttestationInfoItem("No Auth Required", it.toString(), indentLevel = 1)) }
         props.userAuthType?.let { items.add(AttestationInfoItem("User Auth Type", it.toString(), indentLevel = 1)) }
@@ -401,17 +402,6 @@ class KeyAttestationViewModel @Inject constructor(
         props.deviceUniqueAttestation?.let { items.add(AttestationInfoItem("Device Unique Attestation", it.toString(), indentLevel = 1)) }
         props.attestationIdSecondImei?.let { items.add(AttestationInfoItem("Attestation ID Second IMEI", it, indentLevel = 1)) }
         props.moduleHash?.let { items.add(AttestationInfoItem("Module Hash", it, indentLevel = 1)) }
-    }
-
-    private fun formatEpochMilliToISO8601(epochMilli: Long): String {
-        val date = Date(epochMilli)
-        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ", Locale.US)
-        format.timeZone = TimeZone.getTimeZone("UTC")
-        var formattedDate = format.format(date)
-        if (formattedDate.endsWith("UTC")) {
-            formattedDate = formattedDate.substring(0, formattedDate.length - 3) + "Z"
-        }
-        return formattedDate
     }
 
     fun onCopyResultsClicked() {

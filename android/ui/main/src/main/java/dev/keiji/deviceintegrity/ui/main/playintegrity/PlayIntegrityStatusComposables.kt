@@ -24,12 +24,9 @@ import dev.keiji.deviceintegrity.ui.main.R
 import dev.keiji.deviceintegrity.api.DeviceInfo
 import dev.keiji.deviceintegrity.api.SecurityInfo
 import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
 import android.content.Intent
 import dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload
+import dev.keiji.deviceintegrity.ui.main.util.DateFormatUtil
 
 @Composable
 fun StatusDisplayArea(
@@ -210,20 +207,6 @@ fun StatusDisplayArea(
     }
 }
 
-fun formatTimestamp(timestampMillis: Long?): String {
-    if (timestampMillis == null) return "N/A"
-    return try {
-        val millis = timestampMillis // No need to convert toLong()
-        val date = Date(millis)
-        // Use Z instead of XXX for API level 23 compatibility
-        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault())
-        format.timeZone = TimeZone.getDefault()
-        format.format(date)
-    } catch (e: NumberFormatException) {
-        "N/A (Invalid Timestamp)"
-    }
-}
-
 @Composable
 fun DisplayFormattedResponse(
     serverVerificationPayload: ServerVerificationPayload?
@@ -265,7 +248,7 @@ fun DisplayPlayIntegrityResponse(playIntegrityResponse: TokenPayloadExternal) {
         Text("    Package Name: ${playIntegrityResponse.requestDetails?.requestPackageName ?: "N/A"}")
         Text("    Nonce: ${playIntegrityResponse.requestDetails?.nonce ?: "N/A"}")
         Text("    Request Hash: ${playIntegrityResponse.requestDetails?.requestHash ?: "N/A"}")
-        Text("    Timestamp: ${formatTimestamp(playIntegrityResponse.requestDetails?.timestampMillis)}")
+        Text("    Timestamp: ${DateFormatUtil.formatEpochMilliToISO8601(playIntegrityResponse.requestDetails?.timestampMillis)}")
 
         Spacer(modifier = Modifier.height(8.dp))
         Text("  App Integrity:")
@@ -349,7 +332,7 @@ internal fun formatDisplayOutput(
                 Package Name: ${playIntegrityResponse.requestDetails?.requestPackageName ?: "N/A"}
                 Nonce: ${playIntegrityResponse.requestDetails?.nonce ?: "N/A"}
                 Request Hash: ${playIntegrityResponse.requestDetails?.requestHash ?: "N/A"}
-                Timestamp: ${formatTimestamp(playIntegrityResponse.requestDetails?.timestampMillis)}
+                Timestamp: ${DateFormatUtil.formatEpochMilliToISO8601(playIntegrityResponse.requestDetails?.timestampMillis)}
 
               App Integrity:
                 Recognition Verdict: ${playIntegrityResponse.appIntegrity?.appRecognitionVerdict ?: "N/A"}
