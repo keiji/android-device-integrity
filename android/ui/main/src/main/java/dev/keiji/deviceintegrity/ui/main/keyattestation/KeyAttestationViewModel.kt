@@ -109,37 +109,32 @@ class KeyAttestationViewModel @Inject constructor(
                 val decodedChallenge = withContext(Dispatchers.Default) {
                     Base64Utils.UrlSafeNoPadding.decode(currentChallenge)
                 }
-                val decodedChallenge = withContext(Dispatchers.Default) {
-                    Base64Utils.UrlSafeNoPadding.decode(currentChallenge)
-                }
                 var keyPairDataResult: KeyPairData? = null // Initialize to null
                 try {
+                    val decodedChallenge = withContext(Dispatchers.Default) { // Moved decode into try block
+                        Base64Utils.UrlSafeNoPadding.decode(currentChallenge)
+                    }
+
                     keyPairDataResult = withContext(Dispatchers.IO) {
                         when (uiState.value.selectedKeyType) {
                             CryptoAlgorithm.RSA -> keyPairRepository.generateRsaKeyPair(decodedChallenge)
-                            CryptoAlgorithm.EC -> keyPairRepository.generateEcKeyPair(decodedChallenge) // Restored EC call
+                            CryptoAlgorithm.EC -> keyPairRepository.generateEcKeyPair(decodedChallenge)
                             CryptoAlgorithm.ECDH -> throw UnsupportedOperationException("ECDH key generation is not yet implemented.")
-                            // No else branch, assuming CryptoAlgorithm is sealed or these are exhaustive for generation
                         }
                     }
 
-                    // This part will only be reached if no exception was thrown by withContext(Dispatchers.IO)
-                    // For ECDH, an exception is thrown, so it won't reach here.
-                    // For RSA/EC, if successful, keyPairDataResult will be non-null.
+                    // If successful, update UI
                     _uiState.update {
                         it.copy(
-                            generatedKeyPairData = keyPairDataResult, // Will be null if ECDH was selected (due to exception)
-                            status = if (keyPairDataResult != null) "KeyPair generated successfully. Alias: ${keyPairDataResult.keyAlias}" else it.status // Keep old status if null
+                            generatedKeyPairData = keyPairDataResult, // This will be non-null if no exception
+                            status = "KeyPair generated successfully. Alias: ${keyPairDataResult!!.keyAlias}" // keyPairDataResult is asserted non-null here as success implies it.
                         )
                     }
 
-                } catch (e: Exception) { // Catches exceptions from withContext or specific UnsupportedOperationException
-                    Log.e("KeyAttestationViewModel", "Failed to generate KeyPair", e)
+                } catch (e: Exception) { // Single catch block for all exceptions in the try
+                    Log.e("KeyAttestationViewModel", "Failed to generate KeyPair or decode challenge", e)
                     _uiState.update { it.copy(status = "Failed to generate KeyPair: ${e.message}", generatedKeyPairData = null) }
                 }
-            } catch (e: Exception) { // This outer catch is for exceptions from Base64Utils.decode or other initial logic
-                Log.e("KeyAttestationViewModel", "Outer exception in generateKeyPair", e)
-                _uiState.update { it.copy(status = "Failed to generate KeyPair: ${e.message}", generatedKeyPairData = null) }
             }
         }
     }
