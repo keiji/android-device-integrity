@@ -18,4 +18,11 @@ data class KeyAttestationUiState(
     val sessionId: String? = null,
     val generatedKeyPairData: KeyPairData? = null
     // deviceInfoText and securityInfoText are removed as their content will be part of verificationResultItems
-)
+) {
+    val isNonceVisible: Boolean get() = nonce.isNotEmpty()
+    val isChallengeVisible: Boolean get() = challenge.isNotEmpty()
+
+    val isStep2KeySelectionEnabled: Boolean get() = nonce.isNotEmpty() && challenge.isNotEmpty()
+    val isStep3GenerateKeyPairEnabled: Boolean get() = isStep2KeySelectionEnabled
+    val isStep4VerifyAttestationEnabled: Boolean get() = generatedKeyPairData != null
+}

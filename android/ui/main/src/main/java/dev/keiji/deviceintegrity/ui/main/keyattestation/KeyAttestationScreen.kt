@@ -72,11 +72,11 @@ fun KeyAttestationScreen(
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-        if (uiState.nonce.isNotEmpty()) {
+        if (uiState.isNonceVisible) {
             Text(text = "Nonce: ${uiState.nonce}")
         }
         Spacer(modifier = Modifier.height(8.dp))
-        if (uiState.challenge.isNotEmpty()) {
+        if (uiState.isChallengeVisible) {
             Text(text = "Challenge: ${uiState.challenge}")
         }
 
@@ -85,12 +85,10 @@ fun KeyAttestationScreen(
         Text(text = "Step2. 生成するキーペアの種類を設定")
         Spacer(modifier = Modifier.height(8.dp))
 
-        val step2Enabled = uiState.nonce.isNotEmpty() && uiState.challenge.isNotEmpty()
-
         Box(modifier = Modifier.fillMaxWidth()) {
             ExposedDropdownMenuBox(
                 expanded = keyTypeExpanded,
-                onExpandedChange = { if (step2Enabled) keyTypeExpanded = !keyTypeExpanded }
+                onExpandedChange = { if (uiState.isStep2KeySelectionEnabled) keyTypeExpanded = !keyTypeExpanded }
             ) {
                 TextField(
                     value = uiState.selectedKeyType.label,
@@ -104,7 +102,7 @@ fun KeyAttestationScreen(
                     modifier = Modifier
                         .menuAnchor()
                         .fillMaxWidth(),
-                    enabled = step2Enabled
+                    enabled = uiState.isStep2KeySelectionEnabled
                 )
                 ExposedDropdownMenu(
                     expanded = keyTypeExpanded,
@@ -117,7 +115,7 @@ fun KeyAttestationScreen(
                                 onSelectedKeyTypeChange(algorithm)
                                 keyTypeExpanded = false
                             },
-                            enabled = step2Enabled
+                            enabled = uiState.isStep2KeySelectionEnabled
                         )
                     }
                 }
@@ -133,7 +131,7 @@ fun KeyAttestationScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(ButtonHeight),
-            enabled = step2Enabled // Step 3 button enabled state depends on Step 2 being enabled
+            enabled = uiState.isStep3GenerateKeyPairEnabled
         ) {
             Text(text = "Generate KeyPair")
         }
@@ -147,7 +145,7 @@ fun KeyAttestationScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(ButtonHeight),
-            enabled = uiState.generatedKeyPairData != null // Step 4 button enabled if key pair is generated
+            enabled = uiState.isStep4VerifyAttestationEnabled
         ) {
             Text(text = "Request Verify KeyAttestation")
         }
