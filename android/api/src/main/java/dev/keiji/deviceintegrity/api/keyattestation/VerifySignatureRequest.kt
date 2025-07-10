@@ -10,9 +10,9 @@ data class VerifySignatureRequest(
     @SerialName("session_id")
     val sessionId: String,
     @SerialName("signature")
-    val signatureDataBase64UrlEncoded: String, // Assuming signature and nonce_b remain Base64URL encoded as per existing server code and OpenAPI spec for these fields
-    @SerialName("nonce_b")
-    val nonceBBase64UrlEncoded: String,
+    val signatureDataBase64UrlEncoded: String,
+    @SerialName("client_nonce")
+    val clientNonceBase64UrlEncoded: String,
     @SerialName("certificate_chain")
     val certificateChainBase64Encoded: List<String>,
     @SerialName("device_info")
