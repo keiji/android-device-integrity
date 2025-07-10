@@ -153,18 +153,29 @@ class KeyAttestationViewModel @Inject constructor(
             val newSessionId = UUID.randomUUID().toString()
             _uiState.update { it.copy(sessionId = newSessionId) }
 
-            // Assuming PrepareSignatureRequest can be used for both nonce and salt,
-            // or the server differentiates based on other parameters or context.
-            val request = PrepareSignatureRequest(sessionId = newSessionId)
             try {
-                val response = keyAttestationRepository.prepareSignature(request)
-                _uiState.update {
-                    it.copy(
-                        nonceOrSalt = response.nonceBase64UrlEncoded, // Store the fetched value here
-                        challenge = response.challengeBase64UrlEncoded,
-                        status = successMessage,
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
-                    )
+                if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) {
+                    val request = PrepareAgreementRequest(sessionId = newSessionId)
+                    val response = keyAttestationRepository.prepareAgreement(request)
+                    _uiState.update {
+                        it.copy(
+                            nonceOrSalt = response.saltBase64UrlEncoded, // Store SALT for ECDH
+                            challenge = response.challengeBase64UrlEncoded,
+                            status = successMessage,
+                            progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                        )
+                    }
+                } else {
+                    val request = PrepareSignatureRequest(sessionId = newSessionId)
+                    val response = keyAttestationRepository.prepareSignature(request)
+                    _uiState.update {
+                        it.copy(
+                            nonceOrSalt = response.nonceBase64UrlEncoded, // Store NONCE for EC/RSA
+                            challenge = response.challengeBase64UrlEncoded,
+                            status = successMessage,
+                            progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                        )
+                    }
                 }
             } catch (e: ServerException) {
                 Log.w("KeyAttestationViewModel", "ServerException fetching nonce/salt/challenge", e)
