@@ -266,12 +266,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 )
                 Log.d("StandardPlayIntegrityVM", "Verification Response: ${response.playIntegrityResponse.tokenPayloadExternal}")
                 val resultItems = transformPayloadToInfoItems(response, currentSessionId, currentUiState.requestHashValue)
-                var finalStatus = "Token verification complete."
-                 if (response.playIntegrityResponse.tokenPayloadExternal.deviceIntegrity?.deviceRecognitionVerdict?.any { it.contains("MEETS_DEVICE_INTEGRITY", ignoreCase = true) || it.contains("MEETS_VIRTUAL_INTEGRITY", ignoreCase = true) } == false) {
-                    finalStatus = "Token verification complete. Device Integrity Check Failed."
-                } else if (response.playIntegrityResponse.tokenPayloadExternal.appIntegrity?.appRecognitionVerdict?.contains("MEETS_DEVICE_INTEGRITY", ignoreCase = true) == false) {
-                    finalStatus = "Token verification complete. App Integrity Check Failed."
-                }
+                val finalStatus = "Token verification complete."
                 _uiState.update {
                     it.copy(
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS, status = finalStatus,

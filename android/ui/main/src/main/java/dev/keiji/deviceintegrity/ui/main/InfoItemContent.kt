@@ -2,9 +2,14 @@ package dev.keiji.deviceintegrity.ui.main
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.selection.SelectionContainer
 // Removed Material Icons imports
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -50,7 +55,7 @@ fun InfoItemContent(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 8.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
                     IconButton(onClick = onCopyClick) {
@@ -71,7 +76,7 @@ fun InfoItemContent(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(8.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
@@ -91,15 +96,20 @@ fun InfoItemContent(
                         }
 
                         Column(modifier = itemPadding) {
+                            if (item.isHeader && item.indentLevel == 0 && index != 0) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+
                             if (item.isHeader) {
+                                val top = if (index > 0) 8.dp else 0.dp
                                 Text(
                                     text = item.label,
                                     style = textStyle,
                                     fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(top = if (index > 0) 8.dp else 0.dp, bottom = 4.dp)
+                                    modifier = Modifier.padding(top = top, bottom = 4.dp)
                                 )
                             } else {
-                                Row(
+                                FlowRow(
                                      modifier = Modifier.padding(vertical = 2.dp)
                                 ) {
                                     Text(
@@ -107,10 +117,15 @@ fun InfoItemContent(
                                         style = textStyle,
                                         fontWeight = FontWeight.Bold,
                                     )
-                                    Text(
-                                        text = " ${item.value}",
-                                        style = textStyle,
-                                    )
+
+                                    Spacer(modifier = Modifier.width(8.dp))
+
+                                    SelectionContainer {
+                                        Text(
+                                            text = item.value,
+                                            style = textStyle,
+                                        )
+                                    }
                                 }
                             }
                         }
