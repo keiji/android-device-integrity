@@ -18,7 +18,7 @@ interface KeyAttestationRepository {
      */
     @Throws(ServerException::class, IOException::class)
     suspend fun prepareSignature(
-        requestBody: PrepareRequest
+        requestBody: PrepareSignatureRequest
     ): PrepareResponse
 
     /**
