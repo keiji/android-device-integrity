@@ -62,7 +62,7 @@ fun KeyAttestationScreen(
         CryptoAlgorithm.ECDH -> "Fetch Salt/Challenge"
         else -> "Fetch Nonce/Challenge"
     }
-    val saltOrNonceLabel = when (uiState.selectedKeyType) {
+    val nonceOrSaltLabel = when (uiState.selectedKeyType) {
         CryptoAlgorithm.ECDH -> "Salt"
         else -> "Nonce"
     }
@@ -129,14 +129,14 @@ fun KeyAttestationScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(ButtonHeight),
-            enabled = uiState.isStep2FetchSaltOrNonceChallengeEnabled // Use new UiState property
+            enabled = uiState.isStep2FetchNonceOrSaltChallengeEnabled // Use new UiState property
         ) {
             Text(text = step2ButtonText)
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-        if (uiState.isSaltOrNonceVisible) { // Use new UiState property
-            Text(text = "$saltOrNonceLabel: ${uiState.saltOrNonce}") // Use new UiState property and dynamic label
+        if (uiState.isNonceOrSaltVisible) { // Use new UiState property
+            Text(text = "$nonceOrSaltLabel: ${uiState.nonceOrSalt}") // Use new UiState property and dynamic label
         }
         Spacer(modifier = Modifier.height(8.dp))
         if (uiState.isChallengeVisible) {
@@ -242,7 +242,7 @@ private fun KeyAttestationScreenPreview() {
     )
     KeyAttestationScreen(
         uiState = KeyAttestationUiState(
-            saltOrNonce = "PREVIEW_SALT_OR_NONCE_67890", // Updated field name
+            nonceOrSalt = "PREVIEW_NONCE_OR_SALT_67890", // Updated field name
             challenge = "PREVIEW_CHALLENGE_ABCDE",
             selectedKeyType = CryptoAlgorithm.RSA, // Example: RSA selected
             status = "Verification successful.",
