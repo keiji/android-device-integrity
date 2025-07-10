@@ -15,6 +15,7 @@ import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.repository.contract.KeyPairRepository
 import dev.keiji.deviceintegrity.repository.contract.KeyAttestationRepository
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
+import dev.keiji.deviceintegrity.ui.main.InfoItem
 import dev.keiji.deviceintegrity.ui.main.common.KEY_ATTESTATION_DELAY_MS
 import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityProgressConstants
 import dev.keiji.deviceintegrity.ui.main.util.Base64Utils
@@ -67,7 +68,7 @@ class KeyAttestationViewModel @Inject constructor(
                 it.copy(
                     selectedKeyType = newKeyType,
                     generatedKeyPairData = null,
-                    verificationResultItems = emptyList(),
+                    infoItems = emptyList(),
                     status = "Key algorithm changed. Please generate a new key pair.",
                     progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
                 )
@@ -90,7 +91,7 @@ class KeyAttestationViewModel @Inject constructor(
                     nonce = "",
                     challenge = "",
                     generatedKeyPairData = null,
-                    verificationResultItems = emptyList(),
+                    infoItems = emptyList(),
                     progressValue = PlayIntegrityProgressConstants.FULL_PROGRESS
                 )
             }
@@ -171,7 +172,7 @@ class KeyAttestationViewModel @Inject constructor(
                 it.copy(
                     status = "Generating KeyPair...",
                     generatedKeyPairData = null,
-                    verificationResultItems = emptyList(),
+                    infoItems = emptyList(),
                     progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS
                 )
             }
@@ -225,7 +226,7 @@ class KeyAttestationViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     status = "Preparing to verify KeyAttestation...",
-                    verificationResultItems = emptyList(),
+                    infoItems = emptyList(),
                     progressValue = PlayIntegrityProgressConstants.FULL_PROGRESS
                 )
             }
@@ -350,7 +351,7 @@ class KeyAttestationViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             status = "Verification successful.",
-                            verificationResultItems = resultItems,
+                            infoItems = resultItems,
                             progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
                         )
                     }
@@ -391,47 +392,47 @@ class KeyAttestationViewModel @Inject constructor(
         }
     }
 
-    private fun convertDeviceInfoToAttestationItems(deviceInfo: DeviceInfo): List<AttestationInfoItem> {
-        val items = mutableListOf<AttestationInfoItem>()
-        items.add(AttestationInfoItem("Device Info", "", isHeader = true, indentLevel = 0))
-        items.add(AttestationInfoItem("Brand", deviceInfo.brand, indentLevel = 1))
-        items.add(AttestationInfoItem("Model", deviceInfo.model, indentLevel = 1))
-        items.add(AttestationInfoItem("Device", deviceInfo.device, indentLevel = 1))
-        items.add(AttestationInfoItem("Product", deviceInfo.product, indentLevel = 1))
-        items.add(AttestationInfoItem("Manufacturer", deviceInfo.manufacturer, indentLevel = 1))
-        items.add(AttestationInfoItem("Hardware", deviceInfo.hardware, indentLevel = 1))
-        items.add(AttestationInfoItem("Board", deviceInfo.board, indentLevel = 1))
-        items.add(AttestationInfoItem("Bootloader", deviceInfo.bootloader, indentLevel = 1))
-        items.add(AttestationInfoItem("Version Release", deviceInfo.versionRelease, indentLevel = 1))
-        items.add(AttestationInfoItem("SDK Int", deviceInfo.sdkInt.toString(), indentLevel = 1))
-        items.add(AttestationInfoItem("Fingerprint", deviceInfo.fingerprint, indentLevel = 1))
-        items.add(AttestationInfoItem("Security Patch", deviceInfo.securityPatch, indentLevel = 1))
+    private fun convertDeviceInfoToAttestationItems(deviceInfo: DeviceInfo): List<InfoItem> {
+        val items = mutableListOf<InfoItem>()
+        items.add(InfoItem("Device Info", "", isHeader = true, indentLevel = 0))
+        items.add(InfoItem("Brand", deviceInfo.brand, indentLevel = 1))
+        items.add(InfoItem("Model", deviceInfo.model, indentLevel = 1))
+        items.add(InfoItem("Device", deviceInfo.device, indentLevel = 1))
+        items.add(InfoItem("Product", deviceInfo.product, indentLevel = 1))
+        items.add(InfoItem("Manufacturer", deviceInfo.manufacturer, indentLevel = 1))
+        items.add(InfoItem("Hardware", deviceInfo.hardware, indentLevel = 1))
+        items.add(InfoItem("Board", deviceInfo.board, indentLevel = 1))
+        items.add(InfoItem("Bootloader", deviceInfo.bootloader, indentLevel = 1))
+        items.add(InfoItem("Version Release", deviceInfo.versionRelease, indentLevel = 1))
+        items.add(InfoItem("SDK Int", deviceInfo.sdkInt.toString(), indentLevel = 1))
+        items.add(InfoItem("Fingerprint", deviceInfo.fingerprint, indentLevel = 1))
+        items.add(InfoItem("Security Patch", deviceInfo.securityPatch, indentLevel = 1))
         return items
     }
 
-    private fun convertSecurityInfoToAttestationItems(securityInfo: SecurityInfo): List<AttestationInfoItem> {
-        val items = mutableListOf<AttestationInfoItem>()
-        items.add(AttestationInfoItem("Security Info", "", isHeader = true, indentLevel = 0))
-        items.add(AttestationInfoItem("Is Device Lock Enabled", securityInfo.isDeviceLockEnabled.toString(), indentLevel = 1))
-        items.add(AttestationInfoItem("Is Biometrics Enabled", securityInfo.isBiometricsEnabled.toString(), indentLevel = 1))
-        items.add(AttestationInfoItem("Has Class3 Authenticator", securityInfo.hasClass3Authenticator.toString(), indentLevel = 1))
-        items.add(AttestationInfoItem("Has Strongbox", securityInfo.hasStrongbox.toString(), indentLevel = 1))
+    private fun convertSecurityInfoToAttestationItems(securityInfo: SecurityInfo): List<InfoItem> {
+        val items = mutableListOf<InfoItem>()
+        items.add(InfoItem("Security Info", "", isHeader = true, indentLevel = 0))
+        items.add(InfoItem("Is Device Lock Enabled", securityInfo.isDeviceLockEnabled.toString(), indentLevel = 1))
+        items.add(InfoItem("Is Biometrics Enabled", securityInfo.isBiometricsEnabled.toString(), indentLevel = 1))
+        items.add(InfoItem("Has Class3 Authenticator", securityInfo.hasClass3Authenticator.toString(), indentLevel = 1))
+        items.add(InfoItem("Has Strongbox", securityInfo.hasStrongbox.toString(), indentLevel = 1))
         return items
     }
 
-    private fun buildVerificationResultList(response: VerifySignatureResponse): MutableList<AttestationInfoItem> {
-        val items = mutableListOf<AttestationInfoItem>()
+    private fun buildVerificationResultList(response: VerifySignatureResponse): MutableList<InfoItem> {
+        val items = mutableListOf<InfoItem>()
 
-        items.add(AttestationInfoItem("Session ID", response.sessionId))
-        items.add(AttestationInfoItem("Is Verified", response.isVerified.toString()))
-        response.reason?.let { items.add(AttestationInfoItem("Reason", it)) }
+        items.add(InfoItem("Session ID", response.sessionId))
+        items.add(InfoItem("Is Verified", response.isVerified.toString()))
+        response.reason?.let { items.add(InfoItem("Reason", it)) }
 
         val attestationInfo = response.attestationInfo
-        items.add(AttestationInfoItem("Attestation Version", attestationInfo.attestationVersion.toString()))
-        items.add(AttestationInfoItem("Attestation Security Level", attestationInfo.attestationSecurityLevel.toString()))
-        items.add(AttestationInfoItem("KeyMint Version", attestationInfo.keymintVersion.toString()))
-        items.add(AttestationInfoItem("KeyMint Security Level", attestationInfo.keymintSecurityLevel.toString()))
-        items.add(AttestationInfoItem("Attestation Challenge", attestationInfo.attestationChallenge))
+        items.add(InfoItem("Attestation Version", attestationInfo.attestationVersion.toString()))
+        items.add(InfoItem("Attestation Security Level", attestationInfo.attestationSecurityLevel.toString()))
+        items.add(InfoItem("KeyMint Version", attestationInfo.keymintVersion.toString()))
+        items.add(InfoItem("KeyMint Security Level", attestationInfo.keymintSecurityLevel.toString()))
+        items.add(InfoItem("Attestation Challenge", attestationInfo.attestationChallenge))
 
         addAuthorizationListItems(items, "Software Enforced Properties", attestationInfo.softwareEnforcedProperties)
         addAuthorizationListItems(items, "Hardware Enforced Properties", attestationInfo.hardwareEnforcedProperties)
@@ -440,74 +441,74 @@ class KeyAttestationViewModel @Inject constructor(
     }
 
     private fun addAuthorizationListItems(
-        items: MutableList<AttestationInfoItem>,
+        items: MutableList<InfoItem>,
         header: String,
         props: AuthorizationList?
     ) {
         props ?: return
-        items.add(AttestationInfoItem(header, "", isHeader = true))
+        items.add(InfoItem(header, "", isHeader = true))
 
         props.attestationApplicationId?.let { appId ->
-            items.add(AttestationInfoItem("Attestation Application ID", "", indentLevel = 1, isHeader = true))
-            appId.attestationApplicationId.let { items.add(AttestationInfoItem("Application ID", it, indentLevel = 2)) }
-            appId.attestationApplicationVersionCode?.let { items.add(AttestationInfoItem("Version Code", it.toString(), indentLevel = 2)) }
+            items.add(InfoItem("Attestation Application ID", "", indentLevel = 1, isHeader = true))
+            appId.attestationApplicationId.let { items.add(InfoItem("Application ID", it, indentLevel = 2)) }
+            appId.attestationApplicationVersionCode?.let { items.add(InfoItem("Version Code", it.toString(), indentLevel = 2)) }
             appId.applicationSignatures.forEachIndexed { index, signature ->
-                items.add(AttestationInfoItem("Signature[${index}]", signature, indentLevel = 2))
+                items.add(InfoItem("Signature[${index}]", signature, indentLevel = 2))
             }
         }
-        props.creationDatetime?.let { items.add(AttestationInfoItem("Creation Datetime", DateFormatUtil.formatEpochMilliToISO8601(it), indentLevel = 1)) }
-        props.algorithm?.let { items.add(AttestationInfoItem("Algorithm", it.toString(), indentLevel = 1)) }
-        props.origin?.let { items.add(AttestationInfoItem("Origin", it.toString(), indentLevel = 1)) }
-        props.ecCurve?.let { items.add(AttestationInfoItem("EC Curve", it.toString(), indentLevel = 1)) }
-        props.keySize?.let { items.add(AttestationInfoItem("Key Size", it.toString(), indentLevel = 1)) }
-        props.purpose?.let { items.add(AttestationInfoItem("Purposes", it.joinToString(), indentLevel = 1)) }
-        props.digest?.let { items.add(AttestationInfoItem("Digest", it.joinToString(), indentLevel = 1)) }
-        props.padding?.let { items.add(AttestationInfoItem("Padding", it.joinToString(), indentLevel = 1)) }
-        props.rsaPublicExponent?.let { items.add(AttestationInfoItem("RSA Public Exponent", it.toString(), indentLevel = 1)) }
-        props.mgfDigest?.let { items.add(AttestationInfoItem("MGF Digest", it.joinToString(), indentLevel = 1)) }
-        props.rollbackResistance?.let { items.add(AttestationInfoItem("Rollback Resistance", it.toString(), indentLevel = 1)) }
-        props.earlyBootOnly?.let { items.add(AttestationInfoItem("Early Boot Only", it.toString(), indentLevel = 1)) }
-        props.activeDateTime?.let { items.add(AttestationInfoItem("Active Datetime", DateFormatUtil.formatEpochMilliToISO8601(it), indentLevel = 1)) }
-        props.originationExpireDateTime?.let { items.add(AttestationInfoItem("Origination Expire Datetime", DateFormatUtil.formatEpochMilliToISO8601(it), indentLevel = 1)) }
-        props.usageExpireDateTime?.let { items.add(AttestationInfoItem("Usage Expire Datetime", DateFormatUtil.formatEpochMilliToISO8601(it), indentLevel = 1)) }
-        props.usageCountLimit?.let { items.add(AttestationInfoItem("Usage Count Limit", it.toString(), indentLevel = 1)) }
-        props.noAuthRequired?.let { items.add(AttestationInfoItem("No Auth Required", it.toString(), indentLevel = 1)) }
-        props.userAuthType?.let { items.add(AttestationInfoItem("User Auth Type", it.toString(), indentLevel = 1)) }
-        props.authTimeout?.let { items.add(AttestationInfoItem("Auth Timeout", it.toString(), indentLevel = 1)) }
-        props.allowWhileOnBody?.let { items.add(AttestationInfoItem("Allow While On Body", it.toString(), indentLevel = 1)) }
-        props.trustedUserPresenceRequired?.let { items.add(AttestationInfoItem("Trusted User Presence Required", it.toString(), indentLevel = 1)) }
-        props.trustedConfirmationRequired?.let { items.add(AttestationInfoItem("Trusted Confirmation Required", it.toString(), indentLevel = 1)) }
-        props.unlockedDeviceRequired?.let { items.add(AttestationInfoItem("Unlocked Device Required", it.toString(), indentLevel = 1)) }
+        props.creationDatetime?.let { items.add(InfoItem("Creation Datetime", DateFormatUtil.formatEpochMilliToISO8601(it), indentLevel = 1)) }
+        props.algorithm?.let { items.add(InfoItem("Algorithm", it.toString(), indentLevel = 1)) }
+        props.origin?.let { items.add(InfoItem("Origin", it.toString(), indentLevel = 1)) }
+        props.ecCurve?.let { items.add(InfoItem("EC Curve", it.toString(), indentLevel = 1)) }
+        props.keySize?.let { items.add(InfoItem("Key Size", it.toString(), indentLevel = 1)) }
+        props.purpose?.let { items.add(InfoItem("Purposes", it.joinToString(), indentLevel = 1)) }
+        props.digest?.let { items.add(InfoItem("Digest", it.joinToString(), indentLevel = 1)) }
+        props.padding?.let { items.add(InfoItem("Padding", it.joinToString(), indentLevel = 1)) }
+        props.rsaPublicExponent?.let { items.add(InfoItem("RSA Public Exponent", it.toString(), indentLevel = 1)) }
+        props.mgfDigest?.let { items.add(InfoItem("MGF Digest", it.joinToString(), indentLevel = 1)) }
+        props.rollbackResistance?.let { items.add(InfoItem("Rollback Resistance", it.toString(), indentLevel = 1)) }
+        props.earlyBootOnly?.let { items.add(InfoItem("Early Boot Only", it.toString(), indentLevel = 1)) }
+        props.activeDateTime?.let { items.add(InfoItem("Active Datetime", DateFormatUtil.formatEpochMilliToISO8601(it), indentLevel = 1)) }
+        props.originationExpireDateTime?.let { items.add(InfoItem("Origination Expire Datetime", DateFormatUtil.formatEpochMilliToISO8601(it), indentLevel = 1)) }
+        props.usageExpireDateTime?.let { items.add(InfoItem("Usage Expire Datetime", DateFormatUtil.formatEpochMilliToISO8601(it), indentLevel = 1)) }
+        props.usageCountLimit?.let { items.add(InfoItem("Usage Count Limit", it.toString(), indentLevel = 1)) }
+        props.noAuthRequired?.let { items.add(InfoItem("No Auth Required", it.toString(), indentLevel = 1)) }
+        props.userAuthType?.let { items.add(InfoItem("User Auth Type", it.toString(), indentLevel = 1)) }
+        props.authTimeout?.let { items.add(InfoItem("Auth Timeout", it.toString(), indentLevel = 1)) }
+        props.allowWhileOnBody?.let { items.add(InfoItem("Allow While On Body", it.toString(), indentLevel = 1)) }
+        props.trustedUserPresenceRequired?.let { items.add(InfoItem("Trusted User Presence Required", it.toString(), indentLevel = 1)) }
+        props.trustedConfirmationRequired?.let { items.add(InfoItem("Trusted Confirmation Required", it.toString(), indentLevel = 1)) }
+        props.unlockedDeviceRequired?.let { items.add(InfoItem("Unlocked Device Required", it.toString(), indentLevel = 1)) }
 
         props.rootOfTrust?.let { rot ->
-            items.add(AttestationInfoItem("Root of Trust", "", indentLevel = 1, isHeader = true))
-            rot.deviceLocked?.let { items.add(AttestationInfoItem("Device Locked", it.toString(), indentLevel = 2)) }
-            rot.verifiedBootState?.let { items.add(AttestationInfoItem("Verified Boot State", it.toString(), indentLevel = 2)) }
-            rot.verifiedBootHash?.let { items.add(AttestationInfoItem("Verified Boot Hash", it, indentLevel = 2)) }
-            rot.verifiedBootKey?.let { items.add(AttestationInfoItem("Verified Boot Key", it, indentLevel = 2)) }
+            items.add(InfoItem("Root of Trust", "", indentLevel = 1, isHeader = true))
+            rot.deviceLocked?.let { items.add(InfoItem("Device Locked", it.toString(), indentLevel = 2)) }
+            rot.verifiedBootState?.let { items.add(InfoItem("Verified Boot State", it.toString(), indentLevel = 2)) }
+            rot.verifiedBootHash?.let { items.add(InfoItem("Verified Boot Hash", it, indentLevel = 2)) }
+            rot.verifiedBootKey?.let { items.add(InfoItem("Verified Boot Key", it, indentLevel = 2)) }
         }
 
-        props.osVersion?.let { items.add(AttestationInfoItem("OS Version", it.toString(), indentLevel = 1)) }
-        props.osPatchLevel?.let { items.add(AttestationInfoItem("OS Patch Level", it.toString(), indentLevel = 1)) }
-        props.attestationIdBrand?.let { items.add(AttestationInfoItem("Attestation ID Brand", it, indentLevel = 1)) }
-        props.attestationIdDevice?.let { items.add(AttestationInfoItem("Attestation ID Device", it, indentLevel = 1)) }
-        props.attestationIdProduct?.let { items.add(AttestationInfoItem("Attestation ID Product", it, indentLevel = 1)) }
-        props.attestationIdSerial?.let { items.add(AttestationInfoItem("Attestation ID Serial", it, indentLevel = 1)) }
-        props.attestationIdImei?.let { items.add(AttestationInfoItem("Attestation ID IMEI", it, indentLevel = 1)) }
-        props.attestationIdMeid?.let { items.add(AttestationInfoItem("Attestation ID MEID", it, indentLevel = 1)) }
-        props.attestationIdManufacturer?.let { items.add(AttestationInfoItem("Attestation ID Manufacturer", it, indentLevel = 1)) }
-        props.attestationIdModel?.let { items.add(AttestationInfoItem("Attestation ID Model", it, indentLevel = 1)) }
-        props.vendorPatchLevel?.let { items.add(AttestationInfoItem("Vendor Patch Level", it.toString(), indentLevel = 1)) }
-        props.bootPatchLevel?.let { items.add(AttestationInfoItem("Boot Patch Level", it.toString(), indentLevel = 1)) }
-        props.deviceUniqueAttestation?.let { items.add(AttestationInfoItem("Device Unique Attestation", it.toString(), indentLevel = 1)) }
-        props.attestationIdSecondImei?.let { items.add(AttestationInfoItem("Attestation ID Second IMEI", it, indentLevel = 1)) }
-        props.moduleHash?.let { items.add(AttestationInfoItem("Module Hash", it, indentLevel = 1)) }
+        props.osVersion?.let { items.add(InfoItem("OS Version", it.toString(), indentLevel = 1)) }
+        props.osPatchLevel?.let { items.add(InfoItem("OS Patch Level", it.toString(), indentLevel = 1)) }
+        props.attestationIdBrand?.let { items.add(InfoItem("Attestation ID Brand", it, indentLevel = 1)) }
+        props.attestationIdDevice?.let { items.add(InfoItem("Attestation ID Device", it, indentLevel = 1)) }
+        props.attestationIdProduct?.let { items.add(InfoItem("Attestation ID Product", it, indentLevel = 1)) }
+        props.attestationIdSerial?.let { items.add(InfoItem("Attestation ID Serial", it, indentLevel = 1)) }
+        props.attestationIdImei?.let { items.add(InfoItem("Attestation ID IMEI", it, indentLevel = 1)) }
+        props.attestationIdMeid?.let { items.add(InfoItem("Attestation ID MEID", it, indentLevel = 1)) }
+        props.attestationIdManufacturer?.let { items.add(InfoItem("Attestation ID Manufacturer", it, indentLevel = 1)) }
+        props.attestationIdModel?.let { items.add(InfoItem("Attestation ID Model", it, indentLevel = 1)) }
+        props.vendorPatchLevel?.let { items.add(InfoItem("Vendor Patch Level", it.toString(), indentLevel = 1)) }
+        props.bootPatchLevel?.let { items.add(InfoItem("Boot Patch Level", it.toString(), indentLevel = 1)) }
+        props.deviceUniqueAttestation?.let { items.add(InfoItem("Device Unique Attestation", it.toString(), indentLevel = 1)) }
+        props.attestationIdSecondImei?.let { items.add(InfoItem("Attestation ID Second IMEI", it, indentLevel = 1)) }
+        props.moduleHash?.let { items.add(InfoItem("Module Hash", it, indentLevel = 1)) }
     }
 
     fun onCopyResultsClicked() {
-        val items = uiState.value.verificationResultItems
+        val items = uiState.value.infoItems
         if (items.isNotEmpty()) {
-            val textToCopy = AttestationResultFormatter.formatAttestationResults(items)
+            val textToCopy = InfoItemFormatter.formatInfoItems(items)
             viewModelScope.launch {
                 _copyEventChannel.send(textToCopy)
             }
@@ -515,9 +516,9 @@ class KeyAttestationViewModel @Inject constructor(
     }
 
     fun onShareResultsClicked() {
-        val items = uiState.value.verificationResultItems
+        val items = uiState.value.infoItems
         if (items.isNotEmpty()) {
-            val textToShare = AttestationResultFormatter.formatAttestationResults(items)
+            val textToShare = InfoItemFormatter.formatInfoItems(items)
             viewModelScope.launch {
                 _shareEventChannel.send(textToShare)
             }

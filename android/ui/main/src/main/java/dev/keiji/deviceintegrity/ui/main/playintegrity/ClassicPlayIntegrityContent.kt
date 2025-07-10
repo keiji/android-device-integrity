@@ -1,38 +1,38 @@
 package dev.keiji.deviceintegrity.ui.main.playintegrity
 
+import android.content.Intent
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider // Kept for now, though not directly used by InfoItemContent
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import dev.keiji.deviceintegrity.api.playintegrity.AccountDetails
-import dev.keiji.deviceintegrity.api.playintegrity.AppAccessRiskVerdict
-import dev.keiji.deviceintegrity.api.playintegrity.AppIntegrity
-import dev.keiji.deviceintegrity.api.playintegrity.DeviceAttributes
-import dev.keiji.deviceintegrity.api.playintegrity.DeviceIntegrity
-import dev.keiji.deviceintegrity.api.DeviceInfo
-import dev.keiji.deviceintegrity.api.playintegrity.EnvironmentDetails
-import dev.keiji.deviceintegrity.api.playintegrity.PlayIntegrityResponseWrapper
-import dev.keiji.deviceintegrity.api.playintegrity.RecentDeviceActivity
-import dev.keiji.deviceintegrity.api.playintegrity.RequestDetails
-import dev.keiji.deviceintegrity.api.SecurityInfo
-import dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload
-import dev.keiji.deviceintegrity.api.playintegrity.TokenPayloadExternal
-import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfo
+import dev.keiji.deviceintegrity.ui.main.InfoItem
+import dev.keiji.deviceintegrity.ui.main.InfoItemContent
+import dev.keiji.deviceintegrity.ui.main.keyattestation.InfoItemFormatter
 import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
+import kotlinx.coroutines.launch
 
 @Composable
 fun ClassicPlayIntegrityContent(
@@ -43,6 +43,9 @@ fun ClassicPlayIntegrityContent(
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
 
     Column(
         modifier = modifier
@@ -50,7 +53,7 @@ fun ClassicPlayIntegrityContent(
             .verticalScroll(scrollState)
             .padding(16.dp)
             .imePadding(),
-        horizontalAlignment = Alignment.Start, // Align labels to the left
+        horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Top
     ) {
         Text(text = "Step 1. サーバーからNonceを取得")
@@ -97,15 +100,49 @@ fun ClassicPlayIntegrityContent(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-        HorizontalDivider() // Add a divider
-        Spacer(modifier = Modifier.height(16.dp))
 
-        StatusDisplayArea(
-            progressValue = uiState.progressValue,
-            errorMessages = uiState.errorMessages,
-            statusText = uiState.status,
-            serverVerificationPayload = uiState.serverVerificationPayload,
-            currentSessionId = uiState.currentSessionId
+        // Progress Indicators
+        if (uiState.progressValue > PlayIntegrityProgressConstants.NO_PROGRESS && uiState.progressValue < PlayIntegrityProgressConstants.FULL_PROGRESS) {
+            LinearProgressIndicator(
+                progress = { uiState.progressValue },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        } else if (uiState.progressValue == PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        val statusToDisplay = if (uiState.errorMessages.isNotEmpty()) {
+            "Error: ${uiState.errorMessages.joinToString("\n")}"
+        } else {
+            uiState.status
+        }
+
+        InfoItemContent(
+            status = statusToDisplay,
+            isVerifiedSuccessfully = uiState.resultInfoItems.isNotEmpty() && uiState.errorMessages.isEmpty() && statusToDisplay.contains("complete", ignoreCase = true) && !statusToDisplay.contains("Failed", ignoreCase = true),
+            infoItems = uiState.resultInfoItems,
+            onCopyClick = {
+                val textToCopy = InfoItemFormatter.formatInfoItems(uiState.resultInfoItems)
+                clipboardManager.setText(AnnotatedString(textToCopy))
+                Log.d("ClassicPlayIntegrity", "Copied: $textToCopy")
+            },
+            onShareClick = {
+                val textToShare = InfoItemFormatter.formatInfoItems(uiState.resultInfoItems)
+                val sendIntent: Intent = Intent().apply {
+                    action = Intent.ACTION_SEND
+                    putExtra(Intent.EXTRA_TEXT, textToShare)
+                    type = "text/plain"
+                }
+                val shareIntent = Intent.createChooser(sendIntent, null)
+                context.startActivity(shareIntent)
+            }
         )
     }
 }
@@ -113,70 +150,22 @@ fun ClassicPlayIntegrityContent(
 @Preview
 @Composable
 private fun ClassicPlayIntegrityContentPreview() {
+    val sampleItems = listOf(
+        InfoItem("Session ID (Current)", "preview-session-id-classic", indentLevel = 0),
+        InfoItem("Play Integrity API Response", "", isHeader = true, indentLevel = 0),
+        InfoItem("Request Details", "", isHeader = true, indentLevel = 1),
+        InfoItem("Request Package Name", "dev.keiji.preview", indentLevel = 2),
+        InfoItem("Nonce", "preview-nonce-from-server", indentLevel = 2),
+    )
     ClassicPlayIntegrityContent(
         uiState = ClassicPlayIntegrityUiState(
             nonce = "preview-nonce",
             integrityToken = "preview-token",
             progressValue = 0.0F,
             status = "Preview status text for Classic.",
-            serverVerificationPayload = ServerVerificationPayload(
-                playIntegrityResponse = PlayIntegrityResponseWrapper(
-                    tokenPayloadExternal = TokenPayloadExternal(
-                        requestDetails = RequestDetails(
-                            requestPackageName = "dev.keiji.preview",
-                            nonce = "preview-nonce-from-server",
-                            requestHash = "preview-request-hash",
-                            timestampMillis = System.currentTimeMillis()
-                        ),
-                        appIntegrity = AppIntegrity(
-                            appRecognitionVerdict = "MEETS_DEVICE_INTEGRITY",
-                            packageName = "dev.keiji.preview",
-                            certificateSha256Digest = listOf("cert1", "cert2"),
-                            versionCode = 123
-                        ),
-                        deviceIntegrity = DeviceIntegrity(
-                            deviceRecognitionVerdict = listOf("MEETS_DEVICE_INTEGRITY"),
-                            deviceAttributes = DeviceAttributes(
-                                sdkVersion = 30
-                            ),
-                            recentDeviceActivity = RecentDeviceActivity(
-                                deviceActivityLevel = "LEVEL_1"
-                            )
-                        ),
-                        accountDetails = AccountDetails(
-                            appLicensingVerdict = "LICENSED"
-                        ),
-                        environmentDetails = EnvironmentDetails(
-                            appAccessRiskVerdict = AppAccessRiskVerdict(
-                                appsDetected = listOf("app1", "app2")
-                            ),
-                            playProtectVerdict = "NO_ISSUES"
-                        )
-                    )
-                ),
-                deviceInfo = DeviceInfo(
-                    brand = "PreviewBrand",
-                    model = "PreviewModel",
-                    device = "PreviewDevice",
-                    product = "PreviewProduct",
-                    manufacturer = "PreviewManufacturer",
-                    hardware = "PreviewHardware",
-                    board = "PreviewBoard",
-                    bootloader = "PreviewBootloader",
-                    versionRelease = "12",
-                    sdkInt = 31,
-                    fingerprint = "PreviewFingerprint",
-                    securityPatch = "2023-03-05"
-                ),
-                securityInfo = SecurityInfo(
-                    isDeviceLockEnabled = true, isBiometricsEnabled = false,
-                    hasClass3Authenticator = true, hasStrongbox = false
-                ),
-                googlePlayDeveloperServiceInfo = GooglePlayDeveloperServiceInfo(
-                    versionCode = 100,
-                    versionName = ""
-                )
-            )
+            resultInfoItems = sampleItems,
+            currentSessionId = "preview-session-classic",
+            serverVerificationPayload = null
         ),
         onFetchNonce = {},
         onRequestToken = {},

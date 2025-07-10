@@ -1,7 +1,9 @@
 package dev.keiji.deviceintegrity.ui.main.keyattestation
 
-object AttestationResultFormatter {
-    fun formatAttestationResults(items: List<AttestationInfoItem>): String {
+import dev.keiji.deviceintegrity.ui.main.InfoItem
+
+object InfoItemFormatter {
+    fun formatInfoItems(items: List<InfoItem>): String {
         return items.joinToString("\n") { item ->
             val prefix = "".padStart(item.indentLevel * 2, ' ')
             if (item.isHeader) {
