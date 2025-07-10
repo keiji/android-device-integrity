@@ -75,13 +75,13 @@ class KeyAttestationViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     selectedKeyType = newKeyType,
-                    nonceOrSalt = "", // Clear nonce/salt
+                    saltOrNonce = "", // Clear salt/nonce
                     challenge = "",   // Clear challenge
                     generatedKeyPairData = null,
                     infoItems = emptyList(),
-                    status = "Key algorithm changed to ${newKeyType.label}. Please fetch new Nonce/Salt and Challenge.",
+                    status = "Key algorithm changed to ${newKeyType.label}. Please fetch new Salt/Nonce and Challenge.",
                     progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
-                    sessionId = null // Also clear sessionId as it's tied to nonce/challenge
+                    sessionId = null // Also clear sessionId as it's tied to salt/nonce/challenge
                 )
             }
         }
@@ -89,12 +89,12 @@ class KeyAttestationViewModel @Inject constructor(
 
     fun fetchNonceOrSaltChallenge() {
         viewModelScope.launch {
-            // It's good practice to also clear any old keypair data if fetching new nonce/salt/challenge
+            // It's good practice to also clear any old keypair data if fetching new salt/nonce/challenge
             _uiState.value.generatedKeyPairData?.keyAlias?.let { alias ->
                 try {
                     keyPairRepository.removeKeyPair(alias)
                 } catch (e: Exception) {
-                    Log.e("KeyAttestationViewModel", "Failed to delete key pair on fetching nonce/salt", e)
+                    Log.e("KeyAttestationViewModel", "Failed to delete key pair on fetching salt/nonce", e)
                 }
             }
 
@@ -118,7 +118,7 @@ class KeyAttestationViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     status = statusMessage,
-                    nonceOrSalt = "", // Clear previous nonce/salt
+                    saltOrNonce = "", // Clear previous salt/nonce
                     challenge = "",   // Clear previous challenge
                     generatedKeyPairData = null, // Clear previous key data
                     infoItems = emptyList(),    // Clear previous results
@@ -153,21 +153,32 @@ class KeyAttestationViewModel @Inject constructor(
             val newSessionId = UUID.randomUUID().toString()
             _uiState.update { it.copy(sessionId = newSessionId) }
 
-            // Assuming PrepareSignatureRequest can be used for both nonce and salt,
-            // or the server differentiates based on other parameters or context.
-            val request = PrepareSignatureRequest(sessionId = newSessionId)
             try {
-                val response = keyAttestationRepository.prepareSignature(request)
-                _uiState.update {
-                    it.copy(
-                        nonceOrSalt = response.nonceBase64UrlEncoded, // Store the fetched value here
-                        challenge = response.challengeBase64UrlEncoded,
-                        status = successMessage,
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
-                    )
+                if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) {
+                    val request = PrepareAgreementRequest(sessionId = newSessionId)
+                    val response = keyAttestationRepository.prepareAgreement(request)
+                    _uiState.update {
+                        it.copy(
+                            saltOrNonce = response.saltBase64UrlEncoded, // Store SALT for ECDH
+                            challenge = response.challengeBase64UrlEncoded,
+                            status = successMessage,
+                            progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                        )
+                    }
+                } else {
+                    val request = PrepareSignatureRequest(sessionId = newSessionId)
+                    val response = keyAttestationRepository.prepareSignature(request)
+                    _uiState.update {
+                        it.copy(
+                            saltOrNonce = response.nonceBase64UrlEncoded, // Store NONCE for EC/RSA
+                            challenge = response.challengeBase64UrlEncoded,
+                            status = successMessage,
+                            progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                        )
+                    }
                 }
             } catch (e: ServerException) {
-                Log.w("KeyAttestationViewModel", "ServerException fetching nonce/salt/challenge", e)
+                Log.w("KeyAttestationViewModel", "ServerException fetching salt/nonce/challenge", e)
                 val message = e.errorMessage ?: e.localizedMessage ?: "Unknown server error"
                 _uiState.update {
                     it.copy(
@@ -177,7 +188,7 @@ class KeyAttestationViewModel @Inject constructor(
                     )
                 }
             } catch (e: IOException) {
-                Log.w("KeyAttestationViewModel", "IOException fetching nonce/salt/challenge", e)
+                Log.w("KeyAttestationViewModel", "IOException fetching salt/nonce/challenge", e)
                 _uiState.update {
                     it.copy(
                         status = "$failureMessagePrefix: Network Error: ${e.localizedMessage}",
@@ -186,7 +197,7 @@ class KeyAttestationViewModel @Inject constructor(
                     )
                 }
             } catch (e: Exception) {
-                Log.e("KeyAttestationViewModel", "Exception fetching nonce/salt/challenge", e)
+                Log.e("KeyAttestationViewModel", "Exception fetching salt/nonce/challenge", e)
                 _uiState.update {
                     it.copy(
                         status = "$failureMessagePrefix: ${e.localizedMessage}",
@@ -210,10 +221,10 @@ class KeyAttestationViewModel @Inject constructor(
             }
 
             val currentChallenge = uiState.value.challenge
-            val currentNonceOrSalt = uiState.value.nonceOrSalt
+            val currentSaltOrNonce = uiState.value.saltOrNonce
 
-            if (currentNonceOrSalt.isEmpty() || currentChallenge.isEmpty()) {
-                val missingItem = if (currentNonceOrSalt.isEmpty()) {
+            if (currentSaltOrNonce.isEmpty() || currentChallenge.isEmpty()) {
+                val missingItem = if (currentSaltOrNonce.isEmpty()) {
                     if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) "Salt" else "Nonce"
                 } else {
                     "Challenge"
@@ -301,7 +312,7 @@ class KeyAttestationViewModel @Inject constructor(
 
             val currentSessionId = uiState.value.sessionId
             val currentKeyPairData = uiState.value.generatedKeyPairData
-            val serverNonceOrSaltB64Url = uiState.value.nonceOrSalt // Use nonceOrSalt
+            val serverSaltOrNonceB64Url = uiState.value.saltOrNonce // Use saltOrNonce
 
             if (currentSessionId == null) {
                 val itemToFetch = if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) "Salt/Challenge" else "Nonce/Challenge"
@@ -323,7 +334,7 @@ class KeyAttestationViewModel @Inject constructor(
                 }
                 return@launch
             }
-            if (serverNonceOrSaltB64Url.isEmpty()) {
+            if (serverSaltOrNonceB64Url.isEmpty()) {
                 val missingItem = if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) "Salt" else "Nonce"
                 _uiState.update {
                     it.copy(
@@ -336,8 +347,8 @@ class KeyAttestationViewModel @Inject constructor(
 
             val clientNonce = ByteArray(32)
             SecureRandom().nextBytes(clientNonce)
-            val decodedServerNonceOrSalt = Base64Utils.UrlSafeNoPadding.decode(serverNonceOrSaltB64Url) // Use decodedServerNonceOrSalt
-            val dataToSign = decodedServerNonceOrSalt + clientNonce // Use decodedServerNonceOrSalt
+            val decodedServerSaltOrNonce = Base64Utils.UrlSafeNoPadding.decode(serverSaltOrNonceB64Url) // Use decodedServerSaltOrNonce
+            val dataToSign = decodedServerSaltOrNonce + clientNonce // Use decodedServerSaltOrNonce
             val privateKey = keyPair.private
 
             val selectedSigner = when (uiState.value.selectedKeyType) {
