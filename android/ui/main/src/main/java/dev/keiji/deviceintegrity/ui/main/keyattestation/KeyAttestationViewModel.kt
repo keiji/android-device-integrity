@@ -288,10 +288,10 @@ class KeyAttestationViewModel @Inject constructor(
                 return@launch
             }
 
-            val nonceB = ByteArray(32)
-            SecureRandom().nextBytes(nonceB)
+            val clientNonce = ByteArray(32)
+            SecureRandom().nextBytes(clientNonce)
             val decodedServerNonce = Base64Utils.UrlSafeNoPadding.decode(serverNonceB64Url)
-            val dataToSign = decodedServerNonce + nonceB
+            val dataToSign = decodedServerNonce + clientNonce
             val privateKey = keyPair.private
 
             val selectedSigner = when (uiState.value.selectedKeyType) {
@@ -310,7 +310,7 @@ class KeyAttestationViewModel @Inject constructor(
             val signatureData = selectedSigner.sign(dataToSign, privateKey)
 
             val signatureDataBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(signatureData)
-            val nonceBBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(nonceB)
+            val clientNonceBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(clientNonce)
             val certificateChainBase64Encoded =
                 currentKeyPairData.certificates.map { cert ->
                     Base64.Default.encode(cert.encoded)
@@ -318,7 +318,7 @@ class KeyAttestationViewModel @Inject constructor(
             val request = VerifySignatureRequest(
                 sessionId = currentSessionId,
                 signatureDataBase64UrlEncoded = signatureDataBase64UrlEncoded,
-                nonceBBase64UrlEncoded = nonceBBase64UrlEncoded,
+                clientNonceBase64UrlEncoded = clientNonceBase64UrlEncoded,
                 certificateChainBase64Encoded = certificateChainBase64Encoded,
                 deviceInfo = DeviceInfo(
                     brand = deviceInfoProvider.BRAND,

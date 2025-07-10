@@ -701,7 +701,7 @@ def prepare_attestation():
 def verify_signature_attestation():
     """
     Verifies the Key Attestation Signature (mock implementation).
-    Request body: { "session_id": "string", "signature": "string (Base64Encoded)", "nonce_b": "string (Base64Encoded)", "certificate_chain": ["string (Base64Encoded)"] }
+    Request body: { "session_id": "string", "signature": "string (Base64Encoded)", "client_nonce": "string (Base64Encoded)", "certificate_chain": ["string (Base64Encoded)"] }
     Response body: { "session_id": "string", "is_verified": false, "reason": "Mock implementation", "decoded_certificate_chain": { "mocked_detail": "This is a mock response for decoded certificate chain." }, "attestation_properties": { "mocked_software_enforced": {}, "mocked_tee_enforced": {} } }
     """
     try:
@@ -719,7 +719,7 @@ def verify_signature_attestation():
         # --- 1. Validate Input and Session ---
         session_id = data.get('session_id') # session_id must exist for meaningful logging/storage
         signature_b64 = data.get('signature')
-        nonce_b_b64 = data.get('nonce_b')
+        client_nonce_b64 = data.get('client_nonce')
         certificate_chain_b64 = data.get('certificate_chain')
         device_info_from_request = data.get('device_info', {})
         security_info_from_request = data.get('security_info', {})
@@ -740,17 +740,17 @@ def verify_signature_attestation():
             return jsonify({"error": "Missing 'session_id'"}), 400
 
 
-        if not all([signature_b64, nonce_b_b64, certificate_chain_b64]):
-            logger.warning(f"Verify Signature request for session '{session_id}' missing one or more required fields (signature, nonce_b, certificate_chain).")
+        if not all([signature_b64, client_nonce_b64, certificate_chain_b64]):
+            logger.warning(f"Verify Signature request for session '{session_id}' missing one or more required fields (signature, client_nonce, certificate_chain).")
             store_key_attestation_result(
-                session_id, "failed", "Missing one or more required fields: signature, nonce_b, certificate_chain",
+                session_id, "failed", "Missing one or more required fields: signature, client_nonce, certificate_chain",
                 payload_data_json_str, "{}"
             )
-            return jsonify({"error": "Missing one or more required fields: signature, nonce_b, certificate_chain"}), 400
+            return jsonify({"error": "Missing one or more required fields: signature, client_nonce, certificate_chain"}), 400
 
         if not isinstance(session_id, str) or \
            not isinstance(signature_b64, str) or \
-           not isinstance(nonce_b_b64, str) or \
+           not isinstance(client_nonce_b64, str) or \
            not isinstance(certificate_chain_b64, list) or \
            not all(isinstance(cert, str) for cert in certificate_chain_b64):
             logger.warning(f"Verify Signature request for session '{session_id}' has type mismatch for one or more fields.")
@@ -758,7 +758,7 @@ def verify_signature_attestation():
                 session_id, "failed", "Type mismatch for one or more fields.",
                 payload_data_json_str, "{}"
             )
-            return jsonify({"error": "Type mismatch for one or more fields. Ensure session_id, signature, nonce_b are strings and certificate_chain is a list of strings."}), 400
+            return jsonify({"error": "Type mismatch for one or more fields. Ensure session_id, signature, client_nonce are strings and certificate_chain is a list of strings."}), 400
 
         if not datastore_client:
             logger.error("Datastore client not available for /verify/signature endpoint.")
@@ -805,7 +805,7 @@ def verify_signature_attestation():
             validate_attestation_signature(
                 certificates[0], # Leaf certificate
                 nonce_from_store_b64,
-                nonce_b_b64,
+                client_nonce_b64,
                 signature_b64
             )
             logger.info(f"Attestation signature validated successfully for session_id: {session_id}")

@@ -128,7 +128,7 @@ components:
           format: byte
           description: Base64-URL-encoded signature.
           example: "U2lnbmVkRGF0YTEyMzQ1Njc4OTA="
-        nonce_b:
+        client_nonce:
           type: string
           format: byte
           description: Base64-encoded second nonce from client.
