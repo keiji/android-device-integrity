@@ -80,9 +80,9 @@ class KeyAttestationViewModel @Inject constructor(
                     serverPublicKey = "", // Clear server public key
                     generatedKeyPairData = null,
                     infoItems = emptyList(),
-                    status = "Key algorithm changed to ${newKeyType.label}. Please fetch new Nonce/Salt and Challenge.", // Updated message
+                    status = "Key algorithm changed to ${newKeyType.label}. Please fetch new Nonce/Salt and Challenge.",
                     progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
-                    sessionId = null // Also clear sessionId as it's tied to nonce/salt/challenge
+                    sessionId = null // Also clear sessionId as it's tied to nonce/challenge
                 )
             }
         }
@@ -95,7 +95,7 @@ class KeyAttestationViewModel @Inject constructor(
                 try {
                     keyPairRepository.removeKeyPair(alias)
                 } catch (e: Exception) {
-                    Log.e("KeyAttestationViewModel", "Failed to delete key pair on fetching nonce/salt", e) // Updated log
+                    Log.e("KeyAttestationViewModel", "Failed to delete key pair on fetching nonce/salt", e)
                 }
             }
 
@@ -181,7 +181,7 @@ class KeyAttestationViewModel @Inject constructor(
                     }
                 }
             } catch (e: ServerException) {
-                Log.w("KeyAttestationViewModel", "ServerException fetching nonce/salt/challenge", e) // Updated log
+                Log.w("KeyAttestationViewModel", "ServerException fetching nonce/salt/challenge", e)
                 val message = e.errorMessage ?: e.localizedMessage ?: "Unknown server error"
                 _uiState.update {
                     it.copy(
@@ -191,7 +191,7 @@ class KeyAttestationViewModel @Inject constructor(
                     )
                 }
             } catch (e: IOException) {
-                Log.w("KeyAttestationViewModel", "IOException fetching nonce/salt/challenge", e) // Updated log
+                Log.w("KeyAttestationViewModel", "IOException fetching nonce/salt/challenge", e)
                 _uiState.update {
                     it.copy(
                         status = "$failureMessagePrefix: Network Error: ${e.localizedMessage}",
@@ -200,7 +200,7 @@ class KeyAttestationViewModel @Inject constructor(
                     )
                 }
             } catch (e: Exception) {
-                Log.e("KeyAttestationViewModel", "Exception fetching nonce/salt/challenge", e) // Updated log
+                Log.e("KeyAttestationViewModel", "Exception fetching nonce/salt/challenge", e)
                 _uiState.update {
                     it.copy(
                         status = "$failureMessagePrefix: ${e.localizedMessage}",
@@ -224,10 +224,10 @@ class KeyAttestationViewModel @Inject constructor(
             }
 
             val currentChallenge = uiState.value.challenge
-            val currentNonceOrSalt = uiState.value.nonceOrSalt // Renamed
+            val currentNonceOrSalt = uiState.value.nonceOrSalt
 
-            if (currentNonceOrSalt.isEmpty() || currentChallenge.isEmpty()) { // Renamed
-                val missingItem = if (currentNonceOrSalt.isEmpty()) { // Renamed
+            if (currentNonceOrSalt.isEmpty() || currentChallenge.isEmpty()) {
+                val missingItem = if (currentNonceOrSalt.isEmpty()) {
                     if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) "Salt" else "Nonce"
                 } else {
                     "Challenge"
@@ -337,7 +337,7 @@ class KeyAttestationViewModel @Inject constructor(
                 }
                 return@launch
             }
-            if (serverNonceOrSaltB64Url.isEmpty()) { // Renamed
+            if (serverNonceOrSaltB64Url.isEmpty()) {
                 val missingItem = if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) "Salt" else "Nonce"
                 _uiState.update {
                     it.copy(
