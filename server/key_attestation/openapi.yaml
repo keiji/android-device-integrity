@@ -158,6 +158,7 @@ components:
       required:
         - salt
         - challenge
+        - public_key
       properties:
         salt:
           type: string
@@ -169,6 +170,11 @@ components:
           format: byte
           description: Base64URL-encoded challenge.
           example: "Q2hhbGxlbmdlU3RyaW5nSGVyZQ=="
+        public_key:
+          type: string
+          format: byte
+          description: Base64URL-encoded server public key for ECDH (X.509 SubjectPublicKeyInfo, DER). The example below is standard Base64 for linter compatibility.
+          example: "dGVzdA==" # Represents "test" in Base64
     VerifySignatureRequestBody:
       type: object
       required:

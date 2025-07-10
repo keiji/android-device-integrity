@@ -77,6 +77,7 @@ class KeyAttestationViewModel @Inject constructor(
                     selectedKeyType = newKeyType,
                     nonceOrSalt = "", // Clear nonce/salt
                     challenge = "",   // Clear challenge
+                    serverPublicKey = "", // Clear server public key
                     generatedKeyPairData = null,
                     infoItems = emptyList(),
                     status = "Key algorithm changed to ${newKeyType.label}. Please fetch new Nonce/Salt and Challenge.",
@@ -99,19 +100,19 @@ class KeyAttestationViewModel @Inject constructor(
             }
 
             val statusMessage = when (_uiState.value.selectedKeyType) {
-                CryptoAlgorithm.ECDH -> "Preparing to fetch Salt/Challenge..."
+                CryptoAlgorithm.ECDH -> "Preparing to fetch Salt/Challenge/PublicKey..." // Updated message
                 else -> "Preparing to fetch Nonce/Challenge..."
             }
             val fetchingMessage = when (_uiState.value.selectedKeyType) {
-                CryptoAlgorithm.ECDH -> "Fetching Salt/Challenge..."
+                CryptoAlgorithm.ECDH -> "Fetching Salt/Challenge/PublicKey..." // Updated message
                 else -> "Fetching Nonce/Challenge..."
             }
             val successMessage = when (_uiState.value.selectedKeyType) {
-                CryptoAlgorithm.ECDH -> "Salt/Challenge fetched successfully."
+                CryptoAlgorithm.ECDH -> "Salt/Challenge/PublicKey fetched successfully." // Updated message
                 else -> "Nonce/Challenge fetched successfully."
             }
             val failureMessagePrefix = when (_uiState.value.selectedKeyType) {
-                CryptoAlgorithm.ECDH -> "Failed to fetch Salt/Challenge"
+                CryptoAlgorithm.ECDH -> "Failed to fetch Salt/Challenge/PublicKey" // Updated message
                 else -> "Failed to fetch Nonce/Challenge"
             }
 
@@ -120,6 +121,7 @@ class KeyAttestationViewModel @Inject constructor(
                     status = statusMessage,
                     nonceOrSalt = "", // Clear previous nonce/salt
                     challenge = "",   // Clear previous challenge
+                    serverPublicKey = "", // Clear previous server public key
                     generatedKeyPairData = null, // Clear previous key data
                     infoItems = emptyList(),    // Clear previous results
                     progressValue = PlayIntegrityProgressConstants.FULL_PROGRESS
@@ -161,6 +163,7 @@ class KeyAttestationViewModel @Inject constructor(
                         it.copy(
                             nonceOrSalt = response.saltBase64UrlEncoded, // Store SALT for ECDH
                             challenge = response.challengeBase64UrlEncoded,
+                            serverPublicKey = response.publicKeyBase64UrlEncoded, // Store server public key for ECDH
                             status = successMessage,
                             progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
                         )
@@ -231,7 +234,7 @@ class KeyAttestationViewModel @Inject constructor(
                 }
                 _uiState.update {
                     it.copy(
-                        status = "$missingItem is not available. Fetch $missingItem/Challenge first.",
+                        status = "$missingItem is not available. Fetch $missingItem/Challenge first.", // Message is generic enough
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
                     )
                 }
@@ -315,7 +318,7 @@ class KeyAttestationViewModel @Inject constructor(
             val serverNonceOrSaltB64Url = uiState.value.nonceOrSalt // Use nonceOrSalt
 
             if (currentSessionId == null) {
-                val itemToFetch = if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) "Salt/Challenge" else "Nonce/Challenge"
+                val itemToFetch = if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) "Salt/Challenge/PublicKey" else "Nonce/Challenge" // Updated message
                 _uiState.update {
                     it.copy(
                         status = "SessionId is missing. Fetch $itemToFetch first.",
@@ -338,7 +341,7 @@ class KeyAttestationViewModel @Inject constructor(
                 val missingItem = if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) "Salt" else "Nonce"
                 _uiState.update {
                     it.copy(
-                        status = "Server $missingItem is missing. Fetch $missingItem/Challenge first.",
+                        status = "Server $missingItem is missing. Fetch $missingItem/Challenge first.", // Message is generic enough
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
                     )
                 }

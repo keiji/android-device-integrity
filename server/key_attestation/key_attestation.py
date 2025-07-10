@@ -111,6 +111,34 @@ def store_agreement_key_attestation_session(session_id, salt_encoded, challenge_
     # Consider calling cleanup_expired_agreement_sessions() here or via a scheduled job
     cleanup_expired_agreement_sessions()
 
+def store_agreement_key_attestation_session(session_id, salt_encoded, challenge_encoded, public_key_encoded=None): # Added public_key_encoded
+    """
+    Stores the agreement key attestation session data in Datastore.
+    The entity key will be the session_id to ensure uniqueness and allow easy lookup.
+    """
+    if not datastore_client:
+        logger.error("Datastore client not available. Cannot store session.")
+        raise ConnectionError("Datastore client not initialized.")
+
+    now = datetime.now(timezone.utc)
+
+    key = datastore_client.key(AGREEMENT_KEY_ATTESTATION_SESSION_KIND, session_id)
+    entity = datastore.Entity(key=key)
+    entity.update({
+        'session_id': session_id,
+        'salt': salt_encoded, # Changed from nonce
+        'challenge': challenge_encoded,
+        'generated_at': now,
+    })
+    if public_key_encoded:
+        entity['public_key'] = public_key_encoded
+
+    datastore_client.put(entity)
+    logger.info(f"Stored agreement key attestation session for session_id: {session_id}")
+    # Consider calling cleanup_expired_agreement_sessions() here or via a scheduled job
+    cleanup_expired_agreement_sessions()
+
+
 def get_key_attestation_session(session_id):
     """
     Retrieves and validates key attestation session data from Datastore.
@@ -794,7 +822,7 @@ def prepare_agreement_attestation():
     """
     Prepares for key attestation agreement by generating a salt and challenge.
     Request body: { "session_id": "string" }
-    Response body: { "salt": "string (Base64URLEncoded)", "challenge": "string (Base64URLEncoded)" }
+    Response body: { "salt": "string (Base64URLEncoded)", "challenge": "string (Base64URLEncoded)", "public_key": "string (Base64URLEncoded, optional)" }
     """
     if not datastore_client:
         logger.error("Datastore client not available for /prepare/agreement endpoint.")
@@ -817,9 +845,23 @@ def prepare_agreement_attestation():
 
         salt_encoded = base64url_encode(salt_bytes)
         challenge_encoded = base64url_encode(challenge_bytes)
+        public_key_encoded = None
 
+        # Generate ECDH P-256 key pair
+        private_key = ec.generate_private_key(ec.SECP256R1())
+        public_key = private_key.public_key()
+
+        # Serialize public key to DER format then Base64URL encode
+        # Using X.509 SubjectPublicKeyInfo format for EC public keys
+        public_key_bytes = public_key.public_bytes(
+            encoding=serialization.Encoding.DER,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo # Standard X.509 format
+        )
+        public_key_encoded = base64url_encode(public_key_bytes)
+
+        # Store session data including the public key in Datastore
         try:
-            store_agreement_key_attestation_session(session_id, salt_encoded, challenge_encoded)
+            store_agreement_key_attestation_session(session_id, salt_encoded, challenge_encoded, public_key_encoded)
         except ConnectionError as e:
              logger.error(f"Datastore connection error during store_agreement_key_attestation_session: {e}")
              return jsonify({"error": "Failed to store session due to datastore connectivity"}), 503
@@ -829,7 +871,8 @@ def prepare_agreement_attestation():
 
         response_data = {
             "salt": salt_encoded,
-            "challenge": challenge_encoded
+            "challenge": challenge_encoded,
+            "public_key": public_key_encoded
         }
         logger.info(f"Successfully prepared agreement attestation for sessionId: {session_id}")
         return jsonify(response_data), 200
