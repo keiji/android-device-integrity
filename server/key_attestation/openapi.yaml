@@ -173,8 +173,8 @@ components:
         public_key:
           type: string
           format: byte
-          description: Base64URL-encoded server public key for ECDH (X.509 SubjectPublicKeyInfo, DER).
-          example: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs_o5-uQbTjL33K24gSJLIc96-p4pCl-O9mIVVj3LXgY61xXyH3DAJ4lB3L0T0f7vP9p_wI7a8hY0i4jW-Xg"
+          description: Base64URL-encoded server public key for ECDH (X.509 SubjectPublicKeyInfo, DER). The example below is standard Base64 for linter compatibility.
+          example: "dGVzdA==" # Represents "test" in Base64
     VerifySignatureRequestBody:
       type: object
       required:
