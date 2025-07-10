@@ -30,6 +30,7 @@ except Exception as e:
 
 # Datastore Kind for Key Attestation Sessions
 KEY_ATTESTATION_SESSION_KIND = "SignatureKeyAttestationSession"
+AGREEMENT_KEY_ATTESTATION_SESSION_KIND = "AgreementKeyAttestationSession"
 KEY_ATTESTATION_RESULT_KIND = "KeyAttestationResult" # New Datastore Kind
 NONCE_EXPIRY_MINUTES = 10 # Renamed from SESSION_EXPIRY_MINUTES
 
@@ -86,6 +87,30 @@ def store_key_attestation_session(session_id, nonce_encoded, challenge_encoded):
     # Consider calling cleanup_expired_sessions() here or via a scheduled job
     cleanup_expired_sessions()
 
+def store_agreement_key_attestation_session(session_id, salt_encoded, challenge_encoded):
+    """
+    Stores the agreement key attestation session data in Datastore.
+    The entity key will be the session_id to ensure uniqueness and allow easy lookup.
+    """
+    if not datastore_client:
+        logger.error("Datastore client not available. Cannot store session.")
+        raise ConnectionError("Datastore client not initialized.")
+
+    now = datetime.now(timezone.utc)
+
+    key = datastore_client.key(AGREEMENT_KEY_ATTESTATION_SESSION_KIND, session_id)
+    entity = datastore.Entity(key=key)
+    entity.update({
+        'session_id': session_id,
+        'salt': salt_encoded, # Changed from nonce
+        'challenge': challenge_encoded,
+        'generated_at': now,
+    })
+    datastore_client.put(entity)
+    logger.info(f"Stored agreement key attestation session for session_id: {session_id}")
+    # Consider calling cleanup_expired_agreement_sessions() here or via a scheduled job
+    cleanup_expired_agreement_sessions()
+
 def get_key_attestation_session(session_id):
     """
     Retrieves and validates key attestation session data from Datastore.
@@ -121,6 +146,38 @@ def get_key_attestation_session(session_id):
         return None
 
     logger.info(f"Successfully retrieved and validated session for session_id: {session_id}")
+    return entity
+
+def get_agreement_key_attestation_session(session_id):
+    """
+    Retrieves and validates agreement key attestation session data from Datastore.
+    Returns the session entity if valid and not expired, otherwise None.
+    """
+    if not datastore_client:
+        logger.error("Datastore client not available. Cannot retrieve session.")
+        return None
+
+    key = datastore_client.key(AGREEMENT_KEY_ATTESTATION_SESSION_KIND, session_id)
+    entity = datastore_client.get(key)
+
+    if not entity:
+        logger.warning(f"Agreement session not found for session_id: {session_id}")
+        return None
+
+    generated_at = entity.get('generated_at')
+    if not generated_at:
+        logger.error(f"Agreement session {session_id} is missing 'generated_at' timestamp.")
+        return None
+
+    if generated_at.tzinfo is None:
+        generated_at = generated_at.replace(tzinfo=timezone.utc)
+
+    expiry_datetime = generated_at + timedelta(minutes=NONCE_EXPIRY_MINUTES) # Using NONCE_EXPIRY_MINUTES for salt too
+    if datetime.now(timezone.utc) > expiry_datetime:
+        logger.warning(f"Agreement session expired for session_id: {session_id}. Generated at: {generated_at}, Expired at: {expiry_datetime}")
+        return None
+
+    logger.info(f"Successfully retrieved and validated agreement session for session_id: {session_id}")
     return entity
 
 def decode_certificate_chain(certificate_chain_b64):
@@ -603,6 +660,28 @@ def cleanup_expired_sessions():
     except Exception as e:
         logger.error(f"Error during Datastore cleanup of expired key attestation sessions: {e}")
 
+def cleanup_expired_agreement_sessions():
+    """Removes expired agreement key attestation session entities from Datastore."""
+    if not datastore_client:
+        logger.warning("Datastore client not available. Skipping cleanup of expired agreement sessions.")
+        return
+
+    try:
+        expiry_time_check = datetime.now(timezone.utc) - timedelta(minutes=NONCE_EXPIRY_MINUTES)
+        query = datastore_client.query(kind=AGREEMENT_KEY_ATTESTATION_SESSION_KIND)
+        query.add_filter('generated_at', '<', expiry_time_check)
+
+        expired_entities = list(query.fetch())
+
+        if expired_entities:
+            keys_to_delete = [entity.key for entity in expired_entities]
+            datastore_client.delete_multi(keys_to_delete)
+            logger.info(f"Cleaned up {len(keys_to_delete)} expired agreement key attestation session entities.")
+        else:
+            logger.info("No expired agreement key attestation session entities found to cleanup.")
+    except Exception as e:
+        logger.error(f"Error during Datastore cleanup of expired agreement key attestation sessions: {e}")
+
 def delete_key_attestation_session(session_id):
     """Deletes a specific key attestation session entity from Datastore."""
     if not datastore_client:
@@ -616,6 +695,19 @@ def delete_key_attestation_session(session_id):
     except Exception as e:
         logger.error(f"Error deleting key attestation session {session_id} from Datastore: {e}")
         # Optionally re-raise or handle more gracefully
+
+def delete_agreement_key_attestation_session(session_id):
+    """Deletes a specific agreement key attestation session entity from Datastore."""
+    if not datastore_client:
+        logger.warning(f"Datastore client not available. Cannot delete agreement session {session_id}.")
+        return
+
+    try:
+        key = datastore_client.key(AGREEMENT_KEY_ATTESTATION_SESSION_KIND, session_id)
+        datastore_client.delete(key)
+        logger.info(f"Successfully deleted agreement key attestation session for session_id: {session_id}")
+    except Exception as e:
+        logger.error(f"Error deleting agreement key attestation session {session_id} from Datastore: {e}")
 
 def store_key_attestation_result(session_id, result, reason, payload_data_json_str, attestation_data_json_str):
     """Stores the key attestation verification result in Datastore."""
@@ -695,6 +787,55 @@ def prepare_signature_attestation():
 
     except Exception as e:
         logger.error(f"Error in /prepare endpoint: {e}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
+
+@app.route('/v1/prepare/agreement', methods=['POST'])
+def prepare_agreement_attestation():
+    """
+    Prepares for key attestation agreement by generating a salt and challenge.
+    Request body: { "session_id": "string" }
+    Response body: { "salt": "string (Base64URLEncoded)", "challenge": "string (Base64URLEncoded)" }
+    """
+    if not datastore_client:
+        logger.error("Datastore client not available for /prepare/agreement endpoint.")
+        return jsonify({"error": "Datastore service not available"}), 503
+
+    try:
+        data = request.get_json()
+        if not data:
+            logger.warning("Prepare agreement request missing JSON payload.")
+            return jsonify({"error": "Missing JSON payload"}), 400
+
+        session_id = data.get('session_id')
+        if not session_id or not isinstance(session_id, str) or not session_id.strip():
+            logger.warning(f"Prepare agreement request with invalid session_id: {session_id}")
+            return jsonify({"error": "'session_id' must be a non-empty string"}), 400
+
+        # Generate salt and challenge
+        salt_bytes = generate_random_bytes()
+        challenge_bytes = generate_random_bytes()
+
+        salt_encoded = base64url_encode(salt_bytes)
+        challenge_encoded = base64url_encode(challenge_bytes)
+
+        try:
+            store_agreement_key_attestation_session(session_id, salt_encoded, challenge_encoded)
+        except ConnectionError as e:
+             logger.error(f"Datastore connection error during store_agreement_key_attestation_session: {e}")
+             return jsonify({"error": "Failed to store session due to datastore connectivity"}), 503
+        except Exception as e:
+            logger.error(f"Failed to store agreement key attestation session for sessionId {session_id}: {e}")
+            return jsonify({"error": "Failed to store session data"}), 500
+
+        response_data = {
+            "salt": salt_encoded,
+            "challenge": challenge_encoded
+        }
+        logger.info(f"Successfully prepared agreement attestation for sessionId: {session_id}")
+        return jsonify(response_data), 200
+
+    except Exception as e:
+        logger.error(f"Error in /prepare/agreement endpoint: {e}")
         return jsonify({"error": "An unexpected error occurred"}), 500
 
 @app.route('/v1/verify/signature', methods=['POST']) # Changed from Blueprint
