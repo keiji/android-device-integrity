@@ -42,7 +42,7 @@ import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
 fun KeyAttestationScreen(
     uiState: KeyAttestationUiState, // uiState collected and passed from MainActivity
     onSelectedKeyTypeChange: (CryptoAlgorithm) -> Unit,
-    onFetchNonceChallenge: () -> Unit,
+    onFetchNonceOrSaltChallenge: () -> Unit, // Renamed
     onGenerateKeyPair: () -> Unit,
     onRequestVerifyKeyAttestation: () -> Unit,
     onClickCopy: () -> Unit,
@@ -54,45 +54,35 @@ fun KeyAttestationScreen(
 
     val isHorizontalProgressVisible = uiState.progressValue > PlayIntegrityProgressConstants.NO_PROGRESS && uiState.progressValue < PlayIntegrityProgressConstants.FULL_PROGRESS
 
+    val step2Label = when (uiState.selectedKeyType) {
+        CryptoAlgorithm.ECDH -> "Step 2. サーバーからSalt/Challengeを取得"
+        else -> "Step 2. サーバーからNonce/Challengeを取得"
+    }
+    val step2ButtonText = when (uiState.selectedKeyType) {
+        CryptoAlgorithm.ECDH -> "Fetch Salt/Challenge"
+        else -> "Fetch Nonce/Challenge"
+    }
+    val nonceOrSaltLabel = when (uiState.selectedKeyType) {
+        CryptoAlgorithm.ECDH -> "Salt"
+        else -> "Nonce"
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(top = 16.dp, start = 16.dp, end = 16.dp), // Adjusted padding for InfoItemContent
+            .padding(top = 16.dp, start = 16.dp, end = 16.dp),
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Top
     ) {
-        Text(text = "Step1. サーバーからNonce/Challengeを取得")
+        // Step 1: Select Key Algorithm (Moved from original Step 2)
+        Text(text = "Step 1. 鍵のアルゴリズムを選択")
         Spacer(modifier = Modifier.height(8.dp))
-        Button(
-            onClick = onFetchNonceChallenge,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(ButtonHeight),
-            enabled = uiState.isStep1FetchNonceChallengeEnabled
-        ) {
-            Text(text = "Fetch Nonce/Challenge")
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-        if (uiState.isNonceVisible) {
-            Text(text = "Nonce: ${uiState.nonce}")
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        if (uiState.isChallengeVisible) {
-            Text(text = "Challenge: ${uiState.challenge}")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(text = "Step 2. 鍵のアルゴリズムを設定")
-        Spacer(modifier = Modifier.height(8.dp))
-
         Box(modifier = Modifier.fillMaxWidth()) {
             ExposedDropdownMenuBox(
                 expanded = keyTypeExpanded,
                 onExpandedChange = {
-                    if (uiState.isStep2KeySelectionEnabled) { // isStep2KeySelectionEnabled already considers isLoading
+                    if (uiState.isStep1KeySelectionEnabled) { // Use new UiState property
                         keyTypeExpanded = !keyTypeExpanded
                     }
                 }
@@ -109,7 +99,7 @@ fun KeyAttestationScreen(
                     modifier = Modifier
                         .menuAnchor()
                         .fillMaxWidth(),
-                    enabled = uiState.isStep2KeySelectionEnabled
+                    enabled = uiState.isStep1KeySelectionEnabled // Use new UiState property
                 )
                 ExposedDropdownMenu(
                     expanded = keyTypeExpanded,
@@ -122,38 +112,62 @@ fun KeyAttestationScreen(
                                 onSelectedKeyTypeChange(algorithm)
                                 keyTypeExpanded = false
                             },
-                            enabled = uiState.isStep2KeySelectionEnabled &&
+                            enabled = uiState.isStep1KeySelectionEnabled && // Use new UiState property
                                     !(algorithm == CryptoAlgorithm.ECDH && !uiState.isEcdhAvailable)
                         )
                     }
                 }
             }
         }
-
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text(text = "Step3. キーペア（構成証明付き）を生成")
+        // Step 2: Fetch Nonce/Salt and Challenge (Original Step 1, now with dynamic labels)
+        Text(text = step2Label)
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(
+            onClick = onFetchNonceOrSaltChallenge, // Use renamed function
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(ButtonHeight),
+            enabled = uiState.isStep2FetchNonceOrSaltChallengeEnabled // Use new UiState property
+        ) {
+            Text(text = step2ButtonText)
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        if (uiState.isNonceOrSaltVisible) { // Use new UiState property
+            Text(text = "$nonceOrSaltLabel: ${uiState.nonceOrSalt}") // Use new UiState property and dynamic label
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        if (uiState.isChallengeVisible) {
+            Text(text = "Challenge: ${uiState.challenge}")
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Step 3: Generate KeyPair (Original Step 3)
+        Text(text = "Step 3. キーペア（構成証明付き）を生成")
         Spacer(modifier = Modifier.height(8.dp))
         Button(
             onClick = onGenerateKeyPair,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(ButtonHeight),
-            enabled = uiState.isStep3GenerateKeyPairEnabled
+            enabled = uiState.isStep3GenerateKeyPairEnabled // UiState already updated for this
         ) {
             Text(text = "Generate KeyPair")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text(text = "Step4. キーペアと構成証明を検証")
+        // Step 4: Verify Key Attestation (Original Step 4)
+        Text(text = "Step 4. キーペアと構成証明を検証")
         Spacer(modifier = Modifier.height(8.dp))
         Button(
             onClick = onRequestVerifyKeyAttestation,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(ButtonHeight),
-            enabled = uiState.isStep4VerifyAttestationEnabled
+            enabled = uiState.isStep4VerifyAttestationEnabled // UiState already updated for this
         ) {
             Text(text = "Request Verify KeyAttestation")
         }
@@ -206,7 +220,7 @@ private fun KeyAttestationScreenPreview() {
         InfoItem("KeyMint Security Level", "1"),
         InfoItem("Attestation Challenge", "PREVIEW_ATTESTATION_CHALLENGE_XYZ123"),
         InfoItem("Software Enforced Properties", "", isHeader = true),
-        InfoItem("Attestation Application ID", "", indentLevel = 1, isHeader = true),
+        InfoItem("Attestation Application ID", "", indentLevel = 1, isHeader = true), // Keep existing preview structure
         InfoItem("Application ID", "com.example.preview", indentLevel = 2),
         InfoItem("Version Code", "101", indentLevel = 2),
         InfoItem("Signature", "aabbccddeeff...", indentLevel = 2),
@@ -228,14 +242,15 @@ private fun KeyAttestationScreenPreview() {
     )
     KeyAttestationScreen(
         uiState = KeyAttestationUiState(
-            nonce = "PREVIEW_NONCE_67890",
+            nonceOrSalt = "PREVIEW_NONCE_OR_SALT_67890", // Updated field name
             challenge = "PREVIEW_CHALLENGE_ABCDE",
-            selectedKeyType = CryptoAlgorithm.RSA,
+            selectedKeyType = CryptoAlgorithm.RSA, // Example: RSA selected
             status = "Verification successful.",
-            infoItems = previewItems
+            infoItems = previewItems,
+            isEcdhAvailable = true // Assuming ECDH is available for preview
         ),
         onSelectedKeyTypeChange = { System.out.println("Preview: Key type changed to ${it.label}") },
-        onFetchNonceChallenge = { System.out.println("Preview: Fetch Nonce/Challenge clicked") },
+        onFetchNonceOrSaltChallenge = { System.out.println("Preview: Fetch Nonce/Salt/Challenge clicked") }, // Renamed
         onGenerateKeyPair = { System.out.println("Preview: Generate KeyPair clicked") },
         onRequestVerifyKeyAttestation = { System.out.println("Preview: Request Verify KeyAttestation clicked") },
         onClickCopy = { System.out.println("Preview: onClickCopy called") },
