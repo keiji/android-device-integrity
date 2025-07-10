@@ -16,6 +16,7 @@ import dev.keiji.deviceintegrity.repository.contract.KeyPairRepository
 import dev.keiji.deviceintegrity.repository.contract.KeyAttestationRepository
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
 import dev.keiji.deviceintegrity.ui.main.InfoItem
+import android.os.Build
 import dev.keiji.deviceintegrity.ui.main.common.KEY_ATTESTATION_DELAY_MS
 import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityProgressConstants
 import dev.keiji.deviceintegrity.ui.main.util.Base64Utils
@@ -197,7 +198,12 @@ class KeyAttestationViewModel @Inject constructor(
                     when (uiState.value.selectedKeyType) {
                         CryptoAlgorithm.RSA -> keyPairRepository.generateRsaKeyPair(decodedChallenge)
                         CryptoAlgorithm.EC -> keyPairRepository.generateEcKeyPair(decodedChallenge)
-                        CryptoAlgorithm.ECDH -> throw UnsupportedOperationException("ECDH key generation is not yet implemented.")
+                        CryptoAlgorithm.ECDH -> {
+                            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                                throw UnsupportedOperationException("このデバイスのAndroidのバージョンは構成証明付きのECDH鍵ペアに対応していません")
+                            }
+                            keyPairRepository.generateEcdhKeyPair(decodedChallenge)
+                        }
                     }
                 }
 
