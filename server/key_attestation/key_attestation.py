@@ -111,7 +111,7 @@ def store_agreement_key_attestation_session(session_id, salt_encoded, challenge_
     # Consider calling cleanup_expired_agreement_sessions() here or via a scheduled job
     cleanup_expired_agreement_sessions()
 
-def store_agreement_key_attestation_session(session_id, salt_encoded, challenge_encoded, public_key_encoded=None): # Added public_key_encoded
+def store_agreement_key_attestation_session(session_id, salt_encoded, challenge_encoded, public_key_encoded=None, private_key_encoded=None): # Added public_key_encoded and private_key_encoded
     """
     Stores the agreement key attestation session data in Datastore.
     The entity key will be the session_id to ensure uniqueness and allow easy lookup.
@@ -132,6 +132,8 @@ def store_agreement_key_attestation_session(session_id, salt_encoded, challenge_
     })
     if public_key_encoded:
         entity['public_key'] = public_key_encoded
+    if private_key_encoded:
+        entity['private_key'] = private_key_encoded
 
     datastore_client.put(entity)
     logger.info(f"Stored agreement key attestation session for session_id: {session_id}")
@@ -859,9 +861,17 @@ def prepare_agreement_attestation():
         )
         public_key_encoded = base64url_encode(public_key_bytes)
 
-        # Store session data including the public key in Datastore
+        # Serialize private key to PEM format then Base64URL encode
+        private_key_bytes = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption()
+        )
+        private_key_encoded = base64url_encode(private_key_bytes)
+
+        # Store session data including the public key and private key in Datastore
         try:
-            store_agreement_key_attestation_session(session_id, salt_encoded, challenge_encoded, public_key_encoded)
+            store_agreement_key_attestation_session(session_id, salt_encoded, challenge_encoded, public_key_encoded, private_key_encoded)
         except ConnectionError as e:
              logger.error(f"Datastore connection error during store_agreement_key_attestation_session: {e}")
              return jsonify({"error": "Failed to store session due to datastore connectivity"}), 503
