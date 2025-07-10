@@ -145,7 +145,7 @@ class ClassicPlayIntegrityViewModelTest {
 
         val uiState = viewModel.uiState.first()
         assertTrue(uiState.errorMessages.isNotEmpty())
-        assertEquals("Server error fetching nonce.", uiState.status)
+        assertEquals("Server error fetching nonce: Server error", uiState.status) // Updated
         assertEquals("Server error: 500 - Server error", uiState.errorMessages.first())
     }
 
@@ -159,7 +159,7 @@ class ClassicPlayIntegrityViewModelTest {
 
         val uiState = viewModel.uiState.first()
         assertTrue(uiState.errorMessages.isNotEmpty())
-        assertEquals("Network error fetching nonce.", uiState.status)
+        assertEquals("Network error fetching nonce: Network error", uiState.status) // Updated
         assertEquals("Network error", uiState.errorMessages.first())
     }
 
@@ -219,7 +219,7 @@ class ClassicPlayIntegrityViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val uiState = viewModel.uiState.first()
-        assertEquals("Server error verifying token.", uiState.status)
+        assertEquals("Server error verifying token: Forbidden by server", uiState.status) // Updated
         assertTrue(uiState.errorMessages.isNotEmpty())
         assertEquals("Server error: 403 - Forbidden by server", uiState.errorMessages.first())
     }
@@ -242,7 +242,7 @@ class ClassicPlayIntegrityViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val uiState = viewModel.uiState.first()
-        assertEquals("Network error verifying token.", uiState.status)
+        assertEquals("Network error verifying token: Network connection lost", uiState.status) // Updated
         assertTrue(uiState.errorMessages.isNotEmpty())
         assertEquals("Network connection lost", uiState.errorMessages.first())
     }

@@ -14,16 +14,11 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -35,12 +30,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.keiji.deviceintegrity.ui.main.InfoItem
+import dev.keiji.deviceintegrity.ui.main.InfoItemContent
 import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityProgressConstants
 import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
-import dev.keiji.deviceintegrity.ui.main.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,209 +58,138 @@ fun KeyAttestationScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(16.dp),
+            .padding(top = 16.dp, start = 16.dp, end = 16.dp), // Adjusted padding for InfoItemContent
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Top
     ) {
         Text(text = "Step1. サーバーからNonce/Challengeを取得")
         Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = onFetchNonceChallenge,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(ButtonHeight),
-                enabled = uiState.isStep1FetchNonceChallengeEnabled
-            ) {
-                Text(text = "Fetch Nonce/Challenge")
-            }
+        Button(
+            onClick = onFetchNonceChallenge,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(ButtonHeight),
+            enabled = uiState.isStep1FetchNonceChallengeEnabled
+        ) {
+            Text(text = "Fetch Nonce/Challenge")
+        }
 
-            Spacer(modifier = Modifier.height(8.dp))
-            if (uiState.isNonceVisible) {
-                Text(text = "Nonce: ${uiState.nonce}")
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            if (uiState.isChallengeVisible) {
-                Text(text = "Challenge: ${uiState.challenge}")
-            }
+        Spacer(modifier = Modifier.height(8.dp))
+        if (uiState.isNonceVisible) {
+            Text(text = "Nonce: ${uiState.nonce}")
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        if (uiState.isChallengeVisible) {
+            Text(text = "Challenge: ${uiState.challenge}")
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-            Text(text = "Step 2. 鍵のアルゴリズムを設定")
-            Spacer(modifier = Modifier.height(8.dp))
+        Text(text = "Step 2. 鍵のアルゴリズムを設定")
+        Spacer(modifier = Modifier.height(8.dp))
 
-            Box(modifier = Modifier.fillMaxWidth()) {
-                ExposedDropdownMenuBox(
-                    expanded = keyTypeExpanded,
-                    onExpandedChange = {
-                        if (uiState.isStep2KeySelectionEnabled) { // isStep2KeySelectionEnabled already considers isLoading
-                            keyTypeExpanded = !keyTypeExpanded
-                        }
+        Box(modifier = Modifier.fillMaxWidth()) {
+            ExposedDropdownMenuBox(
+                expanded = keyTypeExpanded,
+                onExpandedChange = {
+                    if (uiState.isStep2KeySelectionEnabled) { // isStep2KeySelectionEnabled already considers isLoading
+                        keyTypeExpanded = !keyTypeExpanded
                     }
+                }
+            ) {
+                TextField(
+                    value = uiState.selectedKeyType.label,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Key Algorithm") },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = keyTypeExpanded)
+                    },
+                    colors = ExposedDropdownMenuDefaults.textFieldColors(),
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth(),
+                    enabled = uiState.isStep2KeySelectionEnabled
+                )
+                ExposedDropdownMenu(
+                    expanded = keyTypeExpanded,
+                    onDismissRequest = { keyTypeExpanded = false }
                 ) {
-                    TextField(
-                        value = uiState.selectedKeyType.label,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Key Algorithm") },
-                        trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = keyTypeExpanded)
-                        },
-                        colors = ExposedDropdownMenuDefaults.textFieldColors(),
-                        modifier = Modifier
-                            .menuAnchor()
-                            .fillMaxWidth(),
-                        enabled = uiState.isStep2KeySelectionEnabled
-                    )
-                    ExposedDropdownMenu(
-                        expanded = keyTypeExpanded,
-                        onDismissRequest = { keyTypeExpanded = false }
-                    ) {
-                        keyTypes.forEach { algorithm ->
-                            DropdownMenuItem(
-                                text = { Text(algorithm.label) },
-                                onClick = {
-                                    onSelectedKeyTypeChange(algorithm)
-                                    keyTypeExpanded = false
-                                },
-                                enabled = uiState.isStep2KeySelectionEnabled
-                            )
-                        }
+                    keyTypes.forEach { algorithm ->
+                        DropdownMenuItem(
+                            text = { Text(algorithm.label) },
+                            onClick = {
+                                onSelectedKeyTypeChange(algorithm)
+                                keyTypeExpanded = false
+                            },
+                            enabled = uiState.isStep2KeySelectionEnabled
+                        )
                     }
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-            Text(text = "Step3. キーペア（構成証明付き）を生成")
+        Text(text = "Step3. キーペア（構成証明付き）を生成")
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(
+            onClick = onGenerateKeyPair,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(ButtonHeight),
+            enabled = uiState.isStep3GenerateKeyPairEnabled
+        ) {
+            Text(text = "Generate KeyPair")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(text = "Step4. キーペアと構成証明を検証")
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(
+            onClick = onRequestVerifyKeyAttestation,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(ButtonHeight),
+            enabled = uiState.isStep4VerifyAttestationEnabled
+        ) {
+            Text(text = "Request Verify KeyAttestation")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Progress Indicator
+        if (isHorizontalProgressVisible) {
+            LinearProgressIndicator(
+                progress = uiState.progressValue,
+                modifier = Modifier.fillMaxWidth()
+            )
             Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = onGenerateKeyPair,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(ButtonHeight),
-                enabled = uiState.isStep3GenerateKeyPairEnabled
-            ) {
-                Text(text = "Generate KeyPair")
-            }
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(text = "Step4. キーペアと構成証明を検証")
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = onRequestVerifyKeyAttestation,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(ButtonHeight),
-                enabled = uiState.isStep4VerifyAttestationEnabled
-            ) {
-                Text(text = "Request Verify KeyAttestation")
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Progress Indicator
-            if (isHorizontalProgressVisible) {
-                LinearProgressIndicator(
-                    progress = uiState.progressValue,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-
-            // Display general status or CircularProgressIndicator
+        if (uiState.progressValue == PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = if (uiState.progressValue == PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS) Arrangement.Center else Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.Center
             ) {
-                if (uiState.progressValue == PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp)) // Small, centered
-                } else if (uiState.status.isNotEmpty()) {
-                    Text(
-                        text = uiState.status,
-                        style = if (uiState.verificationResultItems.isNotEmpty() && uiState.status.contains(
-                                "successful",
-                                ignoreCase = true
-                            )
-                        )
-                            MaterialTheme.typography.titleMedium
-                        else if (uiState.status.contains("failed", ignoreCase = true) || uiState.status.contains(
-                                "error",
-                                ignoreCase = true
-                            )
-                        )
-                            MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.error)
-                        else
-                            MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.weight(1f)
-                    )
-                    if (uiState.verificationResultItems.isNotEmpty() && !uiState.isLoading) { // Use isLoading for copy/share
-                        Row {
-                            IconButton(onClick = onClickCopy, enabled = !uiState.isLoading) {
-                                Icon(
-                                    painterResource(R.drawable.ic_content_copy),
-                                    contentDescription = "Copy Results"
-                                )
-                            }
-                            IconButton(onClick = onClickShare, enabled = !uiState.isLoading) {
-                                Icon(
-                                    painterResource(R.drawable.ic_share),
-                                    contentDescription = "Share Results"
-                                )
-                            }
-                        }
-                    }
-                }
+                CircularProgressIndicator(modifier = Modifier.size(24.dp))
             }
             Spacer(modifier = Modifier.height(8.dp))
-
-
-            // Display structured verification results
-            if (uiState.verificationResultItems.isNotEmpty()) {
-                Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    uiState.verificationResultItems.forEachIndexed { index, item ->
-                        val textStyle = if (item.isHeader) {
-                            MaterialTheme.typography.titleSmall
-                        } else {
-                            MaterialTheme.typography.bodyMedium
-                        }
-                        val itemPadding = when (item.indentLevel) {
-                            1 -> Modifier.padding(start = 16.dp)
-                            2 -> Modifier.padding(start = 32.dp)
-                            else -> Modifier
-                        }
-
-                        Column(modifier = itemPadding) {
-                            if (item.isHeader) {
-                                Text(
-                                    text = item.label,
-                                    style = textStyle,
-                                    modifier = Modifier.padding(top = if (index > 0) 8.dp else 0.dp, bottom = 4.dp)
-                                )
-                            } else {
-                                Text(
-                                    text = "${item.label}: ${item.value}",
-                                    style = textStyle,
-                                    modifier = Modifier.padding(vertical = 2.dp)
-                                )
-                            }
-                        }
-                        if (item.isHeader && item.indentLevel == 0 && index < uiState.verificationResultItems.lastIndex) {
-                             Divider(modifier = Modifier.padding(vertical = 6.dp))
-                        } else if (!item.isHeader && index < uiState.verificationResultItems.lastIndex && uiState.verificationResultItems[index+1].indentLevel <= item.indentLevel && !uiState.verificationResultItems[index+1].isHeader) {
-                            // Optional: finer grained divider, only if next item is not a header and at same or lower indent
-                            // Divider(modifier = Modifier.padding(start = (item.indentLevel * 16).dp, top = 2.dp, bottom = 2.dp).alpha(0.5f))
-                        }
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
         }
+
+        InfoItemContent(
+            status = uiState.status,
+            isVerifiedSuccessfully = uiState.infoItems.isNotEmpty() &&
+                    (uiState.status.contains("Verification successful", ignoreCase = true) ||
+                            // Add other conditions that signify success if necessary
+                            uiState.infoItems.any { it.label.equals("Is Verified", ignoreCase = true) && it.value.equals("true", ignoreCase = true) }),
+            infoItems = uiState.infoItems,
+            onCopyClick = onClickCopy,
+            onShareClick = onClickShare,
+            modifier = Modifier.fillMaxWidth() // Ensure InfoItemContent takes available width
+        )
+        Spacer(modifier = Modifier.height(16.dp)) // Add padding at the bottom
     }
 }
 
@@ -273,33 +197,33 @@ fun KeyAttestationScreen(
 @Composable
 private fun KeyAttestationScreenPreview() {
     val previewItems = listOf(
-        AttestationInfoItem("Session ID", "preview-session-id"),
-        AttestationInfoItem("Is Verified", "true"),
-        AttestationInfoItem("Attestation Version", "4"),
-        AttestationInfoItem("Attestation Security Level", "1"),
-        AttestationInfoItem("KeyMint Version", "1"),
-        AttestationInfoItem("KeyMint Security Level", "1"),
-        AttestationInfoItem("Attestation Challenge", "PREVIEW_ATTESTATION_CHALLENGE_XYZ123"),
-        AttestationInfoItem("Software Enforced Properties", "", isHeader = true),
-        AttestationInfoItem("Attestation Application ID", "", indentLevel = 1, isHeader = true),
-        AttestationInfoItem("Application ID", "com.example.preview", indentLevel = 2),
-        AttestationInfoItem("Version Code", "101", indentLevel = 2),
-        AttestationInfoItem("Signature", "aabbccddeeff...", indentLevel = 2),
-        AttestationInfoItem("Creation Datetime", "2023-01-01T10:00:00.000Z", indentLevel = 1),
-        AttestationInfoItem("Algorithm", "1", indentLevel = 1),
-        AttestationInfoItem("TEE Enforced Properties", "", isHeader = true),
-        AttestationInfoItem("Origin", "0", indentLevel = 1),
+        InfoItem("Session ID", "preview-session-id"),
+        InfoItem("Is Verified", "true"),
+        InfoItem("Attestation Version", "4"),
+        InfoItem("Attestation Security Level", "1"),
+        InfoItem("KeyMint Version", "1"),
+        InfoItem("KeyMint Security Level", "1"),
+        InfoItem("Attestation Challenge", "PREVIEW_ATTESTATION_CHALLENGE_XYZ123"),
+        InfoItem("Software Enforced Properties", "", isHeader = true),
+        InfoItem("Attestation Application ID", "", indentLevel = 1, isHeader = true),
+        InfoItem("Application ID", "com.example.preview", indentLevel = 2),
+        InfoItem("Version Code", "101", indentLevel = 2),
+        InfoItem("Signature", "aabbccddeeff...", indentLevel = 2),
+        InfoItem("Creation Datetime", "2023-01-01T10:00:00.000Z", indentLevel = 1),
+        InfoItem("Algorithm", "1", indentLevel = 1),
+        InfoItem("TEE Enforced Properties", "", isHeader = true),
+        InfoItem("Origin", "0", indentLevel = 1),
 
         // Sample Device Info
-        AttestationInfoItem("Device Info", "", isHeader = true, indentLevel = 0),
-        AttestationInfoItem("Brand", "Google", indentLevel = 1),
-        AttestationInfoItem("Model", "Pixel Preview", indentLevel = 1),
-        AttestationInfoItem("SDK Int", "33", indentLevel = 1),
+        InfoItem("Device Info", "", isHeader = true, indentLevel = 0),
+        InfoItem("Brand", "Google", indentLevel = 1),
+        InfoItem("Model", "Pixel Preview", indentLevel = 1),
+        InfoItem("SDK Int", "33", indentLevel = 1),
 
         // Sample Security Info
-        AttestationInfoItem("Security Info", "", isHeader = true, indentLevel = 0),
-        AttestationInfoItem("Is Device Lock Enabled", "true", indentLevel = 1),
-        AttestationInfoItem("Has Strongbox", "true", indentLevel = 1),
+        InfoItem("Security Info", "", isHeader = true, indentLevel = 0),
+        InfoItem("Is Device Lock Enabled", "true", indentLevel = 1),
+        InfoItem("Has Strongbox", "true", indentLevel = 1),
     )
     KeyAttestationScreen(
         uiState = KeyAttestationUiState(
@@ -307,7 +231,7 @@ private fun KeyAttestationScreenPreview() {
             challenge = "PREVIEW_CHALLENGE_ABCDE",
             selectedKeyType = CryptoAlgorithm.RSA,
             status = "Verification successful.",
-            verificationResultItems = previewItems
+            infoItems = previewItems
         ),
         onSelectedKeyTypeChange = { System.out.println("Preview: Key type changed to ${it.label}") },
         onFetchNonceChallenge = { System.out.println("Preview: Fetch Nonce/Challenge clicked") },
