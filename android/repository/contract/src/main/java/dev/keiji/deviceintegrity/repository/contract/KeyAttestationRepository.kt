@@ -1,6 +1,6 @@
 package dev.keiji.deviceintegrity.repository.contract
 
-import dev.keiji.deviceintegrity.api.keyattestation.PrepareRequest
+import dev.keiji.deviceintegrity.api.keyattestation.PrepareSignatureRequest
 import dev.keiji.deviceintegrity.api.keyattestation.PrepareResponse
 import dev.keiji.deviceintegrity.api.keyattestation.VerifySignatureRequest
 import dev.keiji.deviceintegrity.api.keyattestation.VerifySignatureResponse
@@ -17,7 +17,7 @@ interface KeyAttestationRepository {
      * @throws Exception for other unexpected errors.
      */
     @Throws(ServerException::class, IOException::class)
-    suspend fun prepare(
+    suspend fun prepareSignature(
         requestBody: PrepareRequest
     ): PrepareResponse
 

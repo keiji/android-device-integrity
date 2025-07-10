@@ -18,11 +18,11 @@ servers:
     description: Key Attestation Service Base URL
 
 paths:
-  /v1/prepare:
+  /v1/prepare/signature:
     post:
-      summary: Prepare Key Attestation
-      description: Generates a nonce and challenge for Key Attestation.
-      operationId: prepareKeyAttestation
+      summary: Prepare Key Attestation Signature
+      description: Generates a nonce and challenge for Key Attestation Signature.
+      operationId: prepareSignatureKeyAttestation
       tags:
         - KeyAttestationV1
       requestBody:

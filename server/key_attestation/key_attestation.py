@@ -647,10 +647,10 @@ def store_key_attestation_result(session_id, result, reason, payload_data_json_s
 
 # --- Endpoints ---
 
-@app.route('/v1/prepare', methods=['POST']) # Changed from Blueprint
-def prepare_attestation():
+@app.route('/v1/prepare/signature', methods=['POST']) # Changed from Blueprint
+def prepare_signature_attestation():
     """
-    Prepares for key attestation by generating a nonce and challenge.
+    Prepares for key attestation signature by generating a nonce and challenge.
     Request body: { "session_id": "string" }
     Response body: { "nonce": "string (Base64URLEncoded)", "challenge": "string (Base64URLEncoded)" }
     """

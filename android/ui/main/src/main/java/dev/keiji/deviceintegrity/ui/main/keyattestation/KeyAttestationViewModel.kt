@@ -123,9 +123,9 @@ class KeyAttestationViewModel @Inject constructor(
             val newSessionId = UUID.randomUUID().toString()
             _uiState.update { it.copy(sessionId = newSessionId) }
 
-            val request = PrepareRequest(sessionId = newSessionId)
+            val request = PrepareSignatureRequest(sessionId = newSessionId)
             try {
-                val response = keyAttestationRepository.prepare(request)
+                val response = keyAttestationRepository.prepareSignature(request)
                 _uiState.update {
                     it.copy(
                         nonce = response.nonceBase64UrlEncoded,

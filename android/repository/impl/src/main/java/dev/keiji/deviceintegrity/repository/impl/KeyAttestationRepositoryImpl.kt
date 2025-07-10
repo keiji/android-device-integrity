@@ -2,7 +2,7 @@ package dev.keiji.deviceintegrity.repository.impl
 
 import android.util.Log
 import dev.keiji.deviceintegrity.api.keyattestation.KeyAttestationVerifyApiClient
-import dev.keiji.deviceintegrity.api.keyattestation.PrepareRequest
+import dev.keiji.deviceintegrity.api.keyattestation.PrepareSignatureRequest
 import dev.keiji.deviceintegrity.api.keyattestation.PrepareResponse
 import dev.keiji.deviceintegrity.api.keyattestation.VerifySignatureRequest
 import dev.keiji.deviceintegrity.api.keyattestation.VerifySignatureResponse
@@ -22,11 +22,11 @@ class KeyAttestationRepositoryImpl @Inject constructor(
     }
 
     @Throws(ServerException::class, IOException::class)
-    override suspend fun prepare(
-        requestBody: PrepareRequest
+    override suspend fun prepareSignature(
+        requestBody: PrepareSignatureRequest
     ): PrepareResponse {
         try {
-            return apiClient.prepare(requestBody)
+            return apiClient.prepareSignature(requestBody)
         } catch (e: HttpException) {
             val errorBody = e.response()?.errorBody()?.string()
             val errorMessage = parseErrorMessage(errorBody)

@@ -6,9 +6,9 @@ import retrofit2.http.POST
 interface KeyAttestationVerifyApiClient {
 
     // Ensure this path matches the server-side endpoint path
-    @POST("v1/prepare")
-    suspend fun prepare(
-        @Body requestBody: PrepareRequest
+    @POST("v1/prepare/signature")
+    suspend fun prepareSignature(
+        @Body requestBody: PrepareSignatureRequest
     ): PrepareResponse
 
     // Ensure this path matches the server-side endpoint path
