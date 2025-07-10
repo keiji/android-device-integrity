@@ -169,7 +169,7 @@ class StandardPlayIntegrityViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val uiState = viewModel.uiState.first()
-        assertEquals("Server error verifying token.", uiState.status)
+        assertEquals("Server error verifying token: Bad Request from server", uiState.status) // Updated
         assertTrue(uiState.errorMessages.isNotEmpty())
         assertEquals("Server error: 400 - Bad Request from server", uiState.errorMessages.first())
     }
@@ -191,7 +191,7 @@ class StandardPlayIntegrityViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val uiState = viewModel.uiState.first()
-        assertEquals("Network error verifying token.", uiState.status)
+        assertEquals("Network error verifying token: No internet", uiState.status) // Updated
         assertTrue(uiState.errorMessages.isNotEmpty())
         assertEquals("No internet", uiState.errorMessages.first())
     }

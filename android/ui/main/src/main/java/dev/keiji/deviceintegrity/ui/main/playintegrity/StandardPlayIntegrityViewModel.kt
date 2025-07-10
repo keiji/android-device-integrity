@@ -16,8 +16,8 @@ import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
 import dev.keiji.deviceintegrity.ui.main.common.DEBUG_VERIFY_TOKEN_DELAY_MS
 import dev.keiji.deviceintegrity.ui.main.common.VERIFY_TOKEN_DELAY_MS
-import dev.keiji.deviceintegrity.ui.main.InfoItem // Moved to top
-import dev.keiji.deviceintegrity.ui.main.util.DateFormatUtil // Moved to top
+import dev.keiji.deviceintegrity.ui.main.InfoItem // Correctly at top
+import dev.keiji.deviceintegrity.ui.main.util.DateFormatUtil // Correctly at top
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -161,7 +161,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 status = "Fetching token...",
                 requestHashValue = "",
                 errorMessages = emptyList(),
-                resultInfoItems = emptyList(), // Clear previous results
+                resultInfoItems = emptyList(),
                 serverVerificationPayload = null
             )
         }
@@ -182,17 +182,17 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e("StandardPlayIntegrityVM", "Error fetching integrity token (Standard)", e)
-                val errorMessage = if (e is ServerException) {
-                    val errorBody = e.errorMessage ?: "No additional error information."
-                    "Error fetching integrity token (Standard): ${e.errorCode} - $errorBody"
+                val specificErrorMessage = if (e is ServerException) {
+                    "Server error: ${e.errorCode ?: "N/A"} - ${e.errorMessage ?: "Unknown"}"
                 } else {
                     e.message ?: "Unknown error fetching integrity token (Standard)."
                 }
+                val userFacingStatus = "Error fetching integrity token (Standard): ${e.message ?: "Unknown error"}"
                 _uiState.update {
                     it.copy(
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
-                        status = "Error fetching integrity token (Standard).",
-                        errorMessages = listOf(errorMessage),
+                        status = userFacingStatus,
+                        errorMessages = listOf(specificErrorMessage),
                         requestHashValue = ""
                     )
                 }
@@ -220,7 +220,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS,
                 status = "Preparing to verify token...",
                 errorMessages = emptyList(),
-                resultInfoItems = emptyList(), // Clear previous results
+                resultInfoItems = emptyList(),
                 serverVerificationPayload = null
             )
         }
@@ -281,29 +281,32 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 }
             } catch (e: ServerException) {
                 Log.e("StandardPlayIntegrityVM", "Server error verifying token: ${e.errorCode} - ${e.errorMessage}", e)
-                val errorStatus = "Server error verifying token: ${e.errorCode ?: "N/A"} - ${e.errorMessage ?: "Unknown"}"
+                val specificErrorMessage = "Server error: ${e.errorCode ?: "N/A"} - ${e.errorMessage ?: "Unknown"}"
+                val userFacingStatus = "Server error verifying token: ${e.errorMessage ?: "Unknown"}"
                 _uiState.update {
                     it.copy(
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS, status = errorStatus,
-                        errorMessages = listOf(errorStatus), serverVerificationPayload = null, resultInfoItems = emptyList()
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS, status = userFacingStatus,
+                        errorMessages = listOf(specificErrorMessage), serverVerificationPayload = null, resultInfoItems = emptyList()
                     )
                 }
             } catch (e: IOException) {
                 Log.e("StandardPlayIntegrityVM", "Network error verifying token", e)
-                val errorStatus = "Network error verifying token: ${e.message ?: "Unknown network error."}"
+                val specificErrorMessage = e.message ?: "Unknown network error."
+                val userFacingStatus = "Network error verifying token: $specificErrorMessage"
                 _uiState.update {
                     it.copy(
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS, status = errorStatus,
-                        errorMessages = listOf(errorStatus), serverVerificationPayload = null, resultInfoItems = emptyList()
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS, status = userFacingStatus,
+                        errorMessages = listOf(specificErrorMessage), serverVerificationPayload = null, resultInfoItems = emptyList()
                     )
                 }
             } catch (e: Exception) {
                 Log.e("StandardPlayIntegrityVM", "Unknown error verifying token", e)
-                val errorStatus = "Unknown error verifying token: ${e.message ?: "An unexpected error occurred."}"
+                val specificErrorMessage = e.message ?: "An unexpected error occurred."
+                val userFacingStatus = "Unknown error verifying token: $specificErrorMessage"
                 _uiState.update {
                     it.copy(
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS, status = errorStatus,
-                        errorMessages = listOf(errorStatus), serverVerificationPayload = null, resultInfoItems = emptyList()
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS, status = userFacingStatus,
+                        errorMessages = listOf(specificErrorMessage), serverVerificationPayload = null, resultInfoItems = emptyList()
                     )
                 }
             }

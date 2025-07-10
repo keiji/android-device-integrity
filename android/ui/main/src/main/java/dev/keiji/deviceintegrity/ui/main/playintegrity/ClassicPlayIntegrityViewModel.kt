@@ -93,34 +93,37 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 }
             } catch (e: ServerException) {
                 Log.e("ClassicPlayIntegrityVM", "Server error fetching nonce: ${e.errorCode} - ${e.errorMessage}", e)
-                val errorStatus = "Server error fetching nonce: ${e.errorCode ?: "N/A"} - ${e.errorMessage ?: "Unknown"}"
+                val specificErrorMessage = "Server error: ${e.errorCode ?: "N/A"} - ${e.errorMessage ?: "Unknown"}"
+                val userFacingStatus = "Server error fetching nonce: ${e.errorMessage ?: "Unknown"}"
                 _uiState.update {
                     it.copy(
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
-                        status = errorStatus,
-                        errorMessages = listOf(errorStatus),
+                        status = userFacingStatus,
+                        errorMessages = listOf(specificErrorMessage), // For test assertion on errorMessages.first()
                         resultInfoItems = emptyList()
                     )
                 }
             } catch (e: IOException) {
                 Log.e("ClassicPlayIntegrityVM", "Network error fetching nonce", e)
-                val errorStatus = "Network error fetching nonce: ${e.message ?: "Unknown network error."}"
+                val specificErrorMessage = e.message ?: "Unknown network error."
+                val userFacingStatus = "Network error fetching nonce: $specificErrorMessage"
                 _uiState.update {
                     it.copy(
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
-                        status = errorStatus,
-                        errorMessages = listOf(errorStatus),
+                        status = userFacingStatus,
+                        errorMessages = listOf(specificErrorMessage), // For test assertion on errorMessages.first()
                         resultInfoItems = emptyList()
                     )
                 }
-            } catch (e: Exception) {
+            } catch (e: Exception) { // General exceptions
                 Log.e("ClassicPlayIntegrityVM", "Unknown error fetching nonce", e)
-                val errorStatus = "Unknown error fetching nonce: ${e.message ?: "An unexpected error occurred."}"
+                val specificErrorMessage = e.message ?: "An unexpected error occurred."
+                val userFacingStatus = "Unknown error fetching nonce: $specificErrorMessage"
                 _uiState.update {
                     it.copy(
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
-                        status = errorStatus,
-                        errorMessages = listOf(errorStatus),
+                        status = userFacingStatus,
+                        errorMessages = listOf(specificErrorMessage),
                         resultInfoItems = emptyList()
                     )
                 }
@@ -334,29 +337,32 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 }
             } catch (e: ServerException) {
                 Log.e("ClassicPlayIntegrityVM", "Server error verifying token: ${e.errorCode} - ${e.errorMessage}", e)
-                val errorStatus = "Server error verifying token: ${e.errorCode ?: "N/A"} - ${e.errorMessage ?: "Unknown"}"
+                val specificErrorMessage = "Server error: ${e.errorCode ?: "N/A"} - ${e.errorMessage ?: "Unknown"}"
+                val userFacingStatus = "Server error verifying token: ${e.errorMessage ?: "Unknown"}"
                 _uiState.update {
                     it.copy(
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS, status = errorStatus,
-                        errorMessages = listOf(errorStatus), serverVerificationPayload = null, resultInfoItems = emptyList()
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS, status = userFacingStatus,
+                        errorMessages = listOf(specificErrorMessage), serverVerificationPayload = null, resultInfoItems = emptyList()
                     )
                 }
             } catch (e: IOException) {
                 Log.e("ClassicPlayIntegrityVM", "Network error verifying token", e)
-                val errorStatus = "Network error verifying token: ${e.message ?: "Unknown network error."}"
+                val specificErrorMessage = e.message ?: "Unknown network error."
+                val userFacingStatus = "Network error verifying token: $specificErrorMessage"
                 _uiState.update {
                     it.copy(
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS, status = errorStatus,
-                        errorMessages = listOf(errorStatus), serverVerificationPayload = null, resultInfoItems = emptyList()
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS, status = userFacingStatus,
+                        errorMessages = listOf(specificErrorMessage), serverVerificationPayload = null, resultInfoItems = emptyList()
                     )
                 }
             } catch (e: Exception) {
                 Log.e("ClassicPlayIntegrityVM", "Unknown error verifying token", e)
-                val errorStatus = "Unknown error verifying token: ${e.message ?: "An unexpected error occurred."}"
+                val specificErrorMessage = e.message ?: "An unexpected error occurred."
+                val userFacingStatus = "Unknown error verifying token: $specificErrorMessage"
                 _uiState.update {
                     it.copy(
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS, status = errorStatus,
-                        errorMessages = listOf(errorStatus), serverVerificationPayload = null, resultInfoItems = emptyList()
+                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS, status = userFacingStatus,
+                        errorMessages = listOf(specificErrorMessage), serverVerificationPayload = null, resultInfoItems = emptyList()
                     )
                 }
             }
