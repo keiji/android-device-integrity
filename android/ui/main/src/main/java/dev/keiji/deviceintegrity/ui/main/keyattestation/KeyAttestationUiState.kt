@@ -13,7 +13,8 @@ data class KeyAttestationUiState(
     val sessionId: String? = null,
     val generatedKeyPairData: KeyPairData? = null,
     val progressValue: Float = PlayIntegrityProgressConstants.NO_PROGRESS,
-    val isEcdhAvailable: Boolean = false
+    val isEcdhAvailable: Boolean = false,
+    val serverPublicKey: String = "" // Added for ECDH server public key
 ) {
     val isSaltOrNonceVisible: Boolean get() = saltOrNonce.isNotEmpty()
     val isChallengeVisible: Boolean get() = challenge.isNotEmpty()

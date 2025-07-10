@@ -8,5 +8,7 @@ data class PrepareAgreementResponse(
     @SerialName("salt")
     val saltBase64UrlEncoded: String,
     @SerialName("challenge")
-    val challengeBase64UrlEncoded: String
+    val challengeBase64UrlEncoded: String,
+    @SerialName("public_key")
+    val publicKeyBase64UrlEncoded: String
 )

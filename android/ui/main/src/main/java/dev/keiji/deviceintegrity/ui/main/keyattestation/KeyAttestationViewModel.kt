@@ -77,6 +77,7 @@ class KeyAttestationViewModel @Inject constructor(
                     selectedKeyType = newKeyType,
                     saltOrNonce = "", // Clear salt/nonce
                     challenge = "",   // Clear challenge
+                    serverPublicKey = "", // Clear server public key
                     generatedKeyPairData = null,
                     infoItems = emptyList(),
                     status = "Key algorithm changed to ${newKeyType.label}. Please fetch new Salt/Nonce and Challenge.",
@@ -120,6 +121,7 @@ class KeyAttestationViewModel @Inject constructor(
                     status = statusMessage,
                     saltOrNonce = "", // Clear previous salt/nonce
                     challenge = "",   // Clear previous challenge
+                    serverPublicKey = "", // Clear previous server public key
                     generatedKeyPairData = null, // Clear previous key data
                     infoItems = emptyList(),    // Clear previous results
                     progressValue = PlayIntegrityProgressConstants.FULL_PROGRESS
@@ -161,6 +163,7 @@ class KeyAttestationViewModel @Inject constructor(
                         it.copy(
                             saltOrNonce = response.saltBase64UrlEncoded, // Store SALT for ECDH
                             challenge = response.challengeBase64UrlEncoded,
+                            serverPublicKey = response.publicKeyBase64UrlEncoded, // Store server public key for ECDH
                             status = successMessage,
                             progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
                         )

@@ -55,11 +55,11 @@ fun KeyAttestationScreen(
     val isHorizontalProgressVisible = uiState.progressValue > PlayIntegrityProgressConstants.NO_PROGRESS && uiState.progressValue < PlayIntegrityProgressConstants.FULL_PROGRESS
 
     val step2Label = when (uiState.selectedKeyType) {
-        CryptoAlgorithm.ECDH -> "Step 2. サーバーからSalt/Challengeを取得"
+        CryptoAlgorithm.ECDH -> "Step 2. サーバーからSalt/Challenge/PublicKeyを取得" // Updated for ECDH
         else -> "Step 2. サーバーからNonce/Challengeを取得"
     }
     val step2ButtonText = when (uiState.selectedKeyType) {
-        CryptoAlgorithm.ECDH -> "Fetch Salt/Challenge"
+        CryptoAlgorithm.ECDH -> "Fetch Salt/Challenge/PublicKey" // Updated for ECDH
         else -> "Fetch Nonce/Challenge"
     }
     val saltOrNonceLabel = when (uiState.selectedKeyType) {

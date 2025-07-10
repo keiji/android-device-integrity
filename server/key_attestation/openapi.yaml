@@ -158,6 +158,7 @@ components:
       required:
         - salt
         - challenge
+        - public_key
       properties:
         salt:
           type: string
@@ -169,6 +170,11 @@ components:
           format: byte
           description: Base64URL-encoded challenge.
           example: "Q2hhbGxlbmdlU3RyaW5nSGVyZQ=="
+        public_key:
+          type: string
+          format: byte
+          description: Base64URL-encoded server public key for ECDH.
+          example: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE..."
     VerifySignatureRequestBody:
       type: object
       required:
