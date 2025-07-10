@@ -84,6 +84,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /v1/prepare/agreement:
+    post:
+      summary: Prepare Key Attestation Agreement
+      description: Generates a salt and challenge for Key Attestation Agreement.
+      operationId: prepareAgreementKeyAttestation
+      tags:
+        - KeyAttestationV1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrepareAgreementRequestBody'
+      responses:
+        '200':
+          description: Successfully generated salt and challenge.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrepareAgreementResponseBody'
+        '400':
+          description: Bad Request (e.g., missing session_id).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   schemas:
     PrepareRequestBody:
@@ -111,6 +144,31 @@ components:
           format: byte
           description: Base64URL-encoded challenge.
           example: "Q2hhbGxlbmdlMTIzNDU2Nzg5MA=="
+    PrepareAgreementRequestBody:
+      type: object
+      required:
+        - session_id
+      properties:
+        session_id:
+          type: string
+          description: Client session ID.
+          example: "session-abcde-67890"
+    PrepareAgreementResponseBody:
+      type: object
+      required:
+        - salt
+        - challenge
+      properties:
+        salt:
+          type: string
+          format: byte
+          description: Base64URL-encoded salt.
+          example: "U2FsdGVkX19Tb21lU2FsdFZhbHVl"
+        challenge:
+          type: string
+          format: byte
+          description: Base64URL-encoded challenge.
+          example: "Q2hhbGxlbmdlU3RyaW5nSGVyZQ=="
     VerifySignatureRequestBody:
       type: object
       required:
