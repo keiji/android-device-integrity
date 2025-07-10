@@ -57,41 +57,71 @@ class KeyAttestationViewModel @Inject constructor(
 
     fun onSelectedKeyTypeChange(newKeyType: CryptoAlgorithm) {
         viewModelScope.launch {
-            uiState.value.generatedKeyPairData?.keyAlias?.let { alias ->
+            // If the key type hasn't actually changed, do nothing.
+            if (newKeyType == _uiState.value.selectedKeyType) {
+                return@launch
+            }
+
+            // Clear existing key pair if it exists
+            _uiState.value.generatedKeyPairData?.keyAlias?.let { alias ->
                 try {
                     keyPairRepository.removeKeyPair(alias)
                 } catch (e: Exception) {
-                    Log.e("KeyAttestationViewModel", "Failed to delete key pair", e)
+                    Log.e("KeyAttestationViewModel", "Failed to delete key pair on key type change", e)
                 }
             }
+
+            // Update UI state: reset relevant fields
             _uiState.update {
                 it.copy(
                     selectedKeyType = newKeyType,
+                    nonceOrSalt = "", // Clear nonce/salt
+                    challenge = "",   // Clear challenge
                     generatedKeyPairData = null,
                     infoItems = emptyList(),
-                    status = "Key algorithm changed. Please generate a new key pair.",
-                    progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                    status = "Key algorithm changed to ${newKeyType.label}. Please fetch new Nonce/Salt and Challenge.",
+                    progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
+                    sessionId = null // Also clear sessionId as it's tied to nonce/challenge
                 )
             }
         }
     }
 
-    fun fetchNonceChallenge() {
+    fun fetchNonceOrSaltChallenge() {
         viewModelScope.launch {
-            uiState.value.generatedKeyPairData?.keyAlias?.let { alias ->
+            // It's good practice to also clear any old keypair data if fetching new nonce/salt/challenge
+            _uiState.value.generatedKeyPairData?.keyAlias?.let { alias ->
                 try {
                     keyPairRepository.removeKeyPair(alias)
                 } catch (e: Exception) {
-                    Log.e("KeyAttestationViewModel", "Failed to delete key pair on fetching nonce", e)
+                    Log.e("KeyAttestationViewModel", "Failed to delete key pair on fetching nonce/salt", e)
                 }
             }
+
+            val statusMessage = when (_uiState.value.selectedKeyType) {
+                CryptoAlgorithm.ECDH -> "Preparing to fetch Salt/Challenge..."
+                else -> "Preparing to fetch Nonce/Challenge..."
+            }
+            val fetchingMessage = when (_uiState.value.selectedKeyType) {
+                CryptoAlgorithm.ECDH -> "Fetching Salt/Challenge..."
+                else -> "Fetching Nonce/Challenge..."
+            }
+            val successMessage = when (_uiState.value.selectedKeyType) {
+                CryptoAlgorithm.ECDH -> "Salt/Challenge fetched successfully."
+                else -> "Nonce/Challenge fetched successfully."
+            }
+            val failureMessagePrefix = when (_uiState.value.selectedKeyType) {
+                CryptoAlgorithm.ECDH -> "Failed to fetch Salt/Challenge"
+                else -> "Failed to fetch Nonce/Challenge"
+            }
+
             _uiState.update {
                 it.copy(
-                    status = "Preparing to fetch Nonce/Challenge...",
-                    nonce = "",
-                    challenge = "",
-                    generatedKeyPairData = null,
-                    infoItems = emptyList(),
+                    status = statusMessage,
+                    nonceOrSalt = "", // Clear previous nonce/salt
+                    challenge = "",   // Clear previous challenge
+                    generatedKeyPairData = null, // Clear previous key data
+                    infoItems = emptyList(),    // Clear previous results
                     progressValue = PlayIntegrityProgressConstants.FULL_PROGRESS
                 )
             }
@@ -115,7 +145,7 @@ class KeyAttestationViewModel @Inject constructor(
 
             _uiState.update {
                 it.copy(
-                    status = "Fetching Nonce/Challenge...",
+                    status = fetchingMessage,
                     progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS
                 )
             }
@@ -123,41 +153,43 @@ class KeyAttestationViewModel @Inject constructor(
             val newSessionId = UUID.randomUUID().toString()
             _uiState.update { it.copy(sessionId = newSessionId) }
 
+            // Assuming PrepareSignatureRequest can be used for both nonce and salt,
+            // or the server differentiates based on other parameters or context.
             val request = PrepareSignatureRequest(sessionId = newSessionId)
             try {
                 val response = keyAttestationRepository.prepareSignature(request)
                 _uiState.update {
                     it.copy(
-                        nonce = response.nonceBase64UrlEncoded,
+                        nonceOrSalt = response.nonceBase64UrlEncoded, // Store the fetched value here
                         challenge = response.challengeBase64UrlEncoded,
-                        status = "Nonce/Challenge fetched successfully.",
+                        status = successMessage,
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
                     )
                 }
             } catch (e: ServerException) {
-                Log.w("KeyAttestationViewModel", "ServerException fetching nonce/challenge", e)
+                Log.w("KeyAttestationViewModel", "ServerException fetching nonce/salt/challenge", e)
                 val message = e.errorMessage ?: e.localizedMessage ?: "Unknown server error"
                 _uiState.update {
                     it.copy(
-                        status = "Failed to fetch Nonce/Challenge: Server Error ${e.errorCode ?: ""}: $message",
+                        status = "$failureMessagePrefix: Server Error ${e.errorCode ?: ""}: $message",
                         sessionId = null,
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
                     )
                 }
             } catch (e: IOException) {
-                Log.w("KeyAttestationViewModel", "IOException fetching nonce/challenge", e)
+                Log.w("KeyAttestationViewModel", "IOException fetching nonce/salt/challenge", e)
                 _uiState.update {
                     it.copy(
-                        status = "Failed to fetch Nonce/Challenge: Network Error: ${e.localizedMessage}",
+                        status = "$failureMessagePrefix: Network Error: ${e.localizedMessage}",
                         sessionId = null,
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
                     )
                 }
             } catch (e: Exception) {
-                Log.e("KeyAttestationViewModel", "Exception fetching nonce/challenge", e)
+                Log.e("KeyAttestationViewModel", "Exception fetching nonce/salt/challenge", e)
                 _uiState.update {
                     it.copy(
-                        status = "Failed to fetch Nonce/Challenge: ${e.localizedMessage}",
+                        status = "$failureMessagePrefix: ${e.localizedMessage}",
                         sessionId = null,
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
                     )
@@ -178,10 +210,17 @@ class KeyAttestationViewModel @Inject constructor(
             }
 
             val currentChallenge = uiState.value.challenge
-            if (currentChallenge.isEmpty()) {
+            val currentNonceOrSalt = uiState.value.nonceOrSalt
+
+            if (currentNonceOrSalt.isEmpty() || currentChallenge.isEmpty()) {
+                val missingItem = if (currentNonceOrSalt.isEmpty()) {
+                    if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) "Salt" else "Nonce"
+                } else {
+                    "Challenge"
+                }
                 _uiState.update {
                     it.copy(
-                        status = "Challenge is not available. Fetch Nonce/Challenge first.",
+                        status = "$missingItem is not available. Fetch $missingItem/Challenge first.",
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
                     )
                 }
@@ -262,12 +301,13 @@ class KeyAttestationViewModel @Inject constructor(
 
             val currentSessionId = uiState.value.sessionId
             val currentKeyPairData = uiState.value.generatedKeyPairData
-            val serverNonceB64Url = uiState.value.nonce
+            val serverNonceOrSaltB64Url = uiState.value.nonceOrSalt // Use nonceOrSalt
 
             if (currentSessionId == null) {
+                val itemToFetch = if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) "Salt/Challenge" else "Nonce/Challenge"
                 _uiState.update {
                     it.copy(
-                        status = "SessionId is missing. Fetch Nonce/Challenge first.",
+                        status = "SessionId is missing. Fetch $itemToFetch first.",
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
                     )
                 }
@@ -283,10 +323,11 @@ class KeyAttestationViewModel @Inject constructor(
                 }
                 return@launch
             }
-            if (serverNonceB64Url.isEmpty()) {
+            if (serverNonceOrSaltB64Url.isEmpty()) {
+                val missingItem = if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) "Salt" else "Nonce"
                 _uiState.update {
                     it.copy(
-                        status = "Server Nonce is missing. Fetch Nonce/Challenge first.",
+                        status = "Server $missingItem is missing. Fetch $missingItem/Challenge first.",
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
                     )
                 }
@@ -295,8 +336,8 @@ class KeyAttestationViewModel @Inject constructor(
 
             val clientNonce = ByteArray(32)
             SecureRandom().nextBytes(clientNonce)
-            val decodedServerNonce = Base64Utils.UrlSafeNoPadding.decode(serverNonceB64Url)
-            val dataToSign = decodedServerNonce + clientNonce
+            val decodedServerNonceOrSalt = Base64Utils.UrlSafeNoPadding.decode(serverNonceOrSaltB64Url) // Use decodedServerNonceOrSalt
+            val dataToSign = decodedServerNonceOrSalt + clientNonce // Use decodedServerNonceOrSalt
             val privateKey = keyPair.private
 
             val selectedSigner = when (uiState.value.selectedKeyType) {
