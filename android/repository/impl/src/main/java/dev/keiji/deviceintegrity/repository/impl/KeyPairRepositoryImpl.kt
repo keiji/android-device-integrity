@@ -157,4 +157,63 @@ class KeyPairRepositoryImpl @Inject constructor(
                 keyPair = generatedKeyPair
             )
         }
+
+    override suspend fun generateEcdhKeyPair(challenge: ByteArray): KeyPairData =
+        withContext(dispatcher) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                throw UnsupportedOperationException("generateEcdhKeyPair with a challenge parameter is not supported before Android S (API 31).")
+            }
+            if (challenge.isEmpty()) {
+                throw IllegalArgumentException("Challenge cannot be empty when calling generateEcdhKeyPair on Android S (API 31) or newer.")
+            }
+
+            val keyStore = getKeyStoreInstance()
+            var localKeyAlias: String
+            while (true) {
+                localKeyAlias = UUID.randomUUID().toString()
+                if (!keyStore.containsAlias(localKeyAlias)) {
+                    break
+                }
+                Log.w(TAG, "ECDH Key alias collision detected for: $localKeyAlias. Retrying...")
+            }
+
+            val keyPairGenerator = KeyPairGenerator.getInstance(
+                KeyProperties.KEY_ALGORITHM_EC,
+                ANDROID_KEY_STORE_PROVIDER
+            )
+
+            val specBuilder = KeyGenParameterSpec.Builder(
+                localKeyAlias,
+                KeyProperties.PURPOSE_AGREE_KEY
+            )
+                .setDigests(KeyProperties.DIGEST_SHA256)
+                .setKeySize(EC_KEY_SIZE)
+                .setAttestationChallenge(challenge)
+
+            // TODO: If device has StrongBox, it should be preferred.
+            // if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            //     specBuilder.setIsStrongBoxBacked(true)
+            // }
+
+            keyPairGenerator.initialize(specBuilder.build())
+            val generatedKeyPair = keyPairGenerator.generateKeyPair()
+
+            val certificateChain = keyStore.getCertificateChain(localKeyAlias)
+            if (certificateChain == null || certificateChain.isEmpty()) {
+                try { keyStore.deleteEntry(localKeyAlias) } catch (e: Exception) { Log.e(TAG, "Failed to cleanup orphaned ECDH key: $localKeyAlias", e) }
+                throw IllegalStateException("Failed to retrieve ECDH certificate chain for alias: $localKeyAlias")
+            }
+
+            val x509Certificates = certificateChain.mapNotNull { it as? X509Certificate }.toTypedArray()
+            if (x509Certificates.size != certificateChain.size || x509Certificates.isEmpty()) {
+                 try { keyStore.deleteEntry(localKeyAlias) } catch (e: Exception) { Log.e(TAG, "Failed to cleanup ECDH key due to cert issue: $localKeyAlias", e) }
+                throw IllegalStateException("ECDH Certificate chain contained non-X509 or empty certificates for alias: $localKeyAlias")
+            }
+
+            return@withContext KeyPairData(
+                keyAlias = localKeyAlias,
+                certificates = x509Certificates,
+                keyPair = generatedKeyPair
+            )
+        }
 }

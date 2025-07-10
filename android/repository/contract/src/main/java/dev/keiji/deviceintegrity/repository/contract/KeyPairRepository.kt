@@ -7,4 +7,5 @@ interface KeyPairRepository {
     suspend fun removeKeyPair(alias: String)
     suspend fun generateEcKeyPair(challenge: ByteArray): KeyPairData
     suspend fun generateRsaKeyPair(challenge: ByteArray): KeyPairData
+    suspend fun generateEcdhKeyPair(challenge: ByteArray): KeyPairData
 }

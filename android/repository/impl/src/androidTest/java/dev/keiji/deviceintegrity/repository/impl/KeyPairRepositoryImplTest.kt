@@ -343,4 +343,75 @@ class KeyPairRepositoryImplTest {
                 exceptionThrown
             )
         }
+
+    @Test
+    fun generateEcdhKeyPair_successfullyGeneratesKey_andReturnsKeyPairDataWithCertificates() =
+        runTest(testScheduler) {
+            val challenge = "test_challenge_instrumentation_ecdh".toByteArray()
+
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                println("Skipping generateEcdhKeyPair_successfullyGeneratesKey test on pre-S SDK (${Build.VERSION.SDK_INT}) as it requires API 31+.")
+                return@runTest
+            }
+
+            val result = keyPairRepository.generateEcdhKeyPair(challenge)
+
+            assertNotNull(result)
+            assertTrue(result.keyAlias.isNotEmpty())
+            assertNotNull(result.certificates)
+            assertTrue(result.certificates.isNotEmpty())
+            assertTrue(keyStore.containsAlias(result.keyAlias))
+            assertEquals(
+                result.certificates[0].publicKey.encoded.toHexString(),
+                keyStore.getCertificate(result.keyAlias).publicKey.encoded.toHexString()
+            )
+
+            if (keyStore.containsAlias(result.keyAlias)) {
+                keyStore.deleteEntry(result.keyAlias)
+            }
+        }
+
+    @Test
+    fun generateEcdhKeyPair_throwsUnsupportedOperationException_onPreSSDK_whenChallengeProvided() =
+        runTest(testScheduler) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                println("Skipping generateEcdhKeyPair_throwsUnsupportedOperationException_onPreSSDK test on S+ SDK (${Build.VERSION.SDK_INT}).")
+                return@runTest
+            }
+
+            val challenge = "test_challenge_pre_S_ecdh".toByteArray()
+            var exceptionThrown = false
+            try {
+                keyPairRepository.generateEcdhKeyPair(challenge)
+            } catch (e: UnsupportedOperationException) {
+                exceptionThrown = true
+                assertTrue(e.message?.contains("not supported before Android S") == true)
+            }
+            assertTrue(
+                "UnsupportedOperationException was expected but not thrown on SDK ${Build.VERSION.SDK_INT}.",
+                exceptionThrown
+            )
+        }
+
+    @Test
+    fun generateEcdhKeyPair_throwsIllegalArgumentException_onSPlusSDK_whenChallengeIsEmpty() =
+        runTest(testScheduler) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                println("Skipping generateEcdhKeyPair_throwsIllegalArgumentException_onSPlusSDK test on pre-S SDK (${Build.VERSION.SDK_INT}).")
+                return@runTest
+            }
+
+            val emptyChallenge = byteArrayOf()
+            var exceptionThrown = false
+            try {
+                keyPairRepository.generateEcdhKeyPair(emptyChallenge)
+            } catch (e: IllegalArgumentException) {
+                exceptionThrown = true
+                assertTrue(e.message?.contains("Challenge cannot be empty") == true)
+            }
+            assertTrue(
+                "IllegalArgumentException was expected but not thrown on SDK ${Build.VERSION.SDK_INT}.",
+                exceptionThrown
+            )
+        }
 }
