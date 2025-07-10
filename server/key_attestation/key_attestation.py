@@ -29,7 +29,7 @@ except Exception as e:
     datastore_client = None
 
 # Datastore Kind for Key Attestation Sessions
-KEY_ATTESTATION_SESSION_KIND = "KeyAttestationSession"
+KEY_ATTESTATION_SESSION_KIND = "SignatureKeyAttestationSession"
 KEY_ATTESTATION_RESULT_KIND = "KeyAttestationResult" # New Datastore Kind
 NONCE_EXPIRY_MINUTES = 10 # Renamed from SESSION_EXPIRY_MINUTES
 
