@@ -46,7 +46,7 @@ class KeyAttestationViewModel @Inject constructor(
     @RSA private val rsaSigner: Signer
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(KeyAttestationUiState())
+    private val _uiState = MutableStateFlow(KeyAttestationUiState(isEcdhAvailable = deviceInfoProvider.isEcdhKeyAttestationAvailable))
     val uiState: StateFlow<KeyAttestationUiState> = _uiState.asStateFlow()
 
     private val _shareEventChannel = Channel<String>()
@@ -197,7 +197,12 @@ class KeyAttestationViewModel @Inject constructor(
                     when (uiState.value.selectedKeyType) {
                         CryptoAlgorithm.RSA -> keyPairRepository.generateRsaKeyPair(decodedChallenge)
                         CryptoAlgorithm.EC -> keyPairRepository.generateEcKeyPair(decodedChallenge)
-                        CryptoAlgorithm.ECDH -> throw UnsupportedOperationException("ECDH key generation is not yet implemented.")
+                        CryptoAlgorithm.ECDH -> {
+                            if (!deviceInfoProvider.isEcdhKeyAttestationAvailable) {
+                                throw UnsupportedOperationException("このデバイスのAndroidのバージョンは構成証明付きのECDH鍵ペアに対応していません")
+                            }
+                            keyPairRepository.generateEcdhKeyPair(decodedChallenge)
+                        }
                     }
                 }
 

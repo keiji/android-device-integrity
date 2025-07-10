@@ -122,7 +122,8 @@ fun KeyAttestationScreen(
                                 onSelectedKeyTypeChange(algorithm)
                                 keyTypeExpanded = false
                             },
-                            enabled = uiState.isStep2KeySelectionEnabled
+                            enabled = uiState.isStep2KeySelectionEnabled &&
+                                    !(algorithm == CryptoAlgorithm.ECDH && !uiState.isEcdhAvailable)
                         )
                     }
                 }
