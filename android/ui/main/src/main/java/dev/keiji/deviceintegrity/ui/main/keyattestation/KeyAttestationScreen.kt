@@ -129,7 +129,7 @@ fun KeyAttestationScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(ButtonHeight),
-            enabled = uiState.isStep2FetchSaltOrNonceChallengeEnabled // Use new UiState property
+            enabled = uiState.isStep2FetchNonceOrSaltChallengeEnabled // Use new UiState property - Renamed
         ) {
             Text(text = step2ButtonText)
         }
