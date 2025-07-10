@@ -12,7 +12,8 @@ data class KeyAttestationUiState(
     val infoItems: List<InfoItem> = emptyList(), // Renamed field for structured results
     val sessionId: String? = null,
     val generatedKeyPairData: KeyPairData? = null,
-    val progressValue: Float = PlayIntegrityProgressConstants.NO_PROGRESS
+    val progressValue: Float = PlayIntegrityProgressConstants.NO_PROGRESS,
+    val isEcdhAvailable: Boolean = false
 ) {
     val isNonceVisible: Boolean get() = nonce.isNotEmpty()
     val isChallengeVisible: Boolean get() = challenge.isNotEmpty()

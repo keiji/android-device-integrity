@@ -16,7 +16,6 @@ import dev.keiji.deviceintegrity.repository.contract.KeyPairRepository
 import dev.keiji.deviceintegrity.repository.contract.KeyAttestationRepository
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
 import dev.keiji.deviceintegrity.ui.main.InfoItem
-import android.os.Build
 import dev.keiji.deviceintegrity.ui.main.common.KEY_ATTESTATION_DELAY_MS
 import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityProgressConstants
 import dev.keiji.deviceintegrity.ui.main.util.Base64Utils
@@ -47,7 +46,7 @@ class KeyAttestationViewModel @Inject constructor(
     @RSA private val rsaSigner: Signer
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(KeyAttestationUiState())
+    private val _uiState = MutableStateFlow(KeyAttestationUiState(isEcdhAvailable = deviceInfoProvider.isEcdhKeyAttestationAvailable))
     val uiState: StateFlow<KeyAttestationUiState> = _uiState.asStateFlow()
 
     private val _shareEventChannel = Channel<String>()
@@ -199,7 +198,7 @@ class KeyAttestationViewModel @Inject constructor(
                         CryptoAlgorithm.RSA -> keyPairRepository.generateRsaKeyPair(decodedChallenge)
                         CryptoAlgorithm.EC -> keyPairRepository.generateEcKeyPair(decodedChallenge)
                         CryptoAlgorithm.ECDH -> {
-                            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                            if (!deviceInfoProvider.isEcdhKeyAttestationAvailable) {
                                 throw UnsupportedOperationException("このデバイスのAndroidのバージョンは構成証明付きのECDH鍵ペアに対応していません")
                             }
                             keyPairRepository.generateEcdhKeyPair(decodedChallenge)

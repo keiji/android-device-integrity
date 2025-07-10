@@ -22,4 +22,6 @@ interface DeviceInfoProvider {
     val FINGERPRINT: String
     val TIME: Long
     val SECURITY_PATCH: String
+
+    val isEcdhKeyAttestationAvailable: Boolean
 }
