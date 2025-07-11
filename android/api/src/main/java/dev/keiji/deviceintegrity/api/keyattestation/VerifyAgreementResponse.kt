@@ -13,4 +13,13 @@ data class VerifyAgreementResponse(
 
     @SerialName("reason")
     val reason: String? = null,
+
+    @SerialName("attestation_info")
+    val attestationInfo: AttestationInfo? = null,
+
+    @SerialName("device_info")
+    val deviceInfo: dev.keiji.deviceintegrity.api.DeviceInfo? = null,
+
+    @SerialName("security_info")
+    val securityInfo: dev.keiji.deviceintegrity.api.SecurityInfo? = null,
 )
