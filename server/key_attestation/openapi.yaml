@@ -243,7 +243,7 @@ components:
           type: string
           format: byte # Base64URL encoded, no padding
           description: Base64URL-encoded (no padding) encrypted data.
-          example: "dGVzdA" # "test"
+          example: "SGVsbG8gV29ybGQ=" # "Hello World"
         client_public_key:
           type: string
           format: base64 # Standard Base64 encoded
