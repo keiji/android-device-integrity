@@ -274,13 +274,10 @@ components:
           example: "Key agreement verified successfully (mock)."
         attestation_info:
           $ref: '#/components/schemas/AttestationInfo'
-          nullable: true # Explicitly marking as nullable
         device_info:
           $ref: '#/components/schemas/DeviceInfo'
-          nullable: true # Explicitly marking as nullable
         security_info:
           $ref: '#/components/schemas/SecurityInfo'
-          nullable: true # Explicitly marking as nullable
     VerifySignatureResponseBody:
       type: object
       required:
