@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.keiji.deviceintegrity.R
+import dev.keiji.deviceintegrity.ui.main.R // Corrected import
 
 @Composable
 fun DeviceIntegrityResults(
