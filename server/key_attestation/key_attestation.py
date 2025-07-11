@@ -1067,36 +1067,75 @@ def verify_agreement_attestation():
             store_key_attestation_result(session_id, 'failed', 'Agreement Session ID not found, expired, or invalid.', payload_data_json_str, '{}')
             return jsonify({'error': 'Agreement Session ID not found, expired, or invalid.'}), 403
 
+        # Mocked AttestationInfo structure
+        mock_attestation_info = {
+            "attestation_version": 0, # Mock value
+            "attestation_security_level": 0, # Mock value (e.g., TEE)
+            "keymint_version": 0, # Mock value
+            "keymint_security_level": 0, # Mock value
+            "attestation_challenge": base64url_encode(b"mock_agreement_challenge"), # Mock challenge
+            "software_enforced_properties": {}, # Empty for mock agreement
+            "hardware_enforced_properties": {}  # Empty for mock agreement
+        }
+
+        # Use device_info and security_info from request, or provide defaults
+        final_device_info = device_info_from_request if device_info_from_request else {
+            "brand": "MockBrand", "model": "MockModel", "device": "MockDevice", "product": "MockProduct",
+            "manufacturer": "MockManufacturer", "hardware": "MockHardware", "board": "MockBoard",
+            "bootloader": "MockBootloader", "version_release": "0", "sdk_int": 0,
+            "fingerprint": "MockFingerprint", "security_patch": "1970-01-01"
+        }
+        final_security_info = security_info_from_request if security_info_from_request else {
+            "is_device_lock_enabled": False, "is_biometrics_enabled": False,
+            "has_class_3_authenticator": False, "has_strongbox": False
+        }
+
         final_response = {
-            'session_id': session_id,
-            'is_verified': True,
-            'reason': 'Key agreement verified successfully (mock).'
+            "session_id": session_id,
+            "is_verified": True, # Mock success
+            "reason": "Key agreement verified successfully (mock).",
+            "attestation_info": mock_attestation_info,
+            "device_info": final_device_info,
+            "security_info": final_security_info
         }
 
-        mock_internal_verification_details = {
-            'verification_type': 'agreement_mock',
-            'client_public_key_provided': bool(client_public_key_b64),
-            'encrypted_data_provided': bool(encrypted_data_b64url)
+        # Storing result in Datastore
+        # The attestation_data part can include the mocked attestation_info for consistency
+        attestation_data_for_datastore = {
+            "attestation_info": mock_attestation_info,
+            "verification_type": "agreement_mock",
+            "client_public_key_provided": bool(client_public_key_b64),
+            "encrypted_data_provided": bool(encrypted_data_b64url)
         }
-        attestation_data_json_str_success = json.dumps(mock_internal_verification_details)
+        attestation_data_json_str_success = json.dumps(attestation_data_for_datastore)
 
-        store_key_attestation_result(session_id, 'verified_agreement_mock', final_response['reason'], payload_data_json_str, attestation_data_json_str_success)
+        store_key_attestation_result(
+            session_id,
+            "verified_agreement_mock",
+            final_response["reason"],
+            payload_data_json_str, # Contains original device_info, security_info from request
+            attestation_data_json_str_success
+        )
         delete_agreement_key_attestation_session(session_id)
 
         logger.info(f'Successfully verified Key Attestation Agreement (mock) for session_id: {session_id}')
         return jsonify(final_response), 200
     except ValueError as e:
-        current_session_id = locals().get('session_id', 'unknown_session_agreement_value_error')
-        payload_str = locals().get('payload_data_json_str', '{}')
-        logger.warning(f'ValueError in /verify/agreement for session {current_session_id}: {e}')
-        store_key_attestation_result(current_session_id, 'failed', str(e), payload_str, '{}')
-        return jsonify({'error': str(e)}), 400
+        current_session_id = locals().get("session_id", "unknown_session_agreement_value_error")
+        payload_str = locals().get("payload_data_json_str", "{}")
+        # Include empty attestation_info in error case if schema expects it
+        att_props_str = json.dumps({"attestation_info": {}})
+        logger.warning(f"ValueError in /verify/agreement for session {current_session_id}: {e}")
+        store_key_attestation_result(current_session_id, "failed", str(e), payload_str, att_props_str)
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
-        current_session_id = locals().get('session_id', 'unknown_session_agreement_exception')
-        payload_str = locals().get('payload_data_json_str', '{}')
-        logger.error(f'Error in /verify/agreement endpoint for session {current_session_id}: {e}', exc_info=True)
-        store_key_attestation_result(current_session_id, 'failed', 'An unexpected error occurred during agreement verification.', payload_str, '{}')
-        return jsonify({'error': 'An unexpected error occurred'}), 500
+        current_session_id = locals().get("session_id", "unknown_session_agreement_exception")
+        payload_str = locals().get("payload_data_json_str", "{}")
+        # Include empty attestation_info in error case if schema expects it
+        att_props_str = json.dumps({"attestation_info": {}})
+        logger.error(f"Error in /verify/agreement endpoint for session {current_session_id}: {e}", exc_info=True)
+        store_key_attestation_result(current_session_id, "failed", "An unexpected error occurred during agreement verification.", payload_str, att_props_str)
+        return jsonify({"error": "An unexpected error occurred"}), 500
 
 if __name__ == '__main__':
     # This is used when running locally only.
