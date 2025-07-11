@@ -26,12 +26,14 @@ import androidx.compose.ui.res.painterResource // Added
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.keiji.deviceintegrity.ui.main.R // Import for R.drawable
+import dev.keiji.deviceintegrity.ui.main.playintegrity.DeviceIntegrityResults
 
 @Composable
 fun InfoItemContent(
     status: String,
     isVerifiedSuccessfully: Boolean,
     infoItems: List<InfoItem>,
+    deviceRecognitionVerdict: List<String> = emptyList(), // Added parameter
     onCopyClick: () -> Unit,
     onShareClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -47,6 +49,11 @@ fun InfoItemContent(
             },
             style = MaterialTheme.typography.titleMedium
         )
+
+        // Display DeviceIntegrityResults if the verdict is not empty
+        if (deviceRecognitionVerdict.isNotEmpty()) {
+            DeviceIntegrityResults(deviceRecognitionVerdict = deviceRecognitionVerdict)
+        }
 
         if (infoItems.isNotEmpty()) {
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
