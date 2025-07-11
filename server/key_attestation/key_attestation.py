@@ -22,7 +22,6 @@ from .datastore_utils import (
     get_key_attestation_session as get_ds_key_attestation_session, # Renamed to avoid conflict
     get_agreement_key_attestation_session as get_ds_agreement_key_attestation_session, # Renamed
     delete_key_attestation_session as delete_ds_key_attestation_session, # Renamed
-    delete_agreement_key_attestation_session as delete_ds_agreement_key_attestation_session, # Renamed
     store_key_attestation_result as store_ds_key_attestation_result, # Renamed
     KEY_ATTESTATION_SESSION_KIND, # Import kind for deletion logic
     AGREEMENT_KEY_ATTESTATION_SESSION_KIND # Import kind for deletion logic
@@ -77,7 +76,7 @@ def prepare_signature_attestation():
         challenge_encoded = base64url_encode(challenge_bytes)
 
         try:
-            store_key_attestation_session(session_id, nonce_encoded, challenge_encoded)
+            store_key_attestation_session(datastore_client, session_id, nonce_encoded, challenge_encoded)
         except ConnectionError as e: # Catch if datastore_client was None during helper call
              logger.error(f'Datastore connection error during store_key_attestation_session: {e}')
              return jsonify({'error': 'Failed to store session due to datastore connectivity'}), 503
@@ -137,7 +136,7 @@ def prepare_agreement_attestation():
         private_key_encoded = base64url_encode(private_key_bytes)
 
         try:
-            store_agreement_key_attestation_session(session_id, salt_encoded, challenge_encoded, public_key_encoded, private_key_encoded)
+            store_agreement_key_attestation_session(datastore_client, session_id, salt_encoded, challenge_encoded, public_key_encoded, private_key_encoded)
         except ConnectionError as e:
              logger.error(f'Datastore connection error during store_agreement_key_attestation_session: {e}')
              return jsonify({'error': 'Failed to store session due to datastore connectivity'}), 503
@@ -167,7 +166,7 @@ def verify_signature_attestation():
         data = request.get_json()
         if not data:
             logger.warning('Verify Signature request missing JSON payload.')
-            store_key_attestation_result('unknown_session', 'failed', 'Missing JSON payload', '{}', '{}')
+            store_ds_key_attestation_result(datastore_client, 'unknown_session', 'failed', 'Missing JSON payload', '{}', '{}')
             return jsonify({'error': 'Missing JSON payload'}), 400
 
         session_id = data.get('session_id')
@@ -185,12 +184,12 @@ def verify_signature_attestation():
 
         if not session_id:
             logger.warning('Verify Signature request missing session_id.')
-            store_key_attestation_result('missing_session_id', 'failed', 'Missing session_id in request', payload_data_json_str, '{}')
+            store_ds_key_attestation_result(datastore_client, 'missing_session_id', 'failed', 'Missing session_id in request', payload_data_json_str, '{}')
             return jsonify({'error': 'Missing \'session_id\''}), 400
 
         if not all([signature_b64, client_nonce_b64, certificate_chain_b64]):
             logger.warning(f'Verify Signature request for session \'{session_id}\' missing one or more required fields (signature, client_nonce, certificate_chain).')
-            store_key_attestation_result(session_id, 'failed', 'Missing one or more required fields: signature, client_nonce, certificate_chain', payload_data_json_str, '{}')
+            store_ds_key_attestation_result(datastore_client, session_id, 'failed', 'Missing one or more required fields: signature, client_nonce, certificate_chain', payload_data_json_str, '{}')
             return jsonify({'error': 'Missing one or more required fields: signature, client_nonce, certificate_chain'}), 400
 
         if not isinstance(session_id, str) or \
@@ -199,17 +198,17 @@ def verify_signature_attestation():
            not isinstance(certificate_chain_b64, list) or \
            not all(isinstance(cert, str) for cert in certificate_chain_b64):
             logger.warning(f'Verify Signature request for session \'{session_id}\' has type mismatch for one or more fields.')
-            store_key_attestation_result(session_id, 'failed', 'Type mismatch for one or more fields.', payload_data_json_str, '{}')
+            store_ds_key_attestation_result(datastore_client, session_id, 'failed', 'Type mismatch for one or more fields.', payload_data_json_str, '{}')
             return jsonify({'error': 'Type mismatch for one or more fields. Ensure session_id, signature, client_nonce are strings and certificate_chain is a list of strings.'}), 400
 
         if not datastore_client:
             logger.error('Datastore client not available for /verify/signature endpoint.')
             return jsonify({'error': 'Datastore service not available'}), 503
 
-        session_entity = get_key_attestation_session(session_id)
+        session_entity = get_ds_key_attestation_session(datastore_client, session_id)
         if not session_entity:
             logger.warning(f'Session ID \'{session_id}\' not found, expired, or invalid.')
-            store_key_attestation_result(session_id, 'failed', 'Session ID not found, expired, or invalid.', payload_data_json_str, '{}')
+            store_ds_key_attestation_result(datastore_client, session_id, 'failed', 'Session ID not found, expired, or invalid.', payload_data_json_str, '{}')
             return jsonify({'error': 'Session ID not found, expired, or invalid.'}), 403
 
         nonce_from_store_b64 = session_entity.get('nonce')
@@ -217,7 +216,7 @@ def verify_signature_attestation():
 
         if not nonce_from_store_b64 or not challenge_from_store_b64:
             logger.error(f'Session \'{session_id}\' is missing nonce or challenge in Datastore.')
-            store_key_attestation_result(session_id, 'failed', 'Corrupted session data in Datastore.', payload_data_json_str, '{}')
+            store_ds_key_attestation_result(datastore_client, session_id, 'failed', 'Corrupted session data in Datastore.', payload_data_json_str, '{}')
             return jsonify({'error': 'Corrupted session data.'}), 500
 
         logger.info(f'Session validation successful for session_id: {session_id}')
@@ -228,8 +227,8 @@ def verify_signature_attestation():
             logger.info(f'Successfully decoded certificate chain for session_id: {session_id}. Chain length: {len(certificates)}')
         except ValueError as e:
             logger.warning(f'Failed to decode certificate chain for session {session_id}: {e}')
-            store_key_attestation_result(session_id, 'failed', f'Invalid certificate chain: {e}', payload_data_json_str, '{}')
-            delete_key_attestation_session(session_id)
+            store_ds_key_attestation_result(datastore_client, session_id, 'failed', f'Invalid certificate chain: {e}', payload_data_json_str, '{}')
+            delete_ds_key_attestation_session(datastore_client, session_id, KEY_ATTESTATION_SESSION_KIND)
             return jsonify({'error': f'Invalid certificate chain: {e}'}), 400
 
         try:
@@ -237,8 +236,8 @@ def verify_signature_attestation():
             logger.info(f'Attestation signature validated successfully for session_id: {session_id}')
         except ValueError as e:
             logger.warning(f'Attestation signature validation failed for session {session_id}: {e}')
-            store_key_attestation_result(session_id, 'failed', f'Attestation signature validation failed: {e}', payload_data_json_str, '{}')
-            delete_key_attestation_session(session_id)
+            store_ds_key_attestation_result(datastore_client, session_id, 'failed', f'Attestation signature validation failed: {e}', payload_data_json_str, '{}')
+            delete_ds_key_attestation_session(datastore_client, session_id, KEY_ATTESTATION_SESSION_KIND)
             return jsonify({'error': f'Attestation signature validation failed: {e}'}), 400
 
         try:
@@ -246,8 +245,8 @@ def verify_signature_attestation():
             logger.info(f'Certificate chain verified successfully for session_id: {session_id}')
         except ValueError as e:
             logger.warning(f'Certificate chain verification failed for session {session_id}: {e}')
-            store_key_attestation_result(session_id, 'failed', f'Certificate chain verification failed: {e}', payload_data_json_str, '{}')
-            delete_key_attestation_session(session_id)
+            store_ds_key_attestation_result(datastore_client, session_id, 'failed', f'Certificate chain verification failed: {e}', payload_data_json_str, '{}')
+            delete_ds_key_attestation_session(datastore_client, session_id, KEY_ATTESTATION_SESSION_KIND)
             return jsonify({'error': f'Certificate chain verification failed: {e}'}), 400
 
         try:
@@ -256,14 +255,14 @@ def verify_signature_attestation():
                 logger.warning(f'Failed to parse attestation extension or missing challenge for session {session_id}.')
                 sanitized_att_props = convert_bytes_to_hex_str(attestation_properties or {})
                 attestation_data_json_str = json.dumps(sanitized_att_props)
-                store_key_attestation_result(session_id, 'failed', 'Failed to parse key attestation extension or attestation challenge not found.', payload_data_json_str, attestation_data_json_str)
+                store_ds_key_attestation_result(datastore_client, session_id, 'failed', 'Failed to parse key attestation extension or attestation challenge not found.', payload_data_json_str, attestation_data_json_str)
                 return jsonify({'error': 'Failed to parse key attestation extension or attestation challenge not found.'}), 400
             logger.info(f'Successfully parsed attestation extension for session_id: {session_id}. Version: {attestation_properties.get("attestation_version")}')
         except ValueError as e:
             logger.warning(f'ASN.1 parsing of attestation extension failed for session {session_id}: {e}')
             sanitized_att_props = convert_bytes_to_hex_str(attestation_properties or {})
             attestation_data_json_str = json.dumps(sanitized_att_props)
-            store_key_attestation_result(session_id, 'failed', f'ASN.1 parsing failed: {e}', payload_data_json_str, attestation_data_json_str)
+            store_ds_key_attestation_result(datastore_client, session_id, 'failed', f'ASN.1 parsing failed: {e}', payload_data_json_str, attestation_data_json_str)
             return jsonify({'error': f'ASN.1 parsing failed: {e}'}), 400
 
         sanitized_att_props_for_error = convert_bytes_to_hex_str(attestation_properties or {})
@@ -273,7 +272,7 @@ def verify_signature_attestation():
             challenge_from_store_bytes = base64url_decode(challenge_from_store_b64)
         except Exception as e:
             logger.error(f'Failed to base64url_decode challenge_from_store_b64 for session {session_id}: {e}')
-            store_key_attestation_result(session_id, 'failed', 'Internal server error: Could not decode stored challenge.', payload_data_json_str, attestation_data_json_str_for_error)
+            store_ds_key_attestation_result(datastore_client, session_id, 'failed', 'Internal server error: Could not decode stored challenge.', payload_data_json_str, attestation_data_json_str_for_error)
             return jsonify({'error': 'Internal server error: Could not decode stored challenge.'}), 500
 
         client_attestation_challenge_bytes = attestation_properties.get('attestation_challenge')
@@ -281,8 +280,8 @@ def verify_signature_attestation():
         if not client_attestation_challenge_bytes or \
            not hmac.compare_digest(challenge_from_store_bytes, client_attestation_challenge_bytes):
             logger.warning(f'Challenge mismatch for session {session_id}. Store (bytes_hex): \'{challenge_from_store_bytes.hex()}\', Cert (bytes_hex): \'{client_attestation_challenge_bytes.hex() if client_attestation_challenge_bytes else "None"}\'')
-            store_key_attestation_result(session_id, 'failed', 'Attestation challenge mismatch.', payload_data_json_str, attestation_data_json_str_for_error)
-            delete_key_attestation_session(session_id)
+            store_ds_key_attestation_result(datastore_client, session_id, 'failed', 'Attestation challenge mismatch.', payload_data_json_str, attestation_data_json_str_for_error)
+            delete_ds_key_attestation_session(datastore_client, session_id, KEY_ATTESTATION_SESSION_KIND)
             return jsonify({'error': 'Attestation challenge mismatch.'}), 400
 
         logger.info(f'Attestation challenge matched successfully for session_id: {session_id}')
@@ -311,8 +310,8 @@ def verify_signature_attestation():
         attestation_data_for_datastore = {'attestation_info': final_response['attestation_info']}
         attestation_data_json_str_success = json.dumps(attestation_data_for_datastore)
 
-        store_key_attestation_result(session_id, 'verified', final_response['reason'], payload_data_json_str, attestation_data_json_str_success)
-        delete_key_attestation_session(session_id)
+        store_ds_key_attestation_result(datastore_client, session_id, 'verified', final_response['reason'], payload_data_json_str, attestation_data_json_str_success)
+        delete_ds_key_attestation_session(datastore_client, session_id, KEY_ATTESTATION_SESSION_KIND)
 
         logger.info(f'Successfully verified Key Attestation Signature for session_id: {session_id}')
         return jsonify(final_response), 200
@@ -323,7 +322,7 @@ def verify_signature_attestation():
         sanitized_att_props = convert_bytes_to_hex_str(raw_att_props)
         att_props_str = json.dumps(sanitized_att_props)
         logger.warning(f'ValueError in /verify/signature for session {current_session_id}: {e}')
-        store_key_attestation_result(current_session_id, 'failed', str(e), payload_str, att_props_str)
+        store_ds_key_attestation_result(datastore_client, current_session_id, 'failed', str(e), payload_str, att_props_str)
         return jsonify({'error': str(e)}), 400
     except Exception as e:
         current_session_id = locals().get('session_id', 'unknown_session_exception')
@@ -332,7 +331,7 @@ def verify_signature_attestation():
         sanitized_att_props = convert_bytes_to_hex_str(raw_att_props)
         att_props_str = json.dumps(sanitized_att_props)
         logger.error(f'Error in /verify/signature endpoint for session {current_session_id}: {e}', exc_info=True)
-        store_key_attestation_result(current_session_id, 'failed', 'An unexpected error occurred.', payload_str, att_props_str)
+        store_ds_key_attestation_result(datastore_client, current_session_id, 'failed', 'An unexpected error occurred.', payload_str, att_props_str)
         return jsonify({'error': 'An unexpected error occurred'}), 500
 
 @app.route('/v1/verify/agreement', methods=['POST'])
@@ -356,7 +355,7 @@ def verify_agreement_attestation():
         data = request.get_json()
         if not data:
             logger.warning('Verify Agreement request missing JSON payload.')
-            store_key_attestation_result('unknown_session_agreement', 'failed', 'Missing JSON payload for agreement', '{}', '{}')
+            store_ds_key_attestation_result(datastore_client, 'unknown_session_agreement', 'failed', 'Missing JSON payload for agreement', '{}', '{}')
             return jsonify({'error': 'Missing JSON payload'}), 400
 
         session_id = data.get('session_id')
@@ -375,19 +374,19 @@ def verify_agreement_attestation():
 
         if not session_id:
             logger.warning('Verify Agreement request missing session_id.')
-            store_key_attestation_result('missing_session_id_agreement', 'failed', 'Missing session_id in agreement request', payload_data_json_str, '{}')
+            store_ds_key_attestation_result(datastore_client, 'missing_session_id_agreement', 'failed', 'Missing session_id in agreement request', payload_data_json_str, '{}')
             return jsonify({'error': 'Missing \'session_id\''}), 400
 
         if not all([encrypted_data_b64url, client_public_key_b64]):
             logger.warning(f'Verify Agreement request for session \'{session_id}\' missing encrypted_data or client_public_key.')
-            store_key_attestation_result(session_id, 'failed', 'Missing encrypted_data or client_public_key for agreement', payload_data_json_str, '{}')
+            store_ds_key_attestation_result(datastore_client, session_id, 'failed', 'Missing encrypted_data or client_public_key for agreement', payload_data_json_str, '{}')
             return jsonify({'error': 'Missing \'encrypted_data\' or \'client_public_key\''}), 400
 
         if not isinstance(session_id, str) or \
            not isinstance(encrypted_data_b64url, str) or \
            not isinstance(client_public_key_b64, str):
             logger.warning(f'Verify Agreement request for session \'{session_id}\' has type mismatch.')
-            store_key_attestation_result(session_id, 'failed', 'Type mismatch in agreement request fields.', payload_data_json_str, '{}')
+            store_ds_key_attestation_result(datastore_client, session_id, 'failed', 'Type mismatch in agreement request fields.', payload_data_json_str, '{}')
             return jsonify({'error': 'Type mismatch for one or more fields.'}), 400
 
         if not datastore_client:
@@ -406,10 +405,10 @@ def verify_agreement_attestation():
         # 8. Verify the decrypted data (e.g., by checking a MAC or expected structure).
         # 9. For this mock, we'll just check if the session exists and then return a mock success.
 
-        agreement_session_entity = get_agreement_key_attestation_session(session_id)
+        agreement_session_entity = get_ds_agreement_key_attestation_session(datastore_client, session_id)
         if not agreement_session_entity:
             logger.warning(f'Agreement Session ID \'{session_id}\' not found, expired, or invalid for verify/agreement.')
-            store_key_attestation_result(session_id, 'failed', 'Agreement Session ID not found, expired, or invalid.', payload_data_json_str, '{}')
+            store_ds_key_attestation_result(datastore_client, session_id, 'failed', 'Agreement Session ID not found, expired, or invalid.', payload_data_json_str, '{}')
             return jsonify({'error': 'Agreement Session ID not found, expired, or invalid.'}), 403
 
         # Mocked AttestationInfo structure
@@ -454,14 +453,15 @@ def verify_agreement_attestation():
         }
         attestation_data_json_str_success = json.dumps(attestation_data_for_datastore)
 
-        store_key_attestation_result(
+        store_ds_key_attestation_result(
+            datastore_client,
             session_id,
             "verified_agreement_mock",
             final_response["reason"],
             payload_data_json_str, # Contains original device_info, security_info from request
             attestation_data_json_str_success
         )
-        delete_agreement_key_attestation_session(session_id)
+        delete_ds_key_attestation_session(datastore_client, session_id, AGREEMENT_KEY_ATTESTATION_SESSION_KIND)
 
         logger.info(f'Successfully verified Key Attestation Agreement (mock) for session_id: {session_id}')
         return jsonify(final_response), 200
@@ -471,7 +471,7 @@ def verify_agreement_attestation():
         # Include empty attestation_info in error case if schema expects it
         att_props_str = json.dumps({"attestation_info": {}})
         logger.warning(f"ValueError in /verify/agreement for session {current_session_id}: {e}")
-        store_key_attestation_result(current_session_id, "failed", str(e), payload_str, att_props_str)
+        store_ds_key_attestation_result(datastore_client, current_session_id, "failed", str(e), payload_str, att_props_str)
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         current_session_id = locals().get("session_id", "unknown_session_agreement_exception")
@@ -479,7 +479,7 @@ def verify_agreement_attestation():
         # Include empty attestation_info in error case if schema expects it
         att_props_str = json.dumps({"attestation_info": {}})
         logger.error(f"Error in /verify/agreement endpoint for session {current_session_id}: {e}", exc_info=True)
-        store_key_attestation_result(current_session_id, "failed", "An unexpected error occurred during agreement verification.", payload_str, att_props_str)
+        store_ds_key_attestation_result(datastore_client, current_session_id, "failed", "An unexpected error occurred during agreement verification.", payload_str, att_props_str)
         return jsonify({"error": "An unexpected error occurred"}), 500
 
 if __name__ == '__main__':
