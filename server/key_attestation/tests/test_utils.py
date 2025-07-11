@@ -2,12 +2,12 @@ import unittest
 import sys
 import os
 
-# Add the parent directory to sys.path to allow importing key_attestation
+# Add the parent directory to sys.path to allow importing key_attestation utils
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from key_attestation import convert_bytes_to_hex_str
+from utils import convert_bytes_to_hex_str # Updated import
 
-class TestKeyAttestationHelpers(unittest.TestCase):
+class TestUtilsHelpers(unittest.TestCase): # Renamed class
 
     def test_convert_bytes_to_hex_str_empty(self):
         self.assertEqual(convert_bytes_to_hex_str({}), {})
