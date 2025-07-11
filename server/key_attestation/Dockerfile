@@ -10,8 +10,8 @@ COPY requirements.txt .
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the current directory contents into the container at /app
-COPY . .
+# Copy the current directory contents into the container at /app/key_attestation_pkg/
+COPY . /app/key_attestation_pkg/
 
 # Make port $PORT available to the world outside this container
 # Cloud Run sets this environment variable.
@@ -21,4 +21,4 @@ EXPOSE $PORT
 ENV PORT 8080
 
 # Run app.py when the container launches
-CMD exec gunicorn -b :$PORT key_attestation:app
+CMD exec gunicorn -b :$PORT key_attestation_pkg.key_attestation:app
