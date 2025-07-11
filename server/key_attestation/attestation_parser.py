@@ -292,10 +292,17 @@ def parse_key_description(key_desc_bytes):
     Parses the KeyDescription SEQUENCE from the attestation extension using pyasn1.
     Returns a dictionary containing key properties.
     """
+    logger.debug(f"Attempting to parse KeyDescription bytes: {key_desc_bytes.hex() if key_desc_bytes else 'None'}")
     try:
-        key_desc_sequence, _ = der_decoder.decode(key_desc_bytes)
+        key_desc_sequence, rest = der_decoder.decode(key_desc_bytes)
+        logger.debug(f"Successfully decoded KeyDescription sequence by pyasn1. Remaining bytes: {len(rest)}")
+        if hasattr(key_desc_sequence, 'prettyPrint'):
+            logger.debug(f"Decoded KeyDescription sequence (prettyPrint):\n{key_desc_sequence.prettyPrint()}")
+        else:
+            logger.debug(f"Decoded KeyDescription sequence (raw): {key_desc_sequence}")
     except PyAsn1Error as e:
         logger.error(f'Failed to decode KeyDescription ASN.1 sequence with pyasn1: {e}')
+        logger.debug(f"Problematic KeyDescription bytes for pyasn1: {key_desc_bytes.hex() if key_desc_bytes else 'None'}")
         raise ValueError('Malformed KeyDescription sequence.')
 
     if not isinstance(key_desc_sequence, univ.Sequence):

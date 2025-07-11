@@ -232,11 +232,23 @@ class TestAttestationParser(unittest.TestCase):
         cert_b64 = "MIIC2TCCAn+gAwIBAgIBATAKBggqhkjOPQQDAjA5MSkwJwYDVQQDEyAyMDZmMTJkNjhkMjQyMGMwZjI5YWNmYjRlNDc0ZjBjODEMMAoGA1UEChMDVEVFMB4XDTcwMDEwMTAwMDAwMFoXDTQ4MDEwMTAwMDAwMFowHzEdMBsGA1UEAxMUQW5kcm9pZCBLZXlzdG9yZSBLZXkwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATyINSR0Wf9X1Jxdsdf09GKliJTPBC+HJO8gNDdFNbx7n6KTD68mrJphhFIIaJ78vNGCaOGYVPIpHbThsCG6Q3jo4IBkDCCAYwwDgYDVR0PAQH/BAQDAgeAMIIBeAYKKwYBBAHWeQIBEQSCAWgwggFkAgIBkAoBAQICAZAKAQEEIO1p6vfSmakeYfAW8HIi+CrW6Nr8Xus+xVrMJ81E+PxGBAAwgYi/hT0IAgYBl+SXKhe/hUVSBFAwTjEoMCYEIWRldi5rZWlqaS5kZXZpY2VpbnRlZ3JpdHkuZGV2ZWxvcAIBDjEiBCCEg7tsgmYaUpr+XL0nD7zehkyT/aIAXcgyH44btIaZH7+FVCIEIHMtalhZPLW4yWyP2sCsN4O/k1B8bqO5MNaJDipbSmC9MIGkoQgxBgIBAgIBA6IDAgEDowQCAgEApQUxAwIBBKoDAgEBv4N3AgUAv4U+AwIBAL+FQEwwSgQgmsQXQVPUXkVFsPSeIv5jJzmZtqwctpScOp8D7IgH7ukBAf8KAQAEIBQ+0ZEIUkS3m+CK5xG+fIPd95UHafmGwGjG0ZHgRTh3v4VBBQIDAnEAv4VCBQIDAxcKv4VOBgIEATT/7b+FTwYCBAE0/+0wCgYIKoZIzj0EAwIDSAAwRQIgWJtsWC5QwsIy6ul82uykYmd7leztN4mTA1Kg4rJiPVMCIQD8ppExEufkiNzLaOF5a4q4AIGSCAyBPMuxlu20r2+uoQ=="
         cert_der = base64.b64decode(cert_b64)
         certificate = x509.load_der_x509_certificate(cert_der)
-        attestation_properties = get_attestation_extension_properties(certificate)
-        self.assertIsNotNone(attestation_properties) # Basic check that properties were found
+        attestation_properties = None
+        try:
+            attestation_properties = get_attestation_extension_properties(certificate)
+            self.assertIsNotNone(attestation_properties) # Basic check that properties were found
 
-        # Assert top-level properties
-        self.assertEqual(attestation_properties.get('attestation_version'), 4)
+            # Assert top-level properties
+            self.assertEqual(attestation_properties.get('attestation_version'), 4)
+        except Exception as e:
+            print(f"Exception during get_attestation_extension_properties or initial assertions: {e}")
+            if attestation_properties is not None:
+                import json
+                print("Attestation Properties (on error):")
+                print(json.dumps(attestation_properties, indent=2, default=lambda o: repr(o) if isinstance(o, bytes) else str(o)))
+            raise # Re-raise the exception to ensure test fails correctly
+
+        if attestation_properties is None: # Should not happen if assertIsNotNone passed or exception was raised
+            self.fail("attestation_properties is None unexpectedly after initial block")
         self.assertEqual(attestation_properties.get('attestation_security_level'), 1)
         self.assertEqual(attestation_properties.get('keymint_or_keymaster_version'), 4)
         self.assertEqual(attestation_properties.get('keymint_or_keymaster_security_level'), 1)
