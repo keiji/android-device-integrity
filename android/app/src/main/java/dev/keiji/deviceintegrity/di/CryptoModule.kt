@@ -4,12 +4,16 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import dev.keiji.deviceintegrity.crypto.contract.Encrypt
+import dev.keiji.deviceintegrity.crypto.contract.SharedKeyDerivator
 import dev.keiji.deviceintegrity.crypto.contract.Signer
 import dev.keiji.deviceintegrity.crypto.contract.Verifier
 import dev.keiji.deviceintegrity.crypto.contract.qualifier.EC
 import dev.keiji.deviceintegrity.crypto.contract.qualifier.RSA
 import dev.keiji.deviceintegrity.crypto.impl.EcSignerImpl
 import dev.keiji.deviceintegrity.crypto.impl.EcVerifierImpl
+import dev.keiji.deviceintegrity.crypto.impl.EncryptImpl
+import dev.keiji.deviceintegrity.crypto.impl.HkdfKeyDerivator
 import dev.keiji.deviceintegrity.crypto.impl.RsaSignerImpl
 import dev.keiji.deviceintegrity.crypto.impl.RsaVerifierImpl
 import javax.inject.Singleton
@@ -37,4 +41,12 @@ object CryptoModule {
     @Provides
     @Singleton
     fun provideRsaVerifier(): Verifier = RsaVerifierImpl()
+
+    @Provides
+    @Singleton
+    fun provideEncrypt(): Encrypt = EncryptImpl()
+
+    @Provides
+    @Singleton
+    fun provideSharedKeyDerivator(): SharedKeyDerivator = HkdfKeyDerivator()
 }
