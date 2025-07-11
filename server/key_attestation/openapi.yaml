@@ -64,7 +64,7 @@ paths:
           content:
             application/json:
               schema:
-              $ref: '#/components/schemas/VerifyAgreementResponseBody'
+                $ref: '#/components/schemas/VerifyAgreementResponseBody' # Corrected: $ref is a child of schema
         '400':
           description: Bad Request (e.g., missing parameters).
           content:
@@ -110,12 +110,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Internal Server Error.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+    # Removed duplicate '500' entry
 
   /v1/prepare/agreement:
     post:
@@ -253,7 +248,7 @@ components:
           type: string
           format: byte # Base64URL encoded, no padding
           description: Base64URL-encoded (no padding) encrypted data.
-          example: "ZW5jcnlwdGVkX2RhdGE"
+          example: "dGVzdF9lbmNvZGluZw" # "test_encoding"
         client_public_key:
           type: string
           format: base64 # Standard Base64 encoded
