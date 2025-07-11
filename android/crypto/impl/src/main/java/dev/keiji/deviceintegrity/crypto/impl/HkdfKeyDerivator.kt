@@ -1,6 +1,6 @@
-package com.example.crypto.impl
+package dev.keiji.deviceintegrity.crypto.impl
 
-import com.example.crypto.contract.SharedKeyDerivator
+import dev.keiji.deviceintegrity.crypto.contract.SharedKeyDerivator
 import java.security.InvalidKeyException
 import java.security.NoSuchAlgorithmException
 import java.security.PrivateKey

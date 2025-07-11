@@ -1,4 +1,4 @@
-package com.example.crypto.contract
+package dev.keiji.deviceintegrity.crypto.contract
 
 import java.security.PrivateKey
 import java.security.PublicKey
