@@ -7,6 +7,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.keiji.deviceintegrity.api.DeviceInfo
 import dev.keiji.deviceintegrity.api.SecurityInfo
 import dev.keiji.deviceintegrity.api.keyattestation.*
+import dev.keiji.deviceintegrity.crypto.contract.CryptoInterface
+import dev.keiji.deviceintegrity.crypto.contract.SharedKeyDerivator
 import dev.keiji.deviceintegrity.crypto.contract.Signer
 import dev.keiji.deviceintegrity.crypto.contract.qualifier.EC
 import dev.keiji.deviceintegrity.crypto.contract.qualifier.RSA
@@ -20,6 +22,7 @@ import dev.keiji.deviceintegrity.ui.main.common.KEY_ATTESTATION_DELAY_MS
 import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityProgressConstants
 import dev.keiji.deviceintegrity.ui.main.util.Base64Utils
 import dev.keiji.deviceintegrity.ui.main.util.DateFormatUtil
+import dev.keiji.deviceintegrity.ui.main.util.KeyUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -42,6 +45,8 @@ class KeyAttestationViewModel @Inject constructor(
     private val keyAttestationRepository: KeyAttestationRepository,
     private val deviceInfoProvider: DeviceInfoProvider,
     private val deviceSecurityStateProvider: DeviceSecurityStateProvider,
+    private val sharedKeyDerivator: SharedKeyDerivator,
+    private val cryptoInterface: CryptoInterface,
     @EC private val ecSigner: Signer,
     @RSA private val rsaSigner: Signer
 ) : ViewModel() {
@@ -315,10 +320,12 @@ class KeyAttestationViewModel @Inject constructor(
 
             val currentSessionId = uiState.value.sessionId
             val currentKeyPairData = uiState.value.generatedKeyPairData
-            val serverNonceOrSaltB64Url = uiState.value.nonceOrSalt // Use nonceOrSalt
+            val serverNonceOrSaltB64Url = uiState.value.nonceOrSalt
+            val serverPublicKeyB64Url = uiState.value.serverPublicKey
+            val challengeB64Url = uiState.value.challenge
 
             if (currentSessionId == null) {
-                val itemToFetch = if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) "Salt/Challenge/PublicKey" else "Nonce/Challenge" // Updated message
+                val itemToFetch = if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) "Salt/Challenge/PublicKey" else "Nonce/Challenge"
                 _uiState.update {
                     it.copy(
                         status = "SessionId is missing. Fetch $itemToFetch first.",
@@ -327,6 +334,7 @@ class KeyAttestationViewModel @Inject constructor(
                 }
                 return@launch
             }
+
             val keyPair = currentKeyPairData?.keyPair
             if (keyPair == null) {
                 _uiState.update {
@@ -337,52 +345,138 @@ class KeyAttestationViewModel @Inject constructor(
                 }
                 return@launch
             }
+
             if (serverNonceOrSaltB64Url.isEmpty()) {
                 val missingItem = if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) "Salt" else "Nonce"
                 _uiState.update {
                     it.copy(
-                        status = "Server $missingItem is missing. Fetch $missingItem/Challenge first.", // Message is generic enough
+                        status = "Server $missingItem is missing. Fetch $missingItem/Challenge first.",
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
                     )
                 }
                 return@launch
             }
 
-            val clientNonce = ByteArray(32)
-            SecureRandom().nextBytes(clientNonce)
-            val decodedServerNonceOrSalt = Base64Utils.UrlSafeNoPadding.decode(serverNonceOrSaltB64Url) // Use decodedServerNonceOrSalt
-            val dataToSign = decodedServerNonceOrSalt + clientNonce // Use decodedServerNonceOrSalt
-            val privateKey = keyPair.private
-
-            val selectedSigner = when (uiState.value.selectedKeyType) {
-                CryptoAlgorithm.EC -> ecSigner
-                CryptoAlgorithm.RSA -> rsaSigner
-                CryptoAlgorithm.ECDH -> {
+            if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) {
+                if (serverPublicKeyB64Url.isEmpty() || challengeB64Url.isEmpty()) {
                     _uiState.update {
                         it.copy(
-                            status = "ECDH is not supported for signing.",
+                            status = "Server PublicKey or Challenge is missing for ECDH. Fetch Salt/Challenge/PublicKey first.",
                             progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
                         )
                     }
                     return@launch
                 }
-            }
-            val signatureData = selectedSigner.sign(dataToSign, privateKey)
 
-            val signatureDataBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(signatureData)
-            val clientNonceBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(clientNonce)
-            val certificateChainBase64Encoded =
-                currentKeyPairData.certificates.map { cert ->
-                    Base64.Default.encode(cert.encoded)
+                try {
+                    val serverPublicKeyBytes = Base64Utils.UrlSafeNoPadding.decode(serverPublicKeyB64Url)
+                    val saltBytes = Base64Utils.UrlSafeNoPadding.decode(serverNonceOrSaltB64Url)
+                    val challengeBytes = Base64Utils.UrlSafeNoPadding.decode(challengeB64Url)
+
+                    val serverPublicKey = KeyUtils.convertBytesToPublicKey(serverPublicKeyBytes, "EC") // Assuming EC for ECDH
+
+                    val derivedKeyBytes = sharedKeyDerivator.deriveKey(serverPublicKey, keyPair.private, saltBytes)
+                    // Assuming "AES" as the algorithm for the derived secret key, adjust if necessary for your specific crypto operations
+                    val derivedSecretKey = KeyUtils.convertBytesToSecretKey(derivedKeyBytes, "AES")
+
+                    val sessionIdBytes = currentSessionId.toByteArray(Charsets.US_ASCII)
+                    val encryptedChallenge = cryptoInterface.encrypt(challengeBytes, derivedSecretKey, sessionIdBytes)
+                    val encryptedChallengeB64Url = Base64Utils.UrlSafeNoPadding.encode(encryptedChallenge)
+                    val clientPublicKeyB64Url = Base64Utils.UrlSafeNoPadding.encode(keyPair.public.encoded)
+
+                    val request = VerifyAgreementRequest(
+                        sessionId = currentSessionId,
+                        encryptedChallengeBase64UrlEncoded = encryptedChallengeB64Url,
+                        clientPublicKeyBase64UrlEncoded = clientPublicKeyB64Url,
+                        deviceInfo = DeviceInfo(
+                            brand = deviceInfoProvider.BRAND,
+                            model = deviceInfoProvider.MODEL,
+                            device = deviceInfoProvider.DEVICE,
+                            product = deviceInfoProvider.PRODUCT,
+                            manufacturer = deviceInfoProvider.MANUFACTURER,
+                            hardware = deviceInfoProvider.HARDWARE,
+                            board = deviceInfoProvider.BOARD,
+                            bootloader = deviceInfoProvider.BOOTLOADER,
+                            versionRelease = deviceInfoProvider.VERSION_RELEASE,
+                            sdkInt = deviceInfoProvider.SDK_INT,
+                            fingerprint = deviceInfoProvider.FINGERPRINT,
+                            securityPatch = deviceInfoProvider.SECURITY_PATCH
+                        ),
+                        securityInfo = SecurityInfo(
+                            isDeviceLockEnabled = deviceSecurityStateProvider.isDeviceLockEnabled,
+                            isBiometricsEnabled = deviceSecurityStateProvider.isBiometricsEnabled,
+                            hasClass3Authenticator = deviceSecurityStateProvider.hasClass3Authenticator,
+                            hasStrongbox = deviceSecurityStateProvider.hasStrongBox
+                        )
+                    )
+                    val response = keyAttestationRepository.verifyAgreement(request)
+                    if (response.isVerified) {
+                        val resultItems = buildVerificationResultList(response) // Assuming VerifyAgreementResponse can be handled by this
+                        resultItems.addAll(convertDeviceInfoToAttestationItems(response.deviceInfo))
+                        resultItems.addAll(convertSecurityInfoToAttestationItems(response.securityInfo))
+                        _uiState.update {
+                            it.copy(
+                                status = "Verification successful.",
+                                infoItems = resultItems,
+                                progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                            )
+                        }
+                    } else {
+                        _uiState.update {
+                            it.copy(
+                                status = "Verification failed. Reason: ${response.reason ?: "Unknown"}",
+                                progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                            )
+                        }
+                    }
+
+                } catch (e: Exception) {
+                    Log.e("KeyAttestationViewModel", "Error during ECDH agreement verification", e)
+                    _uiState.update {
+                        it.copy(
+                            status = "Failed to verify ECDH agreement: ${e.localizedMessage}",
+                            progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                        )
+                    }
+                    return@launch
                 }
-            val request = VerifySignatureRequest(
-                sessionId = currentSessionId,
-                signatureDataBase64UrlEncoded = signatureDataBase64UrlEncoded,
-                clientNonceBase64UrlEncoded = clientNonceBase64UrlEncoded,
-                certificateChainBase64Encoded = certificateChainBase64Encoded,
-                deviceInfo = DeviceInfo(
-                    brand = deviceInfoProvider.BRAND,
-                    model = deviceInfoProvider.MODEL,
+
+            } else { // EC or RSA
+                val clientNonce = ByteArray(32)
+                SecureRandom().nextBytes(clientNonce)
+                val decodedServerNonceOrSalt = Base64Utils.UrlSafeNoPadding.decode(serverNonceOrSaltB64Url)
+                val dataToSign = decodedServerNonceOrSalt + clientNonce
+                val privateKey = keyPair.private
+
+                val selectedSigner = when (uiState.value.selectedKeyType) {
+                    CryptoAlgorithm.EC -> ecSigner
+                    CryptoAlgorithm.RSA -> rsaSigner
+                    else -> { // Should not happen due to the outer if/else
+                        _uiState.update {
+                            it.copy(
+                                status = "Unsupported algorithm for signing.",
+                                progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                            )
+                        }
+                        return@launch
+                    }
+                }
+                val signatureData = selectedSigner.sign(dataToSign, privateKey)
+
+                val signatureDataBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(signatureData)
+                val clientNonceBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(clientNonce)
+                val certificateChainBase64Encoded =
+                    currentKeyPairData.certificates.map { cert ->
+                        Base64.Default.encode(cert.encoded)
+                    }
+                val request = VerifySignatureRequest(
+                    sessionId = currentSessionId,
+                    signatureDataBase64UrlEncoded = signatureDataBase64UrlEncoded,
+                    clientNonceBase64UrlEncoded = clientNonceBase64UrlEncoded,
+                    certificateChainBase64Encoded = certificateChainBase64Encoded,
+                    deviceInfo = DeviceInfo(
+                        brand = deviceInfoProvider.BRAND,
+                        model = deviceInfoProvider.MODEL,
                     device = deviceInfoProvider.DEVICE,
                     product = deviceInfoProvider.PRODUCT,
                     manufacturer = deviceInfoProvider.MANUFACTURER,
@@ -487,18 +581,41 @@ class KeyAttestationViewModel @Inject constructor(
         items.add(InfoItem("Is Verified", response.isVerified.toString()))
         response.reason?.let { items.add(InfoItem("Reason", it)) }
 
-        val attestationInfo = response.attestationInfo
-        items.add(InfoItem("Attestation Version", attestationInfo.attestationVersion.toString()))
-        items.add(InfoItem("Attestation Security Level", attestationInfo.attestationSecurityLevel.toString()))
-        items.add(InfoItem("KeyMint Version", attestationInfo.keymintVersion.toString()))
-        items.add(InfoItem("KeyMint Security Level", attestationInfo.keymintSecurityLevel.toString()))
-        items.add(InfoItem("Attestation Challenge", attestationInfo.attestationChallenge))
+        response.attestationInfo?.let { attestationInfo ->
+            items.add(InfoItem("Attestation Version", attestationInfo.attestationVersion.toString()))
+            items.add(InfoItem("Attestation Security Level", attestationInfo.attestationSecurityLevel.toString()))
+            items.add(InfoItem("KeyMint Version", attestationInfo.keymintVersion.toString()))
+            items.add(InfoItem("KeyMint Security Level", attestationInfo.keymintSecurityLevel.toString()))
+            items.add(InfoItem("Attestation Challenge", attestationInfo.attestationChallenge))
 
-        addAuthorizationListItems(items, "Software Enforced Properties", attestationInfo.softwareEnforcedProperties)
-        addAuthorizationListItems(items, "Hardware Enforced Properties", attestationInfo.hardwareEnforcedProperties)
-
+            addAuthorizationListItems(items, "Software Enforced Properties", attestationInfo.softwareEnforcedProperties)
+            addAuthorizationListItems(items, "Hardware Enforced Properties", attestationInfo.hardwareEnforcedProperties)
+        }
         return items
     }
+
+    // Overload for VerifyAgreementResponse
+    private fun buildVerificationResultList(response: VerifyAgreementResponse): MutableList<InfoItem> {
+        val items = mutableListOf<InfoItem>()
+
+        items.add(InfoItem("Session ID", response.sessionId))
+        items.add(InfoItem("Is Verified", response.isVerified.toString()))
+        response.reason?.let { items.add(InfoItem("Reason", it)) }
+
+        // AttestationInfo might be null for VerifyAgreementResponse, handle safely
+        response.attestationInfo?.let { attestationInfo ->
+            items.add(InfoItem("Attestation Version", attestationInfo.attestationVersion.toString()))
+            items.add(InfoItem("Attestation Security Level", attestationInfo.attestationSecurityLevel.toString()))
+            items.add(InfoItem("KeyMint Version", attestationInfo.keymintVersion.toString()))
+            items.add(InfoItem("KeyMint Security Level", attestationInfo.keymintSecurityLevel.toString()))
+            items.add(InfoItem("Attestation Challenge", attestationInfo.attestationChallenge)) // This might be different or not applicable here
+
+            addAuthorizationListItems(items, "Software Enforced Properties", attestationInfo.softwareEnforcedProperties)
+            addAuthorizationListItems(items, "Hardware Enforced Properties", attestationInfo.hardwareEnforcedProperties)
+        }
+        return items
+    }
+
 
     private fun addAuthorizationListItems(
         items: MutableList<InfoItem>,
