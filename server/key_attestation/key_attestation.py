@@ -1137,6 +1137,143 @@ def verify_signature_attestation():
         store_key_attestation_result(current_session_id, "failed", "An unexpected error occurred.", payload_str, att_props_str)
         return jsonify({"error": "An unexpected error occurred"}), 500
 
+@app.route('/v1/verify/agreement', methods=['POST'])
+def verify_agreement_attestation():
+    """
+    Verifies the Key Attestation Agreement (mock implementation).
+    Request body: {
+        "session_id": "string",
+        "encrypted_data": "string (Base64URL Encoded, no padding)",
+        "client_public_key": "string (Base64 Encoded)",
+        "device_info": {},
+        "security_info": {}
+    }
+    Response body: {
+        "session_id": "string",
+        "is_verified": false,
+        "reason": "string"
+    }
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            logger.warning("Verify Agreement request missing JSON payload.")
+            # Store a generic failure if payload is missing
+            store_key_attestation_result(
+                "unknown_session_agreement", "failed", "Missing JSON payload for agreement",
+                "{}", "{}"
+            )
+            return jsonify({"error": "Missing JSON payload"}), 400
+
+        session_id = data.get('session_id')
+        encrypted_data_b64url = data.get('encrypted_data')
+        client_public_key_b64 = data.get('client_public_key')
+        device_info_from_request = data.get('device_info', {}) # Optional
+        security_info_from_request = data.get('security_info', {}) # Optional
+
+        payload_data_for_datastore = {
+            "device_info": device_info_from_request,
+            "security_info": security_info_from_request,
+            "encrypted_data_provided": bool(encrypted_data_b64url), # Log if data was provided
+            "client_public_key_provided": bool(client_public_key_b64) # Log if key was provided
+        }
+        payload_data_json_str = json.dumps(payload_data_for_datastore)
+
+        if not session_id:
+            logger.warning("Verify Agreement request missing session_id.")
+            store_key_attestation_result(
+                "missing_session_id_agreement", "failed", "Missing session_id in agreement request",
+                payload_data_json_str, "{}"
+            )
+            return jsonify({"error": "Missing 'session_id'"}), 400
+
+        if not all([encrypted_data_b64url, client_public_key_b64]):
+            logger.warning(f"Verify Agreement request for session '{session_id}' missing encrypted_data or client_public_key.")
+            store_key_attestation_result(
+                session_id, "failed", "Missing encrypted_data or client_public_key for agreement",
+                payload_data_json_str, "{}"
+            )
+            return jsonify({"error": "Missing 'encrypted_data' or 'client_public_key'"}), 400
+
+        if not isinstance(session_id, str) or \
+           not isinstance(encrypted_data_b64url, str) or \
+           not isinstance(client_public_key_b64, str):
+            logger.warning(f"Verify Agreement request for session '{session_id}' has type mismatch.")
+            store_key_attestation_result(
+                session_id, "failed", "Type mismatch in agreement request fields.",
+                payload_data_json_str, "{}"
+            )
+            return jsonify({"error": "Type mismatch for one or more fields."}), 400
+
+        if not datastore_client:
+            logger.error("Datastore client not available for /verify/agreement endpoint.")
+            return jsonify({"error": "Datastore service not available"}), 503
+
+        # Mock verification logic:
+        # In a real scenario, you would:
+        # 1. Retrieve the agreement session using session_id (get_agreement_key_attestation_session).
+        # 2. Decode client_public_key_b64.
+        # 3. Retrieve server's private key stored during prepare/agreement.
+        # 4. Perform ECDH to derive a shared secret.
+        # 5. Use the shared secret and salt (from session) to derive a decryption key (e.g., HKDF).
+        # 6. Decode encrypted_data_b64url.
+        # 7. Decrypt the data using the derived key.
+        # 8. Verify the decrypted data (e.g., by checking a MAC or expected structure).
+        # 9. For this mock, we'll just check if the session exists and then return a mock success.
+
+        agreement_session_entity = get_agreement_key_attestation_session(session_id)
+        if not agreement_session_entity:
+            logger.warning(f"Agreement Session ID '{session_id}' not found, expired, or invalid for verify/agreement.")
+            store_key_attestation_result(
+                session_id, "failed", "Agreement Session ID not found, expired, or invalid.",
+                payload_data_json_str, "{}"
+            )
+            return jsonify({"error": "Agreement Session ID not found, expired, or invalid."}), 403
+
+        # For the new VerifyAgreementResponseBody, we only need session_id, is_verified, and reason.
+        final_response = {
+            "session_id": session_id,
+            "is_verified": True, # Mock success
+            "reason": "Key agreement verified successfully (mock)."
+            # No attestation_info, device_info, or security_info for this specific response
+        }
+
+        # Storing result in Datastore can still include more details if useful for internal logging,
+        # but the client response is simpler.
+        # For simplicity, we'll just store the reason for the mock.
+        # The payload_data_json_str already contains device/security info if provided by client.
+        # The attestation_data part can be minimal or reflect what was "verified" in the mock.
+        mock_internal_verification_details = {
+            "verification_type": "agreement_mock",
+            "client_public_key_provided": bool(client_public_key_b64),
+            "encrypted_data_provided": bool(encrypted_data_b64url)
+        }
+        attestation_data_json_str_success = json.dumps(mock_internal_verification_details)
+
+        store_key_attestation_result(
+            session_id,
+            "verified_agreement_mock", # Result type
+            final_response["reason"],    # Reason
+            payload_data_json_str,       # Original payload data (device_info, etc.)
+            attestation_data_json_str_success # Internal mock verification details
+        )
+        delete_agreement_key_attestation_session(session_id) # Clean up session after mock verification
+
+        logger.info(f"Successfully verified Key Attestation Agreement (mock) for session_id: {session_id}")
+        return jsonify(final_response), 200
+
+    except ValueError as e:
+        current_session_id = locals().get("session_id", "unknown_session_agreement_value_error")
+        payload_str = locals().get("payload_data_json_str", "{}")
+        logger.warning(f"ValueError in /verify/agreement for session {current_session_id}: {e}")
+        store_key_attestation_result(current_session_id, "failed", str(e), payload_str, "{}")
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        current_session_id = locals().get("session_id", "unknown_session_agreement_exception")
+        payload_str = locals().get("payload_data_json_str", "{}")
+        logger.error(f"Error in /verify/agreement endpoint for session {current_session_id}: {e}", exc_info=True)
+        store_key_attestation_result(current_session_id, "failed", "An unexpected error occurred during agreement verification.", payload_str, "{}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
 
 if __name__ == '__main__':
     # This is used when running locally only.

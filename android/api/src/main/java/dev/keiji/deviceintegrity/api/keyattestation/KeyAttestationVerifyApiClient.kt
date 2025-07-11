@@ -21,4 +21,9 @@ interface KeyAttestationVerifyApiClient {
     suspend fun prepareAgreement(
         @Body requestBody: PrepareAgreementRequest
     ): PrepareAgreementResponse
+
+    @POST("v1/verify/agreement")
+    suspend fun verifyAgreement(
+        @Body requestBody: VerifyAgreementRequest
+    ): VerifyAgreementResponse
 }

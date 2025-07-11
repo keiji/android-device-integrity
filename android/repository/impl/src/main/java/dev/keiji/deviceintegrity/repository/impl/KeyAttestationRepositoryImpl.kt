@@ -6,6 +6,7 @@ import dev.keiji.deviceintegrity.api.keyattestation.PrepareAgreementRequest
 import dev.keiji.deviceintegrity.api.keyattestation.PrepareAgreementResponse
 import dev.keiji.deviceintegrity.api.keyattestation.PrepareSignatureRequest
 import dev.keiji.deviceintegrity.api.keyattestation.PrepareResponse
+import dev.keiji.deviceintegrity.api.keyattestation.VerifyAgreementRequest
 import dev.keiji.deviceintegrity.api.keyattestation.VerifySignatureRequest
 import dev.keiji.deviceintegrity.api.keyattestation.VerifySignatureResponse
 import dev.keiji.deviceintegrity.repository.contract.KeyAttestationRepository
@@ -80,6 +81,26 @@ class KeyAttestationRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Log.w(TAG, "PrepareAgreement failed: Unknown error", e)
             throw IOException("An unknown error occurred during prepareAgreement: ${e.message}", e) // Wrap unknown errors
+        }
+    }
+
+    @Throws(ServerException::class, IOException::class)
+    override suspend fun verifyAgreement(
+        requestBody: VerifyAgreementRequest
+    ): VerifyAgreementResponse { // Updated response type
+        try {
+            return apiClient.verifyAgreement(requestBody)
+        } catch (e: HttpException) {
+            val errorBody = e.response()?.errorBody()?.string()
+            val errorMessage = parseErrorMessage(errorBody)
+            Log.w(TAG, "VerifyAgreement failed: HTTP ${e.code()}, Body: $errorBody", e)
+            throw ServerException(errorCode = e.code(), errorMessage = errorMessage, cause = e)
+        } catch (e: IOException) {
+            Log.w(TAG, "VerifyAgreement failed: Network error", e)
+            throw e // Re-throw IOException directly
+        } catch (e: Exception) {
+            Log.w(TAG, "VerifyAgreement failed: Unknown error", e)
+            throw IOException("An unknown error occurred during verifyAgreement: ${e.message}", e) // Wrap unknown errors
         }
     }
 
