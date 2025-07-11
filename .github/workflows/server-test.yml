@@ -1,0 +1,66 @@
+name: Server Tests
+
+on:
+  push:
+    branches:
+      - main # Or your default branch
+    paths:
+      - 'server/key_attestation/**'
+      - 'server/play_integrity/**'
+  pull_request:
+    paths:
+      - 'server/key_attestation/**'
+      - 'server/play_integrity/**'
+
+jobs:
+  filters:
+    runs-on: ubuntu-latest
+    outputs:
+      key_attestation: ${{ steps.filter.outputs.key_attestation }}
+      play_integrity: ${{ steps.filter.outputs.play_integrity }}
+    steps:
+    - uses: actions/checkout@v3
+    - uses: dorny/paths-filter@v2
+      id: filter
+      with:
+        filters: |
+          key_attestation:
+            - 'server/key_attestation/**'
+          play_integrity:
+            - 'server/play_integrity/**'
+
+  test_key_attestation:
+    needs: filters
+    if: needs.filters.outputs.key_attestation == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.x' # Or specify a more precise version
+
+    - name: Install dependencies for Key Attestation
+      run: pip install -r server/key_attestation/requirements.txt
+
+    - name: Run Key Attestation tests
+      run: python -m unittest discover server/key_attestation/tests
+
+  test_play_integrity:
+    needs: filters
+    if: needs.filters.outputs.play_integrity == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.x' # Or specify a more precise version
+
+    - name: Install dependencies for Play Integrity
+      run: pip install -r server/play_integrity/requirements.txt
+
+    - name: Run Play Integrity tests (Placeholder)
+      run: echo "No tests for Play Integrity yet."
