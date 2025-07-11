@@ -1,13 +1,15 @@
 import unittest
 import sys
 import os
+import base64
+from cryptography import x509
 from pyasn1.type import univ, namedtype, tag
 from pyasn1.codec.der import encoder as der_encoder
 
 # Add the parent directory (server/key_attestation) to sys.path to allow importing attestation_parser
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from attestation_parser import parse_key_description, parse_authorization_list, OID_ANDROID_KEY_ATTESTATION
+from attestation_parser import parse_key_description, parse_authorization_list, OID_ANDROID_KEY_ATTESTATION, get_attestation_extension_properties
 from attestation_parser import TAG_OS_VERSION, TAG_OS_PATCH_LEVEL, TAG_PURPOSE, TAG_ALGORITHM, TAG_EC_CURVE
 
 # --- Mock ASN.1 data generation helpers ---
@@ -224,6 +226,51 @@ class TestAttestationParser(unittest.TestCase):
         # This case likely means der_decoder.decode fails to produce a Sequence at all
         with self.assertRaisesRegex(ValueError, "Decoded KeyDescription is not an ASN.1 SEQUENCE."):
             parse_key_description(incomplete_bytes) # type: ignore
+
+    def test_parse_keiji_device_integrity_beta_cert(self):
+        # Test case for the certificate provided by the user
+        cert_b64 = "MIIC2TCCAn+gAwIBAgIBATAKBggqhkjOPQQDAjA5MSkwJwYDVQQDEyAyMDZmMTJkNjhkMjQyMGMwZjI5YWNmYjRlNDc0ZjBjODEMMAoGA1UEChMDVEVFMB4XDTcwMDEwMTAwMDAwMFoXDTQ4MDEwMTAwMDAwMFowHzEdMBsGA1UEAxMUQW5kcm9pZCBLZXlzdG9yZSBLZXkwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATyINSR0Wf9X1Jxdsdf09GKliJTPBC+HJO8gNDdFNbx7n6KTD68mrJphhFIIaJ78vNGCaOGYVPIpHbThsCG6Q3jo4IBkDCCAYwwDgYDVR0PAQH/BAQDAgeAMIIBeAYKKwYBBAHWeQIBEQSCAWgwggFkAgIBkAoBAQICAZAKAQEEIO1p6vfSmakeYfAW8HIi+CrW6Nr8Xus+xVrMJ81E+PxGBAAwgYi/hT0IAgYBl+SXKhe/hUVSBFAwTjEoMCYEIWRldi5rZWlqaS5kZXZpY2VpbnRlZ3JpdHkuZGV2ZWxvcAIBDjEiBCCEg7tsgmYaUpr+XL0nD7zehkyT/aIAXcgyH44btIaZH7+FVCIEIHMtalhZPLW4yWyP2sCsN4O/k1B8bqO5MNaJDipbSmC9MIGkoQgxBgIBAgIBA6IDAgEDowQCAgEApQUxAwIBBKoDAgEBv4N3AgUAv4U+AwIBAL+FQEwwSgQgmsQXQVPUXkVFsPSeIv5jJzmZtqwctpScOp8D7IgH7ukBAf8KAQAEIBQ+0ZEIUkS3m+CK5xG+fIPd95UHafmGwGjG0ZHgRTh3v4VBBQIDAnEAv4VCBQIDAxcKv4VOBgIEATT/7b+FTwYCBAE0/+0wCgYIKoZIzj0EAwIDSAAwRQIgWJtsWC5QwsIy6ul82uykYmd7leztN4mTA1Kg4rJiPVMCIQD8ppExEufkiNzLaOF5a4q4AIGSCAyBPMuxlu20r2+uoQ=="
+        cert_der = base64.b64decode(cert_b64)
+        certificate = x509.load_der_x509_certificate(cert_der)
+        attestation_properties = get_attestation_extension_properties(certificate)
+        self.assertIsNotNone(attestation_properties) # Basic check that properties were found
+
+        # Assert top-level properties
+        self.assertEqual(attestation_properties.get('attestation_version'), 4)
+        self.assertEqual(attestation_properties.get('attestation_security_level'), 1)
+        self.assertEqual(attestation_properties.get('keymint_or_keymaster_version'), 4)
+        self.assertEqual(attestation_properties.get('keymint_or_keymaster_security_level'), 1)
+        expected_challenge = b'\xed\x69\xea\xf7\xd2\x9a\x66\x4e\x61\xf0\x16\xf0\x72\x22\xf8\x2a\xd6\xe8\xda\xfc\x5e\xeb\x3e\xc5\x5a\xcc\x27\xcd\x44\xf8\xfc\x46\x04\x00'
+        self.assertEqual(attestation_properties.get('attestation_challenge'), expected_challenge)
+        self.assertIsNone(attestation_properties.get('unique_id'))
+
+        # Assert software_enforced properties
+        sw_enforced = attestation_properties.get('software_enforced', {})
+        self.assertEqual(sw_enforced.get('os_version'), 0)
+        self.assertEqual(sw_enforced.get('os_patch_level'), 0)
+        self.assertEqual(sw_enforced.get('vendor_patch_level'), 0)
+        self.assertEqual(sw_enforced.get('boot_patch_level'), 0)
+
+        app_id_properties = sw_enforced.get('attestation_application_id', {})
+        self.assertEqual(app_id_properties.get('attestation_application_id'), "dev.keiji.deviceintegrity.develop")
+        self.assertEqual(app_id_properties.get('attestation_application_version_code'), 1)
+        self.assertListEqual(sorted(app_id_properties.get('application_signatures', [])), sorted(["8483bbb6c8261a529aff5cbd270fbcdc864c93fda8805dc8321f8e1bb486991f"]))
+
+        # Assert hardware_enforced properties
+        hw_enforced = attestation_properties.get('hardware_enforced', {})
+        # For 'purpose', the order can vary, so we compare sets or sorted lists.
+        # The parser returns a list, so we'll sort both actual and expected.
+        self.assertListEqual(sorted(hw_enforced.get('purpose', [])), sorted([2, 3]))
+        self.assertEqual(hw_enforced.get('algorithm'), 3)
+        self.assertEqual(hw_enforced.get('ec_curve'), 1)
+        self.assertEqual(hw_enforced.get('origin'), "0") # Parser returns string for origin
+
+        root_of_trust = hw_enforced.get('root_of_trust', {})
+        self.assertEqual(root_of_trust.get('verified_boot_key'), "c4174150d45e4545b0f49e22fe63273999b6ac1cb6949c3a9f03ec8807eee901")
+        self.assertEqual(root_of_trust.get('device_locked'), True)
+        self.assertEqual(root_of_trust.get('verified_boot_state'), 0)
+        self.assertEqual(root_of_trust.get('verified_boot_hash'), "143ed191085244b79be08ae711be7c83ddf7950769f986c068c6d191e0453877")
+        pass
 
 
 if __name__ == '__main__':
