@@ -1,5 +1,7 @@
 package dev.keiji.deviceintegrity.api.keyattestation
 
+import dev.keiji.deviceintegrity.api.DeviceInfo
+import dev.keiji.deviceintegrity.api.SecurityInfo
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -12,14 +14,14 @@ data class VerifyAgreementResponse(
     val isVerified: Boolean,
 
     @SerialName("reason")
-    val reason: String? = null,
+    val reason: String? = null, // reason can still be optional
 
     @SerialName("attestation_info")
-    val attestationInfo: AttestationInfo? = null,
+    val attestationInfo: AttestationInfo,
 
     @SerialName("device_info")
-    val deviceInfo: dev.keiji.deviceintegrity.api.DeviceInfo? = null,
+    val deviceInfo: DeviceInfo,
 
     @SerialName("security_info")
-    val securityInfo: dev.keiji.deviceintegrity.api.SecurityInfo? = null,
+    val securityInfo: SecurityInfo,
 )

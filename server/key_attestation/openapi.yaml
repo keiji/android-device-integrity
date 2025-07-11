@@ -258,7 +258,9 @@ components:
       required:
         - session_id
         - is_verified
-        # attestation_info, device_info, and security_info are optional
+        - attestation_info
+        - device_info
+        - security_info
       properties:
         session_id:
           type: string
@@ -270,14 +272,14 @@ components:
           example: true
         reason:
           type: string
-          description: Reason for verification status (optional).
+          description: Reason for verification status (optional). # Reason can still be optional
           example: "Key agreement verified successfully (mock)."
         attestation_info:
-          $ref: '#/components/schemas/AttestationInfo'
+          $ref: '#/components/schemas/AttestationInfo' # No nullable: true here
         device_info:
-          $ref: '#/components/schemas/DeviceInfo'
+          $ref: '#/components/schemas/DeviceInfo'   # No nullable: true here
         security_info:
-          $ref: '#/components/schemas/SecurityInfo'
+          $ref: '#/components/schemas/SecurityInfo' # No nullable: true here
     VerifySignatureResponseBody:
       type: object
       required:
