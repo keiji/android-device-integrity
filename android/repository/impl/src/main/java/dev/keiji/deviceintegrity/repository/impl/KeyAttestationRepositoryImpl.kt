@@ -7,6 +7,7 @@ import dev.keiji.deviceintegrity.api.keyattestation.PrepareAgreementResponse
 import dev.keiji.deviceintegrity.api.keyattestation.PrepareSignatureRequest
 import dev.keiji.deviceintegrity.api.keyattestation.PrepareResponse
 import dev.keiji.deviceintegrity.api.keyattestation.VerifyAgreementRequest
+import dev.keiji.deviceintegrity.api.keyattestation.VerifyAgreementResponse // Added missing import
 import dev.keiji.deviceintegrity.api.keyattestation.VerifySignatureRequest
 import dev.keiji.deviceintegrity.api.keyattestation.VerifySignatureResponse
 import dev.keiji.deviceintegrity.repository.contract.KeyAttestationRepository

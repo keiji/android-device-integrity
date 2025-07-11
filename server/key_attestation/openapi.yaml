@@ -77,12 +77,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Internal Server Error.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+    # Removed the duplicate '500' entry from here
 
   /v1/verify/signature:
     post:
@@ -248,7 +243,7 @@ components:
           type: string
           format: byte # Base64URL encoded, no padding
           description: Base64URL-encoded (no padding) encrypted data.
-          example: "dGVzdF9lbmNvZGluZw" # "test_encoding"
+          example: "dGVzdA" # "test"
         client_public_key:
           type: string
           format: base64 # Standard Base64 encoded
