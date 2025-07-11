@@ -44,12 +44,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/verify/agreement:
+    post:
+      summary: Verify Key Attestation Agreement
+      description: Verifies the Key Attestation Agreement (mock implementation).
+      operationId: verifyAgreementKeyAttestation
+      tags:
+        - KeyAttestationV1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyAgreementRequestBody'
+      responses:
+        '200':
+          description: Successfully processed agreement verification (mock response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyAgreementResponseBody' # Corrected: $ref is a child of schema
+        '400':
+          description: Bad Request (e.g., missing parameters).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal Server Error.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+    # Removed the duplicate '500' entry from here
 
   /v1/verify/signature:
     post:
@@ -77,12 +105,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Internal Server Error.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+    # Removed duplicate '500' entry
 
   /v1/prepare/agreement:
     post:
@@ -204,6 +227,50 @@ components:
             format: base64
           description: Array of standard Base64-encoded certificate strings.
           example: ["Y2VydDE=", "Y2VydDI="]
+    VerifyAgreementRequestBody: # New Request Body for verify/agreement
+      type: object
+      required:
+        - session_id
+        - encrypted_data
+        - client_public_key
+        # device_info and security_info are optional but recommended
+      properties:
+        session_id:
+          type: string
+          description: Client session ID.
+          example: "session-abcde-67890"
+        encrypted_data:
+          type: string
+          format: byte # Base64URL encoded, no padding
+          description: Base64URL-encoded (no padding) encrypted data.
+          example: "SGVsbG8gV29ybGQ=" # "Hello World"
+        client_public_key:
+          type: string
+          format: base64 # Standard Base64 encoded
+          description: Standard Base64-encoded client's public key (X.509 SubjectPublicKeyInfo, DER).
+          example: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEE5g3G..." # Example of a Base64 encoded key
+        device_info:
+          $ref: '#/components/schemas/DeviceInfo'
+        security_info:
+          $ref: '#/components/schemas/SecurityInfo'
+    VerifyAgreementResponseBody: # New Response Body for verify/agreement
+      type: object
+      required:
+        - session_id
+        - is_verified
+      properties:
+        session_id:
+          type: string
+          description: Client session ID.
+          example: "session-abcde-67890"
+        is_verified:
+          type: boolean
+          description: Result of the agreement verification.
+          example: true
+        reason:
+          type: string
+          description: Reason for verification status (optional).
+          example: "Key agreement verified successfully (mock)."
     VerifySignatureResponseBody:
       type: object
       required:
