@@ -1,11 +1,15 @@
 package dev.keiji.deviceintegrity.repository.contract
 
-import dev.keiji.deviceintegrity.api.keyattestation.PrepareSignatureRequest
-import dev.keiji.deviceintegrity.api.keyattestation.PrepareResponse
-import dev.keiji.deviceintegrity.api.keyattestation.VerifySignatureRequest
-import dev.keiji.deviceintegrity.api.keyattestation.VerifySignatureResponse
+// API model imports
 import dev.keiji.deviceintegrity.api.keyattestation.PrepareAgreementRequest
 import dev.keiji.deviceintegrity.api.keyattestation.PrepareAgreementResponse
+import dev.keiji.deviceintegrity.api.keyattestation.PrepareResponse
+import dev.keiji.deviceintegrity.api.keyattestation.PrepareSignatureRequest
+import dev.keiji.deviceintegrity.api.keyattestation.VerifyAgreementRequest
+import dev.keiji.deviceintegrity.api.keyattestation.VerifyAgreementResponse
+import dev.keiji.deviceintegrity.api.keyattestation.VerifySignatureRequest
+import dev.keiji.deviceintegrity.api.keyattestation.VerifySignatureResponse
+// Local project imports
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
 import java.io.IOException
 
@@ -59,6 +63,6 @@ interface KeyAttestationRepository {
      */
     @Throws(ServerException::class, IOException::class)
     suspend fun verifyAgreement(
-        requestBody: dev.keiji.deviceintegrity.api.keyattestation.VerifyAgreementRequest // FQDN to avoid import collision if any
-    ): dev.keiji.deviceintegrity.api.keyattestation.VerifyAgreementResponse // FQDN for clarity
+        requestBody: VerifyAgreementRequest
+    ): VerifyAgreementResponse
 }
