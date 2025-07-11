@@ -522,37 +522,20 @@ class KeyAttestationViewModel @Inject constructor(
             // Common try-catch block for both ECDH (verifyAgreement) and EC/RSA (verifySignature)
             try {
                 if (uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) {
-                    // Reconstruct VerifyAgreementRequest for ECDH path
                     val serverPublicKeyB64Url = uiState.value.serverPublicKey // Already checked for empty
                     val challengeB64Url = uiState.value.challenge // Already checked for empty
-                    val saltBytes = Base64Utils.UrlSafeNoPadding.decode(serverNonceOrSaltB64Url)
-                    val serverPublicKeyBytes = Base64Utils.UrlSafeNoPadding.decode(serverPublicKeyB64Url)
-                    val keyFactory = KeyFactory.getInstance("EC")
-                    val serverPublicKey = keyFactory.generatePublic(X509EncodedKeySpec(serverPublicKeyBytes))
 
-                    val sharedSecret = sharedKeyDerivator.deriveKey(serverPublicKey, privateKey, saltBytes)
-                    val secretKeySpec = SecretKeySpec(sharedSecret, "AES")
-                    val challengeBytes = Base64Utils.UrlSafeNoPadding.decode(challengeB64Url)
-                    val aad = currentSessionId.toByteArray(StandardCharsets.US_ASCII)
-                    val encryptedChallenge = encrypt.encrypt(challengeBytes, secretKeySpec, aad)
-                    val encryptedChallengeB64Url = Base64Utils.UrlSafeNoPadding.encode(encryptedChallenge)
-                    val clientPublicKeyBytes = keyPair.public.encoded
-                    val clientPublicKeyB64Url = Base64Utils.UrlSafeNoPadding.encode(clientPublicKeyBytes)
-
-                    val ecdhRequest = VerifyAgreementRequest(
-                        sessionId = currentSessionId,
-                        encryptedPayloadBase64UrlEncoded = encryptedChallengeB64Url,
-                        clientPublicKeyBase64UrlEncoded = clientPublicKeyB64Url,
-                        deviceInfo = DeviceInfo( /* ... same as above ... */
-                            brand = deviceInfoProvider.BRAND, model = deviceInfoProvider.MODEL, device = deviceInfoProvider.DEVICE, product = deviceInfoProvider.PRODUCT, manufacturer = deviceInfoProvider.MANUFACTURER, hardware = deviceInfoProvider.HARDWARE, board = deviceInfoProvider.BOARD, bootloader = deviceInfoProvider.BOOTLOADER, versionRelease = deviceInfoProvider.VERSION_RELEASE, sdkInt = deviceInfoProvider.SDK_INT, fingerprint = deviceInfoProvider.FINGERPRINT, securityPatch = deviceInfoProvider.SECURITY_PATCH
-                        ),
-                        securityInfo = SecurityInfo( /* ... same as above ... */
-                            isDeviceLockEnabled = deviceSecurityStateProvider.isDeviceLockEnabled, isBiometricsEnabled = deviceSecurityStateProvider.isBiometricsEnabled, hasClass3Authenticator = deviceSecurityStateProvider.hasClass3Authenticator, hasStrongbox = deviceSecurityStateProvider.hasStrongBox
-                        )
+                    val response = performEcdhVerification(
+                        currentSessionId = currentSessionId,
+                        clientPrivateKey = privateKey,
+                        clientPublicKeyBytes = keyPair.public.encoded,
+                        serverPublicKeyB64Url = serverPublicKeyB64Url,
+                        saltB64Url = serverNonceOrSaltB64Url,
+                        challengeB64Url = challengeB64Url
                     )
-                    val response = keyAttestationRepository.verifyAgreement(ecdhRequest)
+
                     if (response.isVerified) {
-                        val resultItems = buildVerificationResultList(response) // VerifyAgreementResponse used here
+                        val resultItems = buildVerificationResultListForAgreement(response)
                         resultItems.addAll(convertDeviceInfoToAttestationItems(response.deviceInfo))
                         resultItems.addAll(convertSecurityInfoToAttestationItems(response.securityInfo))
                         _uiState.update {
@@ -571,26 +554,23 @@ class KeyAttestationViewModel @Inject constructor(
                         }
                     }
                 } else {
-                    // Reconstruct VerifySignatureRequest for EC/RSA path
-                    val signatureData = selectedSigner.sign(dataToSign, privateKey) // selectedSigner is defined in the EC/RSA block
-                    val signatureDataBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(signatureData)
-                    val clientNonceBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(clientNonce)
-                    val certificateChainBase64Encoded = currentKeyPairData.certificates.map { cert -> Base64.Default.encode(cert.encoded) }
-                    val signatureRequest = VerifySignatureRequest(
-                        sessionId = currentSessionId,
-                        signatureDataBase64UrlEncoded = signatureDataBase64UrlEncoded,
-                        clientNonceBase64UrlEncoded = clientNonceBase64UrlEncoded,
-                        certificateChainBase64Encoded = certificateChainBase64Encoded,
-                        deviceInfo = DeviceInfo( /* ... same as above ... */
-                            brand = deviceInfoProvider.BRAND, model = deviceInfoProvider.MODEL, device = deviceInfoProvider.DEVICE, product = deviceInfoProvider.PRODUCT, manufacturer = deviceInfoProvider.MANUFACTURER, hardware = deviceInfoProvider.HARDWARE, board = deviceInfoProvider.BOARD, bootloader = deviceInfoProvider.BOOTLOADER, versionRelease = deviceInfoProvider.VERSION_RELEASE, sdkInt = deviceInfoProvider.SDK_INT, fingerprint = deviceInfoProvider.FINGERPRINT, securityPatch = deviceInfoProvider.SECURITY_PATCH
-                        ),
-                        securityInfo = SecurityInfo( /* ... same as above ... */
-                            isDeviceLockEnabled = deviceSecurityStateProvider.isDeviceLockEnabled, isBiometricsEnabled = deviceSecurityStateProvider.isBiometricsEnabled, hasClass3Authenticator = deviceSecurityStateProvider.hasClass3Authenticator, hasStrongbox = deviceSecurityStateProvider.hasStrongBox
-                        )
+                    val selectedSigner = when (uiState.value.selectedKeyType) {
+                        CryptoAlgorithm.EC -> ecSigner
+                        CryptoAlgorithm.RSA -> rsaSigner
+                        else -> throw IllegalStateException("Unsupported algorithm for signing") // Should have been caught
+                    }
+
+                    val response = performEcOrRsaVerification(
+                        currentSessionId = currentSessionId,
+                        privateKey = privateKey,
+                        dataToSign = dataToSign,
+                        clientNonce = clientNonce,
+                        currentKeyPairData = currentKeyPairData,
+                        signer = selectedSigner // Pass the selected signer
                     )
-                    val response = keyAttestationRepository.verifySignature(signatureRequest)
+
                     if (response.isVerified) {
-                        val resultItems = buildVerificationResultList(response) // VerifySignatureResponse used here
+                        val resultItems = buildVerificationResultList(response)
                         resultItems.addAll(convertDeviceInfoToAttestationItems(response.deviceInfo))
                         resultItems.addAll(convertSecurityInfoToAttestationItems(response.securityInfo))
                         _uiState.update {
@@ -681,6 +661,76 @@ class KeyAttestationViewModel @Inject constructor(
         }
     }
 
+    private suspend fun performEcdhVerification(
+        currentSessionId: String,
+        clientPrivateKey: java.security.PrivateKey,
+        clientPublicKeyBytes: ByteArray,
+        serverPublicKeyB64Url: String,
+        saltB64Url: String,
+        challengeB64Url: String
+    ): VerifyAgreementResponse {
+        val serverPublicKeyBytesDecoded = Base64Utils.UrlSafeNoPadding.decode(serverPublicKeyB64Url)
+        val keyFactory = KeyFactory.getInstance("EC")
+        val serverPublicKey = keyFactory.generatePublic(X509EncodedKeySpec(serverPublicKeyBytesDecoded))
+
+        val saltBytes = Base64Utils.UrlSafeNoPadding.decode(saltB64Url)
+
+        val sharedSecret = sharedKeyDerivator.deriveKey(serverPublicKey, clientPrivateKey, saltBytes)
+        val secretKeySpec = SecretKeySpec(sharedSecret, "AES")
+
+        val challengeBytes = Base64Utils.UrlSafeNoPadding.decode(challengeB64Url)
+        val aad = currentSessionId.toByteArray(StandardCharsets.US_ASCII)
+
+        val encryptedChallenge = encrypt.encrypt(challengeBytes, secretKeySpec, aad)
+        val encryptedChallengeB64Url = Base64Utils.UrlSafeNoPadding.encode(encryptedChallenge)
+
+        val clientPublicKeyB64Url = Base64Utils.UrlSafeNoPadding.encode(clientPublicKeyBytes)
+
+        val request = VerifyAgreementRequest(
+            sessionId = currentSessionId,
+            encryptedPayloadBase64UrlEncoded = encryptedChallengeB64Url,
+            clientPublicKeyBase64UrlEncoded = clientPublicKeyB64Url,
+            deviceInfo = DeviceInfo(
+                brand = deviceInfoProvider.BRAND, model = deviceInfoProvider.MODEL, device = deviceInfoProvider.DEVICE, product = deviceInfoProvider.PRODUCT, manufacturer = deviceInfoProvider.MANUFACTURER, hardware = deviceInfoProvider.HARDWARE, board = deviceInfoProvider.BOARD, bootloader = deviceInfoProvider.BOOTLOADER, versionRelease = deviceInfoProvider.VERSION_RELEASE, sdkInt = deviceInfoProvider.SDK_INT, fingerprint = deviceInfoProvider.FINGERPRINT, securityPatch = deviceInfoProvider.SECURITY_PATCH
+            ),
+            securityInfo = SecurityInfo(
+                isDeviceLockEnabled = deviceSecurityStateProvider.isDeviceLockEnabled, isBiometricsEnabled = deviceSecurityStateProvider.isBiometricsEnabled, hasClass3Authenticator = deviceSecurityStateProvider.hasClass3Authenticator, hasStrongbox = deviceSecurityStateProvider.hasStrongBox
+            )
+        )
+        return keyAttestationRepository.verifyAgreement(request)
+    }
+
+    private suspend fun performEcOrRsaVerification(
+        currentSessionId: String,
+        privateKey: java.security.PrivateKey,
+        dataToSign: ByteArray,
+        clientNonce: ByteArray,
+        currentKeyPairData: KeyPairData,
+        signer: Signer
+    ): VerifySignatureResponse {
+        val signatureData = signer.sign(dataToSign, privateKey)
+        val signatureDataBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(signatureData)
+        val clientNonceBase64UrlEncoded = Base64Utils.UrlSafeNoPadding.encode(clientNonce)
+        val certificateChainBase64Encoded =
+            currentKeyPairData.certificates.map { cert ->
+                Base64.Default.encode(cert.encoded)
+            }
+        val request = VerifySignatureRequest(
+            sessionId = currentSessionId,
+            signatureDataBase64UrlEncoded = signatureDataBase64UrlEncoded,
+            clientNonceBase64UrlEncoded = clientNonceBase64UrlEncoded,
+            certificateChainBase64Encoded = certificateChainBase64Encoded,
+            deviceInfo = DeviceInfo(
+                brand = deviceInfoProvider.BRAND, model = deviceInfoProvider.MODEL, device = deviceInfoProvider.DEVICE, product = deviceInfoProvider.PRODUCT, manufacturer = deviceInfoProvider.MANUFACTURER, hardware = deviceInfoProvider.HARDWARE, board = deviceInfoProvider.BOARD, bootloader = deviceInfoProvider.BOOTLOADER, versionRelease = deviceInfoProvider.VERSION_RELEASE, sdkInt = deviceInfoProvider.SDK_INT, fingerprint = deviceInfoProvider.FINGERPRINT, securityPatch = deviceInfoProvider.SECURITY_PATCH
+            ),
+            securityInfo = SecurityInfo(
+                isDeviceLockEnabled = deviceSecurityStateProvider.isDeviceLockEnabled, isBiometricsEnabled = deviceSecurityStateProvider.isBiometricsEnabled, hasClass3Authenticator = deviceSecurityStateProvider.hasClass3Authenticator, hasStrongbox = deviceSecurityStateProvider.hasStrongBox
+            )
+        )
+        return keyAttestationRepository.verifySignature(request)
+    }
+
+
     private fun convertDeviceInfoToAttestationItems(deviceInfo: DeviceInfo): List<InfoItem> {
         val items = mutableListOf<InfoItem>()
         items.add(InfoItem("Device Info", "", isHeader = true, indentLevel = 0))
@@ -696,6 +746,30 @@ class KeyAttestationViewModel @Inject constructor(
         items.add(InfoItem("SDK Int", deviceInfo.sdkInt.toString(), indentLevel = 1))
         items.add(InfoItem("Fingerprint", deviceInfo.fingerprint, indentLevel = 1))
         items.add(InfoItem("Security Patch", deviceInfo.securityPatch, indentLevel = 1))
+        return items
+    }
+
+    // New method for VerifyAgreementResponse
+    private fun buildVerificationResultListForAgreement(response: dev.keiji.deviceintegrity.api.keyattestation.VerifyAgreementResponse): MutableList<InfoItem> {
+        val items = mutableListOf<InfoItem>()
+
+        items.add(InfoItem("Session ID", response.sessionId))
+        items.add(InfoItem("Is Verified", response.isVerified.toString()))
+        response.reason?.let { items.add(InfoItem("Reason", it)) }
+
+        // Assuming VerifyAgreementResponse has attestationInfo, deviceInfo, securityInfo
+        // If the structure is different, this part needs adjustment.
+        // For now, let's assume it's similar enough to VerifySignatureResponse for these fields.
+        val attestationInfo = response.attestationInfo
+        items.add(InfoItem("Attestation Version", attestationInfo.attestationVersion.toString()))
+        items.add(InfoItem("Attestation Security Level", attestationInfo.attestationSecurityLevel.toString()))
+        items.add(InfoItem("KeyMint Version", attestationInfo.keymintVersion.toString()))
+        items.add(InfoItem("KeyMint Security Level", attestationInfo.keymintSecurityLevel.toString()))
+        items.add(InfoItem("Attestation Challenge", attestationInfo.attestationChallenge)) // This might be different for agreement
+
+        addAuthorizationListItems(items, "Software Enforced Properties", attestationInfo.softwareEnforcedProperties)
+        addAuthorizationListItems(items, "Hardware Enforced Properties", attestationInfo.hardwareEnforcedProperties)
+
         return items
     }
 
