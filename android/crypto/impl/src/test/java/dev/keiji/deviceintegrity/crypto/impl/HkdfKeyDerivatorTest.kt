@@ -1,5 +1,7 @@
-package com.example.crypto.impl
+package dev.keiji.deviceintegrity.crypto.impl
 
+import dev.keiji.deviceintegrity.crypto.contract.SharedKeyDerivator
+import dev.keiji.deviceintegrity.crypto.impl.HkdfKeyDerivator
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
