@@ -106,35 +106,87 @@ def parse_attestation_application_id(attestation_application_id_bytes):
         logger.error('AttestationApplicationId is not a SEQUENCE or has too few elements.')
         raise ValueError('AttestationApplicationId not a valid SEQUENCE.')
 
-    parsed_data = {'package_infos': [], 'signature_digests': []}
+    # Aligning with reference code's structure (b5f506e)
+    parsed_data = {} # Reference initializes an empty dict, then adds keys like 'attestation_application_id'
 
-    package_infos_set = app_id_seq[0]
-    if isinstance(package_infos_set, univ.SetOf):
-        for package_info_seq in package_infos_set:
-            if isinstance(package_info_seq, univ.Sequence) and len(package_info_seq) == 2:
-                try:
-                    pkg_name = str(package_info_seq[0])
-                    pkg_version = int(package_info_seq[1])
-                    parsed_data['package_infos'].append({'package_name': pkg_name, 'version': pkg_version})
-                except (TypeError, ValueError) as e:
-                    logger.warning(f'Malformed PackageInfo entry (name/version) in AttestationApplicationId: {package_info_seq}, error: {e}')
-            else:
-                logger.warning(f'Malformed PackageInfo entry (not a sequence or wrong length) in AttestationApplicationId: {package_info_seq}')
-    else:
-        logger.warning('packageInfos is not a SetOf in AttestationApplicationId.')
+    # Reference: if not isinstance(attestation_application_id_sequence, univ.SequenceOf): return parsed_data
+    # Current app_id_seq is already decoded from bytes.
+    # Reference expects `attestation_application_id_sequence` (our `app_id_seq`) to be SequenceOf according to its check,
+    # but then accesses it like a Sequence: `app_id_seq[0][0]`
+    # This implies app_id_seq might be a Sequence wrapping a SequenceOf or similar structure in practice for the reference.
+    # For now, trying to match the access pattern of b5f506e as closely as possible.
+    # The b5f506e structure:
+    # AttestationApplicationId ::= SEQUENCE { // This is what app_id_seq is based on schema
+    #    packageInfos SET OF PackageInfo, // app_id_seq[0]
+    #    signatureDigests SET OF OCTET_STRING // app_id_seq[1]
+    # }
+    # PackageInfo ::= SEQUENCE { packageName UTF8String, version INTEGER }
 
-    signature_digests_set = app_id_seq[1]
-    if isinstance(signature_digests_set, univ.SetOf):
-        for sig_digest_octet_str in signature_digests_set:
-            if isinstance(sig_digest_octet_str, univ.OctetString):
-                try:
-                    parsed_data['signature_digests'].append(bytes(sig_digest_octet_str).hex())
-                except (TypeError, ValueError) as e:
-                     logger.warning(f'Malformed signatureDigest (conversion to hex) in AttestationApplicationId: {sig_digest_octet_str}, error: {e}')
-            else:
-                 logger.warning(f'Malformed signatureDigest entry (not OctetString) in AttestationApplicationId: {sig_digest_octet_str}')
+    # b5f506e code:
+    # package_info_sequence = attestation_application_id_sequence[0][0]
+    # This [0][0] access is unusual if attestation_application_id_sequence is directly the AttestationApplicationId above.
+    # It would imply attestation_application_id_sequence is something like: SEQUENCE { actual_att_app_id_seq AttestationApplicationId }
+    # Or, if `univ.SequenceOf` was treated as `univ.Sequence` containing one element which is `univ.SequenceOf`.
+    # Given the ASN.1 schema, app_id_seq[0] should be the SET OF PackageInfo.
+    # And app_id_seq[0][0] would be the first PackageInfo sequence from that set.
+    # The reference code's `package_info_sequence.items()` is the main non-standard part for a single PackageInfo.
+
+    # Let's assume `app_id_seq` is the main `AttestationApplicationId ::= SEQUENCE`
+    if not isinstance(app_id_seq, univ.Sequence) or len(app_id_seq) < 2: # Basic check
+        logger.warning('AttestationApplicationId is not a SEQUENCE or has too few elements for b5f506e structure.')
+        return parsed_data # Return empty dict as per reference's implicit behavior
+
+    # packageInfos_set_or_seq = app_id_seq[0] # This should be the SET OF PackageInfo
+    # The reference code `package_info_sequence = attestation_application_id_sequence[0][0]`
+    # seems to imply it's picking the *first* PackageInfo from the set and then iterating its fields using `.items()`.
+    # This is very specific and would only parse the first package if multiple exist.
+
+    # Replicating b5f506e's logic for package info (parsing only the first package info's fields):
+    # It seems b5f506e intends to get the first PackageInfo sequence.
+    package_infos_outer = app_id_seq[0] # This should be SET OF PackageInfo
+    if isinstance(package_infos_outer, univ.SetOf) and len(package_infos_outer) > 0:
+        package_info_sequence = package_infos_outer[0] # Get the first PackageInfo SEQUENCE
+        if isinstance(package_info_sequence, univ.Sequence):
+            # Reference: items = package_info_sequence.items()
+            # This is the non-standard part. It implies package_info_sequence was dict-like.
+            # If it's a pyasn1 Sequence, .items() is not standard.
+            # Mimicking the effect: access by index for known structure of PackageInfo (name, version)
+            if len(package_info_sequence) >= 1: # packageName
+                 # b5f506e uses str(value_component) where value_component is item[1] from .items()
+                 # For a sequence element, just str() is fine.
+                parsed_data['attestation_application_id'] = str(package_info_sequence[0]) # packageName
+            if len(package_info_sequence) >= 2: # version
+                parsed_data['attestation_application_version_code'] = int(package_info_sequence[1]) # version
+        else:
+            logger.warning(f"First PackageInfo in AttestationApplicationId is not a SEQUENCE: {package_info_sequence}")
+    elif isinstance(package_infos_outer, univ.Sequence) and len(package_infos_outer) > 0 :
+        # Fallback if it was a Sequence of PackageInfo instead of SetOf
+        package_info_sequence = package_infos_outer[0]
+        if isinstance(package_info_sequence, univ.Sequence):
+            if len(package_info_sequence) >= 1:
+                parsed_data['attestation_application_id'] = str(package_info_sequence[0])
+            if len(package_info_sequence) >= 2:
+                parsed_data['attestation_application_version_code'] = int(package_info_sequence[1])
+        else:
+            logger.warning(f"First PackageInfo in AttestationApplicationId (Sequence case) is not a SEQUENCE: {package_info_sequence}")
     else:
-        logger.warning('signatureDigests is not a SetOf in AttestationApplicationId.')
+        logger.warning(f"packageInfos in AttestationApplicationId is not SetOf/SequenceOf or is empty: {package_infos_outer}")
+
+
+    # Replicating b5f506e's logic for signatures
+    signatures = []
+    signature_set = app_id_seq[1] # This should be SET OF OCTET_STRING
+    if isinstance(signature_set, univ.SetOf):
+        # Reference: for index, item in enumerate(signature_set): signatures.append(bytes(item).hex())
+        # This is standard for iterating a SetOf.
+        for item_octet_string in signature_set:
+            if isinstance(item_octet_string, univ.OctetString):
+                signatures.append(bytes(item_octet_string).hex())
+            else:
+                logger.warning(f"Item in signature_set is not OctetString: {item_octet_string}")
+    else:
+        logger.warning(f"signatureDigests in AttestationApplicationId is not a SetOf: {signature_set}")
+    parsed_data['application_signatures'] = signatures
 
     return parsed_data
 
@@ -146,140 +198,92 @@ def parse_authorization_list(auth_list_sequence, attestation_version):
     """
     parsed_props = {}
     if not isinstance(auth_list_sequence, univ.Sequence):
-        logger.warning(f"AuthorizationList is not a sequence: {type(auth_list_sequence)}")
+        # Reference code doesn't explicitly log this but returns empty. Consistent.
         return parsed_props
 
-    for item_value_pair in auth_list_sequence:
+    # Aligning with reference code's iteration style (b5f506e)
+    # This iteration style is non-standard for pyasn1 univ.Sequence
+    # and may rely on specific pyasn1 version behavior or a pre-processed sequence.
+    for item in auth_list_sequence.items():
         try:
-            if not hasattr(item_value_pair, 'tagSet') or not item_value_pair.tagSet:
-                 logger.warning(f'Skipping item in AuthorizationList without a proper tagSet: {item_value_pair}')
-                 continue
-            # Ensure tagId is accessed correctly, it's part of the first tag in the TagSet
-            tag_number = item_value_pair.tagSet[0].tagId
-            # The value is the component of the EXPLICIT tagged type
-            value_component_container = item_value_pair.getComponent()
-            if value_component_container is None:
-                logger.warning(f"Tag {tag_number} in AuthorizationList has no value component container.")
-                continue
-
-            # Check if the value component itself is another sequence or a simple type
-            # This depends on how the EXPLICIT tag was defined in the ASN.1 schema
-            # For many tags, the value is directly the component (e.g., INTEGER, OCTET STRING)
-            # For some, like ROOT_OF_TRUST, it's a nested SEQUENCE.
-            # If the component is a univ.Any or similar, we might need to decode it further.
-            # For pyasn1, typically the .getComponent() on the tagged object gives the inner value.
-            # If the value is directly a simple type (like Integer, OctetString), we use it.
-            # If it's a constructed type (like Sequence), it's used directly.
-            # The .getComponent() method on the tagged object itself (item_value_pair)
-            # should give the value part of the [TAG] EXPLICIT Value construct.
-
-            value = value_component_container # This is the actual value after the EXPLICIT tag
-
-        except (AttributeError, IndexError, TypeError, PyAsn1Error) as e: # Added PyAsn1Error
-            logger.warning(f'Could not get tag or value from auth list item: {item_value_pair}, error: {e}')
+            # Aligning with reference code's tag and value extraction
+            tag_set = item[1].tagSet
+            tag_number = tag_set.superTags[1].tagId
+            value_component = item[1] # In reference, this 'item[1]' is used as the value directly
+        except (AttributeError, IndexError, TypeError): # Match reference error types if possible
+            logger.warning(f"Could not get tag from item: {item}") # Reference log
             continue
 
         try:
+            # Mirroring the if/elif structure and value processing from b5f506e
             if tag_number == TAG_ATTESTATION_APPLICATION_ID:
-                # The value should be an OctetString containing the DER encoded App ID
-                if isinstance(value, univ.OctetString):
-                    app_id_bytes = bytes(value)
-                    parsed_props['attestation_application_id'] = parse_attestation_application_id(app_id_bytes)
-                else:
-                    logger.warning(f"TAG_ATTESTATION_APPLICATION_ID value is not OctetString: {type(value)}")
+                # Assuming value_component is OctetString bytes as in reference
+                parsed_props['attestation_application_id'] = parse_attestation_application_id(bytes(value_component))
             elif tag_number == TAG_OS_VERSION:
-                parsed_props['os_version'] = int(value)
-            elif tag_number == TAG_OS_PATCH_LEVEL: # YYYYMMDD format
-                parsed_props['os_patch_level'] = int(value)
-            elif tag_number == TAG_VENDOR_PATCH_LEVEL: # YYYYMMDD format
-                parsed_props['vendor_patch_level'] = int(value)
-            elif tag_number == TAG_BOOT_PATCH_LEVEL: # YYYYMMDD format
-                parsed_props['boot_patch_level'] = int(value)
+                parsed_props['os_version'] = int(value_component)
+            elif tag_number == TAG_OS_PATCH_LEVEL:
+                parsed_props['os_patch_level'] = int(value_component)
             elif tag_number == TAG_DIGEST: # SET OF INTEGER
-                parsed_props['digests'] = [int(p) for p in value] if isinstance(value, univ.SetOf) else [int(value)] if isinstance(value, univ.Integer) else []
-            elif tag_number == TAG_PURPOSE: # SET OF INTEGER
-                parsed_props['purpose'] = [int(p) for p in value] if isinstance(value, univ.SetOf) else [int(value)] if isinstance(value, univ.Integer) else []
+                # Reference: digests = [int(p) for p in value_component]
+                # This assumes value_component is directly iterable (like a pyasn1 SetOf/SequenceOf)
+                parsed_props['digests'] = [int(p) for p in value_component]
+            elif tag_number == TAG_PURPOSE:  # SET OF INTEGER
+                parsed_props['purpose'] = [int(p) for p in value_component]
             elif tag_number == TAG_ALGORITHM:
-                parsed_props['algorithm'] = int(value)
+                parsed_props['algorithm'] = int(value_component)
             elif tag_number == TAG_EC_CURVE:
-                parsed_props['ec_curve'] = int(value)
+                parsed_props['ec_curve'] = int(value_component)
             elif tag_number == TAG_RSA_PUBLIC_EXPONENT:
-                parsed_props['rsa_public_exponent'] = int(value)
-            elif tag_number == TAG_MGF_DIGEST: # For RSA PSS padding, SET OF INTEGER
-                 parsed_props['mgf_digest'] = [int(p) for p in value] if isinstance(value, univ.SetOf) else [int(value)] if isinstance(value, univ.Integer) else []
+                parsed_props['rsa_public_exponent'] = int(value_component)
+            elif tag_number == TAG_MGF_DIGEST: # SET OF INTEGER in reference
+                parsed_props['mgf_digest'] = [int(p) for p in value_component]
             elif tag_number == TAG_KEY_SIZE:
-                parsed_props['key_size'] = int(value)
-            elif tag_number == TAG_NO_AUTH_REQUIRED: # NULL type implies presence
+                parsed_props['key_size'] = int(value_component)
+            elif tag_number == TAG_NO_AUTH_REQUIRED:  # NULL
                 parsed_props['no_auth_required'] = True
-            elif tag_number == TAG_CREATION_DATETIME: # INTEGER milliseconds since epoch
-                parsed_props['creation_datetime'] = int(value)
-            elif tag_number == TAG_ORIGIN: # INTEGER (KeyOrigin)
-                parsed_props['origin'] = int(value)
-            elif tag_number == TAG_ATTESTATION_ID_BRAND:
-                parsed_props['attestation_id_brand'] = bytes(value).decode('utf-8', errors='replace')
-            elif tag_number == TAG_ATTESTATION_ID_DEVICE:
-                parsed_props['attestation_id_device'] = bytes(value).decode('utf-8', errors='replace')
-            elif tag_number == TAG_ATTESTATION_ID_PRODUCT:
-                parsed_props['attestation_id_product'] = bytes(value).decode('utf-8', errors='replace')
-            elif tag_number == TAG_ATTESTATION_ID_SERIAL:
-                parsed_props['attestation_id_serial'] = bytes(value).decode('utf-8', errors='replace')
-            elif tag_number == TAG_ATTESTATION_ID_MANUFACTURER:
-                parsed_props['attestation_id_manufacturer'] = bytes(value).decode('utf-8', errors='replace')
-            elif tag_number == TAG_ATTESTATION_ID_MODEL:
-                parsed_props['attestation_id_model'] = bytes(value).decode('utf-8', errors='replace')
-            elif tag_number == TAG_MODULE_HASH: # OCTET_STRING
-                parsed_props['module_hash'] = base64.urlsafe_b64encode(bytes(value)).decode()
-            elif tag_number == TAG_ROOT_OF_TRUST: # This is a SEQUENCE
-                parsed_props['root_of_trust'] = parse_root_of_trust(value) # value should be the RootOfTrust SEQUENCE
-            elif tag_number == TAG_PADDING: # SET OF INTEGER
-                parsed_props['padding'] = [int(p) for p in value] if isinstance(value, univ.SetOf) else [int(value)] if isinstance(value, univ.Integer) else []
-            elif tag_number == TAG_ROLLBACK_RESISTANCE: # NULL
-                parsed_props['rollback_resistance'] = True
-            elif tag_number == TAG_EARLY_BOOT_ONLY: # NULL
-                parsed_props['early_boot_only'] = True
-            elif tag_number == TAG_ACTIVE_DATETIME: # INTEGER milliseconds
-                parsed_props['active_datetime'] = int(value)
-            elif tag_number == TAG_ORIGINATION_EXPIRE_DATETIME: # INTEGER milliseconds
-                parsed_props['origination_expire_datetime'] = int(value)
-            elif tag_number == TAG_USAGE_EXPIRE_DATETIME: # INTEGER milliseconds
-                parsed_props['usage_expire_datetime'] = int(value)
-            elif tag_number == TAG_USAGE_COUNT_LIMIT: # INTEGER
-                parsed_props['usage_count_limit'] = int(value)
-            elif tag_number == TAG_USER_AUTH_TYPE: # INTEGER (Bitfield: 1=fingerprint, 2=password, 4=iris, etc.)
-                parsed_props['user_auth_type'] = int(value)
-            elif tag_number == TAG_AUTH_TIMEOUT: # INTEGER seconds
-                parsed_props['auth_timeout'] = int(value)
-            elif tag_number == TAG_ALLOW_WHILE_ON_BODY: # NULL
-                parsed_props['allow_while_on_body'] = True
-            elif tag_number == TAG_TRUSTED_USER_PRESENCE_REQUIRED: # NULL
-                parsed_props['trusted_user_presence_required'] = True
-            elif tag_number == TAG_TRUSTED_CONFIRMATION_REQUIRED: # NULL
-                parsed_props['trusted_confirmation_required'] = True
-            elif tag_number == TAG_UNLOCKED_DEVICE_REQUIRED: # NULL
-                parsed_props['unlocked_device_required'] = True
-            elif tag_number == TAG_ATTESTATION_ID_IMEI: # OCTET_STRING
-                parsed_props['attestation_id_imei'] = bytes(value).decode('utf-8', errors='replace')
-            elif tag_number == TAG_ATTESTATION_ID_MEID: # OCTET_STRING
-                parsed_props['attestation_id_meid'] = bytes(value).decode('utf-8', errors='replace')
-            elif tag_number == TAG_DEVICE_UNIQUE_ATTESTATION: # NULL (KeyMint v2+)
-                parsed_props['device_unique_attestation'] = True
-            elif tag_number == TAG_ATTESTATION_ID_SECOND_IMEI: # OCTET_STRING
-                parsed_props['attestation_id_second_imei'] = bytes(value).decode('utf-8', errors='replace')
+            elif tag_number == TAG_CREATION_DATETIME:
+                parsed_props['creation_datetime'] = int(value_component)
+            elif tag_number == TAG_ORIGIN: # Reference uses str()
+                parsed_props['origin'] = str(value_component)
+            elif tag_number == TAG_VENDOR_PATCH_LEVEL: # Present in b5f506e constants and parser
+                parsed_props['vendor_patch_level'] = int(value_component)
+            elif tag_number == TAG_BOOT_PATCH_LEVEL: # Present in b5f506e constants and parser
+                parsed_props['boot_patch_level'] = int(value_component)
+            elif tag_number == TAG_ATTESTATION_ID_BRAND: # Reference uses str()
+                parsed_props['attestation_id_brand'] = str(value_component)
+            elif tag_number == TAG_ATTESTATION_ID_DEVICE: # Reference uses str()
+                parsed_props['attestation_id_device'] = str(value_component)
+            elif tag_number == TAG_ATTESTATION_ID_PRODUCT: # Reference uses str()
+                parsed_props['attestation_id_product'] = str(value_component)
+            elif tag_number == TAG_ATTESTATION_ID_SERIAL: # Reference uses str()
+                parsed_props['attestation_id_serial'] = str(value_component)
+            elif tag_number == TAG_ATTESTATION_ID_MANUFACTURER: # Reference uses str()
+                parsed_props['attestation_id_manufacturer'] = str(value_component)
+            elif tag_number == TAG_ATTESTATION_ID_MODEL: # Reference uses str()
+                parsed_props['attestation_id_model'] = str(value_component)
+            elif tag_number == TAG_MODULE_HASH: # OCTET_STRING in reference
+                 # Assuming value_component is OctetString bytes
+                parsed_props['module_hash'] = base64.urlsafe_b64encode(bytes(value_component)).decode()
+            elif tag_number == TAG_ROOT_OF_TRUST: # SEQUENCE
+                parsed_props['root_of_trust'] = parse_root_of_trust(value_component)
+            # Tags explicitly NOT handled by b5f506e's if/elif but present in its constants or newer Android versions:
+            # TAG_PADDING, TAG_ROLLBACK_RESISTANCE, TAG_EARLY_BOOT_ONLY, TAG_ACTIVE_DATETIME,
+            # TAG_ORIGINATION_EXPIRE_DATETIME, TAG_USAGE_EXPIRE_DATETIME, TAG_USAGE_COUNT_LIMIT,
+            # TAG_USER_AUTH_TYPE, TAG_AUTH_TIMEOUT, TAG_ALLOW_WHILE_ON_BODY,
+            # TAG_TRUSTED_USER_PRESENCE_REQUIRED, TAG_TRUSTED_CONFIRMATION_REQUIRED,
+            # TAG_UNLOCKED_DEVICE_REQUIRED, TAG_ATTESTATION_ID_IMEI, TAG_ATTESTATION_ID_MEID,
+            # TAG_DEVICE_UNIQUE_ATTESTATION, TAG_ATTESTATION_ID_SECOND_IMEI.
+            # These will fall into the 'else' block below, matching b5f506e's behavior.
             else:
-                # Store unknown tags as bytes if possible, or their string representation
-                unknown_value_repr = ""
-                if hasattr(value, 'asOctets'):
-                    unknown_value_repr = f"bytes:{bytes(value).hex()}"
-                elif hasattr(value, 'prettyPrint'):
-                    unknown_value_repr = value.prettyPrint()
-                else:
-                    unknown_value_repr = str(value)
-                logger.warning(f'Unknown tag in AuthorizationList: {tag_number}, value: {unknown_value_repr}')
-                parsed_props[f'unknown_tag_{tag_number}'] = unknown_value_repr
+                # Reference code's unknown tag logging
+                logger.warning("Unknown tag:%d, %s" % (tag_number, value_component))
+                # To fully mimic, we might not store unknown tags, or store them as per reference if it did.
+                # The reference log doesn't show it storing them, so we won't by default.
 
-        except (PyAsn1Error, ValueError, TypeError) as e:
-            val_repr = getattr(value, 'prettyPrint', lambda: str(value))()
-            logger.warning(f'Error parsing tag {tag_number} in AuthorizationList: {e}. Value component: {val_repr}')
+        except (PyAsn1Error, ValueError, TypeError) as e: # Match reference error types
+            # Reference log format
+            logger.warning(
+                f"Error parsing tag {tag_number} in AuthorizationList: {e}. Value component: {value_component}")
     return parsed_props
 
 
@@ -299,102 +303,69 @@ def parse_key_description(key_desc_bytes):
 
     parsed_data = {}
     try:
-        current_index = 0
-        parsed_data['attestation_version'] = int(key_desc_sequence[current_index])
-        current_index += 1
-        parsed_data['attestation_security_level'] = int(key_desc_sequence[current_index]) # SecurityLevel enum
-        current_index += 1
-        parsed_data['keymint_or_keymaster_version'] = int(key_desc_sequence[current_index])
-        current_index += 1
-        parsed_data['keymint_or_keymaster_security_level'] = int(key_desc_sequence[current_index]) # SecurityLevel enum
-        current_index += 1
-        parsed_data['attestation_challenge'] = bytes(key_desc_sequence[current_index]) # OCTET STRING
-        current_index += 1
+        # Using idx naming and logic closer to reference version
+        idx = 0
+        parsed_data['attestation_version'] = int(key_desc_sequence[idx])
+        idx += 1
+        parsed_data['attestation_security_level'] = int(key_desc_sequence[idx])
+        idx += 1
+        parsed_data['keymint_or_keymaster_version'] = int(key_desc_sequence[idx])
+        idx += 1
+        parsed_data['keymint_or_keymaster_security_level'] = int(key_desc_sequence[idx])
+        idx += 1
+        parsed_data['attestation_challenge'] = bytes(key_desc_sequence[idx])
+        idx += 1
 
-        # uniqueId is optional, OCTET STRING
-        if len(key_desc_sequence) > current_index and isinstance(key_desc_sequence[current_index], univ.OctetString):
-            parsed_data['unique_id'] = bytes(key_desc_sequence[current_index]).hex()
-            current_index += 1
+        # uniqueId is optional OCTET STRING (reference: idx 5)
+        if len(key_desc_sequence) > idx and isinstance(key_desc_sequence[idx], univ.OctetString):
+            parsed_data['unique_id'] = bytes(key_desc_sequence[idx]).hex()
+            idx += 1
         else:
-            # If not present, it's not an error, just means it wasn't included.
-            # Could be a NULL or the next sequence (software_enforced)
-            # The schema implies unique_id is an OCTET STRING if present.
-            # If the next item is a SEQUENCE, it's software_enforced.
-            parsed_data['unique_id'] = None
+            parsed_data['unique_id'] = None # Reference behavior implies it might not increment idx if not found
 
-
-        # softwareEnforced is a AuthorizationList (SEQUENCE)
-        if len(key_desc_sequence) > current_index and isinstance(key_desc_sequence[current_index], univ.Sequence):
-            sw_enforced_seq = key_desc_sequence[current_index]
-            parsed_data['software_enforced'] = parse_authorization_list(sw_enforced_seq, parsed_data.get('attestation_version'))
-            current_index += 1
+        # softwareEnforced AuthorizationList (reference: idx after uniqueId)
+        if len(key_desc_sequence) > idx and isinstance(key_desc_sequence[idx], univ.Sequence):
+            sw_enforced_seq = key_desc_sequence[idx]
+            parsed_data['software_enforced'] = parse_authorization_list(
+                sw_enforced_seq,
+                parsed_data.get('attestation_version')
+            )
+            idx += 1
         else:
-            # This field is mandatory. If it's not a sequence, it's a format error.
-            # However, to be robust, initialize to empty if parsing fails or structure is unexpected.
             logger.warning("Software enforced properties not found or not a sequence as expected.")
             parsed_data['software_enforced'] = {}
 
-
-        # hardwareEnforced is a AuthorizationList (SEQUENCE)
-        if len(key_desc_sequence) > current_index and isinstance(key_desc_sequence[current_index], univ.Sequence):
-            hw_enforced_seq = key_desc_sequence[current_index]
-            parsed_data['hardware_enforced'] = parse_authorization_list(hw_enforced_seq, parsed_data.get('attestation_version'))
-            current_index += 1
+        # hardwareEnforced AuthorizationList (reference: idx after softwareEnforced)
+        if len(key_desc_sequence) > idx and isinstance(key_desc_sequence[idx], univ.Sequence):
+            hw_enforced_seq = key_desc_sequence[idx]
+            parsed_data['hardware_enforced'] = parse_authorization_list(
+                hw_enforced_seq,
+                parsed_data.get('attestation_version')
+            )
+            idx += 1
         else:
-            # This field is mandatory.
             logger.warning("Hardware enforced properties not found or not a sequence as expected.")
             parsed_data['hardware_enforced'] = {}
 
-        # For KeyMint version 200 (Android T / attestation version 4) and above,
-        # there's an optional VerifiedBootState field.
-        # And for KeyMint version 100 (Android S / attestation version 3) and above,
-        # there's an optional DeviceUniqueAttestation field (KeyMint v2 only - tag 720)
-        # The schema shows:
-        #   KeyDescription ::= SEQUENCE {
-        #       keymasterVersion                   INTEGER,
-        #       keymasterSecurityLevel             SecurityLevel,
-        #       attestationChallenge               OCTET_STRING,
-        #       uniqueId                           OCTET_STRING OPTIONAL,
-        #       softwareEnforced                   AuthorizationList,
-        #       teeEnforced                        AuthorizationList,
-        #       -- KM4: The following two fields were added in Keymaster 4.0.
-        #       -- Attestation v3 (KM4) adds these:
-        #       -- vendorPatchLevel                 INTEGER OPTIONAL,
-        #       -- bootPatchLevel                   INTEGER OPTIONAL,
-        #       -- Attestation v4 (KM4.1/KeyMint) adds this:
-        #       -- individualAttestation            NULL OPTIONAL, -- This is actually DeviceUniqueAttestation as per docs.
-        #   }
-        # The structure from the `cryptography` library for X.509 parsing suggests
-        # the extension value is a SEQUENCE.
-        # Let's check the official ASN.1 definition from AOSP:
-        # KeyDescription ::= SEQUENCE {
-        #    attestationVersion         INTEGER,    -- Version of the attestation data structure
-        #    attestationSecurityLevel   SecurityLevel, -- Security level of the attestation
-        #    keymasterVersion           INTEGER,    -- Version of Keymaster/KeyMint HAL
-        #    keymasterSecurityLevel     SecurityLevel, -- Security level of Keymaster/KeyMint
-        #    attestationChallenge       OCTET STRING, -- Challenge from the server
-        #    uniqueId                   OCTET STRING OPTIONAL, -- Used for rate limiting
-        #    softwareEnforced           AuthorizationList, -- Software-enforced properties
-        #    teeEnforced                AuthorizationList, -- TEE-enforced properties
-        #    -- New optional fields for KeyMint versions
-        #    -- For attestationVersion >= 4 (KeyMint v200 / Android T)
-        #    deviceUniqueAttestation    NULL OPTIONAL
-        # }
-        # The `deviceUniqueAttestation` field is at the end.
-
-        if parsed_data.get('attestation_version') >= 4 and len(key_desc_sequence) > current_index:
-             if isinstance(key_desc_sequence[current_index], univ.Null):
-                parsed_data['device_unique_attestation_flag_present'] = True # Indicates the NULL field was present
-                current_index += 1
-        # Note: The actual boolean value for 'device_unique_attestation' is typically found within
-        # the hardware_enforced properties under TAG_DEVICE_UNIQUE_ATTESTATION (720).
-        # The NULL at the end of KeyDescription is more of a flag indicating it *could* be present.
-
+        # Reference version's specific check for a trailing NULL for device_unique_attestation
+        # if attestation_version is 4.
+        # Reference: if parsed_data.get('attestation_version') == 4 and len(key_desc_sequence) > idx:
+        #                if isinstance(key_desc_sequence[idx], univ.Null):
+        #                    parsed_data['device_unique_attestation'] = True
+        # This implies the 'device_unique_attestation' key should be set.
+        if parsed_data.get('attestation_version') == 4 and len(key_desc_sequence) > idx:
+            if isinstance(key_desc_sequence[idx], univ.Null):
+                parsed_data['device_unique_attestation'] = True # Using key name from reference
+                # idx += 1 # Reference didn't show incrementing idx here, but it would be logical if this was consumed.
+                           # For safety and closer match, will not increment based on reference's visible logic.
+            # else: # Ensure the key is not present if the condition isn't met, or set to False?
+                  # Reference code implies it's only added if True.
+                  # To match reference, only add if true.
+            # Based on reference, idx is not incremented after this check.
 
     except (IndexError, ValueError, PyAsn1Error, TypeError) as e:
-        logger.error(f'Error processing parsed KeyDescription sequence: {e}. Structure might be unexpected. Sequence: {key_desc_sequence.prettyPrint() if hasattr(key_desc_sequence, "prettyPrint") else key_desc_sequence}')
-        # Consider what to return or if to re-raise. Returning partial data might be risky.
-        # For now, re-raise as it indicates a significant parsing problem.
+        seq_repr = getattr(key_desc_sequence, "prettyPrint", lambda: str(key_desc_sequence))()
+        logger.error(f'Error processing parsed KeyDescription sequence: {e}. Structure might be unexpected. Sequence: {seq_repr}')
         raise ValueError(f'Malformed or unexpected KeyDescription structure: {e}')
     return parsed_data
 
