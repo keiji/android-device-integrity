@@ -1,16 +1,20 @@
 package dev.keiji.deviceintegrity.repository.impl
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
-import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -22,6 +26,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 import java.security.KeyPairGenerator
 import java.security.KeyStore
 
@@ -40,16 +45,24 @@ class KeyPairRepositoryImplTest {
     private val testScheduler = TestCoroutineScheduler()
     private val testDispatcher = StandardTestDispatcher(testScheduler)
 
-
     private val testAliasBase = "instrumentationTestAlias"
 
     @Before
     fun setUp() {
-        context = ApplicationProvider.getApplicationContext<Context>()
+        Dispatchers.setMain(testDispatcher)
+
+        context = ApplicationProvider.getApplicationContext()
         keyStore = KeyStore.getInstance("AndroidKeyStore")
         keyStore.load(null)
 
-        deviceSecurityStateProvider = mock(DeviceSecurityStateProvider::class.java)
+        val isStrongBoxSupported = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            context.packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
+        } else {
+            false
+        }
+
+        deviceSecurityStateProvider = mock()
+        `when`(deviceSecurityStateProvider.hasStrongBox).thenReturn(isStrongBoxSupported)
 
         // It's important that EcKeyPairRepositoryImpl uses Dispatchers.IO or a dispatcher we can control.
         // The Impl is hardcoded to use a dispatcher passed in constructor.
@@ -63,6 +76,8 @@ class KeyPairRepositoryImplTest {
     @After
     fun tearDown() {
         cleanupTestKeys()
+
+        Dispatchers.resetMain()
     }
 
     private fun cleanupTestKeys() {
@@ -246,6 +261,38 @@ class KeyPairRepositoryImplTest {
         }
 
     @Test
+    fun generateEcKeyPair_StrongBox_successfullyGeneratesKey_andReturnsKeyPairDataWithCertificates() =
+        runTest(testScheduler) {
+            val challenge = "test_challenge_instrumentation".toByteArray()
+
+            if (!deviceSecurityStateProvider.hasStrongBox) {
+                // This success path test expects to run on N+ because of the challenge requirement.
+                // The method EcKeyPairRepositoryImpl.generateEcKeyPair throws if SDK < N.
+                // So, if we are on pre-N, this test should not proceed to call generateEcKeyPair.
+                // The exception for pre-N is tested in another dedicated test.
+                println("Skipping generateEcKeyPair_StrongBox_successfullyGeneratesKey test.")
+                return@runTest
+            }
+
+            val result = keyPairRepository.generateEcKeyPair(challenge, true)
+
+            assertNotNull(result)
+            assertTrue(result.keyAlias.isNotEmpty())
+            assertNotNull(result.certificates)
+            assertTrue(result.certificates.isNotEmpty())
+            assertTrue(keyStore.containsAlias(result.keyAlias))
+            assertEquals(
+                result.certificates[0].publicKey,
+                keyStore.getCertificate(result.keyAlias).publicKey
+            )
+
+            // Important: Clean up dynamically generated alias
+            if (keyStore.containsAlias(result.keyAlias)) {
+                keyStore.deleteEntry(result.keyAlias)
+            }
+        }
+
+    @Test
     fun generateEcKeyPair_throwsIllegalStateException_whenCertificateChainIsNull() =
         runTest(testScheduler) {
             // This specific scenario (AndroidKeyStore successfully generates a key but returns a null chain)
@@ -289,6 +336,33 @@ class KeyPairRepositoryImplTest {
             }
 
             val result = keyPairRepository.generateRsaKeyPair(challenge, false)
+
+            assertNotNull(result)
+            assertTrue(result.keyAlias.isNotEmpty())
+            assertNotNull(result.certificates)
+            assertTrue(result.certificates.isNotEmpty())
+            assertTrue(keyStore.containsAlias(result.keyAlias))
+            assertEquals(
+                result.certificates[0].publicKey.encoded.toHexString(),
+                keyStore.getCertificate(result.keyAlias).publicKey.encoded.toHexString()
+            )
+
+            if (keyStore.containsAlias(result.keyAlias)) {
+                keyStore.deleteEntry(result.keyAlias)
+            }
+        }
+
+    @Test
+    fun generateRsaKeyPair_StrongBox_successfullyGeneratesKey_andReturnsKeyPairDataWithCertificates() =
+        runTest(testScheduler) {
+            val challenge = "generateRsaKeyPair_StrongBox_successfullyGeneratesKey".toByteArray()
+
+            if (!deviceSecurityStateProvider.hasStrongBox) {
+                println("Skipping generateRsaKeyPair_successfullyGeneratesKey test.")
+                return@runTest
+            }
+
+            val result = keyPairRepository.generateRsaKeyPair(challenge, true)
 
             assertNotNull(result)
             assertTrue(result.keyAlias.isNotEmpty())
@@ -360,6 +434,33 @@ class KeyPairRepositoryImplTest {
             }
 
             val result = keyPairRepository.generateEcdhKeyPair(challenge, false)
+
+            assertNotNull(result)
+            assertTrue(result.keyAlias.isNotEmpty())
+            assertNotNull(result.certificates)
+            assertTrue(result.certificates.isNotEmpty())
+            assertTrue(keyStore.containsAlias(result.keyAlias))
+            assertEquals(
+                result.certificates[0].publicKey.encoded.toHexString(),
+                keyStore.getCertificate(result.keyAlias).publicKey.encoded.toHexString()
+            )
+
+            if (keyStore.containsAlias(result.keyAlias)) {
+                keyStore.deleteEntry(result.keyAlias)
+            }
+        }
+
+    @Test
+    fun generateEcdhKeyPair_StrongBox_successfullyGeneratesKey_andReturnsKeyPairDataWithCertificates() =
+        runTest(testScheduler) {
+            val challenge = "test_challenge_instrumentation_ecdh".toByteArray()
+
+            if (!deviceSecurityStateProvider.hasStrongBox) {
+                println("Skipping generateEcdhKeyPair_StrongBox_successfullyGeneratesKey test.")
+                return@runTest
+            }
+
+            val result = keyPairRepository.generateEcdhKeyPair(challenge, true)
 
             assertNotNull(result)
             assertTrue(result.keyAlias.isNotEmpty())
