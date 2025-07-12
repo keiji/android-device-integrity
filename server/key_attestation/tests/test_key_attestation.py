@@ -18,11 +18,12 @@ class KeyAttestationAgreementTest(unittest.TestCase):
     @patch('key_attestation.key_attestation.get_ds_agreement_key_attestation_session')
     @patch('key_attestation.key_attestation.delete_ds_key_attestation_session')
     @patch('key_attestation.key_attestation.store_ds_key_attestation_result')
-    @patch('key_attestation.key_attestation.derive_shared_key_and_decrypt')
+    @patch('key_attestation.key_attestation.derive_shared_key')
+    @patch('key_attestation.key_attestation.decrypt_data')
     @patch('key_attestation.key_attestation.decode_certificate_chain')
     @patch('key_attestation.key_attestation.verify_certificate_chain')
     @patch('key_attestation.key_attestation.get_attestation_extension_properties')
-    def test_verify_agreement_success(self, mock_get_props, mock_verify_chain, mock_decode_chain, mock_decrypt, mock_store_result, mock_delete_session, mock_get_session, mock_ds_client):
+    def test_verify_agreement_success(self, mock_get_props, mock_verify_chain, mock_decode_chain, mock_decrypt, mock_derive_key, mock_store_result, mock_delete_session, mock_get_session, mock_ds_client):
         # Mocking session data from Datastore
         mock_session_entity = MagicMock()
         mock_session_entity.get.side_effect = lambda key: {
@@ -32,7 +33,8 @@ class KeyAttestationAgreementTest(unittest.TestCase):
         }.get(key)
         mock_get_session.return_value = mock_session_entity
 
-        # Mocking decryption to return the correct nonce
+        # Mocking key derivation and decryption
+        mock_derive_key.return_value = b'test_aes_key'
         mock_decrypt.return_value = b'test_nonce'
 
         # Mocking certificate and attestation data
@@ -71,8 +73,9 @@ class KeyAttestationAgreementTest(unittest.TestCase):
     @patch('key_attestation.key_attestation.get_ds_agreement_key_attestation_session')
     @patch('key_attestation.key_attestation.delete_ds_key_attestation_session')
     @patch('key_attestation.key_attestation.store_ds_key_attestation_result')
-    @patch('key_attestation.key_attestation.derive_shared_key_and_decrypt')
-    def test_verify_agreement_nonce_mismatch(self, mock_decrypt, mock_store_result, mock_delete_session, mock_get_session, mock_ds_client):
+    @patch('key_attestation.key_attestation.derive_shared_key')
+    @patch('key_attestation.key_attestation.decrypt_data')
+    def test_verify_agreement_nonce_mismatch(self, mock_decrypt, mock_derive_key, mock_store_result, mock_delete_session, mock_get_session, mock_ds_client):
         # Mocking session data from Datastore
         mock_session_entity = MagicMock()
         mock_session_entity.get.side_effect = lambda key: {
@@ -82,7 +85,8 @@ class KeyAttestationAgreementTest(unittest.TestCase):
         }.get(key)
         mock_get_session.return_value = mock_session_entity
 
-        # Mocking decryption to return a different nonce
+        # Mocking key derivation and decryption for nonce mismatch
+        mock_derive_key.return_value = b'test_aes_key'
         mock_decrypt.return_value = b'wrong_nonce'
 
         iv = base64url_encode(b'123456789012')

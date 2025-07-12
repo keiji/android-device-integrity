@@ -107,22 +107,13 @@ def validate_attestation_signature(leaf_certificate: x509.Certificate,
         logger.error(f'Error during attestation signature verification: {e}')
         raise ValueError(f'An unexpected error occurred during signature verification: {e}')
 
-def derive_shared_key_and_decrypt(
+def derive_shared_key(
     server_private_key_pem: bytes,
     client_public_key_der: bytes,
-    salt: bytes,
-    iv: bytes,
-    encrypted_data: bytes,
-    aad: bytes
+    salt: bytes
 ) -> bytes:
     """
-    Derives a shared secret using ECDH, then an AES key using HKDF,
-    and finally decrypts the data using AES-GCM.
-
-    Returns:
-        bytes: The decrypted data.
-    Raises:
-        ValueError: If any of the cryptographic operations fail.
+    Derives a shared AES key using ECDH and HKDF.
     """
     try:
         server_private_key = serialization.load_pem_private_key(
@@ -162,10 +153,20 @@ def derive_shared_key_and_decrypt(
             backend=default_backend()
         )
         aes_key = hkdf.derive(shared_secret)
+        return aes_key
     except Exception as e:
         logger.error(f"HKDF key derivation failed: {e}")
         raise ValueError("Failed to derive AES key.") from e
 
+def decrypt_data(
+    aes_key: bytes,
+    iv: bytes,
+    encrypted_data: bytes,
+    aad: bytes
+) -> bytes:
+    """
+    Decrypts data using AES-GCM.
+    """
     try:
         aesgcm = AESGCM(aes_key)
         decrypted_data = aesgcm.decrypt(iv, encrypted_data, aad)

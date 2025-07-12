@@ -14,7 +14,8 @@ from .cryptographic_utils import (
     decode_certificate_chain,
     validate_attestation_signature,
     verify_certificate_chain,
-    derive_shared_key_and_decrypt,
+    derive_shared_key,
+    decrypt_data,
     base64url_decode as crypto_base64url_decode # Renamed to avoid conflict if utils.base64url_decode is different
 )
 from .datastore_utils import (
@@ -451,16 +452,19 @@ def verify_agreement_attestation():
             return jsonify({'error': f'Invalid Base64URL encoding: {e}'}), 400
 
         try:
-            decrypted_nonce_bytes = derive_shared_key_and_decrypt(
+            aes_key = derive_shared_key(
                 server_private_key_pem=server_private_key_pem_bytes,
                 client_public_key_der=client_public_key_der_bytes,
-                salt=client_salt_bytes,
+                salt=client_salt_bytes
+            )
+            decrypted_nonce_bytes = decrypt_data(
+                aes_key=aes_key,
                 iv=iv_bytes,
                 encrypted_data=encrypted_nonce_bytes,
                 aad=session_id_bytes_for_aad
             )
         except ValueError as e:
-            logger.warning(f'Decryption failed for session {session_id}: {e}')
+            logger.warning(f'Key derivation or decryption failed for session {session_id}: {e}')
             store_ds_key_attestation_result(datastore_client, session_id, 'failed', f'Decryption failed: {e}', payload_data_json_str, '{}')
             delete_ds_key_attestation_session(datastore_client, session_id, AGREEMENT_KEY_ATTESTATION_SESSION_KIND)
             return jsonify({'error': f'Decryption failed: {e}'}), 400
