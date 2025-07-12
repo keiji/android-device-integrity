@@ -143,7 +143,7 @@ class TestAttestationParser(unittest.TestCase):
         incomplete_bytes = der_encoder.encode(temp_seq)
         # This test expects a failure because mandatory fields of KeyDescriptionSchemaV4 are missing.
         # The error "ASN.1 object KeyDescriptionSchemaV4 has uninitialized components" is valid for this.
-        with self.assertRaisesRegex(ValueError, "Malformed KeyDescription sequence \(schema validation failed\)|uninitialized components"):
+        with self.assertRaisesRegex(ValueError, r"Malformed KeyDescription sequence \(schema validation failed\)|uninitialized components"):
             parse_key_description(incomplete_bytes)
 
     def test_parse_keiji_device_integrity_beta_cert(self):
