@@ -23,6 +23,7 @@ import org.junit.Before
 import org.junit.Test
 import dev.keiji.deviceintegrity.provider.impl.DeviceSecurityStateProviderImpl
 import org.junit.runner.RunWith
+import org.mockito.Mockito.mock
 import java.security.KeyPairGenerator
 import java.security.KeyStore
 
