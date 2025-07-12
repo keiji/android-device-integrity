@@ -97,9 +97,9 @@ def prepare_signature_attestation():
 @app.route('/v1/prepare/agreement', methods=['POST'])
 def prepare_agreement_attestation():
     """
-    Prepares for key attestation agreement by generating a salt and challenge.
+    Prepares for key attestation agreement by generating a nonce and challenge.
     Request body: { "session_id": "string" }
-    Response body: { "salt": "string (Base64URLEncoded)", "challenge": "string (Base64URLEncoded)", "public_key": "string (Base64URLEncoded, optional)" }
+    Response body: { "nonce": "string (Base64URLEncoded)", "challenge": "string (Base64URLEncoded)", "public_key": "string (Base64URLEncoded, optional)" }
     """
     if not datastore_client:
         logger.error('Datastore client not available for /prepare/agreement endpoint.')
@@ -116,9 +116,9 @@ def prepare_agreement_attestation():
             logger.warning(f'Prepare agreement request with invalid session_id: {session_id}')
             return jsonify({'error': '\'session_id\' must be a non-empty string'}), 400
 
-        salt_bytes = generate_random_bytes()
+        nonce_bytes = generate_random_bytes()
         challenge_bytes = generate_random_bytes()
-        salt_encoded = base64url_encode(salt_bytes)
+        nonce_encoded = base64url_encode(nonce_bytes)
         challenge_encoded = base64url_encode(challenge_bytes)
 
         private_key = ec.generate_private_key(ec.SECP256R1())
@@ -136,7 +136,7 @@ def prepare_agreement_attestation():
         private_key_encoded = base64url_encode(private_key_bytes)
 
         try:
-            store_agreement_key_attestation_session(datastore_client, session_id, salt_encoded, challenge_encoded, public_key_encoded, private_key_encoded)
+            store_agreement_key_attestation_session(datastore_client, session_id, nonce_encoded, challenge_encoded, public_key_encoded, private_key_encoded)
         except ConnectionError as e:
              logger.error(f'Datastore connection error during store_agreement_key_attestation_session: {e}')
              return jsonify({'error': 'Failed to store session due to datastore connectivity'}), 503
@@ -145,7 +145,7 @@ def prepare_agreement_attestation():
             return jsonify({'error': 'Failed to store session data'}), 500
 
         response_data = {
-            'salt': salt_encoded,
+            'nonce': nonce_encoded,
             'challenge': challenge_encoded,
             'public_key': public_key_encoded
         }
@@ -342,6 +342,7 @@ def verify_agreement_attestation():
         "session_id": "string",
         "encrypted_data": "string (Base64URL Encoded, no padding)",
         "client_public_key": "string (Base64 Encoded)",
+        "salt": "string (Base64URL Encoded, no padding)", # New field
         "device_info": {},
         "security_info": {}
     }
@@ -361,6 +362,7 @@ def verify_agreement_attestation():
         session_id = data.get('session_id')
         encrypted_data_b64url = data.get('encrypted_data')
         client_public_key_b64 = data.get('client_public_key')
+        client_salt_b64url = data.get('salt')
         device_info_from_request = data.get('device_info', {})
         security_info_from_request = data.get('security_info', {})
 
@@ -368,7 +370,8 @@ def verify_agreement_attestation():
             'device_info': device_info_from_request,
             'security_info': security_info_from_request,
             'encrypted_data_provided': bool(encrypted_data_b64url),
-            'client_public_key_provided': bool(client_public_key_b64)
+            'client_public_key_provided': bool(client_public_key_b64),
+            'client_salt_provided': bool(client_salt_b64url)
         }
         payload_data_json_str = json.dumps(payload_data_for_datastore)
 
@@ -377,14 +380,16 @@ def verify_agreement_attestation():
             store_ds_key_attestation_result(datastore_client, 'missing_session_id_agreement', 'failed', 'Missing session_id in agreement request', payload_data_json_str, '{}')
             return jsonify({'error': 'Missing \'session_id\''}), 400
 
-        if not all([encrypted_data_b64url, client_public_key_b64]):
-            logger.warning(f'Verify Agreement request for session \'{session_id}\' missing encrypted_data or client_public_key.')
-            store_ds_key_attestation_result(datastore_client, session_id, 'failed', 'Missing encrypted_data or client_public_key for agreement', payload_data_json_str, '{}')
-            return jsonify({'error': 'Missing \'encrypted_data\' or \'client_public_key\''}), 400
+        # Added client_salt_b64url to the check
+        if not all([encrypted_data_b64url, client_public_key_b64, client_salt_b64url]):
+            logger.warning(f'Verify Agreement request for session \'{session_id}\' missing encrypted_data, client_public_key, or salt.')
+            store_ds_key_attestation_result(datastore_client, session_id, 'failed', 'Missing encrypted_data, client_public_key, or salt for agreement', payload_data_json_str, '{}')
+            return jsonify({'error': 'Missing \'encrypted_data\', \'client_public_key\', or \'salt\''}), 400
 
         if not isinstance(session_id, str) or \
            not isinstance(encrypted_data_b64url, str) or \
-           not isinstance(client_public_key_b64, str):
+           not isinstance(client_public_key_b64, str) or \
+           not isinstance(client_salt_b64url, str): # Added type check for client_salt_b64url
             logger.warning(f'Verify Agreement request for session \'{session_id}\' has type mismatch.')
             store_ds_key_attestation_result(datastore_client, session_id, 'failed', 'Type mismatch in agreement request fields.', payload_data_json_str, '{}')
             return jsonify({'error': 'Type mismatch for one or more fields.'}), 400
@@ -396,14 +401,18 @@ def verify_agreement_attestation():
         # Mock verification logic:
         # In a real scenario, you would:
         # 1. Retrieve the agreement session using session_id (get_agreement_key_attestation_session).
+        #    This session contains the server's nonce (previously salt).
         # 2. Decode client_public_key_b64.
         # 3. Retrieve server's private key stored during prepare/agreement.
         # 4. Perform ECDH to derive a shared secret.
-        # 5. Use the shared secret and salt (from session) to derive a decryption key (e.g., HKDF).
+        # 5. Use the shared secret, the client_salt_b64url (from request), and server's nonce (from session)
+        #    appropriately to derive a decryption key (e.g., HKDF).
+        #    The client-generated 'salt' is for the HKDF. The server's 'nonce' is the data that was encrypted.
         # 6. Decode encrypted_data_b64url.
-        # 7. Decrypt the data using the derived key.
-        # 8. Verify the decrypted data (e.g., by checking a MAC or expected structure).
+        # 7. Decrypt the data (which should be the server's nonce) using the derived key.
+        # 8. Verify the decrypted data matches the server's nonce stored in the session.
         # 9. For this mock, we'll just check if the session exists and then return a mock success.
+        #    The new 'salt' field is received but not used in this mock verification.
 
         agreement_session_entity = get_ds_agreement_key_attestation_session(datastore_client, session_id)
         if not agreement_session_entity:
@@ -417,7 +426,7 @@ def verify_agreement_attestation():
             "attestation_security_level": 0, # Mock value (e.g., TEE)
             "keymint_version": 0, # Mock value
             "keymint_security_level": 0, # Mock value
-            "attestation_challenge": base64url_encode(b"mock_agreement_challenge"), # Mock challenge
+            "attestation_challenge": base64url_encode(b"mock_agreement_challenge"), # Mock challenge (remains challenge for general attestation info)
             "software_enforced_properties": {}, # Empty for mock agreement
             "hardware_enforced_properties": {}  # Empty for mock agreement
         }

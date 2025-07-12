@@ -55,16 +55,12 @@ fun KeyAttestationScreen(
     val isHorizontalProgressVisible = uiState.progressValue > PlayIntegrityProgressConstants.NO_PROGRESS && uiState.progressValue < PlayIntegrityProgressConstants.FULL_PROGRESS
 
     val step2Label = when (uiState.selectedKeyType) {
-        CryptoAlgorithm.ECDH -> "Step 2. サーバーからSalt/Challenge/PublicKeyを取得" // Updated for ECDH
+        CryptoAlgorithm.ECDH -> "Step 2. サーバーからNonce/Challenge/PublicKeyを取得"
         else -> "Step 2. サーバーからNonce/Challengeを取得"
     }
     val step2ButtonText = when (uiState.selectedKeyType) {
-        CryptoAlgorithm.ECDH -> "Fetch Salt/Challenge/PublicKey" // Updated for ECDH
+        CryptoAlgorithm.ECDH -> "Fetch Nonce/Challenge/PublicKey"
         else -> "Fetch Nonce/Challenge"
-    }
-    val nonceOrSaltLabel = when (uiState.selectedKeyType) {
-        CryptoAlgorithm.ECDH -> "Salt"
-        else -> "Nonce"
     }
 
     Column(
@@ -135,8 +131,8 @@ fun KeyAttestationScreen(
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-        if (uiState.isNonceOrSaltVisible) { // Use new UiState property
-            Text(text = "$nonceOrSaltLabel: ${uiState.nonceOrSalt}") // Use new UiState property and dynamic label
+        if (uiState.isNonceVisible) {
+            Text(text = "Nonce: ${uiState.nonce}")
         }
         Spacer(modifier = Modifier.height(8.dp))
         if (uiState.isChallengeVisible) {
@@ -242,7 +238,7 @@ private fun KeyAttestationScreenPreview() {
     )
     KeyAttestationScreen(
         uiState = KeyAttestationUiState(
-            nonceOrSalt = "PREVIEW_NONCE_OR_SALT_67890", // Updated field name
+            nonce = "PREVIEW_NONCE_OR_SALT_67890",
             challenge = "PREVIEW_CHALLENGE_ABCDE",
             selectedKeyType = CryptoAlgorithm.RSA, // Example: RSA selected
             status = "Verification successful.",

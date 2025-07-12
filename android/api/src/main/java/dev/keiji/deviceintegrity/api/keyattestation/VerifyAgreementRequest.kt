@@ -16,6 +16,9 @@ data class VerifyAgreementRequest(
     @SerialName("client_public_key")
     val clientPublicKey: String, // Standard Base64-encoded
 
+    @SerialName("salt")
+    val salt: String, // Base64URL-encoded, no padding
+
     @SerialName("device_info")
     val deviceInfo: DeviceInfo? = null,
 

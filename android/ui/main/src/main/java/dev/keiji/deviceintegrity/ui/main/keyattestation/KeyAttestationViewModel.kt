@@ -75,12 +75,19 @@ class KeyAttestationViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     selectedKeyType = newKeyType,
-                    nonceOrSalt = "",
+                    nonce = "",
                     challenge = "",
                     serverPublicKey = "",
                     generatedKeyPairData = null,
                     infoItems = emptyList(),
-                    status = "Key algorithm changed to ${newKeyType.label}. Please fetch new Nonce/Salt and Challenge.",
+                    status = run {
+                        val itemsToFetch = if (newKeyType == CryptoAlgorithm.ECDH) {
+                            "Nonce/Challenge/PublicKey"
+                        } else {
+                            "Nonce/Challenge"
+                        }
+                        "Key algorithm changed to ${newKeyType.label}. Please fetch new $itemsToFetch."
+                    },
                     progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
                     sessionId = null
                 )
@@ -99,26 +106,26 @@ class KeyAttestationViewModel @Inject constructor(
             }
 
             val statusMessage = when (_uiState.value.selectedKeyType) {
-                CryptoAlgorithm.ECDH -> "Preparing to fetch Salt/Challenge/PublicKey..."
+                CryptoAlgorithm.ECDH -> "Preparing to fetch Nonce/Challenge/PublicKey..."
                 else -> "Preparing to fetch Nonce/Challenge..."
             }
             val fetchingMessage = when (_uiState.value.selectedKeyType) {
-                CryptoAlgorithm.ECDH -> "Fetching Salt/Challenge/PublicKey..."
+                CryptoAlgorithm.ECDH -> "Fetching Nonce/Challenge/PublicKey..."
                 else -> "Fetching Nonce/Challenge..."
             }
             val successMessage = when (_uiState.value.selectedKeyType) {
-                CryptoAlgorithm.ECDH -> "Salt/Challenge/PublicKey fetched successfully."
+                CryptoAlgorithm.ECDH -> "Nonce/Challenge/PublicKey fetched successfully."
                 else -> "Nonce/Challenge fetched successfully."
             }
             val failureMessagePrefix = when (_uiState.value.selectedKeyType) {
-                CryptoAlgorithm.ECDH -> "Failed to fetch Salt/Challenge/PublicKey"
+                CryptoAlgorithm.ECDH -> "Failed to fetch Nonce/Challenge/PublicKey"
                 else -> "Failed to fetch Nonce/Challenge"
             }
 
             _uiState.update {
                 it.copy(
                     status = statusMessage,
-                    nonceOrSalt = "",
+                    nonce = "",
                     challenge = "",
                     serverPublicKey = "",
                     generatedKeyPairData = null,
@@ -160,7 +167,7 @@ class KeyAttestationViewModel @Inject constructor(
                     val response = keyAttestationRepository.prepareAgreement(request)
                     _uiState.update {
                         it.copy(
-                            nonceOrSalt = response.saltBase64UrlEncoded,
+                            nonce = response.nonceBase64UrlEncoded,
                             challenge = response.challengeBase64UrlEncoded,
                             serverPublicKey = response.publicKeyBase64UrlEncoded,
                             status = successMessage,
@@ -172,7 +179,7 @@ class KeyAttestationViewModel @Inject constructor(
                     val response = keyAttestationRepository.prepareSignature(request)
                     _uiState.update {
                         it.copy(
-                            nonceOrSalt = response.nonceBase64UrlEncoded,
+                            nonce = response.nonceBase64UrlEncoded,
                             challenge = response.challengeBase64UrlEncoded,
                             status = successMessage,
                             progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
@@ -223,17 +230,18 @@ class KeyAttestationViewModel @Inject constructor(
             }
 
             val currentChallenge = uiState.value.challenge
-            val currentNonceOrSalt = uiState.value.nonceOrSalt
+            val currentNonce = uiState.value.nonce
 
-            if (currentNonceOrSalt.isEmpty() || currentChallenge.isEmpty()) {
-                val missingItem = if (currentNonceOrSalt.isEmpty()) {
-                    if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) "Salt" else "Nonce"
+            if (currentNonce.isEmpty() || currentChallenge.isEmpty()) {
+                val missingItem = if (currentNonce.isEmpty()) {
+                    "Nonce"
                 } else {
                     "Challenge"
                 }
+                val suffix = if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH && missingItem == "Nonce") "/PublicKey" else ""
                 _uiState.update {
                     it.copy(
-                        status = "$missingItem is not available. Fetch $missingItem/Challenge first.",
+                        status = "$missingItem is not available. Fetch $missingItem/Challenge$suffix first.",
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
                     )
                 }
@@ -314,12 +322,12 @@ class KeyAttestationViewModel @Inject constructor(
 
             val currentSessionId = uiState.value.sessionId
             val currentKeyPairData = uiState.value.generatedKeyPairData
-            val serverNonceOrSaltB64Url = uiState.value.nonceOrSalt
+            val serverNonceB64Url = uiState.value.nonce // Renamed from nonceOrSalt
             val serverPublicKeyB64Url = uiState.value.serverPublicKey
             val challengeB64Url = uiState.value.challenge
 
             if (currentSessionId == null) {
-                val itemToFetch = if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) "Salt/Challenge/PublicKey" else "Nonce/Challenge"
+                val itemToFetch = if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) "Nonce/Challenge/PublicKey" else "Nonce/Challenge"
                 _uiState.update {
                     it.copy(
                         status = "SessionId is missing. Fetch $itemToFetch first.",
@@ -340,11 +348,12 @@ class KeyAttestationViewModel @Inject constructor(
                 return@launch
             }
 
-            if (serverNonceOrSaltB64Url.isEmpty()) {
-                val missingItem = if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) "Salt" else "Nonce"
+            if (serverNonceB64Url.isEmpty()) {
+                val missingItem = "Nonce" // Always Nonce now
+                val suffix = if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) "/PublicKey" else ""
                 _uiState.update {
                     it.copy(
-                        status = "Server $missingItem is missing. Fetch $missingItem/Challenge first.",
+                        status = "Server $missingItem is missing. Fetch $missingItem/Challenge$suffix first.",
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
                     )
                 }
@@ -356,7 +365,7 @@ class KeyAttestationViewModel @Inject constructor(
                     if (serverPublicKeyB64Url.isEmpty() || challengeB64Url.isEmpty()) {
                         _uiState.update {
                             it.copy(
-                                status = "Server PublicKey or Challenge is missing for ECDH. Fetch Salt/Challenge/PublicKey first.",
+                                status = "Server PublicKey or Challenge is missing for ECDH. Fetch Nonce/Challenge/PublicKey first.",
                                 progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
                             )
                         }
@@ -364,23 +373,27 @@ class KeyAttestationViewModel @Inject constructor(
                     }
 
                     val serverPublicKeyBytes = Base64Utils.UrlSafeNoPadding.decode(serverPublicKeyB64Url)
-                    val saltBytes = Base64Utils.UrlSafeNoPadding.decode(serverNonceOrSaltB64Url)
-                    val challengeBytes = Base64Utils.UrlSafeNoPadding.decode(challengeB64Url)
+                    val serverNonceBytes = Base64Utils.UrlSafeNoPadding.decode(serverNonceB64Url)
 
                     val serverPublicKeyObj = KeyUtils.convertBytesToPublicKey(serverPublicKeyBytes, "EC")
 
-                    val derivedKeyBytes = sharedKeyDerivator.deriveKey(serverPublicKeyObj, keyPair.private, saltBytes)
+                    val clientSaltBytes = ByteArray(32)
+                    SecureRandom().nextBytes(clientSaltBytes)
+
+                    val derivedKeyBytes = sharedKeyDerivator.deriveKey(serverPublicKeyObj, keyPair.private, clientSaltBytes)
                     val derivedSecretKey = KeyUtils.convertBytesToSecretKey(derivedKeyBytes, "AES")
 
                     val sessionIdBytes = currentSessionId.toByteArray(Charsets.US_ASCII)
-                    val encryptedData = encrypt.encrypt(challengeBytes, derivedSecretKey, sessionIdBytes)
+                    val encryptedData = encrypt.encrypt(serverNonceBytes, derivedSecretKey, sessionIdBytes)
                     val encryptedDataBase64Url = Base64Utils.UrlSafeNoPadding.encode(encryptedData)
                     val clientPublicKeyB64Url = Base64Utils.UrlSafeNoPadding.encode(keyPair.public.encoded)
+                    val clientSaltB64Url = Base64Utils.UrlSafeNoPadding.encode(clientSaltBytes)
 
                     val request = VerifyAgreementRequest(
                         sessionId = currentSessionId,
                         encryptedData = encryptedDataBase64Url,
                         clientPublicKey = clientPublicKeyB64Url,
+                        salt = clientSaltB64Url,
                         deviceInfo = DeviceInfo(
                             brand = deviceInfoProvider.BRAND,
                             model = deviceInfoProvider.MODEL,
@@ -425,8 +438,8 @@ class KeyAttestationViewModel @Inject constructor(
                 } else { // EC or RSA
                     val clientNonce = ByteArray(32)
                     SecureRandom().nextBytes(clientNonce)
-                    val decodedServerNonceOrSalt = Base64Utils.UrlSafeNoPadding.decode(serverNonceOrSaltB64Url)
-                    val dataToSign = decodedServerNonceOrSalt + clientNonce
+                    val decodedServerNonce = Base64Utils.UrlSafeNoPadding.decode(serverNonceB64Url)
+                    val dataToSign = decodedServerNonce + clientNonce
                     val privateKey = keyPair.private
 
                     val selectedSigner = when (uiState.value.selectedKeyType) {

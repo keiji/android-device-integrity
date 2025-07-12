@@ -5,8 +5,8 @@ import kotlinx.serialization.SerialName
 
 @Serializable
 data class PrepareAgreementResponse(
-    @SerialName("salt")
-    val saltBase64UrlEncoded: String,
+    @SerialName("nonce")
+    val nonceBase64UrlEncoded: String,
     @SerialName("challenge")
     val challengeBase64UrlEncoded: String,
     @SerialName("public_key")
