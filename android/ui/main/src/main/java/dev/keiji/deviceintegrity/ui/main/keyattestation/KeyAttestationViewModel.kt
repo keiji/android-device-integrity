@@ -619,13 +619,31 @@ class KeyAttestationViewModel @Inject constructor(
 
         response.attestationInfo?.let { attestationInfo ->
             items.add(InfoItem("Attestation Version", attestationInfo.attestationVersion.toString()))
-            items.add(InfoItem("Attestation Security Level", attestationInfo.attestationSecurityLevel.toString()))
+            items.add(
+                InfoItem(
+                    "Attestation Security Level",
+                    ValueConverter.convertSecurityLevelToString(attestationInfo.attestationSecurityLevel)
+                )
+            )
             items.add(InfoItem("KeyMint Version", attestationInfo.keymintVersion.toString()))
-            items.add(InfoItem("KeyMint Security Level", attestationInfo.keymintSecurityLevel.toString()))
+            items.add(
+                InfoItem(
+                    "KeyMint Security Level",
+                    ValueConverter.convertSecurityLevelToString(attestationInfo.keymintSecurityLevel)
+                )
+            )
             items.add(InfoItem("Attestation Challenge", attestationInfo.attestationChallenge))
 
-            addAuthorizationListItems(items, "Software Enforced Properties", attestationInfo.softwareEnforcedProperties)
-            addAuthorizationListItems(items, "Hardware Enforced Properties", attestationInfo.hardwareEnforcedProperties)
+            addAuthorizationListItems(
+                items,
+                "Software Enforced Properties",
+                attestationInfo.softwareEnforcedProperties
+            )
+            addAuthorizationListItems(
+                items,
+                "Hardware Enforced Properties",
+                attestationInfo.hardwareEnforcedProperties
+            )
         }
         return items
     }
@@ -647,11 +665,20 @@ class KeyAttestationViewModel @Inject constructor(
             }
         }
         props.creationDatetime?.let { items.add(InfoItem("Creation Datetime", DateFormatUtil.formatEpochMilliToISO8601(it), indentLevel = 1)) }
-        props.algorithm?.let { items.add(InfoItem("Algorithm", it.toString(), indentLevel = 1)) }
-        props.origin?.let { items.add(InfoItem("Origin", it.toString(), indentLevel = 1)) }
+        props.algorithm?.let {
+            items.add(InfoItem("Algorithm", ValueConverter.convertAlgorithmToString(it), indentLevel = 1))
+        }
+        props.origin?.let {
+            items.add(InfoItem("Origin", ValueConverter.convertOriginToString(it), indentLevel = 1))
+        }
         props.ecCurve?.let { items.add(InfoItem("EC Curve", it.toString(), indentLevel = 1)) }
         props.keySize?.let { items.add(InfoItem("Key Size", it.toString(), indentLevel = 1)) }
-        props.purpose?.let { items.add(InfoItem("Purposes", it.joinToString(), indentLevel = 1)) }
+        props.purpose?.let {
+            val purposes = it.joinToString { purpose ->
+                ValueConverter.convertPurposeToString(purpose)
+            }
+            items.add(InfoItem("Purposes", purposes, indentLevel = 1))
+        }
         props.digest?.let { items.add(InfoItem("Digest", it.joinToString(), indentLevel = 1)) }
         props.padding?.let { items.add(InfoItem("Padding", it.joinToString(), indentLevel = 1)) }
         props.rsaPublicExponent?.let { items.add(InfoItem("RSA Public Exponent", it.toString(), indentLevel = 1)) }
@@ -673,7 +700,15 @@ class KeyAttestationViewModel @Inject constructor(
         props.rootOfTrust?.let { rot ->
             items.add(InfoItem("Root of Trust", "", indentLevel = 1, isHeader = true))
             rot.deviceLocked?.let { items.add(InfoItem("Device Locked", it.toString(), indentLevel = 2)) }
-            rot.verifiedBootState?.let { items.add(InfoItem("Verified Boot State", it.toString(), indentLevel = 2)) }
+            rot.verifiedBootState?.let {
+                items.add(
+                    InfoItem(
+                        "Verified Boot State",
+                        ValueConverter.convertVerifiedBootStateToString(it),
+                        indentLevel = 2
+                    )
+                )
+            }
             rot.verifiedBootHash?.let { items.add(InfoItem("Verified Boot Hash", it, indentLevel = 2)) }
             rot.verifiedBootKey?.let { items.add(InfoItem("Verified Boot Key", it, indentLevel = 2)) }
         }
