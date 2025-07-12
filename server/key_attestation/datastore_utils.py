@@ -38,7 +38,7 @@ def store_key_attestation_session(datastore_client, session_id: str, nonce_encod
         raise # Re-raise to allow caller to handle
 
 
-def store_agreement_key_attestation_session(datastore_client, session_id: str, salt_encoded: str, challenge_encoded: str, public_key_encoded: str = None, private_key_encoded: str = None):
+def store_agreement_key_attestation_session(datastore_client, session_id: str, nonce_encoded: str, challenge_encoded: str, public_key_encoded: str = None, private_key_encoded: str = None):
     """
     Stores the agreement key attestation session data in Datastore.
     """
@@ -51,7 +51,7 @@ def store_agreement_key_attestation_session(datastore_client, session_id: str, s
     entity = datastore_client.entity(key=key)
     entity.update({
         'session_id': session_id,
-        'salt': salt_encoded,
+        'nonce': nonce_encoded,
         'challenge': challenge_encoded,
         'generated_at': now,
     })
