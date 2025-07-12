@@ -386,14 +386,17 @@ class KeyAttestationViewModel @Inject constructor(
                     val sessionIdBytes = currentSessionId.toByteArray(Charsets.US_ASCII)
                     val encryptedData = encrypt.encrypt(serverNonceBytes, derivedSecretKey, sessionIdBytes)
                     val encryptedDataBase64Url = Base64Utils.UrlSafeNoPadding.encode(encryptedData)
-                    val clientPublicKeyB64Url = Base64Utils.UrlSafeNoPadding.encode(keyPair.public.encoded)
                     val clientSaltB64Url = Base64Utils.UrlSafeNoPadding.encode(clientSaltBytes)
+                    val certificateChainBase64Encoded =
+                        currentKeyPairData.certificates.map { cert ->
+                            Base64.Default.encode(cert.encoded)
+                        }
 
                     val request = VerifyAgreementRequest(
                         sessionId = currentSessionId,
-                        encryptedData = encryptedDataBase64Url,
-                        clientPublicKey = clientPublicKeyB64Url,
-                        salt = clientSaltB64Url,
+                        encryptedDataBase64UrlEncoded = encryptedDataBase64Url,
+                        saltBase64UrlEncoded = clientSaltB64Url,
+                        certificateChainBase64Encoded = certificateChainBase64Encoded,
                         deviceInfo = DeviceInfo(
                             brand = deviceInfoProvider.BRAND,
                             model = deviceInfoProvider.MODEL,
