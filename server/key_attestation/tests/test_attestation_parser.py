@@ -227,9 +227,26 @@ class TestAttestationParser(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Decoded KeyDescription is not a valid/complete ASN.1 SEQUENCE."):
             parse_key_description(incomplete_bytes) # type: ignore
 
-    @unittest.skip("Skipping test for Keiji cert: Parser cannot currently handle this specific certificate structure. Needs full ASN.1 schema for robust parsing or alternative ASN.1 library.")
+    # @unittest.skip("Skipping test for Keiji cert: Parser cannot currently handle this specific certificate structure. Needs full ASN.1 schema for robust parsing or alternative ASN.1 library.")
     def test_parse_keiji_device_integrity_beta_cert(self):
         # Test case for the certificate provided by the user
+        # Ensure logging is verbose enough for this test
+        import logging
+        # Configure root logger to show DEBUG from all loggers for this test run
+        # This is a broad setting, ideally configure specific loggers if known
+        logging.basicConfig(level=logging.DEBUG, force=True)
+        # For good measure, ensure the specific logger is also set, if it has specific handlers
+        parser_logger = logging.getLogger('attestation_parser')
+        parser_logger.setLevel(logging.DEBUG)
+        # Add a stream handler to the parser_logger to ensure its output goes to stderr/stdout for test runner
+        # This is to make ABSOLUTELY SURE we see the logs from attestation_parser
+        if not any(isinstance(h, logging.StreamHandler) for h in parser_logger.handlers):
+            stream_handler = logging.StreamHandler(sys.stderr) # or sys.stdout
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            stream_handler.setFormatter(formatter)
+            parser_logger.addHandler(stream_handler)
+            parser_logger.propagate = False # Prevent double logging if root logger also has stream handler
+
         cert_b64 = "MIIC2TCCAn+gAwIBAgIBATAKBggqhkjOPQQDAjA5MSkwJwYDVQQDEyAyMDZmMTJkNjhkMjQyMGMwZjI5YWNmYjRlNDc0ZjBjODEMMAoGA1UEChMDVEVFMB4XDTcwMDEwMTAwMDAwMFoXDTQ4MDEwMTAwMDAwMFowHzEdMBsGA1UEAxMUQW5kcm9pZCBLZXlzdG9yZSBLZXkwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATyINSR0Wf9X1Jxdsdf09GKliJTPBC+HJO8gNDdFNbx7n6KTD68mrJphhFIIaJ78vNGCaOGYVPIpHbThsCG6Q3jo4IBkDCCAYwwDgYDVR0PAQH/BAQDAgeAMIIBeAYKKwYBBAHWeQIBEQSCAWgwggFkAgIBkAoBAQICAZAKAQEEIO1p6vfSmakeYfAW8HIi+CrW6Nr8Xus+xVrMJ81E+PxGBAAwgYi/hT0IAgYBl+SXKhe/hUVSBFAwTjEoMCYEIWRldi5rZWlqaS5kZXZpY2VpbnRlZ3JpdHkuZGV2ZWxvcAIBDjEiBCCEg7tsgmYaUpr+XL0nD7zehkyT/aIAXcgyH44btIaZH7+FVCIEIHMtalhZPLW4yWyP2sCsN4O/k1B8bqO5MNaJDipbSmC9MIGkoQgxBgIBAgIBA6IDAgEDowQCAgEApQUxAwIBBKoDAgEBv4N3AgUAv4U+AwIBAL+FQEwwSgQgmsQXQVPUXkVFsPSeIv5jJzmZtqwctpScOp8D7IgH7ukBAf8KAQAEIBQ+0ZEIUkS3m+CK5xG+fIPd95UHafmGwGjG0ZHgRTh3v4VBBQIDAnEAv4VCBQIDAxcKv4VOBgIEATT/7b+FTwYCBAE0/+0wCgYIKoZIzj0EAwIDSAAwRQIgWJtsWC5QwsIy6ul82uykYmd7leztN4mTA1Kg4rJiPVMCIQD8ppExEufkiNzLaOF5a4q4AIGSCAyBPMuxlu20r2+uoQ=="
         cert_der = base64.b64decode(cert_b64)
         certificate = x509.load_der_x509_certificate(cert_der)

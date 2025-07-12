@@ -329,18 +329,31 @@ def parse_key_description(key_desc_bytes):
     key_desc_sequence = None
     MIN_KEY_DESC_COMPONENTS = 5 # attestationVersion, attestationSecurityLevel, keymasterVersion, keymasterSecurityLevel, attestationChallenge
 
+    # Enhanced logging for initial decode block
+    print(f"DEBUG_PRINT: AttestationParser: Attempting to parse KeyDescription bytes: {key_desc_bytes.hex() if key_desc_bytes else 'None'}")
+    logger.info(f"AttestationParser: Attempting to parse KeyDescription bytes len: {len(key_desc_bytes) if key_desc_bytes else '0'}")
+
     try:
         key_desc_sequence, rest = der_decoder.decode(key_desc_bytes)
 
+        print(f"DEBUG_PRINT: AttestationParser: pyasn1.der_decoder.decode result type: {type(key_desc_sequence)}")
+        logger.info(f"AttestationParser: pyasn1.der_decoder.decode result type: {type(key_desc_sequence)}")
+        if hasattr(key_desc_sequence, 'prettyPrint'):
+            print(f"DEBUG_PRINT: AttestationParser: Decoded KeyDescription (prettyPrint):\n{key_desc_sequence.prettyPrint()}")
+            logger.info(f"AttestationParser: Decoded KeyDescription (prettyPrint available)")
+        else:
+            print(f"DEBUG_PRINT: AttestationParser: Decoded KeyDescription (raw): {repr(key_desc_sequence)}")
+            logger.info(f"AttestationParser: Decoded KeyDescription (raw): {repr(key_desc_sequence)}")
+        print(f"DEBUG_PRINT: AttestationParser: Remaining bytes after decode: {len(rest)}")
+        logger.info(f"AttestationParser: Remaining bytes after decode: {len(rest)}")
+
         if not key_desc_sequence or not isinstance(key_desc_sequence, univ.Sequence) or len(key_desc_sequence) < MIN_KEY_DESC_COMPONENTS:
-            # This log might still be useful even if debug is off generally, as it's an error condition.
             logger.error(f"Decoded KeyDescription is not a valid sequence or too short. Type: {type(key_desc_sequence)}, Length: {len(key_desc_sequence) if hasattr(key_desc_sequence, '__len__') else 'N/A'}")
-            # Avoid logging the full sequence in non-debug, it can be large.
             raise ValueError('Decoded KeyDescription is not a valid/complete ASN.1 SEQUENCE.')
 
     except PyAsn1Error as e:
         logger.error(f'Failed to decode KeyDescription ASN.1 sequence with pyasn1: {e}')
-        # Avoid logging full key_desc_bytes in non-debug for potentially sensitive data or large size.
+        print(f"DEBUG_PRINT: AttestationParser: PyAsn1Error during decode: {e}")
         raise ValueError('Malformed KeyDescription sequence.') from e
 
     parsed_data = {}
