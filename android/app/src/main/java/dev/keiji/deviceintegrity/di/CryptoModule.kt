@@ -48,5 +48,8 @@ object CryptoModule {
 
     @Provides
     @Singleton
-    fun provideSharedKeyDerivator(): SharedKeyDerivator = HkdfKeyDerivator()
+    fun provideSharedKeyDerivator(): SharedKeyDerivator {
+        val hkdfInfo = "key-attestation-agreement".encodeToByteArray()
+        return HkdfKeyDerivator(hkdfInfo)
+    }
 }
