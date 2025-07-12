@@ -438,8 +438,8 @@ class KeyAttestationViewModel @Inject constructor(
                 } else { // EC or RSA
                     val clientNonce = ByteArray(32)
                     SecureRandom().nextBytes(clientNonce)
-                    val decodedServerNonceOrSalt = Base64Utils.UrlSafeNoPadding.decode(serverNonceOrSaltB64Url)
-                    val dataToSign = decodedServerNonceOrSalt + clientNonce
+                    val decodedServerNonce = Base64Utils.UrlSafeNoPadding.decode(serverNonceB64Url) // Corrected variable name
+                    val dataToSign = decodedServerNonce + clientNonce // Corrected variable name
                     val privateKey = keyPair.private
 
                     val selectedSigner = when (uiState.value.selectedKeyType) {
