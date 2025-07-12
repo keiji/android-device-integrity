@@ -51,7 +51,12 @@ class KeyAttestationViewModel @Inject constructor(
     @RSA private val rsaSigner: Signer
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(KeyAttestationUiState(isEcdhAvailable = deviceInfoProvider.isEcdhKeyAttestationAvailable))
+    private val _uiState = MutableStateFlow(
+        KeyAttestationUiState(
+            isEcdhAvailable = deviceInfoProvider.isEcdhKeyAttestationAvailable,
+            isStrongboxSupported = deviceSecurityStateProvider.hasStrongBox,
+        )
+    )
     val uiState: StateFlow<KeyAttestationUiState> = _uiState.asStateFlow()
 
     private val _shareEventChannel = Channel<String>()
@@ -93,6 +98,10 @@ class KeyAttestationViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    fun onPreferStrongBoxChanged(preferStrongBox: Boolean) {
+        _uiState.update { it.copy(preferStrongBox = preferStrongBox) }
     }
 
     fun fetchNonceOrSaltChallenge() {
@@ -254,14 +263,23 @@ class KeyAttestationViewModel @Inject constructor(
                 }
 
                 val keyPairDataResult = withContext(Dispatchers.IO) {
+                    val preferStrongBox = _uiState.value.preferStrongBox
                     when (uiState.value.selectedKeyType) {
-                        CryptoAlgorithm.RSA -> keyPairRepository.generateRsaKeyPair(decodedChallenge)
-                        CryptoAlgorithm.EC -> keyPairRepository.generateEcKeyPair(decodedChallenge)
+                        CryptoAlgorithm.RSA -> keyPairRepository.generateRsaKeyPair(
+                            decodedChallenge,
+                            preferStrongBox
+                        )
+
+                        CryptoAlgorithm.EC -> keyPairRepository.generateEcKeyPair(
+                            decodedChallenge,
+                            preferStrongBox
+                        )
+
                         CryptoAlgorithm.ECDH -> {
                             if (!deviceInfoProvider.isEcdhKeyAttestationAvailable) {
                                 throw UnsupportedOperationException("このデバイスのAndroidのバージョンは構成証明付きのECDH鍵ペアに対応していません")
                             }
-                            keyPairRepository.generateEcdhKeyPair(decodedChallenge)
+                            keyPairRepository.generateEcdhKeyPair(decodedChallenge, preferStrongBox)
                         }
                     }
                 }

@@ -15,6 +15,7 @@ import dev.keiji.deviceintegrity.repository.impl.PlayIntegrityRepositoryImpl
 import kotlinx.coroutines.Dispatchers
 import javax.inject.Singleton
 import dev.keiji.deviceintegrity.api.keyattestation.KeyAttestationVerifyApiClient
+import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.repository.contract.KeyAttestationRepository
 import dev.keiji.deviceintegrity.repository.impl.KeyAttestationRepositoryImpl
 
@@ -36,8 +37,10 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideKeyPairRepository(): KeyPairRepository {
-        return KeyPairRepositoryImpl(Dispatchers.IO)
+    fun provideKeyPairRepository(
+        deviceSecurityStateProvider: DeviceSecurityStateProvider
+    ): KeyPairRepository {
+        return KeyPairRepositoryImpl(Dispatchers.IO, deviceSecurityStateProvider)
     }
 
     @Provides

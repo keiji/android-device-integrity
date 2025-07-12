@@ -1,10 +1,12 @@
 package dev.keiji.deviceintegrity.repository.impl
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Log
+import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.repository.contract.KeyPairData
 import dev.keiji.deviceintegrity.repository.contract.KeyPairRepository
 import kotlinx.coroutines.CoroutineDispatcher
@@ -17,7 +19,8 @@ import java.util.UUID
 import javax.inject.Inject
 
 class KeyPairRepositoryImpl @Inject constructor(
-    private val dispatcher: CoroutineDispatcher
+    private val dispatcher: CoroutineDispatcher,
+    private val deviceSecurityStateProvider: DeviceSecurityStateProvider,
 ) : KeyPairRepository {
 
     companion object {
@@ -49,7 +52,10 @@ class KeyPairRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun generateEcKeyPair(challenge: ByteArray): KeyPairData =
+    override suspend fun generateEcKeyPair(
+        challenge: ByteArray,
+        preferStrongBox: Boolean
+    ): KeyPairData =
         withContext(dispatcher) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
                 throw UnsupportedOperationException("generateEcKeyPair with a challenge parameter is not supported before Android N (API 24).")
@@ -81,6 +87,11 @@ class KeyPairRepositoryImpl @Inject constructor(
                 .setKeySize(EC_KEY_SIZE)
                 .setAttestationChallenge(challenge)
 
+            if (preferStrongBox && deviceSecurityStateProvider.hasStrongBox) {
+                @SuppressLint("NewApi")
+                specBuilder.setIsStrongBoxBacked(true)
+            }
+
             keyPairGenerator.initialize(specBuilder.build())
             val generatedKeyPair = keyPairGenerator.generateKeyPair()
 
@@ -103,7 +114,10 @@ class KeyPairRepositoryImpl @Inject constructor(
             )
         }
 
-    override suspend fun generateRsaKeyPair(challenge: ByteArray): KeyPairData =
+    override suspend fun generateRsaKeyPair(
+        challenge: ByteArray,
+        preferStrongBox: Boolean
+    ): KeyPairData =
         withContext(dispatcher) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
                 throw UnsupportedOperationException("generateRsaKeyPair with a challenge parameter is not supported before Android N (API 24).")
@@ -136,6 +150,11 @@ class KeyPairRepositoryImpl @Inject constructor(
                 .setKeySize(RSA_KEY_SIZE)
                 .setAttestationChallenge(challenge)
 
+            if (preferStrongBox && deviceSecurityStateProvider.hasStrongBox) {
+                @SuppressLint("NewApi")
+                specBuilder.setIsStrongBoxBacked(true)
+            }
+
             keyPairGenerator.initialize(specBuilder.build())
             val generatedKeyPair = keyPairGenerator.generateKeyPair()
 
@@ -158,7 +177,10 @@ class KeyPairRepositoryImpl @Inject constructor(
             )
         }
 
-    override suspend fun generateEcdhKeyPair(challenge: ByteArray): KeyPairData =
+    override suspend fun generateEcdhKeyPair(
+        challenge: ByteArray,
+        preferStrongBox: Boolean
+    ): KeyPairData =
         withContext(dispatcher) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
                 throw UnsupportedOperationException("generateEcdhKeyPair with a challenge parameter is not supported before Android S (API 31).")
@@ -190,10 +212,10 @@ class KeyPairRepositoryImpl @Inject constructor(
                 .setKeySize(EC_KEY_SIZE)
                 .setAttestationChallenge(challenge)
 
-            // TODO: If device has StrongBox, it should be preferred.
-            // if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            //     specBuilder.setIsStrongBoxBacked(true)
-            // }
+            if (preferStrongBox && deviceSecurityStateProvider.hasStrongBox) {
+                @SuppressLint("NewApi")
+                specBuilder.setIsStrongBoxBacked(true)
+            }
 
             keyPairGenerator.initialize(specBuilder.build())
             val generatedKeyPair = keyPairGenerator.generateKeyPair()

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,6 +43,7 @@ import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
 fun KeyAttestationScreen(
     uiState: KeyAttestationUiState, // uiState collected and passed from MainActivity
     onSelectedKeyTypeChange: (CryptoAlgorithm) -> Unit,
+    onPreferStrongBoxChanged: (Boolean) -> Unit,
     onFetchNonceOrSaltChallenge: () -> Unit, // Renamed
     onGenerateKeyPair: () -> Unit,
     onRequestVerifyKeyAttestation: () -> Unit,
@@ -115,6 +117,22 @@ fun KeyAttestationScreen(
                 }
             }
         }
+
+        if (uiState.isStep1PreferStrongBoxVisible) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = uiState.preferStrongBox,
+                    onCheckedChange = onPreferStrongBoxChanged,
+                    enabled = uiState.isStep1PreferStrongBoxEnabled,
+                )
+                Text("StrongBoxで鍵を生成する")
+            }
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
 
         // Step 2: Fetch Nonce/Salt and Challenge (Original Step 1, now with dynamic labels)
@@ -243,9 +261,12 @@ private fun KeyAttestationScreenPreview() {
             selectedKeyType = CryptoAlgorithm.RSA, // Example: RSA selected
             status = "Verification successful.",
             infoItems = previewItems,
-            isEcdhAvailable = true // Assuming ECDH is available for preview
+            isEcdhAvailable = true, // Assuming ECDH is available for preview
+            isStrongboxSupported = true,
+            preferStrongBox = true
         ),
         onSelectedKeyTypeChange = { System.out.println("Preview: Key type changed to ${it.label}") },
+        onPreferStrongBoxChanged = { System.out.println("Preview: Prefer StrongBox changed to $it") },
         onFetchNonceOrSaltChallenge = { System.out.println("Preview: Fetch Nonce/Salt/Challenge clicked") }, // Renamed
         onGenerateKeyPair = { System.out.println("Preview: Generate KeyPair clicked") },
         onRequestVerifyKeyAttestation = { System.out.println("Preview: Request Verify KeyAttestation clicked") },
