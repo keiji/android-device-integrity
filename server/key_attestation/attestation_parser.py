@@ -2,10 +2,48 @@ import base64
 import logging
 from cryptography import x509
 from pyasn1.codec.der import decoder as der_decoder
-from pyasn1.type import univ
+from pyasn1.type import univ, namedtype, namedval, tag # Added namedtype, namedval, tag
 from pyasn1.error import PyAsn1Error
 
 logger = logging.getLogger(__name__)
+
+# --- ASN.1 Type Definitions for pyasn1 ---
+
+class VerifiedBootState(univ.Enumerated):
+    namedValues = namedval.NamedValues(
+        ('Verified', 0),
+        ('SelfSigned', 1),
+        ('Unverified', 2),
+        ('Failed', 3)
+    )
+
+class RootOfTrustAsn1(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('verifiedBootKey', univ.OctetString()),
+        namedtype.NamedType('deviceLocked', univ.Boolean()),
+        namedtype.NamedType('verifiedBootState', VerifiedBootState()),
+        namedtype.NamedType('verifiedBootHash', univ.OctetString())
+    )
+
+# --- End ASN.1 Type Definitions ---
+
+def _parse_root_of_trust_from_asn1_obj(decoded_rot_obj: RootOfTrustAsn1) -> dict:
+    """ Parses the RootOfTrust dictionary from a pyasn1 decoded RootOfTrustAsn1 object. """
+    parsed_data = {}
+    try:
+        parsed_data['verified_boot_key'] = bytes(decoded_rot_obj.getComponentByName('verifiedBootKey')).hex()
+        parsed_data['device_locked'] = bool(decoded_rot_obj.getComponentByName('deviceLocked'))
+        # For ENUMERATED, pyasn1 gives the integer value directly
+        parsed_data['verified_boot_state'] = int(decoded_rot_obj.getComponentByName('verifiedBootState'))
+        parsed_data['verified_boot_hash'] = bytes(decoded_rot_obj.getComponentByName('verifiedBootHash')).hex()
+    except (TypeError, ValueError, PyAsn1Error, AttributeError) as e: # Added AttributeError for getComponentByName
+        logger.error(f"Error parsing fields from RootOfTrustAsn1 object: {e}. Object was: {decoded_rot_obj.prettyPrint() if hasattr(decoded_rot_obj, 'prettyPrint') else decoded_rot_obj}")
+        # Fallback or re-raise depending on how critical this is
+        return {
+            'verified_boot_key': "", 'device_locked': False,
+            'verified_boot_state': -1, 'verified_boot_hash': "" # Indicate error
+        }
+    return parsed_data
 
 # OID for Android Key Attestation extension
 OID_ANDROID_KEY_ATTESTATION = x509.ObjectIdentifier('1.3.6.1.4.1.11129.2.1.17')
@@ -53,34 +91,11 @@ TAG_DEVICE_UNIQUE_ATTESTATION = 720 # KeyMint v2 (Android T)
 TAG_ATTESTATION_ID_SECOND_IMEI = 723 # KeyMint v2
 TAG_MODULE_HASH = 724 # KeyMint v? (Not explicitly versioned in main attestation docs, but related to StrongBox)
 
+# NOTE: The original parse_root_of_trust is now replaced by _parse_root_of_trust_from_asn1_obj
+# if this schema-based approach is fully adopted. For now, keeping the old one
+# available if we need to revert or if other parts of code use it directly, though it's not used by the modified path.
+# def parse_root_of_trust(root_of_trust_sequence): ... (original function)
 
-def parse_root_of_trust(root_of_trust_sequence):
-    """Parses the RootOfTrust ASN.1 sequence."""
-    parsed_data = {}
-    if not isinstance(root_of_trust_sequence, univ.Sequence) or len(root_of_trust_sequence) < 4:
-        logger.warning(f"RootOfTrust sequence is not a sequence or has insufficient elements: {root_of_trust_sequence}")
-        # Return minimal structure or raise error based on strictness
-        return {
-            'verified_boot_key': "",
-            'device_locked': False,
-            'verified_boot_state': 0, # Assuming 0 is a sensible default for UNKNOWN/FAILED
-            'verified_boot_hash': ""
-        }
-    try:
-        parsed_data['verified_boot_key'] = bytes(root_of_trust_sequence[0]).hex()
-        parsed_data['device_locked'] = bool(root_of_trust_sequence[1])
-        parsed_data['verified_boot_state'] = int(root_of_trust_sequence[2]) # Enum: Verified = 0, SelfSigned = 1, Unverified = 2, Failed = 3
-        parsed_data['verified_boot_hash'] = bytes(root_of_trust_sequence[3]).hex()
-    except (TypeError, ValueError, PyAsn1Error) as e:
-        logger.error(f"Error parsing RootOfTrust fields: {e}. Sequence was: {root_of_trust_sequence}")
-        # Fallback or re-raise depending on how critical this is
-        return {
-            'verified_boot_key': getattr(root_of_trust_sequence[0], 'prettyPrint', lambda: str(root_of_trust_sequence[0]))(), # Attempt to get some representation
-            'device_locked': False, # Default
-            'verified_boot_state': -1, # Indicate error
-            'verified_boot_hash': getattr(root_of_trust_sequence[3], 'prettyPrint', lambda: str(root_of_trust_sequence[3]))()
-        }
-    return parsed_data
 
 def parse_attestation_application_id(attestation_application_id_bytes):
     """
@@ -264,8 +279,25 @@ def parse_authorization_list(auth_list_sequence, attestation_version):
             elif tag_number == TAG_MODULE_HASH: # OCTET_STRING in reference
                  # Assuming value_component is OctetString bytes
                 parsed_props['module_hash'] = base64.urlsafe_b64encode(bytes(value_component)).decode()
-            elif tag_number == TAG_ROOT_OF_TRUST: # SEQUENCE
-                parsed_props['root_of_trust'] = parse_root_of_trust(value_component)
+            elif tag_number == TAG_ROOT_OF_TRUST: # SEQUENCE (handled with schema)
+                # value_component is the EXPLICITLY tagged RootOfTrust.
+                # The actual RootOfTrust SEQUENCE is the single component of its constructed value.
+                # pyasn1 typically represents this as a SequenceOf containing one element,
+                # or the component itself is a Sequence.
+                # We need to get the bytes of this inner SEQUENCE.
+                if value_component and len(value_component) > 0:
+                    # The EXPLICIT wrapper means value_component itself is a new type
+                    # containing the original type (RootOfTrustAsn1).
+                    # For pyasn1, when an EXPLICIT tag is applied, the resulting object
+                    # often has the original object as its first (and only) component.
+                    inner_sequence_obj = value_component.getComponentByPosition(0)
+                    rot_bytes = der_encoder.encode(inner_sequence_obj) # Encode the specific RootOfTrustAsn1 part
+
+                    decoded_rot, _ = der_decoder.decode(rot_bytes, asn1Spec=RootOfTrustAsn1())
+                    parsed_props['root_of_trust'] = _parse_root_of_trust_from_asn1_obj(decoded_rot)
+                else:
+                    logger.warning(f"TAG_ROOT_OF_TRUST: value_component is empty or not structured as expected: {value_component}")
+                    parsed_props['root_of_trust'] = {} # Or raise error
             # Tags explicitly NOT handled by b5f506e's if/elif but present in its constants or newer Android versions:
             # TAG_PADDING, TAG_ROLLBACK_RESISTANCE, TAG_EARLY_BOOT_ONLY, TAG_ACTIVE_DATETIME,
             # TAG_ORIGINATION_EXPIRE_DATETIME, TAG_USAGE_EXPIRE_DATETIME, TAG_USAGE_COUNT_LIMIT,
@@ -284,6 +316,8 @@ def parse_authorization_list(auth_list_sequence, attestation_version):
             # Reference log format
             logger.warning(
                 f"Error parsing tag {tag_number} in AuthorizationList: {e}. Value component: {value_component}")
+            # Make parsing stricter: if any tag fails, the whole list parsing fails.
+            raise ValueError(f"Failed to parse tag {tag_number} in AuthorizationList: {e}") from e
     return parsed_props
 
 
@@ -292,34 +326,54 @@ def parse_key_description(key_desc_bytes):
     Parses the KeyDescription SEQUENCE from the attestation extension using pyasn1.
     Returns a dictionary containing key properties.
     """
-    logger.debug(f"Attempting to parse KeyDescription bytes: {key_desc_bytes.hex() if key_desc_bytes else 'None'}")
+    key_desc_sequence = None
+    MIN_KEY_DESC_COMPONENTS = 5 # attestationVersion, attestationSecurityLevel, keymasterVersion, keymasterSecurityLevel, attestationChallenge
+
     try:
         key_desc_sequence, rest = der_decoder.decode(key_desc_bytes)
-        logger.debug(f"Successfully decoded KeyDescription sequence by pyasn1. Remaining bytes: {len(rest)}")
-        if hasattr(key_desc_sequence, 'prettyPrint'):
-            logger.debug(f"Decoded KeyDescription sequence (prettyPrint):\n{key_desc_sequence.prettyPrint()}")
-        else:
-            logger.debug(f"Decoded KeyDescription sequence (raw): {key_desc_sequence}")
+
+        if not key_desc_sequence or not isinstance(key_desc_sequence, univ.Sequence) or len(key_desc_sequence) < MIN_KEY_DESC_COMPONENTS:
+            # This log might still be useful even if debug is off generally, as it's an error condition.
+            logger.error(f"Decoded KeyDescription is not a valid sequence or too short. Type: {type(key_desc_sequence)}, Length: {len(key_desc_sequence) if hasattr(key_desc_sequence, '__len__') else 'N/A'}")
+            # Avoid logging the full sequence in non-debug, it can be large.
+            raise ValueError('Decoded KeyDescription is not a valid/complete ASN.1 SEQUENCE.')
+
     except PyAsn1Error as e:
         logger.error(f'Failed to decode KeyDescription ASN.1 sequence with pyasn1: {e}')
-        logger.debug(f"Problematic KeyDescription bytes for pyasn1: {key_desc_bytes.hex() if key_desc_bytes else 'None'}")
-        raise ValueError('Malformed KeyDescription sequence.')
-
-    if not isinstance(key_desc_sequence, univ.Sequence):
-        raise ValueError('Decoded KeyDescription is not an ASN.1 SEQUENCE.')
+        # Avoid logging full key_desc_bytes in non-debug for potentially sensitive data or large size.
+        raise ValueError('Malformed KeyDescription sequence.') from e
 
     parsed_data = {}
     try:
         # Using idx naming and logic closer to reference version
         idx = 0
+        # Attestation Version
+        if not isinstance(key_desc_sequence[idx], univ.Integer):
+            raise ValueError(f"Expected Integer for attestation_version at index {idx}, got {type(key_desc_sequence[idx])}: {key_desc_sequence[idx]}")
         parsed_data['attestation_version'] = int(key_desc_sequence[idx])
         idx += 1
+
+        # Attestation Security Level
+        if not isinstance(key_desc_sequence[idx], univ.Integer): # ENUMERATED is an Integer subclass
+            raise ValueError(f"Expected Integer/Enum for attestation_security_level at index {idx}, got {type(key_desc_sequence[idx])}: {key_desc_sequence[idx]}")
         parsed_data['attestation_security_level'] = int(key_desc_sequence[idx])
         idx += 1
+
+        # KeyMint/Keymaster Version
+        if not isinstance(key_desc_sequence[idx], univ.Integer):
+            raise ValueError(f"Expected Integer for keymint_or_keymaster_version at index {idx}, got {type(key_desc_sequence[idx])}: {key_desc_sequence[idx]}")
         parsed_data['keymint_or_keymaster_version'] = int(key_desc_sequence[idx])
         idx += 1
+
+        # KeyMint/Keymaster Security Level
+        if not isinstance(key_desc_sequence[idx], univ.Integer): # ENUMERATED is an Integer subclass
+            raise ValueError(f"Expected Integer/Enum for keymint_or_keymaster_security_level at index {idx}, got {type(key_desc_sequence[idx])}: {key_desc_sequence[idx]}")
         parsed_data['keymint_or_keymaster_security_level'] = int(key_desc_sequence[idx])
         idx += 1
+
+        # Attestation Challenge
+        if not isinstance(key_desc_sequence[idx], univ.OctetString):
+            raise ValueError(f"Expected OctetString for attestation_challenge at index {idx}, got {type(key_desc_sequence[idx])}: {key_desc_sequence[idx]}")
         parsed_data['attestation_challenge'] = bytes(key_desc_sequence[idx])
         idx += 1
 
