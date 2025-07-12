@@ -1,8 +1,9 @@
 import base64
 import logging
 from cryptography import x509
-from pyasn1.codec.der import decoder as der_decoder, encoder as der_encoder # Added der_encoder
+from pyasn1.codec.der import decoder as der_decoder, encoder as der_encoder
 from pyasn1.type import univ, namedtype, namedval, tag, constraint
+from pyasn1.error import PyAsn1Error
 
 logger = logging.getLogger(__name__)
 
@@ -24,30 +25,84 @@ class RootOfTrustAsn1(univ.Sequence):
         namedtype.NamedType('verifiedBootHash', univ.OctetString())
     )
 
-# --- End ASN.1 Type Definitions ---
+class SecurityLevel(univ.Enumerated):
+    namedValues = namedval.NamedValues(
+        ('software', 0),
+        ('trustedEnvironment', 1),
+        ('strongBox', 2)
+    )
 
-# --- ASN.1 Schema Definitions for KeyDescription ---
-class KeyDescriptionTopLevelSchema(univ.Sequence):
+class AuthorizationList(univ.Sequence):
     componentType = namedtype.NamedTypes(
-        namedtype.NamedType('attestationVersion', univ.Integer()),
-        namedtype.NamedType('attestationSecurityLevel', univ.Integer()),
-        namedtype.NamedType('keymasterVersion', univ.Integer()),
-        namedtype.NamedType('keymasterSecurityLevel', univ.Integer()),
+        namedtype.OptionalNamedType('purpose', univ.SetOf(componentType=univ.Integer()).subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 1))),
+        namedtype.OptionalNamedType('algorithm', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 2))),
+        namedtype.OptionalNamedType('keySize', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 3))),
+        namedtype.OptionalNamedType('digest', univ.SetOf(componentType=univ.Integer()).subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 5))),
+        namedtype.OptionalNamedType('padding', univ.SetOf(componentType=univ.Integer()).subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 6))),
+        namedtype.OptionalNamedType('ecCurve', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 10))),
+        namedtype.OptionalNamedType('rsaPublicExponent', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 200))),
+        namedtype.OptionalNamedType('mgfDigest', univ.SetOf(componentType=univ.Integer()).subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 203))),
+        namedtype.OptionalNamedType('rollbackResistance', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 303))),
+        namedtype.OptionalNamedType('earlyBootOnly', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 305))),
+        namedtype.OptionalNamedType('activeDateTime', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 400))),
+        namedtype.OptionalNamedType('originationExpireDateTime', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 401))),
+        namedtype.OptionalNamedType('usageExpireDateTime', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 402))),
+        namedtype.OptionalNamedType('usageCountLimit', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 405))),
+        namedtype.OptionalNamedType('noAuthRequired', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 503))),
+        namedtype.OptionalNamedType('userAuthType', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 504))),
+        namedtype.OptionalNamedType('authTimeout', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 505))),
+        namedtype.OptionalNamedType('allowWhileOnBody', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 506))),
+        namedtype.OptionalNamedType('trustedUserPresenceRequired', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 507))),
+        namedtype.OptionalNamedType('trustedConfirmationRequired', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 508))),
+        namedtype.OptionalNamedType('unlockedDeviceRequired', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 509))),
+        namedtype.OptionalNamedType('creationDateTime', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 701))),
+        namedtype.OptionalNamedType('origin', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 702))),
+        namedtype.OptionalNamedType('rootOfTrust', RootOfTrustAsn1().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 704))),
+        namedtype.OptionalNamedType('osVersion', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 705))),
+        namedtype.OptionalNamedType('osPatchLevel', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 706))),
+        namedtype.OptionalNamedType('attestationApplicationId', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 709))),
+        namedtype.OptionalNamedType('attestationIdBrand', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 710))),
+        namedtype.OptionalNamedType('attestationIdDevice', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 711))),
+        namedtype.OptionalNamedType('attestationIdProduct', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 712))),
+        namedtype.OptionalNamedType('attestationIdSerial', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 713))),
+        namedtype.OptionalNamedType('attestationIdImei', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 714))),
+        namedtype.OptionalNamedType('attestationIdMeid', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 715))),
+        namedtype.OptionalNamedType('attestationIdManufacturer', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 716))),
+        namedtype.OptionalNamedType('attestationIdModel', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 717))),
+        namedtype.OptionalNamedType('vendorPatchLevel', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 718))),
+        namedtype.OptionalNamedType('bootPatchLevel', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 719))),
+        namedtype.OptionalNamedType('deviceUniqueAttestation', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 720))),
+        namedtype.OptionalNamedType('moduleHash', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 724)))
+    )
+
+class KeyDescriptionSchemaV4(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('attestationVersion', univ.Integer()), # e.g., 400 for KeyMint 4.0
+        namedtype.NamedType('attestationSecurityLevel', SecurityLevel()),
+        namedtype.NamedType('keyMintVersion', univ.Integer()), # Changed from keymasterVersion for KeyMint
+        namedtype.NamedType('keyMintSecurityLevel', SecurityLevel()), # Changed from keymasterSecurityLevel for KeyMint
         namedtype.NamedType('attestationChallenge', univ.OctetString()),
         namedtype.OptionalNamedType('uniqueId', univ.OctetString()),
-        namedtype.NamedType('softwareEnforced', univ.Any()), # Changed from univ.Sequence to univ.Any
-        namedtype.NamedType('hardwareEnforced', univ.Any()), # Changed from univ.Sequence to univ.Any
-        namedtype.OptionalNamedType('deviceUniqueAttestation', univ.Null())
+        namedtype.NamedType('softwareEnforced', AuthorizationList()),
+        namedtype.NamedType('hardwareEnforced', AuthorizationList())
     )
-# --- End KeyDescription Schema ---
+# --- End ASN.1 Schema Definitions ---
 
-class ExtremelySimpleKeyDescriptionSchema(univ.Sequence): # For testing
+# --- Schemas for AttestationApplicationId ---
+class AttestationPackageInfo(univ.Sequence):
     componentType = namedtype.NamedTypes(
-        namedtype.NamedType('attestationVersion', univ.Integer())
+        namedtype.NamedType('packageName', univ.OctetString()),
+        namedtype.NamedType('version', univ.Integer())
     )
+
+class AttestationApplicationIdSchema(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('packageInfos', univ.SetOf(componentType=AttestationPackageInfo())),
+        namedtype.NamedType('signatureDigests', univ.SetOf(componentType=univ.OctetString()))
+    )
+# --- End Schemas for AttestationApplicationId ---
 
 def _parse_root_of_trust_from_asn1_obj(decoded_rot_obj: RootOfTrustAsn1) -> dict:
-    """ Parses the RootOfTrust dictionary from a pyasn1 decoded RootOfTrustAsn1 object. """
     parsed_data = {}
     try:
         parsed_data['verified_boot_key'] = bytes(decoded_rot_obj.getComponentByName('verifiedBootKey')).hex()
@@ -105,130 +160,155 @@ TAG_DEVICE_UNIQUE_ATTESTATION = 720
 TAG_ATTESTATION_ID_SECOND_IMEI = 723
 TAG_MODULE_HASH = 724
 
-
 def parse_attestation_application_id(attestation_application_id_bytes):
     try:
-        app_id_seq, _ = der_decoder.decode(attestation_application_id_bytes)
+        app_id_obj, _ = der_decoder.decode(attestation_application_id_bytes, asn1Spec=AttestationApplicationIdSchema())
     except PyAsn1Error as e:
-        logger.error(f'Failed to decode AttestationApplicationId inner sequence: {e}')
-        raise ValueError('Malformed AttestationApplicationId inner sequence.')
+        logger.error(f'Failed to decode AttestationApplicationId with schema: {e}')
+        # Fallback to generic decode for logging, then re-raise or raise specific error
+        try:
+            generic_app_id_obj, _ = der_decoder.decode(attestation_application_id_bytes)
+            logger.debug(f"Generic decode of AppId: {generic_app_id_obj.prettyPrint() if hasattr(generic_app_id_obj, 'prettyPrint') else repr(generic_app_id_obj)}")
+        except: # pylint: disable=bare-except
+            pass # Ignore if generic decode also fails
+        raise ValueError('Malformed AttestationApplicationId inner sequence (schema decode failed).') from e
 
-    if not isinstance(app_id_seq, univ.Sequence) or len(app_id_seq) < 2:
-        logger.error('AttestationApplicationId is not a SEQUENCE or has too few elements.')
-        raise ValueError('AttestationApplicationId not a valid SEQUENCE.')
+    # logger.debug(f"PAAId: app_id_obj type: {type(app_id_obj)}")
+    # if hasattr(app_id_obj, 'prettyPrint'):
+    #     logger.debug(f"PAAId: app_id_obj prettyPrint: {app_id_obj.prettyPrint()}")
+    # else:
+    #     logger.debug(f"PAAId: app_id_obj (no prettyPrint): {repr(app_id_obj)}")
+    # logger.debug(f"PAAId: app_id_obj length: {len(app_id_obj) if hasattr(app_id_obj, '__len__') else 'N/A'}")
+
+    if not isinstance(app_id_obj, AttestationApplicationIdSchema): # Should be instance of schema
+        logger.error(f'AttestationApplicationId not decoded as AttestationApplicationIdSchema, but as {type(app_id_obj)}.')
+        raise ValueError('AttestationApplicationId not a valid schema instance.')
 
     parsed_data = {}
-    package_infos_outer = app_id_seq[0]
-    if isinstance(package_infos_outer, univ.SetOf) and len(package_infos_outer) > 0:
-        package_info_sequence = package_infos_outer[0]
-        if isinstance(package_info_sequence, univ.Sequence):
-            if len(package_info_sequence) >= 1:
-                parsed_data['attestation_application_id'] = str(package_info_sequence[0])
-            if len(package_info_sequence) >= 2:
-                parsed_data['attestation_application_version_code'] = int(package_info_sequence[1])
+    package_infos_set = app_id_obj.getComponentByName('packageInfos')
+
+    if package_infos_set.isValue and len(package_infos_set) > 0:
+        # Assuming one AttestationPackageInfo as per typical Android usage
+        # pyasn1 SetOf iteration can be direct or via getComponentByPosition if order is fixed (which it isn't for SET OF)
+        # For simplicity, taking the first item if SET OF is not empty.
+        package_info_item = None
+        for item in package_infos_set: # Iterate over SET OF
+            package_info_item = item # Take the first one
+            break
+
+        if package_info_item and isinstance(package_info_item, AttestationPackageInfo):
+            pkg_name_comp = package_info_item.getComponentByName('packageName')
+            pkg_version_comp = package_info_item.getComponentByName('version')
+
+            if pkg_name_comp is not None and pkg_name_comp.isValue:
+                parsed_data['attestation_application_id'] = str(pkg_name_comp)
+            if pkg_version_comp is not None and pkg_version_comp.isValue:
+                parsed_data['attestation_application_version_code'] = int(pkg_version_comp)
         else:
-            logger.warning(f"First PackageInfo in AttestationApplicationId is not a SEQUENCE: {package_info_sequence}")
-    elif isinstance(package_infos_outer, univ.Sequence) and len(package_infos_outer) > 0 :
-        package_info_sequence = package_infos_outer[0]
-        if isinstance(package_info_sequence, univ.Sequence):
-            if len(package_info_sequence) >= 1:
-                parsed_data['attestation_application_id'] = str(package_info_sequence[0])
-            if len(package_info_sequence) >= 2:
-                parsed_data['attestation_application_version_code'] = int(package_info_sequence[1])
-        else:
-            logger.warning(f"First PackageInfo in AttestationApplicationId (Sequence case) is not a SEQUENCE: {package_info_sequence}")
+            logger.warning(f"First PackageInfo in AttestationApplicationId is not AttestationPackageInfo or SET is empty. Item: {package_info_item}")
     else:
-        logger.warning(f"packageInfos in AttestationApplicationId is not SetOf/SequenceOf or is empty: {package_infos_outer}")
+        logger.warning(f"packageInfos in AttestationApplicationId is empty or not isValue. Value: {package_infos_set}")
 
     signatures = []
-    signature_set = app_id_seq[1]
-    if isinstance(signature_set, univ.SetOf):
-        for item_octet_string in signature_set:
+    signature_digests_set = app_id_obj.getComponentByName('signatureDigests')
+    if signature_digests_set.isValue:
+        for item_octet_string in signature_digests_set: # Iterate over SET OF
             if isinstance(item_octet_string, univ.OctetString):
                 signatures.append(bytes(item_octet_string).hex())
             else:
-                logger.warning(f"Item in signature_set is not OctetString: {item_octet_string}")
-    else:
-        logger.warning(f"signatureDigests in AttestationApplicationId is not a SetOf: {signature_set}")
+                logger.warning(f"Item in signatureDigests is not OctetString: {item_octet_string}")
     parsed_data['application_signatures'] = signatures
     return parsed_data
 
-
-def parse_authorization_list(auth_list_sequence, attestation_version):
+def parse_authorization_list(auth_list_object: AuthorizationList, attestation_version: int) -> dict:
     parsed_props = {}
-    if not isinstance(auth_list_sequence, univ.Sequence):
+    if not isinstance(auth_list_object, AuthorizationList):
+        logger.warning(f"parse_authorization_list called with non-AuthorizationList object: {type(auth_list_object)}")
         return parsed_props
 
-    for item in auth_list_sequence.items():
-        try:
-            tag_set = item[1].tagSet
-            tag_number = tag_set.superTags[1].tagId
-            value_component = item[1]
-        except (AttributeError, IndexError, TypeError):
-            logger.warning(f"Could not get tag from item: {item}")
-            continue
-        try:
-            if tag_number == TAG_ATTESTATION_APPLICATION_ID:
-                parsed_props['attestation_application_id'] = parse_attestation_application_id(bytes(value_component))
-            elif tag_number == TAG_OS_VERSION:
-                parsed_props['os_version'] = int(value_component)
-            elif tag_number == TAG_OS_PATCH_LEVEL:
-                parsed_props['os_patch_level'] = int(value_component)
-            elif tag_number == TAG_DIGEST:
-                parsed_props['digests'] = [int(p) for p in value_component]
-            elif tag_number == TAG_PURPOSE:
-                parsed_props['purpose'] = [int(p) for p in value_component]
-            elif tag_number == TAG_ALGORITHM:
-                parsed_props['algorithm'] = int(value_component)
-            elif tag_number == TAG_EC_CURVE:
-                parsed_props['ec_curve'] = int(value_component)
-            elif tag_number == TAG_RSA_PUBLIC_EXPONENT:
-                parsed_props['rsa_public_exponent'] = int(value_component)
-            elif tag_number == TAG_MGF_DIGEST:
-                parsed_props['mgf_digest'] = [int(p) for p in value_component]
-            elif tag_number == TAG_KEY_SIZE:
-                parsed_props['key_size'] = int(value_component)
-            elif tag_number == TAG_NO_AUTH_REQUIRED:
-                parsed_props['no_auth_required'] = True
-            elif tag_number == TAG_CREATION_DATETIME:
-                parsed_props['creation_datetime'] = int(value_component)
-            elif tag_number == TAG_ORIGIN:
-                parsed_props['origin'] = str(value_component)
-            elif tag_number == TAG_VENDOR_PATCH_LEVEL:
-                parsed_props['vendor_patch_level'] = int(value_component)
-            elif tag_number == TAG_BOOT_PATCH_LEVEL:
-                parsed_props['boot_patch_level'] = int(value_component)
-            elif tag_number == TAG_ATTESTATION_ID_BRAND:
-                parsed_props['attestation_id_brand'] = str(value_component)
-            elif tag_number == TAG_ATTESTATION_ID_DEVICE:
-                parsed_props['attestation_id_device'] = str(value_component)
-            elif tag_number == TAG_ATTESTATION_ID_PRODUCT:
-                parsed_props['attestation_id_product'] = str(value_component)
-            elif tag_number == TAG_ATTESTATION_ID_SERIAL:
-                parsed_props['attestation_id_serial'] = str(value_component)
-            elif tag_number == TAG_ATTESTATION_ID_MANUFACTURER:
-                parsed_props['attestation_id_manufacturer'] = str(value_component)
-            elif tag_number == TAG_ATTESTATION_ID_MODEL:
-                parsed_props['attestation_id_model'] = str(value_component)
-            elif tag_number == TAG_MODULE_HASH:
-                parsed_props['module_hash'] = base64.urlsafe_b64encode(bytes(value_component)).decode()
-            elif tag_number == TAG_ROOT_OF_TRUST:
-                if value_component and len(value_component) > 0:
-                    inner_sequence_obj = value_component.getComponentByPosition(0)
-                    rot_bytes = der_encoder.encode(inner_sequence_obj)
-                    decoded_rot, _ = der_decoder.decode(rot_bytes, asn1Spec=RootOfTrustAsn1())
-                    parsed_props['root_of_trust'] = _parse_root_of_trust_from_asn1_obj(decoded_rot)
-                else:
-                    logger.warning(f"TAG_ROOT_OF_TRUST: value_component is empty or not structured as expected: {value_component}")
-                    parsed_props['root_of_trust'] = {}
-            else:
-                logger.warning("Unknown tag:%d, %s" % (tag_number, value_component))
-        except (PyAsn1Error, ValueError, TypeError) as e:
-            logger.warning(
-                f"Error parsing tag {tag_number} in AuthorizationList: {e}. Value component: {value_component}")
-            raise ValueError(f"Failed to parse tag {tag_number} in AuthorizationList: {e}") from e
-    return parsed_props
+    try:
+        # Handle Integer types
+        for name, key in [
+            ('algorithm', 'algorithm'), ('keySize', 'key_size'), ('ecCurve', 'ec_curve'),
+            ('rsaPublicExponent', 'rsa_public_exponent'), ('activeDateTime', 'active_date_time'),
+            ('originationExpireDateTime', 'origination_expire_date_time'),
+            ('usageExpireDateTime', 'usage_expire_date_time'), ('usageCountLimit', 'usage_count_limit'),
+            ('userAuthType', 'user_auth_type'), ('authTimeout', 'auth_timeout'),
+            ('creationDateTime', 'creation_datetime'), ('origin', 'origin'),
+            ('osVersion', 'os_version'), ('osPatchLevel', 'os_patch_level'),
+            ('vendorPatchLevel', 'vendor_patch_level'), ('bootPatchLevel', 'boot_patch_level')
+        ]:
+            comp = auth_list_object.getComponentByName(name)
+            if comp is not None and comp.isValue:
+                parsed_props[key] = int(comp)
 
+        # Handle SetOf Integer types
+        for name, key in [
+            ('purpose', 'purpose'), ('digest', 'digests'),
+            ('padding', 'padding'), ('mgfDigest', 'mgf_digest')
+        ]:
+            comp = auth_list_object.getComponentByName(name)
+            if comp is not None and comp.isValue:
+                parsed_props[key] = [int(c) for c in comp]
+
+        # Handle Null types (flags)
+        for name, key in [
+            ('rollbackResistance', 'rollback_resistance'), ('earlyBootOnly', 'early_boot_only'),
+            ('noAuthRequired', 'no_auth_required'), ('allowWhileOnBody', 'allow_while_on_body'),
+            ('trustedUserPresenceRequired', 'trusted_user_presence_required'),
+            ('trustedConfirmationRequired', 'trusted_confirmation_required'),
+            ('unlockedDeviceRequired', 'unlocked_device_required'),
+            ('deviceUniqueAttestation', 'device_unique_attestation')
+        ]:
+            comp = auth_list_object.getComponentByName(name)
+            if comp is not None and comp.isValue:
+                parsed_props[key] = True
+
+        # Handle AttestationApplicationId (OctetString containing DER)
+        app_id_comp = auth_list_object.getComponentByName('attestationApplicationId')
+        if app_id_comp is not None and app_id_comp.isValue:
+            parsed_props['attestation_application_id'] = parse_attestation_application_id(bytes(app_id_comp))
+
+        # Handle RootOfTrust (RootOfTrustAsn1 instance)
+        rot_comp = auth_list_object.getComponentByName('rootOfTrust')
+        if rot_comp is not None and rot_comp.isValue:
+            if isinstance(rot_comp, RootOfTrustAsn1):
+                parsed_props['root_of_trust'] = _parse_root_of_trust_from_asn1_obj(rot_comp)
+            else:
+                logger.warning(f"RootOfTrust component expected RootOfTrustAsn1, got {type(rot_comp)}")
+
+        # Handle OCTET_STRING based attestation IDs (decode as UTF-8 or hex)
+        octet_string_fields_to_decode = [
+            ('attestationIdBrand', 'attestation_id_brand'),
+            ('attestationIdDevice', 'attestation_id_device'),
+            ('attestationIdProduct', 'attestation_id_product'),
+            ('attestationIdSerial', 'attestation_id_serial'),
+            ('attestationIdImei', 'attestation_id_imei'),
+            ('attestationIdMeid', 'attestation_id_meid'),
+            ('attestationIdManufacturer', 'attestation_id_manufacturer'),
+            ('attestationIdModel', 'attestation_id_model'),
+        ]
+        for name, key in octet_string_fields_to_decode:
+            comp = auth_list_object.getComponentByName(name)
+            if comp is not None and comp.isValue:
+                val_bytes = bytes(comp)
+                try:
+                    parsed_props[key] = val_bytes.decode('utf-8')
+                except UnicodeDecodeError:
+                    logger.warning(f"Could not decode {name} as UTF-8, using hex: {val_bytes.hex()}")
+                    parsed_props[key] = val_bytes.hex()
+
+        # Handle moduleHash (OctetString, base64url encoded)
+        module_hash_comp = auth_list_object.getComponentByName('moduleHash')
+        if module_hash_comp is not None and module_hash_comp.isValue:
+            val_bytes = bytes(module_hash_comp)
+            parsed_props['module_hash'] = base64.urlsafe_b64encode(val_bytes).decode()
+
+    except Exception as e:
+        logger.error(f"Error processing schema-defined AuthorizationList: {e}. Object: {auth_list_object.prettyPrint() if hasattr(auth_list_object, 'prettyPrint') else auth_list_object}", exc_info=True)
+        raise ValueError(f"Failed to parse schema-defined AuthorizationList: {e}") from e
+
+    return parsed_props
 
 def parse_key_description(key_desc_bytes):
     """
@@ -237,89 +317,75 @@ def parse_key_description(key_desc_bytes):
     """
     key_desc_obj = None
 
-    print(f"DEBUG_PRINT: AttestationParser: Raw key_desc_bytes (first 64 bytes): {key_desc_bytes[:64].hex() if key_desc_bytes else 'None'}")
+    # print(f"DEBUG_PRINT: AttestationParser: Raw key_desc_bytes (first 64 bytes): {key_desc_bytes[:64].hex() if key_desc_bytes else 'None'}")
 
     try:
-        # Use the defined schema KeyDescriptionTopLevelSchema
-        # key_desc_obj, rest = der_decoder.decode(key_desc_bytes, asn1Spec=KeyDescriptionTopLevelSchema()) # Using full schema
-        key_desc_obj, rest = der_decoder.decode(key_desc_bytes, asn1Spec=ExtremelySimpleKeyDescriptionSchema()) # Using simple schema for test
+        key_desc_obj, rest = der_decoder.decode(key_desc_bytes, asn1Spec=KeyDescriptionSchemaV4())
 
-        print(f"DEBUG_PRINT: AttestationParser: Type of decoded key_desc_obj: {type(key_desc_obj)}")
-        print(f"DEBUG_PRINT: AttestationParser: repr(key_desc_obj): {repr(key_desc_obj)}")
-        if hasattr(key_desc_obj, 'prettyPrint'):
-            print(f"DEBUG_PRINT: AttestationParser: key_desc_obj.prettyPrint():\n{key_desc_obj.prettyPrint()}")
-        else:
-            print(f"DEBUG_PRINT: AttestationParser: key_desc_obj has no prettyPrint method.")
-        print(f"DEBUG_PRINT: AttestationParser: Length of rest: {len(rest)}")
+        # print(f"DEBUG_PRINT: AttestationParser: Type of decoded key_desc_obj: {type(key_desc_obj)}")
+        # if hasattr(key_desc_obj, 'prettyPrint'):
+        #     print(f"DEBUG_PRINT: AttestationParser: key_desc_obj.prettyPrint():\n{key_desc_obj.prettyPrint()}")
+        # else:
+        #     print(f"DEBUG_PRINT: AttestationParser: key_desc_obj has no prettyPrint method. repr: {repr(key_desc_obj)}")
+        # print(f"DEBUG_PRINT: AttestationParser: Length of rest: {len(rest)}")
+        if rest:
+             logger.warning(f"Extra bytes found after decoding KeyDescription: {len(rest)} bytes. Rest: {rest[:64].hex()}")
+
 
     except PyAsn1Error as e:
         logger.error(f'Failed to decode KeyDescription ASN.1 sequence with pyasn1 using schema: {e}')
-        print(f"DEBUG_PRINT: AttestationParser: PyAsn1Error occurred during schema-based decode: {e}")
+        # print(f"DEBUG_PRINT: AttestationParser: PyAsn1Error occurred during schema-based decode: {e}")
         raise ValueError('Malformed KeyDescription sequence (schema validation failed).') from e
 
     parsed_data = {}
     try:
-        # Access components by name using the schema
         parsed_data['attestation_version'] = int(key_desc_obj.getComponentByName('attestationVersion'))
-        parsed_data['attestation_security_level'] = int(key_desc_obj.getComponentByName('attestationSecurityLevel'))
-        parsed_data['keymint_or_keymaster_version'] = int(key_desc_obj.getComponentByName('keymasterVersion'))
-        parsed_data['keymint_or_keymaster_security_level'] = int(key_desc_obj.getComponentByName('keymasterSecurityLevel'))
+        attestation_security_level_comp = key_desc_obj.getComponentByName('attestationSecurityLevel')
+        if attestation_security_level_comp is not None and attestation_security_level_comp.isValue:
+            parsed_data['attestation_security_level'] = int(attestation_security_level_comp)
+
+        # Use keyMintVersion and keyMintSecurityLevel as per schema for version 400
+        keymint_version_comp = key_desc_obj.getComponentByName('keyMintVersion')
+        if keymint_version_comp is not None and keymint_version_comp.isValue:
+            parsed_data['keymint_or_keymaster_version'] = int(keymint_version_comp)
+
+        keymint_security_level_comp = key_desc_obj.getComponentByName('keyMintSecurityLevel')
+        if keymint_security_level_comp is not None and keymint_security_level_comp.isValue:
+            parsed_data['keymint_or_keymaster_security_level'] = int(keymint_security_level_comp)
+
         parsed_data['attestation_challenge'] = bytes(key_desc_obj.getComponentByName('attestationChallenge'))
 
         unique_id_comp = key_desc_obj.getComponentByName('uniqueId')
         if unique_id_comp is not None and unique_id_comp.isValue:
             parsed_data['unique_id'] = bytes(unique_id_comp).hex()
         else:
-            parsed_data['unique_id'] = None
+            parsed_data['unique_id'] = None # Explicitly set to None if absent
 
-        sw_enforced_seq = key_desc_obj.getComponentByName('softwareEnforced')
-        if sw_enforced_seq is None:
-             logger.warning("Software enforced properties (softwareEnforced) is None after schema decoding.")
-             parsed_data['software_enforced'] = {}
+        sw_enforced_comp = key_desc_obj.getComponentByName('softwareEnforced')
+        if sw_enforced_comp is not None and sw_enforced_comp.isValue:
+            parsed_data['software_enforced'] = parse_authorization_list(
+                sw_enforced_comp,
+                parsed_data.get('attestation_version')
+            )
         else:
-            if not isinstance(sw_enforced_seq, univ.Sequence):
-                logger.error(f"softwareEnforced is not a univ.Sequence, but {type(sw_enforced_seq)}. Value: {sw_enforced_seq.prettyPrint() if hasattr(sw_enforced_seq, 'prettyPrint') else sw_enforced_seq}")
-                if hasattr(sw_enforced_seq, 'items'):
-                     parsed_data['software_enforced'] = parse_authorization_list(
-                        sw_enforced_seq,
-                        parsed_data.get('attestation_version')
-                    )
-                else:
-                    parsed_data['software_enforced'] = {}
-            else:
-                 parsed_data['software_enforced'] = parse_authorization_list(
-                    sw_enforced_seq,
-                    parsed_data.get('attestation_version')
-                )
+            parsed_data['software_enforced'] = {}
+            logger.warning("Software enforced properties (softwareEnforced) is None or not isValue after schema decoding.")
 
-        hw_enforced_seq = key_desc_obj.getComponentByName('hardwareEnforced')
-        if hw_enforced_seq is None:
-            logger.warning("Hardware enforced properties (hardwareEnforced) is None after schema decoding.")
+
+        hw_enforced_comp = key_desc_obj.getComponentByName('hardwareEnforced')
+        if hw_enforced_comp is not None and hw_enforced_comp.isValue:
+            parsed_data['hardware_enforced'] = parse_authorization_list(
+                hw_enforced_comp,
+                parsed_data.get('attestation_version')
+            )
+        else:
             parsed_data['hardware_enforced'] = {}
-        else:
-            if not isinstance(hw_enforced_seq, univ.Sequence):
-                logger.error(f"hardwareEnforced is not a univ.Sequence, but {type(hw_enforced_seq)}. Value: {hw_enforced_seq.prettyPrint() if hasattr(hw_enforced_seq, 'prettyPrint') else hw_enforced_seq}")
-                if hasattr(hw_enforced_seq, 'items'):
-                    parsed_data['hardware_enforced'] = parse_authorization_list(
-                        hw_enforced_seq,
-                        parsed_data.get('attestation_version')
-                    )
-                else:
-                    parsed_data['hardware_enforced'] = {}
-            else:
-                parsed_data['hardware_enforced'] = parse_authorization_list(
-                    hw_enforced_seq,
-                    parsed_data.get('attestation_version')
-                )
-
-        device_unique_att_comp = key_desc_obj.getComponentByName('deviceUniqueAttestation')
-        if device_unique_att_comp is not None and device_unique_att_comp.isValue:
-             parsed_data['device_unique_attestation'] = True
+            logger.warning("Hardware enforced properties (hardwareEnforced) is None or not isValue after schema decoding.")
 
     except (IndexError, ValueError, PyAsn1Error, TypeError, AttributeError) as e:
         seq_repr = getattr(key_desc_obj, "prettyPrint", lambda: str(key_desc_obj))()
-        logger.error(f'Error processing parsed KeyDescription object: {e}. Structure might be unexpected. Object: {seq_repr}')
-        print(f"DEBUG_PRINT: AttestationParser: Error processing KeyDescription object: {e}. Object (repr): {repr(key_desc_obj)}")
+        logger.error(f'Error processing parsed KeyDescription object: {e}. Structure might be unexpected. Object: {seq_repr}', exc_info=True)
+        # print(f"DEBUG_PRINT: AttestationParser: Error processing KeyDescription object: {e}. Object (repr): {repr(key_desc_obj)}")
         raise ValueError(f'Malformed or unexpected KeyDescription structure: {e}')
     return parsed_data
 
@@ -339,17 +405,17 @@ def get_attestation_extension_properties(certificate):
     key_description_bytes = None
     if isinstance(ext.value, x509.UnrecognizedExtension):
         key_description_bytes = ext.value.value
-    elif isinstance(ext.value, bytes):
+    elif isinstance(ext.value, bytes): # Should not happen with cryptography > 3.0 for this OID
         key_description_bytes = ext.value
-    else:
+    else: # Should be ParsedAttestationRecord if cryptography recognized it, but we want bytes
         logger.error(f'Unexpected type for attestation extension value: {type(ext.value)}. Value: {ext.value}')
         raise ValueError(f'Unexpected type for attestation extension value: {type(ext.value)}')
+
 
     if not key_description_bytes:
         logger.error('Attestation extension found but its value (KeyDescription bytes) is empty or None.')
         return None
 
-    # Using logger.info for this as it's less verbose than DEBUG_PRINT for general flow.
     logger.info(f'KeyDescription bytes length from extension: {len(key_description_bytes)}')
     try:
         attestation_properties = parse_key_description(key_description_bytes)
@@ -358,5 +424,5 @@ def get_attestation_extension_properties(certificate):
         logger.error(f'Failed to parse KeyDescription from attestation extension: {e}')
         raise
     except Exception as e:
-        logger.error(f'An unexpected error occurred while parsing KeyDescription: {e}')
+        logger.error(f'An unexpected error occurred while parsing KeyDescription: {e}', exc_info=True)
         raise
