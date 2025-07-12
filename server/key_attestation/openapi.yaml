@@ -230,8 +230,10 @@ components:
       required:
         - session_id
         - encrypted_data
-        - client_public_key
         - salt
+        - certificate_chain
+        - device_info
+        - security_info
       properties:
         session_id:
           type: string
@@ -242,16 +244,18 @@ components:
           format: byte
           description: Base64URL-encoded (no padding) encrypted data.
           example: "SGVsbG8gV29ybGQ="
-        client_public_key:
-          type: string
-          format: base64
-          description: Standard Base64-encoded client's public key (X.509 SubjectPublicKeyInfo, DER).
-          example: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEE5g3G..."
         salt:
           type: string
           format: byte
           description: Base64URL-encoded (no padding) client-generated salt for HKDF.
           example: "Y2xpZW50X3NhbHRfZGF0YQ=="
+        certificate_chain:
+          type: array
+          items:
+            type: string
+            format: base64
+          description: Array of standard Base64-encoded certificate strings. The leaf certificate's public key is used for the key agreement.
+          example: [ "Y2VydDE=", "Y2VydDI=" ]
         device_info:
           $ref: '#/components/schemas/DeviceInfo'
         security_info:

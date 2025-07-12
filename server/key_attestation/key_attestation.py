@@ -343,11 +343,10 @@ def verify_agreement_attestation():
     Request body: {
         "session_id": "string",
         "encrypted_data": "string (Base64URL Encoded, no padding, first 12 bytes are IV)",
-        "client_public_key": "string (Base64URL Encoded, DER format)",
         "salt": "string (Base64URL Encoded, no padding)",
         "certificate_chain": ["string (Base64Encoded)"],
-        "device_info": {}, # Optional
-        "security_info": {}  # Optional
+        "device_info": {},
+        "security_info": {}
     }
     Response body: (details successful verification structure, errors are standard JSON)
     """
@@ -355,15 +354,13 @@ def verify_agreement_attestation():
         data = request.get_json()
         if not data:
             logger.warning('Verify Agreement request missing JSON payload.')
-            # Minimal data for storing result if session_id is unknown at this stage
             store_ds_key_attestation_result(datastore_client, 'unknown_session_agreement', 'failed', 'Missing JSON payload for agreement', '{}', '{}')
             return jsonify({'error': 'Missing JSON payload'}), 400
 
         session_id = data.get('session_id')
-        encrypted_param_b64url = data.get('encrypted_data') # Renamed from encrypted_data_b64url to reflect it contains IV
-        client_public_key_b64url = data.get('client_public_key')
+        encrypted_param_b64url = data.get('encrypted_data')
         client_salt_b64url = data.get('salt')
-        certificate_chain_b64 = data.get('certificate_chain') # Added for attestation verification
+        certificate_chain_b64 = data.get('certificate_chain')
         device_info_from_request = data.get('device_info', {})
         security_info_from_request = data.get('security_info', {})
 
@@ -371,7 +368,6 @@ def verify_agreement_attestation():
             'device_info': device_info_from_request,
             'security_info': security_info_from_request,
             'encrypted_param_provided': bool(encrypted_param_b64url),
-            'client_public_key_provided': bool(client_public_key_b64url),
             'client_salt_provided': bool(client_salt_b64url),
             'certificate_chain_provided': bool(certificate_chain_b64)
         }
@@ -382,12 +378,12 @@ def verify_agreement_attestation():
             store_ds_key_attestation_result(datastore_client, 'missing_session_id_agreement', 'failed', 'Missing session_id in agreement request', payload_data_json_str, '{}')
             return jsonify({'error': 'Missing \'session_id\''}), 400
 
-        # Validate presence of all required fields
         required_fields = {
             'encrypted_data': encrypted_param_b64url,
-            'client_public_key': client_public_key_b64url,
             'salt': client_salt_b64url,
-            'certificate_chain': certificate_chain_b64
+            'certificate_chain': certificate_chain_b64,
+            'device_info': device_info_from_request,
+            'security_info': security_info_from_request
         }
         missing_fields = [name for name, value in required_fields.items() if not value]
         if missing_fields:
@@ -396,10 +392,8 @@ def verify_agreement_attestation():
             store_ds_key_attestation_result(datastore_client, session_id, 'failed', error_msg + ' for agreement', payload_data_json_str, '{}')
             return jsonify({'error': error_msg}), 400
 
-        # Type validation
         if not isinstance(session_id, str) or \
            not isinstance(encrypted_param_b64url, str) or \
-           not isinstance(client_public_key_b64url, str) or \
            not isinstance(client_salt_b64url, str) or \
            not isinstance(certificate_chain_b64, list) or \
            not all(isinstance(cert, str) for cert in certificate_chain_b64):
@@ -409,7 +403,6 @@ def verify_agreement_attestation():
 
         if not datastore_client:
             logger.error('Datastore client not available for /verify/agreement endpoint.')
-            # No session_id specific logging here as it's a general service issue
             return jsonify({'error': 'Datastore service not available'}), 503
 
         agreement_session_entity = get_ds_agreement_key_attestation_session(datastore_client, session_id)
@@ -419,7 +412,7 @@ def verify_agreement_attestation():
             return jsonify({'error': 'Agreement Session ID not found, expired, or invalid.'}), 403
 
         nonce_from_store_b64url = agreement_session_entity.get('nonce')
-        challenge_from_store_b64url = agreement_session_entity.get('challenge') # For attestation part
+        challenge_from_store_b64url = agreement_session_entity.get('challenge')
         server_private_key_pem_b64url = agreement_session_entity.get('private_key')
 
         if not nonce_from_store_b64url or not challenge_from_store_b64url or not server_private_key_pem_b64url:
@@ -427,11 +420,20 @@ def verify_agreement_attestation():
             store_ds_key_attestation_result(datastore_client, session_id, 'failed', 'Corrupted agreement session data in Datastore.', payload_data_json_str, '{}')
             return jsonify({'error': 'Corrupted session data.'}), 500
 
-        attestation_properties = None # Initialize for potential error logging
+        attestation_properties = None
+
+        try:
+            certificates = decode_certificate_chain(certificate_chain_b64)
+            logger.info(f'Successfully decoded certificate chain for agreement session_id: {session_id}. Chain length: {len(certificates)}')
+        except ValueError as e:
+            logger.warning(f'Failed to decode certificate chain for agreement session {session_id}: {e}')
+            store_ds_key_attestation_result(datastore_client, session_id, 'failed', f'Invalid certificate chain (agreement): {e}', payload_data_json_str, '{}')
+            delete_ds_key_attestation_session(datastore_client, session_id, AGREEMENT_KEY_ATTESTATION_SESSION_KIND)
+            return jsonify({'error': f'Invalid certificate chain: {e}'}), 400
 
         try:
             encrypted_param_bytes = base64url_decode(encrypted_param_b64url)
-            if len(encrypted_param_bytes) < 12: # Check if there's enough data for IV
+            if len(encrypted_param_bytes) < 12:
                 logger.warning(f"Encrypted data for session '{session_id}' is too short to contain IV.")
                 store_ds_key_attestation_result(datastore_client, session_id, 'failed', 'Encrypted data too short.', payload_data_json_str, '{}')
                 delete_ds_key_attestation_session(datastore_client, session_id, AGREEMENT_KEY_ATTESTATION_SESSION_KIND)
@@ -439,17 +441,20 @@ def verify_agreement_attestation():
 
             iv_bytes = encrypted_param_bytes[:12]
             encrypted_nonce_bytes = encrypted_param_bytes[12:]
-            client_public_key_der_bytes = base64url_decode(client_public_key_b64url)
+            client_public_key_der_bytes = certificates[0].public_key().public_bytes(
+                encoding=serialization.Encoding.DER,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo
+            )
             client_salt_bytes = base64url_decode(client_salt_b64url)
             server_private_key_pem_bytes = base64url_decode(server_private_key_pem_b64url)
             nonce_from_store_bytes = base64url_decode(nonce_from_store_b64url)
             session_id_bytes_for_aad = session_id.encode('ascii')
 
-        except Exception as e: # Catch decoding errors
-            logger.warning(f'Base64URL decoding failed for one or more parameters for session {session_id}: {e}')
-            store_ds_key_attestation_result(datastore_client, session_id, 'failed', f'Invalid Base64URL encoding in request: {e}', payload_data_json_str, '{}')
+        except Exception as e:
+            logger.warning(f'Data decoding or public key extraction failed for session {session_id}: {e}')
+            store_ds_key_attestation_result(datastore_client, session_id, 'failed', f'Invalid data in request: {e}', payload_data_json_str, '{}')
             delete_ds_key_attestation_session(datastore_client, session_id, AGREEMENT_KEY_ATTESTATION_SESSION_KIND)
-            return jsonify({'error': f'Invalid Base64URL encoding: {e}'}), 400
+            return jsonify({'error': f'Invalid data in request: {e}'}), 400
 
         try:
             aes_key = derive_shared_key(
@@ -476,16 +481,6 @@ def verify_agreement_attestation():
             return jsonify({'error': 'Nonce mismatch.'}), 400
 
         logger.info(f'Nonce matched successfully for session_id: {session_id} in verify/agreement.')
-
-        # --- Certificate Chain and Attestation Properties Verification (similar to /verify/signature) ---
-        try:
-            certificates = decode_certificate_chain(certificate_chain_b64)
-            logger.info(f'Successfully decoded certificate chain for agreement session_id: {session_id}. Chain length: {len(certificates)}')
-        except ValueError as e:
-            logger.warning(f'Failed to decode certificate chain for agreement session {session_id}: {e}')
-            store_ds_key_attestation_result(datastore_client, session_id, 'failed', f'Invalid certificate chain (agreement): {e}', payload_data_json_str, '{}')
-            delete_ds_key_attestation_session(datastore_client, session_id, AGREEMENT_KEY_ATTESTATION_SESSION_KIND)
-            return jsonify({'error': f'Invalid certificate chain: {e}'}), 400
 
         try:
             verify_certificate_chain(certificates)

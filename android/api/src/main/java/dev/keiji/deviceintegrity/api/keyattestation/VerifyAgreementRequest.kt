@@ -11,17 +11,17 @@ data class VerifyAgreementRequest(
     val sessionId: String,
 
     @SerialName("encrypted_data")
-    val encryptedData: String, // Base64URL-encoded, no padding
-
-    @SerialName("client_public_key")
-    val clientPublicKey: String, // Standard Base64-encoded
+    val encryptedDataBase64UrlEncoded: String,
 
     @SerialName("salt")
-    val salt: String, // Base64URL-encoded, no padding
+    val saltBase64UrlEncoded: String,
+
+    @SerialName("certificate_chain")
+    val certificateChainBase64Encoded: List<String>,
 
     @SerialName("device_info")
-    val deviceInfo: DeviceInfo? = null,
+    val deviceInfo: DeviceInfo,
 
     @SerialName("security_info")
-    val securityInfo: SecurityInfo? = null,
+    val securityInfo: SecurityInfo,
 )
