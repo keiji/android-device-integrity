@@ -224,7 +224,7 @@ class TestAttestationParser(unittest.TestCase):
         # Missing attestation_security_level, keymaster_version, etc.
         incomplete_bytes = der_encoder.encode(key_desc_seq) # type: ignore
         # This case likely means der_decoder.decode fails to produce a Sequence at all
-        with self.assertRaisesRegex(ValueError, "Decoded KeyDescription is not an ASN.1 SEQUENCE."):
+        with self.assertRaisesRegex(ValueError, "Decoded KeyDescription is not a valid/complete ASN.1 SEQUENCE."):
             parse_key_description(incomplete_bytes) # type: ignore
 
     @unittest.skip("Skipping test for Keiji cert: Parser cannot currently handle this specific certificate structure. Needs full ASN.1 schema for robust parsing or alternative ASN.1 library.")
