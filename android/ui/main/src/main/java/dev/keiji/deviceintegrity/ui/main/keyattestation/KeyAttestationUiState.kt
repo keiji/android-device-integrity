@@ -5,7 +5,7 @@ import dev.keiji.deviceintegrity.ui.main.InfoItem
 import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityProgressConstants
 
 data class KeyAttestationUiState(
-    val nonce: String = "", // Renamed from nonceOrSalt
+    val nonce: String = "",
     val challenge: String = "",
     val selectedKeyType: CryptoAlgorithm = CryptoAlgorithm.EC, // Default to EC
     val status: String = "", // Keep for general status messages (e.g., "Fetching...", "Failed...")
@@ -16,7 +16,7 @@ data class KeyAttestationUiState(
     val isEcdhAvailable: Boolean = false,
     val serverPublicKey: String = "" // Added for ECDH server public key
 ) {
-    val isNonceVisible: Boolean get() = nonce.isNotEmpty() // Renamed from isNonceOrSaltVisible
+    val isNonceVisible: Boolean get() = nonce.isNotEmpty()
     val isChallengeVisible: Boolean get() = challenge.isNotEmpty()
 
     val isLoading: Boolean
@@ -29,7 +29,7 @@ data class KeyAttestationUiState(
     val isStep2FetchNonceOrSaltChallengeEnabled: Boolean get() = !isLoading
 
     // Step 3 is Generate KeyPair, enabled if not loading, and nonce and challenge are present
-    val isStep3GenerateKeyPairEnabled: Boolean get() = !isLoading && nonce.isNotEmpty() && challenge.isNotEmpty() // Renamed from nonceOrSalt
+    val isStep3GenerateKeyPairEnabled: Boolean get() = !isLoading && nonce.isNotEmpty() && challenge.isNotEmpty()
 
     // Step 4 is Verify Attestation, enabled if not loading and key pair is generated
     val isStep4VerifyAttestationEnabled: Boolean get() = !isLoading && generatedKeyPairData != null
