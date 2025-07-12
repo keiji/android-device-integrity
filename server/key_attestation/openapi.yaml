@@ -4,7 +4,6 @@ info:
   version: v1
   description: |-
     Provides endpoints for Key Attestation operations.
-    Currently includes a simple placeholder endpoint.
   contact:
     name: API Support
     url: http://www.example.com/support
@@ -19,23 +18,89 @@ servers:
     description: Development server
 
 paths:
-  /key-attestation/:
-    get:
-      summary: Key Attestation Hello World
-      description: Returns a simple greeting from the Key Attestation service. This is a placeholder and will be updated with actual Key Attestation logic.
-      operationId: getKeyAttestationHello
+  /key-attestation/prepare/agreement:
+    post:
+      summary: "Prepare for Key Attestation Agreement"
+      description: "Generates a nonce for the key attestation process."
+      operationId: "prepareKeyAttestationAgreement"
       tags:
         - KeyAttestation
       responses:
         '200':
-          description: Successful response
+          description: "Nonce generated successfully."
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-                example: "Hello World from Key Attestation!"
+                type: object
+                properties:
+                  nonce:
+                    type: string
+                    description: "A unique nonce for the attestation session."
+                    example: "generatedNonceValueBase64"
         '500':
-          description: Internal server error
+          description: "Internal server error during nonce generation."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /key-attestation/verify/agreement:
+    post:
+      summary: "Verify Key Attestation Agreement"
+      description: "Verifies the key attestation data provided by the client."
+      operationId: "verifyKeyAttestationAgreement"
+      tags:
+        - KeyAttestation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - attestationData
+                - salt
+              properties:
+                attestationData:
+                  type: string
+                  description: "Client's attestation data."
+                  example: "clientAttestationDataString"
+                salt:
+                  type: string
+                  format: byte
+                  description: "Client-generated salt, Base64UrlEncoded."
+                  example: "clientGeneratedSaltBase64Url"
+      responses:
+        '200':
+          description: "Attestation verification successful."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  message:
+                    type: string
+                    example: "Verification completed."
+        '400':
+          description: "Bad request (e.g., missing fields, invalid data)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: "Attestation verification failed."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+                properties: # Add more specific error details if desired
+                  error_details:
+                    type: string
+                    example: "Nonce mismatch"
+        '500':
+          description: "Internal server error during verification."
           content:
             application/json:
               schema:
