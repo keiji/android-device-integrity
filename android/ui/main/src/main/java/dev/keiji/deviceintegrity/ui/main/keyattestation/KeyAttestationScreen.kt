@@ -131,8 +131,8 @@ fun KeyAttestationScreen(
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-        if (uiState.isNonceVisible) { // Changed from isNonceOrSaltVisible
-            Text(text = "Nonce: ${uiState.nonce}") // Changed from nonceOrSalt
+        if (uiState.isNonceVisible) {
+            Text(text = "Nonce: ${uiState.nonce}")
         }
         Spacer(modifier = Modifier.height(8.dp))
         if (uiState.isChallengeVisible) {
