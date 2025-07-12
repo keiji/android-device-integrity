@@ -14,7 +14,9 @@ data class KeyAttestationUiState(
     val generatedKeyPairData: KeyPairData? = null,
     val progressValue: Float = PlayIntegrityProgressConstants.NO_PROGRESS,
     val isEcdhAvailable: Boolean = false,
-    val serverPublicKey: String = "" // Added for ECDH server public key
+    val serverPublicKey: String = "",
+    val isStrongboxSupported: Boolean = false,
+    val preferStrongBox: Boolean = false
 ) {
     val isNonceVisible: Boolean get() = nonce.isNotEmpty()
     val isChallengeVisible: Boolean get() = challenge.isNotEmpty()
@@ -24,6 +26,9 @@ data class KeyAttestationUiState(
 
     // Step 1 is now Key Selection, enabled if not loading
     val isStep1KeySelectionEnabled: Boolean get() = !isLoading
+
+    val isStep1PreferStrongBoxVisible: Boolean get() = isStrongboxSupported
+    val isStep1PreferStrongBoxEnabled: Boolean get() = !isLoading
 
     // Step 2 is Fetch Nonce/Salt/Challenge, enabled if not loading and a key type is selected (always true by default)
     val isStep2FetchNonceOrSaltChallengeEnabled: Boolean get() = !isLoading

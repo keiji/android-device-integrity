@@ -197,6 +197,7 @@ fun DeviceIntegrityApp(
                     KeyAttestationScreen(
                         uiState = keyAttestationUiState,
                         onSelectedKeyTypeChange = { keyAttestationViewModel.onSelectedKeyTypeChange(it) },
+                        onPreferStrongBoxChanged = { keyAttestationViewModel.onPreferStrongBoxChanged(it) },
                         onFetchNonceOrSaltChallenge = { keyAttestationViewModel.fetchNonceOrSaltChallenge() }, // Updated this line
                         onGenerateKeyPair = { keyAttestationViewModel.generateKeyPair() },
                         onRequestVerifyKeyAttestation = { keyAttestationViewModel.requestVerifyKeyAttestation() },
