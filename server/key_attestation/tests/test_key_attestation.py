@@ -1,5 +1,11 @@
 import unittest
 import json
+import sys
+import os
+
+# Add the parent directory to the Python path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
 from key_attestation.key_attestation import app
 from key_attestation.cryptographic_utils import base64url_encode
 from unittest.mock import patch, MagicMock
