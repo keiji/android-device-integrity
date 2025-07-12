@@ -179,15 +179,15 @@ components:
     PrepareAgreementResponseBody:
       type: object
       required:
-        - salt
+        - nonce # Changed from salt
         - challenge
         - public_key
       properties:
-        salt:
+        nonce: # Changed from salt
           type: string
           format: byte
-          description: Base64URL-encoded salt.
-          example: "U2FsdGVkX19Tb21lU2FsdFZhbHVl"
+          description: Base64URL-encoded nonce. # Updated description
+          example: "U2FsdGVkX19Tb21lU2FsdFZhbHVl" # Example can remain, or be updated to reflect nonce
         challenge:
           type: string
           format: byte
@@ -203,7 +203,7 @@ components:
       required:
         - session_id
         - signature
-        - nonce_b
+        - nonce_b # This should be client_nonce as per the Python code and other parts of the spec
         - certificate_chain
       properties:
         session_id:
@@ -215,7 +215,7 @@ components:
           format: byte
           description: Base64-URL-encoded signature.
           example: "U2lnbmVkRGF0YTEyMzQ1Njc4OTA="
-        client_nonce:
+        client_nonce: # Corrected from nonce_b to client_nonce
           type: string
           format: byte
           description: Base64-encoded second nonce from client.
@@ -227,12 +227,13 @@ components:
             format: base64
           description: Array of standard Base64-encoded certificate strings.
           example: ["Y2VydDE=", "Y2VydDI="]
-    VerifyAgreementRequestBody: # New Request Body for verify/agreement
+    VerifyAgreementRequestBody:
       type: object
       required:
         - session_id
         - encrypted_data
         - client_public_key
+        - salt # Added salt
         # device_info and security_info are optional but recommended
       properties:
         session_id:
@@ -249,11 +250,16 @@ components:
           format: base64 # Standard Base64 encoded
           description: Standard Base64-encoded client's public key (X.509 SubjectPublicKeyInfo, DER).
           example: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEE5g3G..." # Example of a Base64 encoded key
+        salt: # Added new salt field
+          type: string
+          format: byte # Base64URL encoded, no padding
+          description: Base64URL-encoded (no padding) client-generated salt for HKDF.
+          example: "Y2xpZW50X3NhbHRfZGF0YQ==" # "client_salt_data"
         device_info:
           $ref: '#/components/schemas/DeviceInfo'
         security_info:
           $ref: '#/components/schemas/SecurityInfo'
-    VerifyAgreementResponseBody: # New Response Body for verify/agreement
+    VerifyAgreementResponseBody:
       type: object
       required:
         - session_id
