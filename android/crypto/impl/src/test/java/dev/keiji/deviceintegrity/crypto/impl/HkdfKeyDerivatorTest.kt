@@ -25,7 +25,7 @@ class HkdfKeyDerivatorTest {
     @Before
     fun setUp() {
         // Security.addProvider(org.bouncycastle.jce.provider.BouncyCastleProvider()) // Not needed
-        derivator = HkdfKeyDerivator()
+        derivator = HkdfKeyDerivator(null)
     }
 
     private fun generateEcKeyPair(): KeyPair {

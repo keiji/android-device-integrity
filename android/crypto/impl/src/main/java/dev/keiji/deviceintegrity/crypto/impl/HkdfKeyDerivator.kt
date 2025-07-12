@@ -14,7 +14,9 @@ import javax.inject.Inject
  * Implements SharedKeyDerivator using HKDF (HMAC-based Key Derivation Function)
  * with standard Android APIs.
  */
-class HkdfKeyDerivator @Inject constructor() : SharedKeyDerivator {
+class HkdfKeyDerivator @Inject constructor(
+    private val hkdfInfo: ByteArray?
+) : SharedKeyDerivator {
 
     companion object {
         private const val KEY_AGREEMENT_ALGORITHM = "ECDH"
@@ -24,11 +26,20 @@ class HkdfKeyDerivator @Inject constructor() : SharedKeyDerivator {
     }
 
     override fun deriveKey(publicKey: PublicKey, privateKey: PrivateKey, salt: ByteArray?): ByteArray {
+        return deriveKey(publicKey, privateKey, salt, hkdfInfo)
+    }
+
+    private fun deriveKey(
+        publicKey: PublicKey,
+        privateKey: PrivateKey,
+        salt: ByteArray?,
+        info: ByteArray?
+    ): ByteArray {
         // 1. Perform Key Agreement (ECDH)
         val sharedSecret = performKeyAgreement(publicKey, privateKey)
 
         // 2. Perform HKDF (RFC 5869)
-        return hkdf(sharedSecret, salt, null, DERIVED_KEY_SIZE_BYTES)
+        return hkdf(sharedSecret, salt, info, DERIVED_KEY_SIZE_BYTES)
     }
 
     private fun performKeyAgreement(publicKey: PublicKey, privateKey: PrivateKey): ByteArray {
