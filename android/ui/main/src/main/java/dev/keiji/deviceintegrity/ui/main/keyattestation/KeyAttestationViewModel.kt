@@ -238,9 +238,10 @@ class KeyAttestationViewModel @Inject constructor(
                 } else {
                     "Challenge"
                 }
+                val suffix = if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH && missingItem == "Nonce") "/PublicKey" else ""
                 _uiState.update {
                     it.copy(
-                        status = "$missingItem is not available. Fetch $missingItem/Challenge${if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH && missingItem == "Nonce") "/PublicKey" else ""} first.",
+                        status = "$missingItem is not available. Fetch $missingItem/Challenge$suffix first.",
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
                     )
                 }
@@ -349,9 +350,10 @@ class KeyAttestationViewModel @Inject constructor(
 
             if (serverNonceB64Url.isEmpty()) {
                 val missingItem = "Nonce" // Always Nonce now
+                val suffix = if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) "/PublicKey" else ""
                 _uiState.update {
                     it.copy(
-                        status = "Server $missingItem is missing. Fetch $missingItem/Challenge${if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) "/PublicKey" else ""} first.",
+                        status = "Server $missingItem is missing. Fetch $missingItem/Challenge$suffix first.",
                         progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
                     )
                 }
