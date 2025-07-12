@@ -1,5 +1,6 @@
 package dev.keiji.deviceintegrity.repository.impl
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
@@ -87,6 +88,7 @@ class KeyPairRepositoryImpl @Inject constructor(
                 .setAttestationChallenge(challenge)
 
             if (preferStrongBox && deviceSecurityStateProvider.hasStrongBox) {
+                @SuppressLint("NewApi")
                 specBuilder.setIsStrongBoxBacked(true)
             }
 
@@ -149,6 +151,7 @@ class KeyPairRepositoryImpl @Inject constructor(
                 .setAttestationChallenge(challenge)
 
             if (preferStrongBox && deviceSecurityStateProvider.hasStrongBox) {
+                @SuppressLint("NewApi")
                 specBuilder.setIsStrongBoxBacked(true)
             }
 
@@ -210,6 +213,7 @@ class KeyPairRepositoryImpl @Inject constructor(
                 .setAttestationChallenge(challenge)
 
             if (preferStrongBox && deviceSecurityStateProvider.hasStrongBox) {
+                @SuppressLint("NewApi")
                 specBuilder.setIsStrongBoxBacked(true)
             }
 
