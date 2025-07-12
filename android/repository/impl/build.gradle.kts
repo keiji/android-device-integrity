@@ -73,6 +73,7 @@ dependencies {
     kspTest(libs.hilt.compiler)
 
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.mockito.android)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.kotlinx.coroutines.test)
     // Robolectric and other test dependencies if needed for this module specifically
