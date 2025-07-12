@@ -362,7 +362,7 @@ def verify_agreement_attestation():
         session_id = data.get('session_id')
         encrypted_data_b64url = data.get('encrypted_data')
         client_public_key_b64 = data.get('client_public_key')
-        client_salt_b64url = data.get('salt') # New field
+        client_salt_b64url = data.get('salt')
         device_info_from_request = data.get('device_info', {})
         security_info_from_request = data.get('security_info', {})
 
@@ -371,7 +371,7 @@ def verify_agreement_attestation():
             'security_info': security_info_from_request,
             'encrypted_data_provided': bool(encrypted_data_b64url),
             'client_public_key_provided': bool(client_public_key_b64),
-            'client_salt_provided': bool(client_salt_b64url) # Logging if client salt was provided
+            'client_salt_provided': bool(client_salt_b64url)
         }
         payload_data_json_str = json.dumps(payload_data_for_datastore)
 

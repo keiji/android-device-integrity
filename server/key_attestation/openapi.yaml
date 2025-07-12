@@ -14,7 +14,7 @@ tags:
     description: Operations related to Key Attestation v1
 
 servers:
-  - url: /key-attestation # Assuming the service is hosted at /key-attestation and blueprint handles /v1/*
+  - url: /key-attestation
     description: Key Attestation Service Base URL
 
 paths:
@@ -64,7 +64,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VerifyAgreementResponseBody' # Corrected: $ref is a child of schema
+                $ref: '#/components/schemas/VerifyAgreementResponseBody'
         '400':
           description: Bad Request (e.g., missing parameters).
           content:
@@ -77,7 +77,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-    # Removed the duplicate '500' entry from here
 
   /v1/verify/signature:
     post:
@@ -105,7 +104,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-    # Removed duplicate '500' entry
 
   /v1/prepare/agreement:
     post:
@@ -179,15 +177,15 @@ components:
     PrepareAgreementResponseBody:
       type: object
       required:
-        - nonce # Changed from salt
+        - nonce
         - challenge
         - public_key
       properties:
-        nonce: # Changed from salt
+        nonce:
           type: string
           format: byte
-          description: Base64URL-encoded nonce. # Updated description
-          example: "U2FsdGVkX19Tb21lU2FsdFZhbHVl" # Example can remain, or be updated to reflect nonce
+          description: Base64URL-encoded nonce.
+          example: "U2FsdGVkX19Tb21lU2FsdFZhbHVl"
         challenge:
           type: string
           format: byte
@@ -197,13 +195,13 @@ components:
           type: string
           format: byte
           description: Base64URL-encoded server public key for ECDH (X.509 SubjectPublicKeyInfo, DER). The example below is standard Base64 for linter compatibility.
-          example: "dGVzdA==" # Represents "test" in Base64
+          example: "dGVzdA=="
     VerifySignatureRequestBody:
       type: object
       required:
         - session_id
         - signature
-        - nonce_b # This should be client_nonce as per the Python code and other parts of the spec
+        - client_nonce
         - certificate_chain
       properties:
         session_id:
@@ -215,7 +213,7 @@ components:
           format: byte
           description: Base64-URL-encoded signature.
           example: "U2lnbmVkRGF0YTEyMzQ1Njc4OTA="
-        client_nonce: # Corrected from nonce_b to client_nonce
+        client_nonce:
           type: string
           format: byte
           description: Base64-encoded second nonce from client.
@@ -233,8 +231,7 @@ components:
         - session_id
         - encrypted_data
         - client_public_key
-        - salt # Added salt
-        # device_info and security_info are optional but recommended
+        - salt
       properties:
         session_id:
           type: string
@@ -242,19 +239,19 @@ components:
           example: "session-abcde-67890"
         encrypted_data:
           type: string
-          format: byte # Base64URL encoded, no padding
+          format: byte
           description: Base64URL-encoded (no padding) encrypted data.
-          example: "SGVsbG8gV29ybGQ=" # "Hello World"
+          example: "SGVsbG8gV29ybGQ="
         client_public_key:
           type: string
-          format: base64 # Standard Base64 encoded
+          format: base64
           description: Standard Base64-encoded client's public key (X.509 SubjectPublicKeyInfo, DER).
-          example: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEE5g3G..." # Example of a Base64 encoded key
-        salt: # Added new salt field
+          example: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEE5g3G..."
+        salt:
           type: string
-          format: byte # Base64URL encoded, no padding
+          format: byte
           description: Base64URL-encoded (no padding) client-generated salt for HKDF.
-          example: "Y2xpZW50X3NhbHRfZGF0YQ==" # "client_salt_data"
+          example: "Y2xpZW50X3NhbHRfZGF0YQ=="
         device_info:
           $ref: '#/components/schemas/DeviceInfo'
         security_info:
@@ -278,14 +275,14 @@ components:
           example: true
         reason:
           type: string
-          description: Reason for verification status (optional). # Reason can still be optional
+          description: Reason for verification status (optional).
           example: "Key agreement verified successfully (mock)."
         attestation_info:
-          $ref: '#/components/schemas/AttestationInfo' # No nullable: true here
+          $ref: '#/components/schemas/AttestationInfo'
         device_info:
-          $ref: '#/components/schemas/DeviceInfo'   # No nullable: true here
+          $ref: '#/components/schemas/DeviceInfo'
         security_info:
-          $ref: '#/components/schemas/SecurityInfo' # No nullable: true here
+          $ref: '#/components/schemas/SecurityInfo'
     VerifySignatureResponseBody:
       type: object
       required:
@@ -327,12 +324,12 @@ components:
           type: string
           description: The application ID.
           example: "com.example.app"
-        attestation_application_version_code: # Optional in Kotlin, but if present, it's an int
+        attestation_application_version_code:
           type: integer
           format: int32
           description: Version code of the application.
           example: 101
-          nullable: true # Explicitly marking as nullable if it can be absent
+          nullable: true
 
     RootOfTrust:
       type: object
@@ -347,23 +344,22 @@ components:
           description: Whether the device is locked.
         verified_boot_hash:
           type: string
-          format: byte # Assuming this is a hex string representing bytes, common for hashes
+          format: byte
           description: Verified boot hash.
-          example: "ZGVhZGJlZWY=" # "deadbeef"
+          example: "ZGVhZGJlZWY="
         verified_boot_key:
           type: string
-          format: byte # Assuming this is a hex string
+          format: byte
           description: Verified boot key.
-          example: "Y2FmZWJhYmU=" # "cafebabe"
+          example: "Y2FmZWJhYmU="
         verified_boot_state:
           type: integer
-          format: int32 # Assuming standard integer for state codes
+          format: int32
           description: Verified boot state.
           example: 0
 
     AuthorizationList:
       type: object
-      # No fields are universally required in AuthorizationList as per Android spec; presence depends on key generation options
       properties:
         attestation_application_id:
           $ref: '#/components/schemas/AttestationApplicationId'
@@ -377,11 +373,11 @@ components:
           type: integer
           format: int32
           description: Key algorithm.
-          example: 3 # EC
+          example: 3
           nullable: true
         boot_patch_level:
           type: integer
-          format: int32 # YYYYMMDD
+          format: int32
           description: Bootloader patch level.
           example: 20230305
           nullable: true
@@ -396,7 +392,7 @@ components:
           type: integer
           format: int32
           description: EC curve identifier.
-          example: 1 # P-256
+          example: 1
           nullable: true
         key_size:
           type: integer
@@ -409,18 +405,18 @@ components:
           description: Whether no user authentication is required.
           nullable: true
         origin:
-          type: string # Should be integer in spec, but example uses string
+          type: string
           description: Key origin (e.g., generated, imported).
-          example: "0" # Generated
+          example: "0"
           nullable: true
         os_patch_level:
           type: integer
-          format: int32 # YYYYMMDD
+          format: int32
           description: OS patch level.
           example: 20230405
           nullable: true
         os_version:
-          type: integer # Example "0" in spec, but usually major version like 13
+          type: integer
           format: int32
           description: OS version.
           example: 13
@@ -436,7 +432,7 @@ components:
           $ref: '#/components/schemas/RootOfTrust'
         vendor_patch_level:
           type: integer
-          format: int32 # YYYYMMDD
+          format: int32
           description: Vendor patch level.
           example: 20230201
           nullable: true
@@ -449,30 +445,30 @@ components:
           example: [1, 2]
           nullable: true
         rollback_resistance:
-          type: boolean # Representing NULL type, true if present
+          type: boolean
           description: Indicates if rollback resistance is active. True if the tag is present.
           example: true
           nullable: true
         early_boot_only:
-          type: boolean # Representing NULL type, true if present
+          type: boolean
           description: Indicates if the key can only be used during early boot. True if the tag is present.
           example: true
           nullable: true
         active_datetime:
           type: integer
-          format: int64 # Epoch milliseconds
+          format: int64
           description: Date and time after which the key is valid.
           example: 1678886400000
           nullable: true
         origination_expire_datetime:
           type: integer
-          format: int64 # Epoch milliseconds
+          format: int64
           description: Date and time after which the key can no longer be used for origination (signing/encryption).
           example: 1710508800000
           nullable: true
         usage_expire_datetime:
           type: integer
-          format: int64 # Epoch milliseconds
+          format: int64
           description: Date and time after which the key can no longer be used for any purpose.
           example: 1710508800000
           nullable: true
@@ -483,34 +479,34 @@ components:
           example: 1000
           nullable: true
         user_auth_type:
-          type: integer # Bitmask
+          type: integer
           format: int32
           description: Bitmask of allowed user authentication types (e.g., fingerprint, password).
-          example: 3 # (Password | Fingerprint)
+          example: 3
           nullable: true
         auth_timeout:
           type: integer
-          format: int32 # Seconds
+          format: int32
           description: User authentication validity duration in seconds.
           example: 300
           nullable: true
         allow_while_on_body:
-          type: boolean # Representing NULL type, true if present
+          type: boolean
           description: Allows key use while the device is on-body. True if the tag is present.
           example: true
           nullable: true
         trusted_user_presence_required:
-          type: boolean # Representing NULL type, true if present
+          type: boolean
           description: Requires trusted user presence for key use. True if the tag is present.
           example: true
           nullable: true
         trusted_confirmation_required:
-          type: boolean # Representing NULL type, true if present
+          type: boolean
           description: Requires trusted confirmation for key use. True if the tag is present.
           example: true
           nullable: true
         unlocked_device_required:
-          type: boolean # Representing NULL type, true if present
+          type: boolean
           description: Requires the device to be unlocked for key use. True if the tag is present.
           example: true
           nullable: true
@@ -555,7 +551,7 @@ components:
           example: "Pixel 6 Pro"
           nullable: true
         device_unique_attestation:
-          type: boolean # Representing NULL type, true if present
+          type: boolean
           description: Indicates if the attestation is device-unique. True if the tag is present.
           example: true
           nullable: true
@@ -564,17 +560,17 @@ components:
           description: Second IMEI of the device, if available.
           example: "350000000000001"
           nullable: true
-        mgf_digest: # Was missing from existing OpenAPI but present in Python
+        mgf_digest:
           type: array
           items:
             type: integer
             format: int32
           description: Allowed MGF digest algorithms for RSA PSS/OAEP.
-          example: [4] # SHA256
+          example: [4]
           nullable: true
-        module_hash: # Was missing from existing OpenAPI but present in Python
+        module_hash:
           type: string
-          format: byte # Base64URL Encoded
+          format: byte
           description: Hash of the KeyMint module if available.
           example: "dGVzdF9oYXNo"
           nullable: true
@@ -587,14 +583,14 @@ components:
         - attestation_version
         - keymint_security_level
         - keymint_version
-        - attestation_challenge # Now required
+        - attestation_challenge
         - software_enforced_properties
-        - hardware_enforced_properties # Now required
+        - hardware_enforced_properties
       properties:
         attestation_security_level:
           type: integer
           format: int32
-          example: 1 # StrongBox
+          example: 1
         attestation_version:
           type: integer
           format: int32
@@ -602,24 +598,23 @@ components:
         keymint_security_level:
           type: integer
           format: int32
-          example: 1 # StrongBox
+          example: 1
         keymint_version:
           type: integer
           format: int32
-          example: 200 # KeyMint version, e.g., Android 12+
+          example: 200
         attestation_challenge:
           type: string
-          format: byte # Base64URL encoded
+          format: byte
           description: The challenge value from the attestation certificate, base64url encoded.
-          example: "Y2hhbGxlbmdlX3N0cmluZw==" # "challenge_string"
+          example: "Y2hhbGxlbmdlX3N0cmluZw=="
         software_enforced_properties:
           $ref: '#/components/schemas/AuthorizationList'
         hardware_enforced_properties:
-          $ref: '#/components/schemas/AuthorizationList' # Not nullable itself, can be an empty object {}
+          $ref: '#/components/schemas/AuthorizationList'
 
     DeviceInfo:
       type: object
-      # All fields are typically strings, SDK_INT is int. Assuming all are sent.
       required:
         - brand
         - model

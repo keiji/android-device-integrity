@@ -75,7 +75,7 @@ class KeyAttestationViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     selectedKeyType = newKeyType,
-                    nonce = "", // Renamed from nonceOrSalt
+                    nonce = "",
                     challenge = "",
                     serverPublicKey = "",
                     generatedKeyPairData = null,
@@ -125,7 +125,7 @@ class KeyAttestationViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     status = statusMessage,
-                    nonce = "", // Renamed from nonceOrSalt
+                    nonce = "",
                     challenge = "",
                     serverPublicKey = "",
                     generatedKeyPairData = null,
@@ -167,7 +167,7 @@ class KeyAttestationViewModel @Inject constructor(
                     val response = keyAttestationRepository.prepareAgreement(request)
                     _uiState.update {
                         it.copy(
-                            nonce = response.nonceBase64UrlEncoded, // Renamed from nonceOrSalt
+                            nonce = response.nonceBase64UrlEncoded,
                             challenge = response.challengeBase64UrlEncoded,
                             serverPublicKey = response.publicKeyBase64UrlEncoded,
                             status = successMessage,
@@ -179,7 +179,7 @@ class KeyAttestationViewModel @Inject constructor(
                     val response = keyAttestationRepository.prepareSignature(request)
                     _uiState.update {
                         it.copy(
-                            nonce = response.nonceBase64UrlEncoded, // Renamed from nonceOrSalt
+                            nonce = response.nonceBase64UrlEncoded,
                             challenge = response.challengeBase64UrlEncoded,
                             status = successMessage,
                             progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
@@ -230,11 +230,11 @@ class KeyAttestationViewModel @Inject constructor(
             }
 
             val currentChallenge = uiState.value.challenge
-            val currentNonce = uiState.value.nonce // Renamed from currentNonceOrSalt
+            val currentNonce = uiState.value.nonce
 
-            if (currentNonce.isEmpty() || currentChallenge.isEmpty()) { // Renamed from currentNonceOrSalt
-                val missingItem = if (currentNonce.isEmpty()) { // Renamed from currentNonceOrSalt
-                    "Nonce" // Always Nonce now
+            if (currentNonce.isEmpty() || currentChallenge.isEmpty()) {
+                val missingItem = if (currentNonce.isEmpty()) {
+                    "Nonce"
                 } else {
                     "Challenge"
                 }
