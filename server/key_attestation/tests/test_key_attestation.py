@@ -1,6 +1,11 @@
 import unittest
 import json
+import sys
+import os
 from unittest.mock import patch, MagicMock
+
+# Add the project root to the Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 from key_attestation.key_attestation import app
 from key_attestation.utils import base64url_encode
