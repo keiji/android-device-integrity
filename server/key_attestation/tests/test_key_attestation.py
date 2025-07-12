@@ -3,8 +3,10 @@ import json
 import sys
 import os
 
-# Add the parent directory to the Python path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+# To allow imports from the 'server' directory, we add its parent to the Python path.
+# This ensures that 'from key_attestation...' works correctly, by making the 'server'
+# directory discoverable as a package source.
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 from key_attestation.key_attestation import app
 from key_attestation.cryptographic_utils import base64url_encode
