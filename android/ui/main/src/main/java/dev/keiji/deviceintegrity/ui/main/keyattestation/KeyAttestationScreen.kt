@@ -238,7 +238,7 @@ private fun KeyAttestationScreenPreview() {
     )
     KeyAttestationScreen(
         uiState = KeyAttestationUiState(
-            nonce = "PREVIEW_NONCE_OR_SALT_67890", // Corrected field name
+            nonce = "PREVIEW_NONCE_OR_SALT_67890",
             challenge = "PREVIEW_CHALLENGE_ABCDE",
             selectedKeyType = CryptoAlgorithm.RSA, // Example: RSA selected
             status = "Verification successful.",
