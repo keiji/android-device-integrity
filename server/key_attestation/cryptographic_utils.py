@@ -10,6 +10,10 @@ from cryptography.hazmat.backends import default_backend
 
 logger = logging.getLogger(__name__)
 
+def base64url_encode(data_bytes: bytes) -> str:
+    """Encodes bytes to a Base64URL string (RFC 4648 Section 5)."""
+    return base64.urlsafe_b64encode(data_bytes).decode('utf-8').rstrip('=')
+
 def base64url_decode(base64url_string):
     """Decodes a Base64URL string to bytes."""
     padding = '=' * (4 - (len(base64url_string) % 4))
