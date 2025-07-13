@@ -39,6 +39,8 @@ object ValueConverter {
             2 -> "SIGN(2)"
             3 -> "VERIFY(3)"
             5 -> "WRAP_KEY(5)"
+            6 -> "AGREE_KEY(6)"
+            7 -> "ATTEST_KEY(7)"
             else -> value.toString()
         }
     }
@@ -58,6 +60,7 @@ object ValueConverter {
             1 -> "P_256(1)"
             2 -> "P_384(2)"
             3 -> "P_521(3)"
+            4 -> "CURVE_25519(4)"
             else -> value.toString()
         }
     }
