@@ -27,7 +27,8 @@ class KeyAttestationAgreementTest(unittest.TestCase):
     @patch('server.key_attestation.key_attestation.decrypt_data')
     @patch('server.key_attestation.key_attestation.verify_certificate_chain')
     @patch('server.key_attestation.key_attestation.get_attestation_extension_properties')
-    def test_verify_agreement_success(self, mock_get_attestation_extension_properties, mock_verify_certificate_chain, mock_decrypt_data, mock_derive_shared_key, mock_get_ds_agreement_key_attestation_session):
+    @patch('server.key_attestation.key_attestation.extract_certificate_details')
+    def test_verify_agreement_success(self, mock_extract_certificate_details, mock_get_attestation_extension_properties, mock_verify_certificate_chain, mock_decrypt_data, mock_derive_shared_key, mock_get_ds_agreement_key_attestation_session):
         session_id = 'test_session_id'
         nonce = 'test_nonce'
         challenge = 'test_challenge'
@@ -46,8 +47,12 @@ class KeyAttestationAgreementTest(unittest.TestCase):
         mock_derive_shared_key.return_value = b'test_aes_key'
         mock_decrypt_data.return_value = nonce.encode()
         mock_get_attestation_extension_properties.return_value = {
-            'attestation_challenge': challenge.encode()
+            'attestation_challenge': challenge.encode(),
+            'software_enforced': {},
+            'hardware_enforced': {}
         }
+        mock_verify_certificate_chain.return_value = True
+        mock_extract_certificate_details.return_value = {"name": "test_cert"}
 
         with patch('server.key_attestation.key_attestation.decode_certificate_chain') as mock_decode_certificate_chain:
             mock_cert = MagicMock()
@@ -71,7 +76,8 @@ class KeyAttestationAgreementTest(unittest.TestCase):
     @patch('server.key_attestation.key_attestation.get_ds_agreement_key_attestation_session')
     @patch('server.key_attestation.key_attestation.derive_shared_key')
     @patch('server.key_attestation.key_attestation.decrypt_data')
-    def test_verify_agreement_nonce_mismatch(self, mock_decrypt_data, mock_derive_shared_key, mock_get_ds_agreement_key_attestation_session):
+    @patch('server.key_attestation.key_attestation.verify_certificate_chain')
+    def test_verify_agreement_nonce_mismatch(self, mock_verify_certificate_chain, mock_decrypt_data, mock_derive_shared_key, mock_get_ds_agreement_key_attestation_session):
         session_id = 'test_session_id'
         nonce = 'test_nonce'
         challenge = 'test_challenge'
@@ -89,13 +95,20 @@ class KeyAttestationAgreementTest(unittest.TestCase):
         }
         mock_derive_shared_key.return_value = b'test_aes_key'
         mock_decrypt_data.return_value = b'wrong_nonce'
+        mock_verify_certificate_chain.return_value = True
 
-        with patch('server.key_attestation.key_attestation.decode_certificate_chain') as mock_decode_certificate_chain:
+        with patch('server.key_attestation.key_attestation.decode_certificate_chain') as mock_decode_certificate_chain, \
+             patch('server.key_attestation.key_attestation.get_attestation_extension_properties') as mock_get_attestation_extension_properties, \
+             patch('server.key_attestation.key_attestation.extract_certificate_details') as mock_extract_certificate_details:
             mock_cert = MagicMock()
             mock_public_key = MagicMock()
             mock_public_key.public_bytes.return_value = b'test_public_key'
             mock_cert.public_key.return_value = mock_public_key
             mock_decode_certificate_chain.return_value = [mock_cert]
+            mock_get_attestation_extension_properties.return_value = {
+                'attestation_challenge': challenge.encode()
+            }
+            mock_extract_certificate_details.return_value = {"name": "test_cert"}
 
             response = self.app.post('/v1/verify/agreement',
                                      data=json.dumps({
