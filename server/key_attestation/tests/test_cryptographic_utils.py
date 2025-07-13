@@ -8,9 +8,6 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, ec, padding as asym_padding
 from datetime import datetime, timedelta, timezone
 
-# Add the project root directory to sys.path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
-
 from server.key_attestation.cryptographic_utils import decode_certificate_chain, verify_certificate_chain, validate_attestation_signature, base64url_decode
 from server.key_attestation.utils import base64url_encode
 
