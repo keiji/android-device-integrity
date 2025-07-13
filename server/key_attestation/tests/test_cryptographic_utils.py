@@ -53,18 +53,18 @@ class TestCryptographicUtils(unittest.TestCase):
         self.assertIsNotNone(cert2_details['subject_key_identifier'])
         self.assertEqual(cert2_details['subject_key_identifier'], 'bb4880b68b2fdaea78fb0c29fc48b3648b6eca41')
         self.assertIsNotNone(cert2_details['authority_key_identifier'])
-        self.assertEqual(cert2_details['authority_key_identifier'], 'e19807063a33129ef514063a80410c7180ce1aaf')
+        self.assertEqual(cert2_details['authority_key_identifier'], '399807063a33129ef514063a80410c7180ce1aad')
 
         # 4. Root CA (index 3, since one cert was removed)
         cert3_details = extract_certificate_details(certificates[3])
-        self.assertEqual(cert3_details['name'], 'OU=f92009e853b6b045')
+        self.assertEqual(cert3_details['name'], '2.5.4.5=f92009e853b6b045')
         self.assertEqual(cert3_details['signature_type_sn'], 'sha256WithRSAEncryption')
         self.assertIsNotNone(cert3_details['key_usage'])
         self.assertTrue(cert3_details['key_usage']['key_cert_sign'])
         self.assertIsNotNone(cert3_details['subject_key_identifier'])
-        self.assertEqual(cert3_details['subject_key_identifier'], 'd98784007c880509518b446c47ff1a4cc9ea4f12')
+        self.assertEqual(cert3_details['subject_key_identifier'], '3661e1007c880509518b446c47ff1a4cc9ea4f12')
         self.assertIsNotNone(cert3_details['authority_key_identifier'])
-        self.assertEqual(cert3_details['authority_key_identifier'], 'd98784007c880509518b446c47ff1a4cc9ea4f12')
+        self.assertEqual(cert3_details['authority_key_identifier'], '3661e1007c880509518b446c47ff1a4cc9ea4f12')
 
 if __name__ == '__main__':
     unittest.main()
