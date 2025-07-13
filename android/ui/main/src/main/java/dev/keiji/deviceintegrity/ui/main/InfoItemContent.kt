@@ -99,6 +99,7 @@ fun InfoItemContent(
                         val itemPadding = when (item.indentLevel) {
                             1 -> Modifier.padding(start = 16.dp)
                             2 -> Modifier.padding(start = 32.dp)
+                            3 -> Modifier.padding(start = 48.dp)
                             else -> Modifier
                         }
 
@@ -117,15 +118,16 @@ fun InfoItemContent(
                                 )
                             } else {
                                 FlowRow(
-                                     modifier = Modifier.padding(vertical = 2.dp)
+                                    modifier = Modifier.padding(vertical = 2.dp)
                                 ) {
-                                    Text(
-                                        text = "${item.label}:",
-                                        style = textStyle,
-                                        fontWeight = FontWeight.Bold,
-                                    )
-
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    if (item.label.isNotEmpty()) {
+                                        Text(
+                                            text = "${item.label}:",
+                                            style = textStyle,
+                                            fontWeight = FontWeight.Bold,
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                    }
 
                                     SelectionContainer {
                                         Text(

@@ -824,16 +824,21 @@ class KeyAttestationViewModel @Inject constructor(
             certDetails.authorityKeyIdentifier?.let { items.add(InfoItem("Authority Key Identifier", it, indentLevel = 2)) }
 
             certDetails.keyUsage?.let { keyUsage ->
-                items.add(InfoItem("Key Usage", "", isHeader = true, indentLevel = 2))
-                items.add(InfoItem("Digital Signature", keyUsage.digitalSignature.toString(), indentLevel = 3))
-                items.add(InfoItem("Content Commitment", keyUsage.contentCommitment.toString(), indentLevel = 3))
-                items.add(InfoItem("Key Encipherment", keyUsage.keyEncipherment.toString(), indentLevel = 3))
-                items.add(InfoItem("Data Encipherment", keyUsage.dataEncipherment.toString(), indentLevel = 3))
-                items.add(InfoItem("Key Agreement", keyUsage.keyAgreement.toString(), indentLevel = 3))
-                items.add(InfoItem("Key Cert Sign", keyUsage.keyCertSign.toString(), indentLevel = 3))
-                items.add(InfoItem("CRL Sign", keyUsage.crlSign.toString(), indentLevel = 3))
-                items.add(InfoItem("Encipher Only", keyUsage.encipherOnly.toString(), indentLevel = 3))
-                items.add(InfoItem("Decipher Only", keyUsage.decipherOnly.toString(), indentLevel = 3))
+                val keyUsageItems = mutableListOf<InfoItem>()
+                if (keyUsage.digitalSignature) keyUsageItems.add(InfoItem("", "Digital Signature", indentLevel = 3))
+                if (keyUsage.contentCommitment) keyUsageItems.add(InfoItem("", "Content Commitment", indentLevel = 3))
+                if (keyUsage.keyEncipherment) keyUsageItems.add(InfoItem("", "Key Encipherment", indentLevel = 3))
+                if (keyUsage.dataEncipherment) keyUsageItems.add(InfoItem("", "Data Encipherment", indentLevel = 3))
+                if (keyUsage.keyAgreement) keyUsageItems.add(InfoItem("", "Key Agreement", indentLevel = 3))
+                if (keyUsage.keyCertSign) keyUsageItems.add(InfoItem("", "Key Cert Sign", indentLevel = 3))
+                if (keyUsage.crlSign) keyUsageItems.add(InfoItem("", "CRL Sign", indentLevel = 3))
+                if (keyUsage.encipherOnly) keyUsageItems.add(InfoItem("", "Encipher Only", indentLevel = 3))
+                if (keyUsage.decipherOnly) keyUsageItems.add(InfoItem("", "Decipher Only", indentLevel = 3))
+
+                if (keyUsageItems.isNotEmpty()) {
+                    items.add(InfoItem("Key Usage", "", isHeader = true, indentLevel = 2))
+                    items.addAll(keyUsageItems)
+                }
             }
         }
     }
