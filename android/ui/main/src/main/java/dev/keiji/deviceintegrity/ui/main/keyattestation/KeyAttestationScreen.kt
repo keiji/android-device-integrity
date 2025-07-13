@@ -15,7 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -54,7 +53,8 @@ fun KeyAttestationScreen(
     var keyTypeExpanded by remember { mutableStateOf(false) }
     val keyTypes = CryptoAlgorithm.values().toList()
 
-    val isHorizontalProgressVisible = uiState.progressValue > PlayIntegrityProgressConstants.NO_PROGRESS && uiState.progressValue < PlayIntegrityProgressConstants.FULL_PROGRESS
+    val isHorizontalProgressVisible =
+        uiState.progressValue != PlayIntegrityProgressConstants.NO_PROGRESS
 
     val step2Label = when (uiState.selectedKeyType) {
         CryptoAlgorithm.ECDH -> "Step 2. サーバーからNonce/Challenge/PublicKeyを取得"
@@ -190,20 +190,18 @@ fun KeyAttestationScreen(
 
         // Progress Indicator
         if (isHorizontalProgressVisible) {
-            LinearProgressIndicator(
-                progress = uiState.progressValue,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        if (uiState.progressValue == PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+            val progress = if (uiState.progressValue == PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS) {
+                null
+            } else {
+                uiState.progressValue
             }
+
+            progress?.let {
+                LinearProgressIndicator(
+                    progress = { it },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            } ?: LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             Spacer(modifier = Modifier.height(8.dp))
         }
 

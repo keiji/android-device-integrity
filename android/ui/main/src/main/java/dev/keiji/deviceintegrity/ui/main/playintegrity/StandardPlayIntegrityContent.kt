@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider // Kept for now
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedTextField
@@ -104,19 +103,22 @@ fun StandardPlayIntegrityContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Progress Indicators
-        if (uiState.progressValue > PlayIntegrityProgressConstants.NO_PROGRESS && uiState.progressValue < PlayIntegrityProgressConstants.FULL_PROGRESS) {
-            LinearProgressIndicator(
-                progress = { uiState.progressValue },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-        } else if (uiState.progressValue == PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+        val isProgressVisible =
+            uiState.progressValue != PlayIntegrityProgressConstants.NO_PROGRESS
+
+        if (isProgressVisible) {
+            val progress = if (uiState.progressValue == PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS) {
+                null
+            } else {
+                uiState.progressValue
             }
+
+            progress?.let {
+                LinearProgressIndicator(
+                    progress = { it },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            } ?: LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             Spacer(modifier = Modifier.height(8.dp))
         }
 
