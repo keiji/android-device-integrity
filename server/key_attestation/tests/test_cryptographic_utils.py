@@ -20,7 +20,7 @@ class TestCryptographicUtils(unittest.TestCase):
         ]
 
         certificates = decode_certificate_chain(certificate_chain_b64)
-        self.assertEqual(len(certificates), 4)
+        self.assertEqual(len(certificates), 5)
 
         # 1. Leaf certificate (Android Keystore Key)
         cert0_details = extract_certificate_details(certificates[0])
@@ -33,8 +33,7 @@ class TestCryptographicUtils(unittest.TestCase):
 
         # 2. Intermediate CA (StrongBox)
         cert1_details = extract_certificate_details(certificates[1])
-        self.assertIn('CN=7b95ae3c2d15b7a64255b8f1c0eac128', cert1_details['name'])
-        self.assertIn('O=StrongBox', cert1_details['name'])
+        self.assertEqual(cert1_details['name'], 'O=StrongBox,CN=7b95ae3c2d15b7a64255b8f1c0eac128')
         self.assertEqual(cert1_details['signature_type_sn'], 'ecdsa-with-SHA256')
         self.assertIsNotNone(cert1_details['key_usage'])
         self.assertTrue(cert1_details['key_usage']['key_cert_sign'])
@@ -54,16 +53,28 @@ class TestCryptographicUtils(unittest.TestCase):
         self.assertIsNotNone(cert2_details['authority_key_identifier'])
         self.assertEqual(cert2_details['authority_key_identifier'], '399807063a33129ef514063a80410c7180ce1aad')
 
-        # 4. Root CA (index 3, since one cert was removed)
+        # 4. Intermediate CA (Droid CA2)
         cert3_details = extract_certificate_details(certificates[3])
-        self.assertEqual(cert3_details['name'], '2.5.4.5=f92009e853b6b045')
+        self.assertEqual(cert3_details['name'], 'CN=Droid CA2,O=Google LLC')
         self.assertEqual(cert3_details['signature_type_sn'], 'sha256WithRSAEncryption')
         self.assertIsNotNone(cert3_details['key_usage'])
         self.assertTrue(cert3_details['key_usage']['key_cert_sign'])
+        self.assertTrue(cert3_details['key_usage']['crl_sign'])
         self.assertIsNotNone(cert3_details['subject_key_identifier'])
-        self.assertEqual(cert3_details['subject_key_identifier'], '3661e1007c880509518b446c47ff1a4cc9ea4f12')
+        self.assertEqual(cert3_details['subject_key_identifier'], '399807063a33129ef514063a80410c7180ce1aad')
         self.assertIsNotNone(cert3_details['authority_key_identifier'])
         self.assertEqual(cert3_details['authority_key_identifier'], '3661e1007c880509518b446c47ff1a4cc9ea4f12')
+
+        # 5. Root CA
+        cert4_details = extract_certificate_details(certificates[4])
+        self.assertEqual(cert4_details['name'], '2.5.4.5=f92009e853b6b045')
+        self.assertEqual(cert4_details['signature_type_sn'], 'sha256WithRSAEncryption')
+        self.assertIsNotNone(cert4_details['key_usage'])
+        self.assertTrue(cert4_details['key_usage']['key_cert_sign'])
+        self.assertIsNotNone(cert4_details['subject_key_identifier'])
+        self.assertEqual(cert4_details['subject_key_identifier'], '3661e1007c880509518b446c47ff1a4cc9ea4f12')
+        self.assertIsNotNone(cert4_details['authority_key_identifier'])
+        self.assertEqual(cert4_details['authority_key_identifier'], '3661e1007c880509518b446c47ff1a4cc9ea4f12')
 
 if __name__ == '__main__':
     unittest.main()
