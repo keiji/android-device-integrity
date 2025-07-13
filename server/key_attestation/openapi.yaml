@@ -330,36 +330,44 @@ components:
           type: string
           description: The subject distinguished name of the certificate.
           example: "CN=Android Keystore Key, OU=Android, O=Google, C=US"
+          nullable: true
         serial_number:
           type: string
           description: The serial number of the certificate in hexadecimal format.
           example: "0123456789abcdef"
+          nullable: true
         valid_from:
           type: string
           format: date-time
           description: The start date of the certificate's validity period (NotBefore).
           example: "2023-01-01T00:00:00Z"
+          nullable: true
         valid_to:
           type: string
           format: date-time
           description: The end date of the certificate's validity period (NotAfter).
           example: "2033-01-01T00:00:00Z"
+          nullable: true
         signature_type_sn:
           type: string
           description: The short name of the signature algorithm.
           example: "sha256WithRSAEncryption"
+          nullable: true
         signature_type_ln:
           type: string
           description: The long name of the signature algorithm.
           example: "SHA256withRSA"
+          nullable: true
         subject_key_identifier:
           type: string
           description: The Subject Key Identifier (SKI) extension of the certificate, in hex.
           example: "aabbccddeeff..."
+          nullable: true
         authority_key_identifier:
           type: string
           description: The Authority Key Identifier (AKI) extension of the certificate, in hex.
           example: "112233445566..."
+          nullable: true
         key_usage:
           type: object
           description: An object representing the Key Usage extension fields.
@@ -373,6 +381,7 @@ components:
             crl_sign: { type: boolean, example: false }
             encipher_only: { type: boolean, example: false }
             decipher_only: { type: boolean, example: false }
+          nullable: true
 
     AttestationApplicationId:
       type: object

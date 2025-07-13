@@ -670,6 +670,11 @@ class KeyAttestationViewModel @Inject constructor(
                 attestationInfo.hardwareEnforcedProperties
             )
         }
+
+        if (response.certificateChain.isNotEmpty()) {
+            addCertificateChainInfo(items, response.certificateChain)
+        }
+
         return items
     }
 
@@ -802,6 +807,37 @@ class KeyAttestationViewModel @Inject constructor(
         props.moduleHash?.let { items.add(InfoItem("Module Hash", it, indentLevel = 1)) }
     }
 
+    private fun addCertificateChainInfo(
+        items: MutableList<InfoItem>,
+        certificateChain: List<CertificateDetails>
+    ) {
+        items.add(InfoItem("Certificate Chain", "", isHeader = true, indentLevel = 0))
+        certificateChain.forEachIndexed { index, certDetails ->
+            items.add(InfoItem("Certificate[${index}]", "", isHeader = true, indentLevel = 1))
+            certDetails.name?.let { items.add(InfoItem("Name", it, indentLevel = 2)) }
+            certDetails.serialNumber?.let { items.add(InfoItem("Serial Number", it, indentLevel = 2)) }
+            certDetails.validFrom?.let { items.add(InfoItem("Valid From", it, indentLevel = 2)) }
+            certDetails.validTo?.let { items.add(InfoItem("Valid To", it, indentLevel = 2)) }
+            certDetails.signatureTypeSn?.let { items.add(InfoItem("Signature Type SN", it, indentLevel = 2)) }
+            certDetails.signatureTypeLn?.let { items.add(InfoItem("Signature Type LN", it, indentLevel = 2)) }
+            certDetails.subjectKeyIdentifier?.let { items.add(InfoItem("Subject Key Identifier", it, indentLevel = 2)) }
+            certDetails.authorityKeyIdentifier?.let { items.add(InfoItem("Authority Key Identifier", it, indentLevel = 2)) }
+
+            certDetails.keyUsage?.let { keyUsage ->
+                items.add(InfoItem("Key Usage", "", isHeader = true, indentLevel = 2))
+                items.add(InfoItem("Digital Signature", keyUsage.digitalSignature.toString(), indentLevel = 3))
+                items.add(InfoItem("Content Commitment", keyUsage.contentCommitment.toString(), indentLevel = 3))
+                items.add(InfoItem("Key Encipherment", keyUsage.keyEncipherment.toString(), indentLevel = 3))
+                items.add(InfoItem("Data Encipherment", keyUsage.dataEncipherment.toString(), indentLevel = 3))
+                items.add(InfoItem("Key Agreement", keyUsage.keyAgreement.toString(), indentLevel = 3))
+                items.add(InfoItem("Key Cert Sign", keyUsage.keyCertSign.toString(), indentLevel = 3))
+                items.add(InfoItem("CRL Sign", keyUsage.crlSign.toString(), indentLevel = 3))
+                items.add(InfoItem("Encipher Only", keyUsage.encipherOnly.toString(), indentLevel = 3))
+                items.add(InfoItem("Decipher Only", keyUsage.decipherOnly.toString(), indentLevel = 3))
+            }
+        }
+    }
+
     // Helper extension function to adapt VerifyAgreementResponse to what buildVerificationResultList expects
     private fun VerifyAgreementResponse.toVerifySignatureResponse(): VerifySignatureResponse {
         return VerifySignatureResponse(
@@ -810,7 +846,8 @@ class KeyAttestationViewModel @Inject constructor(
             reason = this.reason,
             attestationInfo = this.attestationInfo,
             deviceInfo = this.deviceInfo,
-            securityInfo = this.securityInfo
+            securityInfo = this.securityInfo,
+            certificateChain = this.certificateChain
         )
     }
 }
