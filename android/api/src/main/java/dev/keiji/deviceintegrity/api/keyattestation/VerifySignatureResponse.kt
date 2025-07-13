@@ -142,5 +142,7 @@ data class VerifySignatureResponse(
     @SerialName("device_info")
     val deviceInfo: DeviceInfo,
     @SerialName("security_info")
-    val securityInfo: SecurityInfo
+    val securityInfo: SecurityInfo,
+    @SerialName("certificate_chain")
+    val certificateChain: List<CertificateDetails> = emptyList()
 )

@@ -24,4 +24,7 @@ data class VerifyAgreementResponse(
 
     @SerialName("security_info")
     val securityInfo: SecurityInfo,
+
+    @SerialName("certificate_chain")
+    val certificateChain: List<CertificateDetails> = emptyList()
 )
