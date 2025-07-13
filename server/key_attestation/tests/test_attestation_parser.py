@@ -6,12 +6,9 @@ from cryptography import x509
 from pyasn1.type import univ, namedtype, tag
 from pyasn1.codec.der import encoder as der_encoder
 
-# Add the parent directory (server/key_attestation) to sys.path to allow importing attestation_parser
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from attestation_parser import parse_key_description, parse_authorization_list, OID_ANDROID_KEY_ATTESTATION, get_attestation_extension_properties
-from attestation_parser import SecurityLevel, AuthorizationList
-from attestation_parser import TAG_OS_VERSION, TAG_OS_PATCH_LEVEL, TAG_PURPOSE, TAG_ALGORITHM, TAG_EC_CURVE, TAG_DEVICE_UNIQUE_ATTESTATION, TAG_KEY_SIZE
+from server.key_attestation.attestation_parser import parse_key_description, parse_authorization_list, OID_ANDROID_KEY_ATTESTATION, get_attestation_extension_properties
+from server.key_attestation.attestation_parser import SecurityLevel, AuthorizationList
+from server.key_attestation.attestation_parser import TAG_OS_VERSION, TAG_OS_PATCH_LEVEL, TAG_PURPOSE, TAG_ALGORITHM, TAG_EC_CURVE, TAG_DEVICE_UNIQUE_ATTESTATION, TAG_KEY_SIZE
 
 # --- Mock ASN.1 data generation helpers ---
 # These helpers are currently problematic for generating DER for complex nested explicit tags

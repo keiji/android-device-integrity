@@ -7,6 +7,7 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.exceptions import InvalidSignature, InvalidTag
 from cryptography.hazmat.backends import default_backend
+from .root_certificates import ROOT_CERTIFICATES
 
 logger = logging.getLogger(__name__)
 
@@ -182,6 +183,25 @@ def decrypt_data(
         logger.error(f"AES-GCM decryption failed with an unexpected error: {e}")
         raise ValueError(f"Decryption failed due to an unexpected error: {e}")
 
+def _prepare_certificate_for_comparison(cert_str: str) -> str:
+    """
+    Prepares a PEM certificate string for comparison by normalizing it.
+    - Trims leading/trailing whitespace.
+    - Removes the PEM header and footer.
+    - Removes all newline characters.
+    """
+    processed_str = cert_str.strip()
+    if processed_str.startswith('-----BEGIN PUBLIC KEY-----'):
+        processed_str = processed_str.replace('-----BEGIN PUBLIC KEY-----', '')
+    if processed_str.startswith('-----BEGIN CERTIFICATE-----'):
+        processed_str = processed_str.replace('-----BEGIN CERTIFICATE-----', '')
+    if processed_str.endswith('-----END PUBLIC KEY-----'):
+        processed_str = processed_str.replace('-----END PUBLIC KEY-----', '')
+    if processed_str.endswith('-----END CERTIFICATE-----'):
+        processed_str = processed_str.replace('-----END CERTIFICATE-----', '')
+    return "".join(processed_str.split())
+
+
 def verify_certificate_chain(certificates: list[x509.Certificate]) -> bool:
     """
     Verifies the certificate chain.
@@ -191,6 +211,38 @@ def verify_certificate_chain(certificates: list[x509.Certificate]) -> bool:
     """
     if not certificates:
         raise ValueError('Certificate chain is empty, cannot verify.')
+
+    # Verify the root of the provided chain
+    root_cert = certificates[-1]
+    try:
+        # Try to serialize as a public key first
+        try:
+            root_public_key = root_cert.public_key()
+            root_cert_pem = root_public_key.public_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo
+            ).decode('utf-8')
+        except Exception:
+            # If that fails, try to serialize as a full certificate
+            root_cert_pem = root_cert.public_bytes(
+                encoding=serialization.Encoding.PEM
+            ).decode('utf-8')
+    except Exception as e:
+        logger.error(f"Could not serialize the root certificate to PEM: {e}")
+        raise ValueError("Failed to serialize the provided root certificate for verification.")
+
+    normalized_root_cert = _prepare_certificate_for_comparison(root_cert_pem)
+
+    normalized_known_roots = [
+        _prepare_certificate_for_comparison(cert) for cert in ROOT_CERTIFICATES
+    ]
+
+    if normalized_root_cert not in normalized_known_roots:
+        logger.warning("The root certificate of the chain is not in the list of trusted root certificates.")
+        raise ValueError("Untrusted root certificate.")
+
+    logger.info("Root certificate is trusted.")
+
     if len(certificates) == 1:
         # A single certificate in the chain is considered "verified" in terms of its internal links.
         # Its trustworthiness would depend on whether it's a self-signed cert that is a known trust anchor,

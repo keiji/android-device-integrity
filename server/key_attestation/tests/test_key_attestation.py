@@ -2,15 +2,10 @@ import unittest
 import json
 import sys
 import os
-
-# To allow imports from the 'server' directory, we add its parent to the Python path.
-# This ensures that 'from key_attestation...' works correctly, by making the 'server'
-# directory discoverable as a package source.
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-
-from key_attestation.key_attestation import app
-from key_attestation.cryptographic_utils import base64url_encode
 from unittest.mock import patch, MagicMock
+
+from server.key_attestation.key_attestation import app
+from server.key_attestation.cryptographic_utils import base64url_encode
 from google.cloud import datastore
 
 class KeyAttestationAgreementTest(unittest.TestCase):
@@ -21,17 +16,17 @@ class KeyAttestationAgreementTest(unittest.TestCase):
 
         # Mock the datastore client
         self.mock_datastore_client = MagicMock()
-        self.patcher = patch('key_attestation.key_attestation.datastore_client', self.mock_datastore_client)
+        self.patcher = patch('server.key_attestation.key_attestation.datastore_client', self.mock_datastore_client)
         self.patcher.start()
 
     def tearDown(self):
         self.patcher.stop()
 
-    @patch('key_attestation.key_attestation.get_ds_agreement_key_attestation_session')
-    @patch('key_attestation.key_attestation.derive_shared_key')
-    @patch('key_attestation.key_attestation.decrypt_data')
-    @patch('key_attestation.key_attestation.verify_certificate_chain')
-    @patch('key_attestation.key_attestation.get_attestation_extension_properties')
+    @patch('server.key_attestation.key_attestation.get_ds_agreement_key_attestation_session')
+    @patch('server.key_attestation.key_attestation.derive_shared_key')
+    @patch('server.key_attestation.key_attestation.decrypt_data')
+    @patch('server.key_attestation.key_attestation.verify_certificate_chain')
+    @patch('server.key_attestation.key_attestation.get_attestation_extension_properties')
     def test_verify_agreement_success(self, mock_get_attestation_extension_properties, mock_verify_certificate_chain, mock_decrypt_data, mock_derive_shared_key, mock_get_ds_agreement_key_attestation_session):
         session_id = 'test_session_id'
         nonce = 'test_nonce'
@@ -40,9 +35,8 @@ class KeyAttestationAgreementTest(unittest.TestCase):
         encrypted_data = 'test_encrypted_data'
         salt = 'test_salt'
         certificate_chain = ['cert1', 'cert2']
-        device_info = {'brand': 'Google', 'model': 'Pixel 7', 'device': 'panther', 'product': 'panther_us', 'manufacturer': 'Google', 'hardware': 'gs201', 'board': 'slider', 'bootloader': 'slider-1.0-...', 'version_release': '13', 'sdk_int': 33, 'fingerprint': 'google/panther/panther:13/...', 'security_patch': '2023-05-01'}
-        security_info = {'is_device_lock_enabled': True, 'is_biometrics_enabled': True, 'has_class_3_authenticator': True, 'has_strongbox': True}
-
+        device_info = {'brand': 'Google', 'model': 'Pixel 7'}
+        security_info = {'is_device_lock_enabled': True}
 
         mock_get_ds_agreement_key_attestation_session.return_value = {
             'nonce': base64url_encode(nonce.encode()),
@@ -55,7 +49,7 @@ class KeyAttestationAgreementTest(unittest.TestCase):
             'attestation_challenge': challenge.encode()
         }
 
-        with patch('key_attestation.key_attestation.decode_certificate_chain') as mock_decode_certificate_chain:
+        with patch('server.key_attestation.key_attestation.decode_certificate_chain') as mock_decode_certificate_chain:
             mock_cert = MagicMock()
             mock_public_key = MagicMock()
             mock_public_key.public_bytes.return_value = b'test_public_key'
@@ -74,9 +68,9 @@ class KeyAttestationAgreementTest(unittest.TestCase):
                                      content_type='application/json')
             self.assertEqual(response.status_code, 200)
 
-    @patch('key_attestation.key_attestation.get_ds_agreement_key_attestation_session')
-    @patch('key_attestation.key_attestation.derive_shared_key')
-    @patch('key_attestation.key_attestation.decrypt_data')
+    @patch('server.key_attestation.key_attestation.get_ds_agreement_key_attestation_session')
+    @patch('server.key_attestation.key_attestation.derive_shared_key')
+    @patch('server.key_attestation.key_attestation.decrypt_data')
     def test_verify_agreement_nonce_mismatch(self, mock_decrypt_data, mock_derive_shared_key, mock_get_ds_agreement_key_attestation_session):
         session_id = 'test_session_id'
         nonce = 'test_nonce'
@@ -85,8 +79,8 @@ class KeyAttestationAgreementTest(unittest.TestCase):
         encrypted_data = 'test_encrypted_data'
         salt = 'test_salt'
         certificate_chain = ['cert1', 'cert2']
-        device_info = {'brand': 'Google', 'model': 'Pixel 7', 'device': 'panther', 'product': 'panther_us', 'manufacturer': 'Google', 'hardware': 'gs201', 'board': 'slider', 'bootloader': 'slider-1.0-...', 'version_release': '13', 'sdk_int': 33, 'fingerprint': 'google/panther/panther:13/...', 'security_patch': '2023-05-01'}
-        security_info = {'is_device_lock_enabled': True, 'is_biometrics_enabled': True, 'has_class_3_authenticator': True, 'has_strongbox': True}
+        device_info = {'brand': 'Google', 'model': 'Pixel 7'}
+        security_info = {'is_device_lock_enabled': True}
 
         mock_get_ds_agreement_key_attestation_session.return_value = {
             'nonce': base64url_encode(nonce.encode()),
@@ -96,7 +90,7 @@ class KeyAttestationAgreementTest(unittest.TestCase):
         mock_derive_shared_key.return_value = b'test_aes_key'
         mock_decrypt_data.return_value = b'wrong_nonce'
 
-        with patch('key_attestation.key_attestation.decode_certificate_chain') as mock_decode_certificate_chain:
+        with patch('server.key_attestation.key_attestation.decode_certificate_chain') as mock_decode_certificate_chain:
             mock_cert = MagicMock()
             mock_public_key = MagicMock()
             mock_public_key.public_bytes.return_value = b'test_public_key'
