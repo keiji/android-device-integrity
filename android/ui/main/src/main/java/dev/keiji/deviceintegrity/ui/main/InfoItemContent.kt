@@ -120,22 +120,20 @@ fun InfoItemContent(
                                 FlowRow(
                                     modifier = Modifier.padding(vertical = 2.dp)
                                 ) {
-                                    val labelText = if (item.value.isEmpty()) item.label else "${item.label}:"
-                                    Text(
-                                        text = labelText,
-                                        style = textStyle,
-                                        fontWeight = FontWeight.Bold,
-                                    )
-
-                                    if (item.value.isNotEmpty()) {
+                                    if (item.label.isNotEmpty()) {
+                                        Text(
+                                            text = "${item.label}:",
+                                            style = textStyle,
+                                            fontWeight = FontWeight.Bold,
+                                        )
                                         Spacer(modifier = Modifier.width(8.dp))
+                                    }
 
-                                        SelectionContainer {
-                                            Text(
-                                                text = item.value,
-                                                style = textStyle,
-                                            )
-                                        }
+                                    SelectionContainer {
+                                        Text(
+                                            text = item.value,
+                                            style = textStyle,
+                                        )
                                     }
                                 }
                             }

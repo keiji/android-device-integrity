@@ -825,15 +825,15 @@ class KeyAttestationViewModel @Inject constructor(
 
             certDetails.keyUsage?.let { keyUsage ->
                 val keyUsageItems = mutableListOf<InfoItem>()
-                if (keyUsage.digitalSignature) keyUsageItems.add(InfoItem("Digital Signature", "", indentLevel = 3))
-                if (keyUsage.contentCommitment) keyUsageItems.add(InfoItem("Content Commitment", "", indentLevel = 3))
-                if (keyUsage.keyEncipherment) keyUsageItems.add(InfoItem("Key Encipherment", "", indentLevel = 3))
-                if (keyUsage.dataEncipherment) keyUsageItems.add(InfoItem("Data Encipherment", "", indentLevel = 3))
-                if (keyUsage.keyAgreement) keyUsageItems.add(InfoItem("Key Agreement", "", indentLevel = 3))
-                if (keyUsage.keyCertSign) keyUsageItems.add(InfoItem("Key Cert Sign", "", indentLevel = 3))
-                if (keyUsage.crlSign) keyUsageItems.add(InfoItem("CRL Sign", "", indentLevel = 3))
-                if (keyUsage.encipherOnly) keyUsageItems.add(InfoItem("Encipher Only", "", indentLevel = 3))
-                if (keyUsage.decipherOnly) keyUsageItems.add(InfoItem("Decipher Only", "", indentLevel = 3))
+                if (keyUsage.digitalSignature) keyUsageItems.add(InfoItem("", "Digital Signature", indentLevel = 3))
+                if (keyUsage.contentCommitment) keyUsageItems.add(InfoItem("", "Content Commitment", indentLevel = 3))
+                if (keyUsage.keyEncipherment) keyUsageItems.add(InfoItem("", "Key Encipherment", indentLevel = 3))
+                if (keyUsage.dataEncipherment) keyUsageItems.add(InfoItem("", "Data Encipherment", indentLevel = 3))
+                if (keyUsage.keyAgreement) keyUsageItems.add(InfoItem("", "Key Agreement", indentLevel = 3))
+                if (keyUsage.keyCertSign) keyUsageItems.add(InfoItem("", "Key Cert Sign", indentLevel = 3))
+                if (keyUsage.crlSign) keyUsageItems.add(InfoItem("", "CRL Sign", indentLevel = 3))
+                if (keyUsage.encipherOnly) keyUsageItems.add(InfoItem("", "Encipher Only", indentLevel = 3))
+                if (keyUsage.decipherOnly) keyUsageItems.add(InfoItem("", "Decipher Only", indentLevel = 3))
 
                 if (keyUsageItems.isNotEmpty()) {
                     items.add(InfoItem("Key Usage", "", isHeader = true, indentLevel = 2))
