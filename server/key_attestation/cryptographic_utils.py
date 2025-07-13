@@ -244,20 +244,34 @@ def verify_certificate_chain(certificates: list[x509.Certificate]) -> bool:
 
     logger.info("Root certificate is trusted.")
 
+    # Verify certificate validity periods
+    from datetime import datetime, timezone
+    current_time_utc = datetime.now(timezone.utc)
+
+    for cert in certificates:
+        if not (cert.not_valid_before_utc <= current_time_utc <= cert.not_valid_after_utc):
+            serial_number_str = cert.serial_number
+            valid_from_str = cert.not_valid_before_utc.isoformat()
+            valid_to_str = cert.not_valid_after_utc.isoformat()
+            logger.warning(
+                f"Certificate with serial number {serial_number_str} is outside its validity period. "
+                f"Valid from: {valid_from_str}, Valid to: {valid_to_str}."
+            )
+            raise ValueError(
+                f"Certificate with serial number {serial_number_str} is outside its validity period."
+            )
+    logger.info("All certificates are within their validity periods.")
+
     # CRL check
     crl_data = crl_utils.get_crl()
     if crl_data is None:
         logger.error("Failed to get CRL data. Aborting certificate verification.")
         raise ValueError("Could not retrieve Certificate Revocation List.")
 
-    for i in range(len(certificates)):
-        cert = certificates[i]
+    for cert in certificates:
         if not crl_utils.verify_certificate_with_crl(cert, crl_data):
-            # This part of the code will not be reached in the current implementation
-            # because verify_certificate_with_crl always returns True.
-            # However, the structure is here for future implementation.
-            logger.warning(f"Certificate with serial number {cert.serial_number} is revoked.")
-            raise ValueError(f"Certificate with serial number {cert.serial_number} is revoked.")
+            # The logging of details is now handled inside verify_certificate_with_crl
+            raise ValueError(f"Certificate with serial number {cert.serial_number} has been revoked.")
 
     if len(certificates) == 1:
         # A single certificate in the chain is considered "verified" in terms of its internal links.
