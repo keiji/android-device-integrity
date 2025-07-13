@@ -1,8 +1,8 @@
 package dev.keiji.deviceintegrity.ui.main.keyattestation
 
 import dev.keiji.deviceintegrity.repository.contract.KeyPairData
-import dev.keiji.deviceintegrity.ui.main.InfoItem
-import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityProgressConstants
+import dev.keiji.deviceintegrity.ui.common.InfoItem
+import dev.keiji.deviceintegrity.ui.main.playintegrity.ProgressConstants
 
 data class KeyAttestationUiState(
     val nonce: String = "",
@@ -12,7 +12,7 @@ data class KeyAttestationUiState(
     val infoItems: List<InfoItem> = emptyList(), // Renamed field for structured results
     val sessionId: String? = null,
     val generatedKeyPairData: KeyPairData? = null,
-    val progressValue: Float = PlayIntegrityProgressConstants.NO_PROGRESS,
+    val progressValue: Float = ProgressConstants.NO_PROGRESS,
     val isEcdhAvailable: Boolean = false,
     val serverPublicKey: String = "",
     val isStrongboxSupported: Boolean = false,
@@ -22,7 +22,7 @@ data class KeyAttestationUiState(
     val isChallengeVisible: Boolean get() = challenge.isNotEmpty()
 
     val isLoading: Boolean
-        get() = progressValue != PlayIntegrityProgressConstants.NO_PROGRESS
+        get() = progressValue != ProgressConstants.NO_PROGRESS
 
     // Step 1 is now Key Selection, enabled if not loading
     val isStep1KeySelectionEnabled: Boolean get() = !isLoading

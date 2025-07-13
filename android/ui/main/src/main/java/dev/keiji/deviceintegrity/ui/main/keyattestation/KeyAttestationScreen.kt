@@ -32,9 +32,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import dev.keiji.deviceintegrity.ui.main.InfoItem
-import dev.keiji.deviceintegrity.ui.main.InfoItemContent
-import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityProgressConstants
+import dev.keiji.deviceintegrity.ui.common.InfoItem
+import dev.keiji.deviceintegrity.ui.common.InfoItemContent
+import dev.keiji.deviceintegrity.ui.main.playintegrity.ProgressConstants
 import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,7 +54,7 @@ fun KeyAttestationScreen(
     val keyTypes = CryptoAlgorithm.values().toList()
 
     val isHorizontalProgressVisible =
-        uiState.progressValue != PlayIntegrityProgressConstants.NO_PROGRESS
+        uiState.progressValue != ProgressConstants.NO_PROGRESS
 
     val step2Label = when (uiState.selectedKeyType) {
         CryptoAlgorithm.ECDH -> "Step 2. サーバーからNonce/Challenge/PublicKeyを取得"
@@ -191,7 +191,7 @@ fun KeyAttestationScreen(
 
         // Progress Indicator
         if (isHorizontalProgressVisible) {
-            val progress = if (uiState.progressValue == PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS) {
+            val progress = if (uiState.progressValue == ProgressConstants.INDETERMINATE_PROGRESS) {
                 null
             } else {
                 uiState.progressValue

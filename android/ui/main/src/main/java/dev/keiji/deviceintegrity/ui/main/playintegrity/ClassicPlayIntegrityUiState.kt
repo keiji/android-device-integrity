@@ -2,13 +2,13 @@ package dev.keiji.deviceintegrity.ui.main.playintegrity
 
 import dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload
 import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfo
-import dev.keiji.deviceintegrity.ui.main.InfoItem
-import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityProgressConstants // Import statement added
+import dev.keiji.deviceintegrity.ui.common.InfoItem
+import dev.keiji.deviceintegrity.ui.main.playintegrity.ProgressConstants // Import statement added
 
 data class ClassicPlayIntegrityUiState(
     val nonce: String = "",
     val integrityToken: String = "",
-    val progressValue: Float = PlayIntegrityProgressConstants.NO_PROGRESS,
+    val progressValue: Float = ProgressConstants.NO_PROGRESS,
     val status: String = "",
     val serverVerificationPayload: ServerVerificationPayload? = null, // Keep for now, maybe used by other logic
     val googlePlayDeveloperServiceInfo: GooglePlayDeveloperServiceInfo? = null,
@@ -17,7 +17,7 @@ data class ClassicPlayIntegrityUiState(
     val resultInfoItems: List<InfoItem> = emptyList() // New field
 ) {
     val isLoading: Boolean
-        get() = progressValue != PlayIntegrityProgressConstants.NO_PROGRESS
+        get() = progressValue != ProgressConstants.NO_PROGRESS
 
     val isFetchNonceButtonEnabled: Boolean
         get() = !isLoading

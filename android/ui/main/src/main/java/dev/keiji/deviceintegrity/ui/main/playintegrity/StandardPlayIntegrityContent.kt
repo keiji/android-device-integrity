@@ -28,9 +28,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import dev.keiji.deviceintegrity.ui.main.InfoItem
-import dev.keiji.deviceintegrity.ui.main.InfoItemContent
-import dev.keiji.deviceintegrity.ui.main.keyattestation.InfoItemFormatter
+import dev.keiji.deviceintegrity.ui.common.InfoItem
+import dev.keiji.deviceintegrity.ui.common.InfoItemContent
+import dev.keiji.deviceintegrity.ui.common.InfoItemFormatter
 import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
 import kotlinx.coroutines.launch
 
@@ -104,10 +104,10 @@ fun StandardPlayIntegrityContent(
 
         // Progress Indicators
         val isProgressVisible =
-            uiState.progressValue != PlayIntegrityProgressConstants.NO_PROGRESS
+            uiState.progressValue != ProgressConstants.NO_PROGRESS
 
         if (isProgressVisible) {
-            val progress = if (uiState.progressValue == PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS) {
+            val progress = if (uiState.progressValue == ProgressConstants.INDETERMINATE_PROGRESS) {
                 null
             } else {
                 uiState.progressValue

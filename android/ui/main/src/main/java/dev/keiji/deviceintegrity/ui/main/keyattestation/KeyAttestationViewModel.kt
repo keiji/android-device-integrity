@@ -17,10 +17,10 @@ import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.repository.contract.KeyPairRepository
 import dev.keiji.deviceintegrity.repository.contract.KeyAttestationRepository
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
-import dev.keiji.deviceintegrity.ui.main.InfoItem
+import dev.keiji.deviceintegrity.ui.common.InfoItem
 import dev.keiji.deviceintegrity.ui.main.common.KEY_ATTESTATION_DELAY_MS
-import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityProgressConstants
-import dev.keiji.deviceintegrity.ui.main.util.Base64Utils
+import dev.keiji.deviceintegrity.ui.main.playintegrity.ProgressConstants
+import dev.keiji.deviceintegrity.ui.util.Base64Utils
 import dev.keiji.deviceintegrity.ui.main.util.DateFormatUtil
 import dev.keiji.deviceintegrity.ui.main.util.KeyUtils
 import kotlinx.coroutines.Dispatchers
@@ -93,7 +93,7 @@ class KeyAttestationViewModel @Inject constructor(
                         }
                         "Key algorithm changed to ${newKeyType.label}. Please fetch new $itemsToFetch."
                     },
-                    progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
+                    progressValue = ProgressConstants.NO_PROGRESS,
                     sessionId = null
                 )
             }
@@ -123,7 +123,7 @@ class KeyAttestationViewModel @Inject constructor(
                     generatedKeyPairData = null,
                     infoItems = emptyList(),
                     status = "StrongBox preference changed. Please generate a new key pair.",
-                    progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
+                    progressValue = ProgressConstants.NO_PROGRESS,
                 )
             }
         }
@@ -164,12 +164,12 @@ class KeyAttestationViewModel @Inject constructor(
                     serverPublicKey = "",
                     generatedKeyPairData = null,
                     infoItems = emptyList(),
-                    progressValue = PlayIntegrityProgressConstants.FULL_PROGRESS
+                    progressValue = ProgressConstants.FULL_PROGRESS
                 )
             }
 
             val delayMs = KEY_ATTESTATION_DELAY_MS
-            val totalSteps = (delayMs / PlayIntegrityProgressConstants.PROGRESS_UPDATE_INTERVAL_MS).toInt()
+            val totalSteps = (delayMs / ProgressConstants.PROGRESS_UPDATE_INTERVAL_MS).toInt()
             var currentStep = 0
 
             _uiState.update {
@@ -179,12 +179,12 @@ class KeyAttestationViewModel @Inject constructor(
             }
 
             while (currentStep < totalSteps) {
-                delay(PlayIntegrityProgressConstants.PROGRESS_UPDATE_INTERVAL_MS)
+                delay(ProgressConstants.PROGRESS_UPDATE_INTERVAL_MS)
                 currentStep++
-                val newProgress = PlayIntegrityProgressConstants.FULL_PROGRESS - (currentStep.toFloat() / totalSteps.toFloat())
+                val newProgress = ProgressConstants.FULL_PROGRESS - (currentStep.toFloat() / totalSteps.toFloat())
                 _uiState.update { currentState ->
                     currentState.copy(
-                        progressValue = newProgress.coerceAtLeast(PlayIntegrityProgressConstants.NO_PROGRESS),
+                        progressValue = newProgress.coerceAtLeast(ProgressConstants.NO_PROGRESS),
                     )
                 }
             }
@@ -192,7 +192,7 @@ class KeyAttestationViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     status = fetchingMessage,
-                    progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS
+                    progressValue = ProgressConstants.INDETERMINATE_PROGRESS
                 )
             }
 
@@ -209,7 +209,7 @@ class KeyAttestationViewModel @Inject constructor(
                             challenge = response.challengeBase64UrlEncoded,
                             serverPublicKey = response.publicKeyBase64UrlEncoded,
                             status = successMessage,
-                            progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                            progressValue = ProgressConstants.NO_PROGRESS
                         )
                     }
                 } else {
@@ -220,7 +220,7 @@ class KeyAttestationViewModel @Inject constructor(
                             nonce = response.nonceBase64UrlEncoded,
                             challenge = response.challengeBase64UrlEncoded,
                             status = successMessage,
-                            progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                            progressValue = ProgressConstants.NO_PROGRESS
                         )
                     }
                 }
@@ -231,7 +231,7 @@ class KeyAttestationViewModel @Inject constructor(
                     it.copy(
                         status = "$failureMessagePrefix: Server Error ${e.errorCode ?: ""}: $message",
                         sessionId = null,
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                        progressValue = ProgressConstants.NO_PROGRESS
                     )
                 }
             } catch (e: IOException) {
@@ -240,7 +240,7 @@ class KeyAttestationViewModel @Inject constructor(
                     it.copy(
                         status = "$failureMessagePrefix: Network Error: ${e.localizedMessage}",
                         sessionId = null,
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                        progressValue = ProgressConstants.NO_PROGRESS
                     )
                 }
             } catch (e: Exception) {
@@ -249,7 +249,7 @@ class KeyAttestationViewModel @Inject constructor(
                     it.copy(
                         status = "$failureMessagePrefix: ${e.localizedMessage}",
                         sessionId = null,
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                        progressValue = ProgressConstants.NO_PROGRESS
                     )
                 }
             }
@@ -263,7 +263,7 @@ class KeyAttestationViewModel @Inject constructor(
                     status = "Generating KeyPair...",
                     generatedKeyPairData = null,
                     infoItems = emptyList(),
-                    progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS
+                    progressValue = ProgressConstants.INDETERMINATE_PROGRESS
                 )
             }
 
@@ -280,7 +280,7 @@ class KeyAttestationViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         status = "$missingItem is not available. Fetch $missingItem/Challenge$suffix first.",
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                        progressValue = ProgressConstants.NO_PROGRESS
                     )
                 }
                 return@launch
@@ -317,7 +317,7 @@ class KeyAttestationViewModel @Inject constructor(
                     it.copy(
                         generatedKeyPairData = keyPairDataResult,
                         status = "KeyPair generated successfully. Alias: ${keyPairDataResult.keyAlias}",
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                        progressValue = ProgressConstants.NO_PROGRESS
                     )
                 }
             } catch (e: Exception) {
@@ -326,7 +326,7 @@ class KeyAttestationViewModel @Inject constructor(
                     it.copy(
                         status = "Failed to generate KeyPair: ${e.message}",
                         generatedKeyPairData = null,
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                        progressValue = ProgressConstants.NO_PROGRESS
                     )
                 }
             }
@@ -339,12 +339,12 @@ class KeyAttestationViewModel @Inject constructor(
                 it.copy(
                     status = "Preparing to verify KeyAttestation...",
                     infoItems = emptyList(),
-                    progressValue = PlayIntegrityProgressConstants.FULL_PROGRESS
+                    progressValue = ProgressConstants.FULL_PROGRESS
                 )
             }
 
             val delayMs = KEY_ATTESTATION_DELAY_MS
-            val totalSteps = (delayMs / PlayIntegrityProgressConstants.PROGRESS_UPDATE_INTERVAL_MS).toInt()
+            val totalSteps = (delayMs / ProgressConstants.PROGRESS_UPDATE_INTERVAL_MS).toInt()
             var currentStep = 0
 
             _uiState.update {
@@ -354,12 +354,12 @@ class KeyAttestationViewModel @Inject constructor(
             }
 
             while (currentStep < totalSteps) {
-                delay(PlayIntegrityProgressConstants.PROGRESS_UPDATE_INTERVAL_MS)
+                delay(ProgressConstants.PROGRESS_UPDATE_INTERVAL_MS)
                 currentStep++
-                val newProgress = PlayIntegrityProgressConstants.FULL_PROGRESS - (currentStep.toFloat() / totalSteps.toFloat())
+                val newProgress = ProgressConstants.FULL_PROGRESS - (currentStep.toFloat() / totalSteps.toFloat())
                 _uiState.update { currentState ->
                     currentState.copy(
-                        progressValue = newProgress.coerceAtLeast(PlayIntegrityProgressConstants.NO_PROGRESS),
+                        progressValue = newProgress.coerceAtLeast(ProgressConstants.NO_PROGRESS),
                     )
                 }
             }
@@ -367,7 +367,7 @@ class KeyAttestationViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     status = "Verifying KeyAttestation...",
-                    progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS
+                    progressValue = ProgressConstants.INDETERMINATE_PROGRESS
                 )
             }
 
@@ -382,7 +382,7 @@ class KeyAttestationViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         status = "SessionId is missing. Fetch $itemToFetch first.",
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                        progressValue = ProgressConstants.NO_PROGRESS
                     )
                 }
                 return@launch
@@ -393,7 +393,7 @@ class KeyAttestationViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         status = "KeyPair is not generated yet.",
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                        progressValue = ProgressConstants.NO_PROGRESS
                     )
                 }
                 return@launch
@@ -405,7 +405,7 @@ class KeyAttestationViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         status = "Server $missingItem is missing. Fetch $missingItem/Challenge$suffix first.",
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                        progressValue = ProgressConstants.NO_PROGRESS
                     )
                 }
                 return@launch
@@ -417,7 +417,7 @@ class KeyAttestationViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 status = "Server PublicKey or Challenge is missing for ECDH. Fetch Nonce/Challenge/PublicKey first.",
-                                progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                                progressValue = ProgressConstants.NO_PROGRESS
                             )
                         }
                         return@launch
@@ -478,14 +478,14 @@ class KeyAttestationViewModel @Inject constructor(
                             it.copy(
                                 status = "Verification successful.",
                                 infoItems = resultItems,
-                                progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                                progressValue = ProgressConstants.NO_PROGRESS
                             )
                         }
                     } else {
                         _uiState.update {
                             it.copy(
                                 status = "Verification failed. Reason: ${response.reason ?: "Unknown"}",
-                                progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                                progressValue = ProgressConstants.NO_PROGRESS
                             )
                         }
                     }
@@ -503,7 +503,7 @@ class KeyAttestationViewModel @Inject constructor(
                             _uiState.update {
                                 it.copy(
                                     status = "Unsupported algorithm for signing.",
-                                    progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                                    progressValue = ProgressConstants.NO_PROGRESS
                                 )
                             }
                             return@launch
@@ -552,14 +552,14 @@ class KeyAttestationViewModel @Inject constructor(
                             it.copy(
                                 status = "Verification successful.",
                                 infoItems = resultItems,
-                                progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                                progressValue = ProgressConstants.NO_PROGRESS
                             )
                         }
                     } else {
                         _uiState.update {
                             it.copy(
                                 status = "Verification failed. Reason: ${responseVerifySignature.reason ?: "Unknown"}",
-                                progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                                progressValue = ProgressConstants.NO_PROGRESS
                             )
                         }
                     }
@@ -570,7 +570,7 @@ class KeyAttestationViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         status = "Failed to verify KeyAttestation: Server Error ${e.errorCode ?: ""}: $message",
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                        progressValue = ProgressConstants.NO_PROGRESS
                     )
                 }
             } catch (e: IOException) {
@@ -578,7 +578,7 @@ class KeyAttestationViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         status = "Failed to verify KeyAttestation: Network Error: ${e.localizedMessage}",
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                        progressValue = ProgressConstants.NO_PROGRESS
                     )
                 }
             } catch (e: Exception) {
@@ -586,7 +586,7 @@ class KeyAttestationViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         status = "Failed to verify KeyAttestation: ${e.localizedMessage}",
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS
+                        progressValue = ProgressConstants.NO_PROGRESS
                     )
                 }
             }

@@ -16,7 +16,7 @@ import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
 import dev.keiji.deviceintegrity.ui.main.common.DEBUG_VERIFY_TOKEN_DELAY_MS
 import dev.keiji.deviceintegrity.ui.main.common.VERIFY_TOKEN_DELAY_MS
-import dev.keiji.deviceintegrity.ui.main.InfoItem // Correctly at top
+import dev.keiji.deviceintegrity.ui.common.InfoItem // Correctly at top
 import dev.keiji.deviceintegrity.ui.main.util.DateFormatUtil // Correctly at top
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,7 +30,7 @@ import java.io.IOException
 import java.util.UUID
 import javax.inject.Inject
 
-// PlayIntegrityProgressConstants will be imported from the new common file
+// ProgressConstants will be imported from the new common file
 
 @HiltViewModel
 class StandardPlayIntegrityViewModel @Inject constructor(
@@ -157,7 +157,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
         }
         _uiState.update {
             it.copy(
-                progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS,
+                progressValue = ProgressConstants.INDETERMINATE_PROGRESS,
                 status = "Fetching token...",
                 requestHashValue = "",
                 errorMessages = emptyList(),
@@ -172,7 +172,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 Log.d("StandardPlayIntegrityVM", "Integrity Token (Standard): $token")
                 _uiState.update {
                     it.copy(
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
+                        progressValue = ProgressConstants.NO_PROGRESS,
                         integrityToken = token,
                         status = "Token fetched successfully (Standard API, see Logcat for token)",
                         errorMessages = emptyList(),
@@ -190,7 +190,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 val userFacingStatus = "Error fetching integrity token (Standard): ${e.message ?: "Unknown error"}"
                 _uiState.update {
                     it.copy(
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
+                        progressValue = ProgressConstants.NO_PROGRESS,
                         status = userFacingStatus,
                         errorMessages = listOf(specificErrorMessage),
                         requestHashValue = ""
@@ -217,7 +217,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
         }
         _uiState.update {
             it.copy(
-                progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS,
+                progressValue = ProgressConstants.INDETERMINATE_PROGRESS,
                 status = "Preparing to verify token...",
                 errorMessages = emptyList(),
                 resultInfoItems = emptyList(),
@@ -228,25 +228,25 @@ class StandardPlayIntegrityViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val delayMs = if (appInfoProvider.isDebugBuild) DEBUG_VERIFY_TOKEN_DELAY_MS else VERIFY_TOKEN_DELAY_MS
-                val totalSteps = (delayMs / PlayIntegrityProgressConstants.PROGRESS_UPDATE_INTERVAL_MS).toInt()
+                val totalSteps = (delayMs / ProgressConstants.PROGRESS_UPDATE_INTERVAL_MS).toInt()
                 var currentStep = 0
                 _uiState.update {
                     it.copy(
-                        progressValue = PlayIntegrityProgressConstants.FULL_PROGRESS,
+                        progressValue = ProgressConstants.FULL_PROGRESS,
                         status = "Waiting for ${delayMs / 1000} sec..."
                     )
                 }
                 while (currentStep < totalSteps) {
-                    delay(PlayIntegrityProgressConstants.PROGRESS_UPDATE_INTERVAL_MS)
+                    delay(ProgressConstants.PROGRESS_UPDATE_INTERVAL_MS)
                     currentStep++
-                    val newProgress = PlayIntegrityProgressConstants.FULL_PROGRESS - (currentStep.toFloat() / totalSteps)
+                    val newProgress = ProgressConstants.FULL_PROGRESS - (currentStep.toFloat() / totalSteps)
                     _uiState.update {
-                        it.copy(progressValue = newProgress.coerceAtLeast(PlayIntegrityProgressConstants.NO_PROGRESS))
+                        it.copy(progressValue = newProgress.coerceAtLeast(ProgressConstants.NO_PROGRESS))
                     }
                 }
                 _uiState.update {
                     it.copy(
-                        progressValue = PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS,
+                        progressValue = ProgressConstants.INDETERMINATE_PROGRESS,
                         status = "Now verifying token with server..."
                     )
                 }
@@ -269,7 +269,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 val finalStatus = "Token verification complete."
                 _uiState.update {
                     it.copy(
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS, status = finalStatus,
+                        progressValue = ProgressConstants.NO_PROGRESS, status = finalStatus,
                         serverVerificationPayload = response, resultInfoItems = resultItems,
                         errorMessages = emptyList(), currentSessionId = currentSessionId
                     )
@@ -280,7 +280,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 val userFacingStatus = "Server error verifying token: ${e.errorMessage ?: "Unknown"}"
                 _uiState.update {
                     it.copy(
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS, status = userFacingStatus,
+                        progressValue = ProgressConstants.NO_PROGRESS, status = userFacingStatus,
                         errorMessages = listOf(specificErrorMessage), serverVerificationPayload = null, resultInfoItems = emptyList()
                     )
                 }
@@ -290,7 +290,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 val userFacingStatus = "Network error verifying token: $specificErrorMessage"
                 _uiState.update {
                     it.copy(
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS, status = userFacingStatus,
+                        progressValue = ProgressConstants.NO_PROGRESS, status = userFacingStatus,
                         errorMessages = listOf(specificErrorMessage), serverVerificationPayload = null, resultInfoItems = emptyList()
                     )
                 }
@@ -300,7 +300,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 val userFacingStatus = "Unknown error verifying token: $specificErrorMessage"
                 _uiState.update {
                     it.copy(
-                        progressValue = PlayIntegrityProgressConstants.NO_PROGRESS, status = userFacingStatus,
+                        progressValue = ProgressConstants.NO_PROGRESS, status = userFacingStatus,
                         errorMessages = listOf(specificErrorMessage), serverVerificationPayload = null, resultInfoItems = emptyList()
                     )
                 }
