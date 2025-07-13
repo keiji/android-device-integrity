@@ -233,7 +233,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         progressValue = PlayIntegrityProgressConstants.FULL_PROGRESS,
-                        status = "Waiting for ${delayMs / 1000} seconds before verification..."
+                        status = "Waiting for ${delayMs / 1000} sec..."
                     )
                 }
                 while (currentStep < totalSteps) {
