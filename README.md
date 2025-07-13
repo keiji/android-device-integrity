@@ -1,4 +1,4 @@
-# android-device-integrity
+# Android Device Integrity
 
 This project provides a demonstration of how to verify Android device integrity. It includes an Android client application and a backend server component. The primary goal is to ensure that interactions are occurring on genuine Android devices with unmodified software.
 
@@ -34,7 +34,7 @@ Detailed setup instructions for each component can be found in their respective 
 The Android client application is located in the `android/` directory.
 
 -   **Setup and Building**:
-    -   Refer to the `AGENTS.md` file in the root directory for comprehensive instructions on setting up the Android SDK, environment variables, and building the project.
+    -   Refer to the `AGENTS.md` file in the `android/` directory for comprehensive instructions on setting up the Android SDK, environment variables, and building the project.
     -   Key build commands (executed from the `android/` directory):
         -   Clean project: `./gradlew clean`
         -   Build debug APK: `./gradlew assembleDebug`
@@ -80,7 +80,7 @@ These files provide detailed information about request and response schemas, par
 
 When contributing to this project or making modifications:
 
--   **Android Development**: Follow the setup and build instructions in `AGENTS.md`. This file also contains important notes for AI agents regarding the Android development environment.
+-   **Android Development**: Follow the setup and build instructions in `android/AGENTS.md`. This file also contains important notes for AI agents regarding the Android development environment.
 -   **Server Development**: Adhere to the guidelines and instructions provided in `server/README.md` for the backend services.
 -   **Code Editing Rules**: General rules for code editing (e.g., code removal, commit messages) are outlined in the `AGENTS.md` file under the section "コード編集時のルール". Please consult this section before committing changes.
 
