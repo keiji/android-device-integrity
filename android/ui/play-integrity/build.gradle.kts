@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "dev.keiji.deviceintegrity.ui.main"
+    namespace = "dev.keiji.deviceintegrity.ui.playintegrity"
     compileSdk = libs.versions.androidCompileSdk.get().toInt()
 
     defaultConfig {
@@ -35,13 +35,7 @@ dependencies {
     implementation(project(":api"))
     implementation(project(":ui"))
     implementation(project(":ui:theme"))
-    implementation(project(":ui:agreement"))
-    implementation(project(":ui:play-integrity"))
-    implementation(project(":ui:key-attestation"))
-    implementation(project(":provider:contract"))
     implementation(project(":repository:contract"))
-    implementation(project(":ui:nav:contract"))
-    implementation(project(":crypto:contract"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -52,9 +46,8 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation(libs.androidx.navigation.compose) // AppScreen might use navigation
     implementation(libs.androidx.lifecycle.runtime.compose)
-    implementation(libs.androidx.lifecycle.viewmodel.compose) // For ViewModel in MainActivity/AppScreen if any
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.hilt.navigation.compose)
     debugImplementation(libs.androidx.ui.tooling)
 
