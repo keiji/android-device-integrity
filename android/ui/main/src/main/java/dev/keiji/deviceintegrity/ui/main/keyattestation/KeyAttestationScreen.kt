@@ -118,21 +118,6 @@ fun KeyAttestationScreen(
             }
         }
 
-        if (uiState.isStep1PreferStrongBoxVisible) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Checkbox(
-                    checked = uiState.preferStrongBox,
-                    onCheckedChange = onPreferStrongBoxChanged,
-                    enabled = uiState.isStep1PreferStrongBoxEnabled,
-                )
-                Text("StrongBoxで鍵を生成する")
-            }
-        }
-
         Spacer(modifier = Modifier.height(16.dp))
 
         // Step 2: Fetch Nonce/Salt and Challenge (Original Step 1, now with dynamic labels)
@@ -160,6 +145,22 @@ fun KeyAttestationScreen(
 
         // Step 3: Generate KeyPair (Original Step 3)
         Text(text = "Step 3. キーペア（構成証明付き）を生成")
+
+        if (uiState.isStep3PreferStrongBoxVisible) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = uiState.preferStrongBox,
+                    onCheckedChange = onPreferStrongBoxChanged,
+                    enabled = uiState.isStep3PreferStrongBoxEnabled,
+                )
+                Text("StrongBoxで鍵を生成する")
+            }
+        }
+
         Spacer(modifier = Modifier.height(8.dp))
         Button(
             onClick = onGenerateKeyPair,

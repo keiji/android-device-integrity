@@ -101,7 +101,32 @@ class KeyAttestationViewModel @Inject constructor(
     }
 
     fun onPreferStrongBoxChanged(preferStrongBox: Boolean) {
-        _uiState.update { it.copy(preferStrongBox = preferStrongBox) }
+        if (preferStrongBox == _uiState.value.preferStrongBox) {
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value.generatedKeyPairData?.keyAlias?.let { alias ->
+                try {
+                    keyPairRepository.removeKeyPair(alias)
+                } catch (e: Exception) {
+                    Log.e(
+                        "KeyAttestationViewModel",
+                        "Failed to delete key pair on preferStrongBox change",
+                        e
+                    )
+                }
+            }
+            _uiState.update {
+                it.copy(
+                    preferStrongBox = preferStrongBox,
+                    generatedKeyPairData = null,
+                    infoItems = emptyList(),
+                    status = "StrongBox preference changed. Please generate a new key pair.",
+                    progressValue = PlayIntegrityProgressConstants.NO_PROGRESS,
+                )
+            }
+        }
     }
 
     fun fetchNonceOrSaltChallenge() {

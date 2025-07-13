@@ -27,14 +27,14 @@ data class KeyAttestationUiState(
     // Step 1 is now Key Selection, enabled if not loading
     val isStep1KeySelectionEnabled: Boolean get() = !isLoading
 
-    val isStep1PreferStrongBoxVisible: Boolean get() = isStrongboxSupported
-    val isStep1PreferStrongBoxEnabled: Boolean get() = !isLoading
-
     // Step 2 is Fetch Nonce/Salt/Challenge, enabled if not loading and a key type is selected (always true by default)
     val isStep2FetchNonceOrSaltChallengeEnabled: Boolean get() = !isLoading
 
     // Step 3 is Generate KeyPair, enabled if not loading, and nonce and challenge are present
     val isStep3GenerateKeyPairEnabled: Boolean get() = !isLoading && nonce.isNotEmpty() && challenge.isNotEmpty()
+
+    val isStep3PreferStrongBoxVisible: Boolean get() = isStrongboxSupported
+    val isStep3PreferStrongBoxEnabled: Boolean get() = isStep3GenerateKeyPairEnabled
 
     // Step 4 is Verify Attestation, enabled if not loading and key pair is generated
     val isStep4VerifyAttestationEnabled: Boolean get() = !isLoading && generatedKeyPairData != null
