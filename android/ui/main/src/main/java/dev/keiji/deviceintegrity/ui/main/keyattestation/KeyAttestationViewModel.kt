@@ -583,7 +583,7 @@ class KeyAttestationViewModel @Inject constructor(
     private fun convertDeviceInfoToAttestationItems(deviceInfo: DeviceInfo?): List<InfoItem> {
         deviceInfo ?: return emptyList()
         val items = mutableListOf<InfoItem>()
-        items.add(InfoItem("Device Info", "", isHeader = true, indentLevel = 0))
+        items.add(InfoItem("Device Info (Reported by Client)", "", isHeader = true, indentLevel = 0))
         items.add(InfoItem("Brand", deviceInfo.brand, indentLevel = 1))
         items.add(InfoItem("Model", deviceInfo.model, indentLevel = 1))
         items.add(InfoItem("Device", deviceInfo.device, indentLevel = 1))
@@ -602,7 +602,7 @@ class KeyAttestationViewModel @Inject constructor(
     private fun convertSecurityInfoToAttestationItems(securityInfo: SecurityInfo?): List<InfoItem> {
         securityInfo ?: return emptyList()
         val items = mutableListOf<InfoItem>()
-        items.add(InfoItem("Security Info", "", isHeader = true, indentLevel = 0))
+        items.add(InfoItem("Security Info (Reported by Client)", "", isHeader = true, indentLevel = 0))
         items.add(InfoItem("Is Device Lock Enabled", securityInfo.isDeviceLockEnabled.toString(), indentLevel = 1))
         items.add(InfoItem("Is Biometrics Enabled", securityInfo.isBiometricsEnabled.toString(), indentLevel = 1))
         items.add(InfoItem("Has Class3 Authenticator", securityInfo.hasClass3Authenticator.toString(), indentLevel = 1))
@@ -671,7 +671,15 @@ class KeyAttestationViewModel @Inject constructor(
         props.origin?.let {
             items.add(InfoItem("Origin", ValueConverter.convertOriginToString(it), indentLevel = 1))
         }
-        props.ecCurve?.let { items.add(InfoItem("EC Curve", it.toString(), indentLevel = 1)) }
+        props.ecCurve?.let {
+            items.add(
+                InfoItem(
+                    "EC Curve",
+                    ValueConverter.convertEcCurveToString(it),
+                    indentLevel = 1
+                )
+            )
+        }
         props.keySize?.let { items.add(InfoItem("Key Size", it.toString(), indentLevel = 1)) }
         props.purpose?.let {
             val purposes = it.joinToString { purpose ->
@@ -679,12 +687,51 @@ class KeyAttestationViewModel @Inject constructor(
             }
             items.add(InfoItem("Purposes", purposes, indentLevel = 1))
         }
-        props.digest?.let { items.add(InfoItem("Digest", it.joinToString(), indentLevel = 1)) }
-        props.padding?.let { items.add(InfoItem("Padding", it.joinToString(), indentLevel = 1)) }
-        props.rsaPublicExponent?.let { items.add(InfoItem("RSA Public Exponent", it.toString(), indentLevel = 1)) }
-        props.mgfDigest?.let { items.add(InfoItem("MGF Digest", it.joinToString(), indentLevel = 1)) }
-        props.rollbackResistance?.let { items.add(InfoItem("Rollback Resistance", it.toString(), indentLevel = 1)) }
-        props.earlyBootOnly?.let { items.add(InfoItem("Early Boot Only", it.toString(), indentLevel = 1)) }
+        props.digest?.let {
+            val digests = it.joinToString { digest ->
+                ValueConverter.convertDigestToString(digest)
+            }
+            items.add(InfoItem("Digest", digests, indentLevel = 1))
+        }
+        props.padding?.let {
+            val paddings = it.joinToString { padding ->
+                ValueConverter.convertPaddingToString(padding)
+            }
+            items.add(InfoItem("Padding", paddings, indentLevel = 1))
+        }
+        props.rsaPublicExponent?.let {
+            items.add(
+                InfoItem(
+                    "RSA Public Exponent",
+                    it.toString(),
+                    indentLevel = 1
+                )
+            )
+        }
+        props.mgfDigest?.let {
+            val digests = it.joinToString { digest ->
+                ValueConverter.convertDigestToString(digest)
+            }
+            items.add(InfoItem("MGF Digest", digests, indentLevel = 1))
+        }
+        props.rollbackResistance?.let {
+            items.add(
+                InfoItem(
+                    "Rollback Resistance",
+                    it.toString(),
+                    indentLevel = 1
+                )
+            )
+        }
+        props.earlyBootOnly?.let {
+            items.add(
+                InfoItem(
+                    "Early Boot Only",
+                    it.toString(),
+                    indentLevel = 1
+                )
+            )
+        }
         props.activeDateTime?.let { items.add(InfoItem("Active Datetime", DateFormatUtil.formatEpochMilliToISO8601(it), indentLevel = 1)) }
         props.originationExpireDateTime?.let { items.add(InfoItem("Origination Expire Datetime", DateFormatUtil.formatEpochMilliToISO8601(it), indentLevel = 1)) }
         props.usageExpireDateTime?.let { items.add(InfoItem("Usage Expire Datetime", DateFormatUtil.formatEpochMilliToISO8601(it), indentLevel = 1)) }
