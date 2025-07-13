@@ -32,40 +32,36 @@ def extract_certificate_details(cert: x509.Certificate) -> dict:
         details['serial_number'] = f'{cert.serial_number:x}'
         details['valid_from'] = cert.not_valid_before_utc.isoformat().replace('+00:00', 'Z')
         details['valid_to'] = cert.not_valid_after_utc.isoformat().replace('+00:00', 'Z')
-        details['signature_type_sn'] = cert.signature_algorithm_oid.name
+        details['signature_type_sn'] = cert.signature_algorithm_oid._name
         details['signature_type_ln'] = cert.signature_algorithm_oid.dotted_string
 
         # Extract extensions
-        try:
-            ski = cert.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
-            details['subject_key_identifier'] = ski.value.digest.hex()
-        except x509.ExtensionNotFound:
-            details['subject_key_identifier'] = None
+        # Initialize extension fields to None
+        details['subject_key_identifier'] = None
+        details['authority_key_identifier'] = None
+        details['key_usage'] = None
 
-        try:
-            aki = cert.extensions.get_extension_for_class(x509.AuthorityKeyIdentifier)
-            if aki.value.key_identifier is not None:
-                details['authority_key_identifier'] = aki.value.key_identifier.hex()
-            else:
-                details['authority_key_identifier'] = None
-        except x509.ExtensionNotFound:
-            details['authority_key_identifier'] = None
-
-        try:
-            key_usage_ext = cert.extensions.get_extension_for_class(x509.KeyUsage)
-            details['key_usage'] = {
-                'digital_signature': key_usage_ext.value.digital_signature,
-                'content_commitment': key_usage_ext.value.content_commitment,
-                'key_encipherment': key_usage_ext.value.key_encipherment,
-                'data_encipherment': key_usage_ext.value.data_encipherment,
-                'key_agreement': key_usage_ext.value.key_agreement,
-                'key_cert_sign': key_usage_ext.value.key_cert_sign,
-                'crl_sign': key_usage_ext.value.crl_sign,
-                'encipher_only': key_usage_ext.value.encipher_only,
-                'decipher_only': key_usage_ext.value.decipher_only,
-            }
-        except x509.ExtensionNotFound:
-            details['key_usage'] = None
+        for ext in cert.extensions:
+            oid = ext.oid
+            if oid == x509.ExtensionOID.SUBJECT_KEY_IDENTIFIER:
+                details['subject_key_identifier'] = ext.value.digest.hex()
+            elif oid == x509.ExtensionOID.AUTHORITY_KEY_IDENTIFIER:
+                if ext.value.key_identifier is not None:
+                    details['authority_key_identifier'] = ext.value.key_identifier.hex()
+            elif oid == x509.ExtensionOID.KEY_USAGE:
+                key_usage_value = ext.value
+                key_agreement = getattr(key_usage_value, 'key_agreement', False)
+                details['key_usage'] = {
+                    'digital_signature': getattr(key_usage_value, 'digital_signature', False),
+                    'content_commitment': getattr(key_usage_value, 'content_commitment', False),
+                    'key_encipherment': getattr(key_usage_value, 'key_encipherment', False),
+                    'data_encipherment': getattr(key_usage_value, 'data_encipherment', False),
+                    'key_agreement': key_agreement,
+                    'key_cert_sign': getattr(key_usage_value, 'key_cert_sign', False),
+                    'crl_sign': getattr(key_usage_value, 'crl_sign', False),
+                    'encipher_only': getattr(key_usage_value, 'encipher_only', False) if key_agreement else False,
+                    'decipher_only': getattr(key_usage_value, 'decipher_only', False) if key_agreement else False,
+                }
 
     except Exception as e:
         logger.error(f"Failed to extract details from certificate (SN: {cert.serial_number}): {e}", exc_info=True)
@@ -87,8 +83,10 @@ def decode_certificate_chain(certificate_chain_b64: list[str]) -> list[x509.Cert
 
         cert_bytes = None
         try:
-            cert_bytes = base64.b64decode(cert_b64)
-        except ValueError as e: # Catches errors specifically from b64decode (e.g., bad padding, invalid chars)
+            # Manually add padding if it's missing.
+            padding = '=' * (4 - (len(cert_b64) % 4))
+            cert_bytes = base64.b64decode(cert_b64 + padding)
+        except (ValueError, TypeError) as e: # Catches errors from b64decode
             logger.error(f'Failed to Base64 decode certificate at index {i}: {e}')
             raise ValueError(f'Invalid Base64 content for certificate at index {i}. Error: {e}')
         # No TypeError check for b64decode here as it's less common if input is confirmed string.
