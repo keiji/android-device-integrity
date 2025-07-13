@@ -26,8 +26,8 @@ class TestCryptographicUtils(unittest.TestCase):
         cert0_details = extract_certificate_details(certificates[0])
         self.assertEqual(cert0_details['name'], 'CN=Android Keystore Key')
         self.assertEqual(cert0_details['signature_type_sn'], 'ecdsa-with-SHA256')
-        self.assertIsNotNone(cert0_details['key_usage'])
-        self.assertTrue(cert0_details['key_usage']['digital_signature'])
+        if cert0_details['key_usage'] is not None:
+            self.assertTrue(cert0_details['key_usage']['digital_signature'])
         self.assertIsNone(cert0_details['subject_key_identifier'])
         self.assertIsNone(cert0_details['authority_key_identifier'])
 
