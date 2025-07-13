@@ -112,10 +112,33 @@ def get_crl():
 
 def verify_certificate_with_crl(certificate: object, crl_data: dict) -> bool:
     """
-    Verifies a single certificate against the CRL.
-    NOTE: This is a placeholder and will always return True as per requirements.
+    Verifies a single certificate against the provided CRL data.
     """
-    # In a real implementation, you would parse crl_data and check
-    # if the certificate's serial number is in the revoked list.
-    logger.info(f"Performing placeholder CRL verification for certificate. (Always returns True)")
-    return True
+    if 'entries' not in crl_data:
+        logger.warning("CRL data is missing the 'entries' key. Cannot check for revocations.")
+        return True # Or False, depending on strictness. Assume not revoked if CRL is malformed.
+
+    serial_number_int = certificate.serial_number
+    serial_number_hex = hex(serial_number_int).lower()
+
+    # The Google CRL uses a hex string for the serial number, which might or might not
+    # have a '0x' prefix. The `hex()` function in Python adds '0x'.
+    # It's safer to handle both cases by stripping the prefix if it exists.
+    if serial_number_hex.startswith('0x'):
+        serial_number_hex = serial_number_hex[2:]
+
+    revoked_entry = crl_data['entries'].get(serial_number_hex)
+
+    if revoked_entry:
+        status = revoked_entry.get('status')
+        expires = revoked_entry.get('expires')
+        reason = revoked_entry.get('reason')
+        comment = revoked_entry.get('comment')
+        logger.warning(
+            f"Certificate with serial number {serial_number_hex} is revoked. "
+            f"Status: {status}, Expires: {expires}, Reason: {reason}, Comment: {comment}"
+        )
+        return False
+    else:
+        logger.info(f"Certificate with serial number {serial_number_hex} is not in the CRL.")
+        return True

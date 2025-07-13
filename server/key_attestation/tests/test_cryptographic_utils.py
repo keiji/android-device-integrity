@@ -215,6 +215,81 @@ class TestCryptographicUtils(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, r"Issuer of certificate at index 0 does not match subject of certificate at index 1."):
             verify_certificate_chain(mismatch_chain)
 
+    @patch('server.key_attestation.cryptographic_utils.crl_utils')
+    @patch('server.key_attestation.cryptographic_utils.ROOT_CERTIFICATES', new_callable=list)
+    def test_verify_certificate_chain_expired_cert(self, mock_root_certs, mock_crl_utils):
+        mock_crl_utils.get_crl.return_value = {"entries": {}}
+        mock_crl_utils.verify_certificate_with_crl.return_value = True
+        root_cert_pem = self.root_ca_cert.public_key().public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+        mock_root_certs.append(root_cert_pem.decode('utf-8'))
+
+        now = datetime.now(timezone.utc)
+        expired_leaf_cert = (
+            x509.CertificateBuilder()
+            .subject_name(self.leaf_cert.subject)
+            .issuer_name(self.intermediate_ca_name)
+            .public_key(self.leaf_public_key)
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(now - timedelta(days=30))
+            .not_valid_after(now - timedelta(days=1))
+            .sign(self.intermediate_ca_private_key, hashes.SHA256())
+        )
+        chain = [expired_leaf_cert, self.intermediate_ca_cert, self.root_ca_cert]
+        with self.assertRaisesRegex(ValueError, "is outside its validity period"):
+            verify_certificate_chain(chain)
+
+    @patch('server.key_attestation.cryptographic_utils.crl_utils')
+    @patch('server.key_attestation.cryptographic_utils.ROOT_CERTIFICATES', new_callable=list)
+    def test_verify_certificate_chain_not_yet_valid_cert(self, mock_root_certs, mock_crl_utils):
+        mock_crl_utils.get_crl.return_value = {"entries": {}}
+        mock_crl_utils.verify_certificate_with_crl.return_value = True
+        root_cert_pem = self.root_ca_cert.public_key().public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+        mock_root_certs.append(root_cert_pem.decode('utf-8'))
+
+        now = datetime.now(timezone.utc)
+        future_leaf_cert = (
+            x509.CertificateBuilder()
+            .subject_name(self.leaf_cert.subject)
+            .issuer_name(self.intermediate_ca_name)
+            .public_key(self.leaf_public_key)
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(now + timedelta(days=1))
+            .not_valid_after(now + timedelta(days=30))
+            .sign(self.intermediate_ca_private_key, hashes.SHA256())
+        )
+        chain = [future_leaf_cert, self.intermediate_ca_cert, self.root_ca_cert]
+        with self.assertRaisesRegex(ValueError, "is outside its validity period"):
+            verify_certificate_chain(chain)
+
+    @patch('server.key_attestation.cryptographic_utils.crl_utils')
+    @patch('server.key_attestation.cryptographic_utils.ROOT_CERTIFICATES', new_callable=list)
+    def test_verify_certificate_chain_revoked_cert(self, mock_root_certs, mock_crl_utils):
+        root_cert_pem = self.root_ca_cert.public_key().public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+        mock_root_certs.append(root_cert_pem.decode('utf-8'))
+
+        # Simulate that get_crl returns a CRL with the leaf certificate's serial
+        revoked_serial_hex = hex(self.leaf_cert.serial_number)[2:]
+        mock_crl_utils.get_crl.return_value = {
+            "entries": {
+                revoked_serial_hex: {"status": "revoked"}
+            }
+        }
+        # Configure the verification function to actually check the CRL
+        mock_crl_utils.verify_certificate_with_crl.side_effect = lambda cert, crl: not (hex(cert.serial_number)[2:] in crl['entries'])
+
+        chain = [self.leaf_cert, self.intermediate_ca_cert, self.root_ca_cert]
+        with self.assertRaisesRegex(ValueError, "has been revoked"):
+            verify_certificate_chain(chain)
+
     def test_verify_certificate_chain_empty(self):
         with self.assertRaisesRegex(ValueError, "Certificate chain is empty, cannot verify"):
             verify_certificate_chain([])
