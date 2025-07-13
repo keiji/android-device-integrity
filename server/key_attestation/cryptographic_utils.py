@@ -8,6 +8,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.exceptions import InvalidSignature, InvalidTag
 from cryptography.hazmat.backends import default_backend
 from .root_certificates import ROOT_CERTIFICATES
+from . import crl_utils
 
 logger = logging.getLogger(__name__)
 
@@ -242,6 +243,21 @@ def verify_certificate_chain(certificates: list[x509.Certificate]) -> bool:
         raise ValueError("Untrusted root certificate.")
 
     logger.info("Root certificate is trusted.")
+
+    # CRL check
+    crl_data = crl_utils.get_crl()
+    if crl_data is None:
+        logger.error("Failed to get CRL data. Aborting certificate verification.")
+        raise ValueError("Could not retrieve Certificate Revocation List.")
+
+    for i in range(len(certificates)):
+        cert = certificates[i]
+        if not crl_utils.verify_certificate_with_crl(cert, crl_data):
+            # This part of the code will not be reached in the current implementation
+            # because verify_certificate_with_crl always returns True.
+            # However, the structure is here for future implementation.
+            logger.warning(f"Certificate with serial number {cert.serial_number} is revoked.")
+            raise ValueError(f"Certificate with serial number {cert.serial_number} is revoked.")
 
     if len(certificates) == 1:
         # A single certificate in the chain is considered "verified" in terms of its internal links.
