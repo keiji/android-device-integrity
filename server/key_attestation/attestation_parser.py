@@ -32,47 +32,90 @@ class SecurityLevel(univ.Enumerated):
         ('strongBox', 2)
     )
 
+OID_ANDROID_KEY_ATTESTATION = x509.ObjectIdentifier('1.3.6.1.4.1.11129.2.1.17')
+
+TAG_PURPOSE = 1
+TAG_ALGORITHM = 2
+TAG_KEY_SIZE = 3
+TAG_DIGEST = 5
+TAG_PADDING = 6
+TAG_EC_CURVE = 10
+TAG_RSA_PUBLIC_EXPONENT = 200
+TAG_MGF_DIGEST = 203
+TAG_ROLLBACK_RESISTANCE = 303
+TAG_EARLY_BOOT_ONLY = 305
+TAG_ACTIVE_DATETIME = 400
+TAG_ORIGINATION_EXPIRE_DATETIME = 401
+TAG_USAGE_EXPIRE_DATETIME = 402
+TAG_USAGE_COUNT_LIMIT = 405
+TAG_NO_AUTH_REQUIRED = 503
+TAG_USER_AUTH_TYPE = 504
+TAG_AUTH_TIMEOUT = 505
+TAG_ALLOW_WHILE_ON_BODY = 506
+TAG_TRUSTED_USER_PRESENCE_REQUIRED = 507
+TAG_TRUSTED_CONFIRMATION_REQUIRED = 508
+TAG_UNLOCKED_DEVICE_REQUIRED = 509
+TAG_CREATION_DATETIME = 701
+TAG_ORIGIN = 702
+TAG_ROOT_OF_TRUST = 704
+TAG_OS_VERSION = 705
+TAG_OS_PATCH_LEVEL = 706
+TAG_ATTESTATION_APPLICATION_ID = 709
+TAG_ATTESTATION_ID_BRAND = 710
+TAG_ATTESTATION_ID_DEVICE = 711
+TAG_ATTESTATION_ID_PRODUCT = 712
+TAG_ATTESTATION_ID_SERIAL = 713
+TAG_ATTESTATION_ID_IMEI = 714
+TAG_ATTESTATION_ID_MEID = 715
+TAG_ATTESTATION_ID_MANUFACTURER = 716
+TAG_ATTESTATION_ID_MODEL = 717
+TAG_VENDOR_PATCH_LEVEL = 718
+TAG_BOOT_PATCH_LEVEL = 719
+TAG_DEVICE_UNIQUE_ATTESTATION = 720
+TAG_ATTESTATION_ID_SECOND_IMEI = 723
+TAG_MODULE_HASH = 724
+
 class AuthorizationList(univ.Sequence):
     componentType = namedtype.NamedTypes(
-        namedtype.OptionalNamedType('purpose', univ.SetOf(componentType=univ.Integer()).subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 1))),
-        namedtype.OptionalNamedType('algorithm', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 2))),
-        namedtype.OptionalNamedType('keySize', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 3))),
-        namedtype.OptionalNamedType('digest', univ.SetOf(componentType=univ.Integer()).subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 5))),
-        namedtype.OptionalNamedType('padding', univ.SetOf(componentType=univ.Integer()).subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 6))),
-        namedtype.OptionalNamedType('ecCurve', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 10))),
-        namedtype.OptionalNamedType('rsaPublicExponent', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 200))),
-        namedtype.OptionalNamedType('mgfDigest', univ.SetOf(componentType=univ.Integer()).subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 203))),
-        namedtype.OptionalNamedType('rollbackResistance', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 303))),
-        namedtype.OptionalNamedType('earlyBootOnly', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 305))),
-        namedtype.OptionalNamedType('activeDateTime', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 400))),
-        namedtype.OptionalNamedType('originationExpireDateTime', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 401))),
-        namedtype.OptionalNamedType('usageExpireDateTime', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 402))),
-        namedtype.OptionalNamedType('usageCountLimit', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 405))),
-        namedtype.OptionalNamedType('noAuthRequired', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 503))),
-        namedtype.OptionalNamedType('userAuthType', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 504))),
-        namedtype.OptionalNamedType('authTimeout', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 505))),
-        namedtype.OptionalNamedType('allowWhileOnBody', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 506))),
-        namedtype.OptionalNamedType('trustedUserPresenceRequired', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 507))),
-        namedtype.OptionalNamedType('trustedConfirmationRequired', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 508))),
-        namedtype.OptionalNamedType('unlockedDeviceRequired', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 509))),
-        namedtype.OptionalNamedType('creationDateTime', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 701))),
-        namedtype.OptionalNamedType('origin', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 702))),
-        namedtype.OptionalNamedType('rootOfTrust', RootOfTrustAsn1().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 704))),
-        namedtype.OptionalNamedType('osVersion', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 705))),
-        namedtype.OptionalNamedType('osPatchLevel', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 706))),
-        namedtype.OptionalNamedType('attestationApplicationId', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 709))),
-        namedtype.OptionalNamedType('attestationIdBrand', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 710))),
-        namedtype.OptionalNamedType('attestationIdDevice', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 711))),
-        namedtype.OptionalNamedType('attestationIdProduct', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 712))),
-        namedtype.OptionalNamedType('attestationIdSerial', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 713))),
-        namedtype.OptionalNamedType('attestationIdImei', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 714))),
-        namedtype.OptionalNamedType('attestationIdMeid', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 715))),
-        namedtype.OptionalNamedType('attestationIdManufacturer', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 716))),
-        namedtype.OptionalNamedType('attestationIdModel', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 717))),
-        namedtype.OptionalNamedType('vendorPatchLevel', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 718))),
-        namedtype.OptionalNamedType('bootPatchLevel', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 719))),
-        namedtype.OptionalNamedType('deviceUniqueAttestation', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 720))),
-        namedtype.OptionalNamedType('moduleHash', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 724)))
+        namedtype.OptionalNamedType('purpose', univ.SetOf(componentType=univ.Integer()).subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_PURPOSE))),
+        namedtype.OptionalNamedType('algorithm', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_ALGORITHM))),
+        namedtype.OptionalNamedType('keySize', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_KEY_SIZE))),
+        namedtype.OptionalNamedType('digest', univ.SetOf(componentType=univ.Integer()).subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_DIGEST))),
+        namedtype.OptionalNamedType('padding', univ.SetOf(componentType=univ.Integer()).subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_PADDING))),
+        namedtype.OptionalNamedType('ecCurve', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_EC_CURVE))),
+        namedtype.OptionalNamedType('rsaPublicExponent', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_RSA_PUBLIC_EXPONENT))),
+        namedtype.OptionalNamedType('mgfDigest', univ.SetOf(componentType=univ.Integer()).subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_MGF_DIGEST))),
+        namedtype.OptionalNamedType('rollbackResistance', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, TAG_ROLLBACK_RESISTANCE))),
+        namedtype.OptionalNamedType('earlyBootOnly', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, TAG_EARLY_BOOT_ONLY))),
+        namedtype.OptionalNamedType('activeDateTime', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_ACTIVE_DATETIME))),
+        namedtype.OptionalNamedType('originationExpireDateTime', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_ORIGINATION_EXPIRE_DATETIME))),
+        namedtype.OptionalNamedType('usageExpireDateTime', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_USAGE_EXPIRE_DATETIME))),
+        namedtype.OptionalNamedType('usageCountLimit', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_USAGE_COUNT_LIMIT))),
+        namedtype.OptionalNamedType('noAuthRequired', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, TAG_NO_AUTH_REQUIRED))),
+        namedtype.OptionalNamedType('userAuthType', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_USER_AUTH_TYPE))),
+        namedtype.OptionalNamedType('authTimeout', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_AUTH_TIMEOUT))),
+        namedtype.OptionalNamedType('allowWhileOnBody', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, TAG_ALLOW_WHILE_ON_BODY))),
+        namedtype.OptionalNamedType('trustedUserPresenceRequired', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, TAG_TRUSTED_USER_PRESENCE_REQUIRED))),
+        namedtype.OptionalNamedType('trustedConfirmationRequired', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, TAG_TRUSTED_CONFIRMATION_REQUIRED))),
+        namedtype.OptionalNamedType('unlockedDeviceRequired', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, TAG_UNLOCKED_DEVICE_REQUIRED))),
+        namedtype.OptionalNamedType('creationDateTime', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_CREATION_DATETIME))),
+        namedtype.OptionalNamedType('origin', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_ORIGIN))),
+        namedtype.OptionalNamedType('rootOfTrust', RootOfTrustAsn1().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_ROOT_OF_TRUST))),
+        namedtype.OptionalNamedType('osVersion', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_OS_VERSION))),
+        namedtype.OptionalNamedType('osPatchLevel', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_OS_PATCH_LEVEL))),
+        namedtype.OptionalNamedType('attestationApplicationId', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_ATTESTATION_APPLICATION_ID))),
+        namedtype.OptionalNamedType('attestationIdBrand', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_ATTESTATION_ID_BRAND))),
+        namedtype.OptionalNamedType('attestationIdDevice', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_ATTESTATION_ID_DEVICE))),
+        namedtype.OptionalNamedType('attestationIdProduct', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_ATTESTATION_ID_PRODUCT))),
+        namedtype.OptionalNamedType('attestationIdSerial', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_ATTESTATION_ID_SERIAL))),
+        namedtype.OptionalNamedType('attestationIdImei', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_ATTESTATION_ID_IMEI))),
+        namedtype.OptionalNamedType('attestationIdMeid', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_ATTESTATION_ID_MEID))),
+        namedtype.OptionalNamedType('attestationIdManufacturer', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_ATTESTATION_ID_MANUFACTURER))),
+        namedtype.OptionalNamedType('attestationIdModel', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_ATTESTATION_ID_MODEL))),
+        namedtype.OptionalNamedType('vendorPatchLevel', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_VENDOR_PATCH_LEVEL))),
+        namedtype.OptionalNamedType('bootPatchLevel', univ.Integer().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_BOOT_PATCH_LEVEL))),
+        namedtype.OptionalNamedType('deviceUniqueAttestation', univ.Null().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, TAG_DEVICE_UNIQUE_ATTESTATION))),
+        namedtype.OptionalNamedType('moduleHash', univ.OctetString().subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, TAG_MODULE_HASH)))
     )
 
 class KeyDescriptionSchemaV4(univ.Sequence):
@@ -116,49 +159,6 @@ def _parse_root_of_trust_from_asn1_obj(decoded_rot_obj: RootOfTrustAsn1) -> dict
             'verified_boot_state': -1, 'verified_boot_hash': ""
         }
     return parsed_data
-
-OID_ANDROID_KEY_ATTESTATION = x509.ObjectIdentifier('1.3.6.1.4.1.11129.2.1.17')
-
-TAG_PURPOSE = 1
-TAG_ALGORITHM = 2
-TAG_KEY_SIZE = 3
-TAG_DIGEST = 5
-TAG_PADDING = 6
-TAG_EC_CURVE = 10
-TAG_RSA_PUBLIC_EXPONENT = 200
-TAG_MGF_DIGEST = 203
-TAG_ROLLBACK_RESISTANCE = 303
-TAG_EARLY_BOOT_ONLY = 305
-TAG_ACTIVE_DATETIME = 400
-TAG_ORIGINATION_EXPIRE_DATETIME = 401
-TAG_USAGE_EXPIRE_DATETIME = 402
-TAG_USAGE_COUNT_LIMIT = 405
-TAG_NO_AUTH_REQUIRED = 503
-TAG_USER_AUTH_TYPE = 504
-TAG_AUTH_TIMEOUT = 505
-TAG_ALLOW_WHILE_ON_BODY = 506
-TAG_TRUSTED_USER_PRESENCE_REQUIRED = 507
-TAG_TRUSTED_CONFIRMATION_REQUIRED = 508
-TAG_UNLOCKED_DEVICE_REQUIRED = 509
-TAG_CREATION_DATETIME = 701
-TAG_ORIGIN = 702
-TAG_ROOT_OF_TRUST = 704
-TAG_OS_VERSION = 705
-TAG_OS_PATCH_LEVEL = 706
-TAG_ATTESTATION_APPLICATION_ID = 709
-TAG_ATTESTATION_ID_BRAND = 710
-TAG_ATTESTATION_ID_DEVICE = 711
-TAG_ATTESTATION_ID_PRODUCT = 712
-TAG_ATTESTATION_ID_SERIAL = 713
-TAG_ATTESTATION_ID_IMEI = 714
-TAG_ATTESTATION_ID_MEID = 715
-TAG_ATTESTATION_ID_MANUFACTURER = 716
-TAG_ATTESTATION_ID_MODEL = 717
-TAG_VENDOR_PATCH_LEVEL = 718
-TAG_BOOT_PATCH_LEVEL = 719
-TAG_DEVICE_UNIQUE_ATTESTATION = 720
-TAG_ATTESTATION_ID_SECOND_IMEI = 723
-TAG_MODULE_HASH = 724
 
 def parse_attestation_application_id(attestation_application_id_bytes):
     try:
