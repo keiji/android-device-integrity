@@ -21,6 +21,58 @@ def base64url_decode(base64url_string):
     padding = '=' * (4 - (len(base64url_string) % 4))
     return base64.urlsafe_b64decode(base64url_string + padding)
 
+def extract_certificate_details(cert: x509.Certificate) -> dict:
+    """
+    Extracts specified details from a single x509.Certificate object.
+    """
+    details = {}
+    try:
+        # Basic certificate information
+        details['name'] = cert.subject.rfc4514_string()
+        details['serial_number'] = f'{cert.serial_number:x}'
+        details['valid_from'] = cert.not_valid_before_utc.isoformat().replace('+00:00', 'Z')
+        details['valid_to'] = cert.not_valid_after_utc.isoformat().replace('+00:00', 'Z')
+        details['signature_type_sn'] = cert.signature_algorithm_oid.name
+        details['signature_type_ln'] = cert.signature_algorithm_oid.dotted_string
+
+        # Extract extensions
+        try:
+            ski = cert.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
+            details['subject_key_identifier'] = ski.value.digest.hex()
+        except x509.ExtensionNotFound:
+            details['subject_key_identifier'] = None
+
+        try:
+            aki = cert.extensions.get_extension_for_class(x509.AuthorityKeyIdentifier)
+            if aki.value.key_identifier is not None:
+                details['authority_key_identifier'] = aki.value.key_identifier.hex()
+            else:
+                details['authority_key_identifier'] = None
+        except x509.ExtensionNotFound:
+            details['authority_key_identifier'] = None
+
+        try:
+            key_usage_ext = cert.extensions.get_extension_for_class(x509.KeyUsage)
+            details['key_usage'] = {
+                'digital_signature': key_usage_ext.value.digital_signature,
+                'content_commitment': key_usage_ext.value.content_commitment,
+                'key_encipherment': key_usage_ext.value.key_encipherment,
+                'data_encipherment': key_usage_ext.value.data_encipherment,
+                'key_agreement': key_usage_ext.value.key_agreement,
+                'key_cert_sign': key_usage_ext.value.key_cert_sign,
+                'crl_sign': key_usage_ext.value.crl_sign,
+                'encipher_only': key_usage_ext.value.encipher_only,
+                'decipher_only': key_usage_ext.value.decipher_only,
+            }
+        except x509.ExtensionNotFound:
+            details['key_usage'] = None
+
+    except Exception as e:
+        logger.error(f"Failed to extract details from certificate (SN: {cert.serial_number}): {e}", exc_info=True)
+        return details
+
+    return details
+
 def decode_certificate_chain(certificate_chain_b64: list[str]) -> list[x509.Certificate]:
     """
     Decodes a list of Base64 encoded certificate strings into a list of X509Certificate objects.
