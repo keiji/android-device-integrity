@@ -172,15 +172,19 @@ class KeyAttestationViewModel @Inject constructor(
             val totalSteps = (delayMs / PlayIntegrityProgressConstants.PROGRESS_UPDATE_INTERVAL_MS).toInt()
             var currentStep = 0
 
+            _uiState.update {
+                it.copy(
+                    status = "Waiting for ${delayMs / 1000} sec..."
+                )
+            }
+
             while (currentStep < totalSteps) {
                 delay(PlayIntegrityProgressConstants.PROGRESS_UPDATE_INTERVAL_MS)
                 currentStep++
                 val newProgress = PlayIntegrityProgressConstants.FULL_PROGRESS - (currentStep.toFloat() / totalSteps.toFloat())
-                val waitingTimeSec = (delayMs - (currentStep * PlayIntegrityProgressConstants.PROGRESS_UPDATE_INTERVAL_MS)) / 1000.0
                 _uiState.update { currentState ->
                     currentState.copy(
                         progressValue = newProgress.coerceAtLeast(PlayIntegrityProgressConstants.NO_PROGRESS),
-                        status = "Waiting for ${String.format("%.1f", waitingTimeSec)}s..."
                     )
                 }
             }
@@ -343,15 +347,19 @@ class KeyAttestationViewModel @Inject constructor(
             val totalSteps = (delayMs / PlayIntegrityProgressConstants.PROGRESS_UPDATE_INTERVAL_MS).toInt()
             var currentStep = 0
 
+            _uiState.update {
+                it.copy(
+                    status = "Waiting for ${delayMs / 1000} sec..."
+                )
+            }
+
             while (currentStep < totalSteps) {
                 delay(PlayIntegrityProgressConstants.PROGRESS_UPDATE_INTERVAL_MS)
                 currentStep++
                 val newProgress = PlayIntegrityProgressConstants.FULL_PROGRESS - (currentStep.toFloat() / totalSteps.toFloat())
-                val waitingTimeSec = (delayMs - (currentStep * PlayIntegrityProgressConstants.PROGRESS_UPDATE_INTERVAL_MS)) / 1000.0
                 _uiState.update { currentState ->
                     currentState.copy(
                         progressValue = newProgress.coerceAtLeast(PlayIntegrityProgressConstants.NO_PROGRESS),
-                        status = "Waiting for ${String.format("%.1f", waitingTimeSec)}s..."
                     )
                 }
             }
