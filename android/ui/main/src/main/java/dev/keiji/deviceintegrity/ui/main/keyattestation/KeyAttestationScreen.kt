@@ -43,7 +43,7 @@ fun KeyAttestationScreen(
     uiState: KeyAttestationUiState, // uiState collected and passed from MainActivity
     onSelectedKeyTypeChange: (CryptoAlgorithm) -> Unit,
     onPreferStrongBoxChanged: (Boolean) -> Unit,
-    onFetchNonceOrSaltChallenge: () -> Unit, // Renamed
+    onFetchNonceChallenge: () -> Unit,
     onGenerateKeyPair: () -> Unit,
     onRequestVerifyKeyAttestation: () -> Unit,
     onClickCopy: () -> Unit,
@@ -122,11 +122,11 @@ fun KeyAttestationScreen(
         Text(text = step2Label)
         Spacer(modifier = Modifier.height(12.dp))
         Button(
-            onClick = onFetchNonceOrSaltChallenge, // Use renamed function
+            onClick = onFetchNonceChallenge,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(ButtonHeight),
-            enabled = uiState.isStep2FetchNonceOrSaltChallengeEnabled // Use new UiState property
+            enabled = uiState.isStep2FetchNonceChallengeEnabled
         ) {
             Text(text = step2ButtonText)
         }
@@ -247,7 +247,7 @@ private fun KeyAttestationScreenPreview() {
     )
     KeyAttestationScreen(
         uiState = KeyAttestationUiState(
-            nonce = "PREVIEW_NONCE_OR_SALT_67890",
+            nonce = "PREVIEW_NONCE_12345",
             challenge = "PREVIEW_CHALLENGE_ABCDE",
             selectedKeyType = CryptoAlgorithm.RSA, // Example: RSA selected
             status = "Verification successful.",
@@ -258,7 +258,7 @@ private fun KeyAttestationScreenPreview() {
         ),
         onSelectedKeyTypeChange = { System.out.println("Preview: Key type changed to ${it.label}") },
         onPreferStrongBoxChanged = { System.out.println("Preview: Prefer StrongBox changed to $it") },
-        onFetchNonceOrSaltChallenge = { System.out.println("Preview: Fetch Nonce/Salt/Challenge clicked") }, // Renamed
+        onFetchNonceChallenge = { System.out.println("Preview: Fetch Nonce/Challenge clicked") },
         onGenerateKeyPair = { System.out.println("Preview: Generate KeyPair clicked") },
         onRequestVerifyKeyAttestation = { System.out.println("Preview: Request Verify KeyAttestation clicked") },
         onClickCopy = { System.out.println("Preview: onClickCopy called") },

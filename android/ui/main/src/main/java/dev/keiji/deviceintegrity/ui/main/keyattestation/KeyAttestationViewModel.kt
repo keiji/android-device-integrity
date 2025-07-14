@@ -130,13 +130,13 @@ class KeyAttestationViewModel @Inject constructor(
         }
     }
 
-    fun fetchNonceOrSaltChallenge() {
+    fun fetchNonceChallenge() {
         viewModelScope.launch {
             _uiState.value.generatedKeyPairData?.keyAlias?.let { alias ->
                 try {
                     keyPairRepository.removeKeyPair(alias)
                 } catch (e: Exception) {
-                    Log.e("KeyAttestationViewModel", "Failed to delete key pair on fetching nonce/salt", e)
+                    Log.e("KeyAttestationViewModel", "Failed to delete key pair on fetching nonce", e)
                 }
             }
 
@@ -226,7 +226,7 @@ class KeyAttestationViewModel @Inject constructor(
                     }
                 }
             } catch (e: ServerException) {
-                Log.w("KeyAttestationViewModel", "ServerException fetching nonce/salt/challenge", e)
+                Log.w("KeyAttestationViewModel", "ServerException fetching nonce/challenge", e)
                 val message = e.errorMessage ?: e.localizedMessage ?: "Unknown server error"
                 _uiState.update {
                     it.copy(
@@ -236,7 +236,7 @@ class KeyAttestationViewModel @Inject constructor(
                     )
                 }
             } catch (e: IOException) {
-                Log.w("KeyAttestationViewModel", "IOException fetching nonce/salt/challenge", e)
+                Log.w("KeyAttestationViewModel", "IOException fetching nonce/challenge", e)
                 _uiState.update {
                     it.copy(
                         status = "$failureMessagePrefix: Network Error: ${e.localizedMessage}",
@@ -245,7 +245,7 @@ class KeyAttestationViewModel @Inject constructor(
                     )
                 }
             } catch (e: Exception) {
-                Log.e("KeyAttestationViewModel", "Exception fetching nonce/salt/challenge", e)
+                Log.e("KeyAttestationViewModel", "Exception fetching nonce/challenge", e)
                 _uiState.update {
                     it.copy(
                         status = "$failureMessagePrefix: ${e.localizedMessage}",
@@ -374,7 +374,7 @@ class KeyAttestationViewModel @Inject constructor(
 
             val currentSessionId = uiState.value.sessionId
             val currentKeyPairData = uiState.value.generatedKeyPairData
-            val serverNonceB64Url = uiState.value.nonce // Renamed from nonceOrSalt
+            val serverNonceB64Url = uiState.value.nonce
             val serverPublicKeyB64Url = uiState.value.serverPublicKey
             val challengeB64Url = uiState.value.challenge
 
