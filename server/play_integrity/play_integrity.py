@@ -212,6 +212,15 @@ def compare_nonces(api_nonce: str, stored_nonce: str) -> bool:
         logger.error(f"Error during nonce canonicalization: {e}. Comparing directly.", exc_info=True)
         return api_nonce == stored_nonce
 
+@app.route('/v1/revision', methods=['GET'])
+def get_revision():
+    """
+    Returns the commit hash of the running revision.
+    """
+    commit_hash = os.environ.get('COMMIT_HASH', 'unknown')
+    return jsonify({'revision': commit_hash})
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port, debug=True)

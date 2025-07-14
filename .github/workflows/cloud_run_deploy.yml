@@ -63,6 +63,7 @@ jobs:
             --region "${{ env.GCP_CLOUD_RUN_REGION }}" \
             --project "${{ env.GCP_PROJECT_ID }}" \
             --allow-unauthenticated \
+            --set-env-vars "COMMIT_HASH=${{ github.sha }}" \
             --quiet
 
   deploy_play_integrity:
@@ -103,4 +104,5 @@ jobs:
             --region "${{ env.GCP_CLOUD_RUN_REGION }}" \
             --project "${{ env.GCP_PROJECT_ID }}" \
             --allow-unauthenticated \
+            --set-env-vars "COMMIT_HASH=${{ github.sha }}" \
             --quiet
