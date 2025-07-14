@@ -16,8 +16,10 @@ import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
 import dev.keiji.deviceintegrity.ui.main.common.DEBUG_VERIFY_TOKEN_DELAY_MS
 import dev.keiji.deviceintegrity.ui.main.common.VERIFY_TOKEN_DELAY_MS
-import dev.keiji.deviceintegrity.ui.common.InfoItem // Correctly at top
-import dev.keiji.deviceintegrity.ui.main.util.DateFormatUtil // Correctly at top
+import dev.keiji.deviceintegrity.ui.common.InfoItem
+import dev.keiji.deviceintegrity.ui.main.util.DateFormatUtil
+import dev.keiji.deviceintegrity.ui.common.ProgressConstants
+import dev.keiji.deviceintegrity.ui.common.InfoItemFormatter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

@@ -3,6 +3,8 @@ package dev.keiji.deviceintegrity.ui.main.playintegrity
 import dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload
 import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfo
 import dev.keiji.deviceintegrity.ui.common.InfoItem
+import dev.keiji.deviceintegrity.ui.common.ProgressConstants
+import dev.keiji.deviceintegrity.ui.common.ProgressConstants
 
 data class StandardPlayIntegrityUiState(
     val contentBinding: String = "",

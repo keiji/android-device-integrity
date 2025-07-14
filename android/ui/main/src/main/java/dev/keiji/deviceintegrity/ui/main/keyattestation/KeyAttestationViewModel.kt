@@ -19,8 +19,9 @@ import dev.keiji.deviceintegrity.repository.contract.KeyAttestationRepository
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
 import dev.keiji.deviceintegrity.ui.common.InfoItem
 import dev.keiji.deviceintegrity.ui.main.common.KEY_ATTESTATION_DELAY_MS
-import dev.keiji.deviceintegrity.ui.main.playintegrity.ProgressConstants
+import dev.keiji.deviceintegrity.ui.common.ProgressConstants
 import dev.keiji.deviceintegrity.ui.util.Base64Utils
+import dev.keiji.deviceintegrity.ui.common.InfoItemFormatter
 import dev.keiji.deviceintegrity.ui.main.util.DateFormatUtil
 import dev.keiji.deviceintegrity.ui.main.util.KeyUtils
 import kotlinx.coroutines.Dispatchers

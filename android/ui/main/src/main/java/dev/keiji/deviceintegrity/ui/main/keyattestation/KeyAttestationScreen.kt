@@ -34,7 +34,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.keiji.deviceintegrity.ui.common.InfoItem
 import dev.keiji.deviceintegrity.ui.common.InfoItemContent
-import dev.keiji.deviceintegrity.ui.main.playintegrity.ProgressConstants
+import dev.keiji.deviceintegrity.ui.common.ProgressConstants
 import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
 
 @OptIn(ExperimentalMaterial3Api::class)

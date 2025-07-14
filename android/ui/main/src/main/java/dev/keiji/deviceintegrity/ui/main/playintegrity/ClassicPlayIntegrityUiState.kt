@@ -3,7 +3,7 @@ package dev.keiji.deviceintegrity.ui.main.playintegrity
 import dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload
 import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfo
 import dev.keiji.deviceintegrity.ui.common.InfoItem
-import dev.keiji.deviceintegrity.ui.main.playintegrity.ProgressConstants // Import statement added
+import dev.keiji.deviceintegrity.ui.common.ProgressConstants
 
 data class ClassicPlayIntegrityUiState(
     val nonce: String = "",

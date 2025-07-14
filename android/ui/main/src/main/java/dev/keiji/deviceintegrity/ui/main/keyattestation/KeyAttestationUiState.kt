@@ -2,7 +2,7 @@ package dev.keiji.deviceintegrity.ui.main.keyattestation
 
 import dev.keiji.deviceintegrity.repository.contract.KeyPairData
 import dev.keiji.deviceintegrity.ui.common.InfoItem
-import dev.keiji.deviceintegrity.ui.main.playintegrity.ProgressConstants
+import dev.keiji.deviceintegrity.ui.common.ProgressConstants
 
 data class KeyAttestationUiState(
     val nonce: String = "",
