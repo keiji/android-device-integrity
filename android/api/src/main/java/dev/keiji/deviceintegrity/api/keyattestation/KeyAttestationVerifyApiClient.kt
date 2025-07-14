@@ -1,15 +1,14 @@
 package dev.keiji.deviceintegrity.api.keyattestation
 
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
 
 interface KeyAttestationVerifyApiClient {
 
     // Ensure this path matches the server-side endpoint path
-    @POST("v1/prepare/signature")
-    suspend fun prepareSignature(
-        @Body requestBody: PrepareSignatureRequest
-    ): PrepareResponse
+    @GET("v1/prepare/signature")
+    suspend fun prepareSignature(): PrepareResponse
 
     // Ensure this path matches the server-side endpoint path
     @POST("v1/verify/signature")
@@ -17,10 +16,8 @@ interface KeyAttestationVerifyApiClient {
         @Body requestBody: VerifySignatureRequest
     ): VerifySignatureResponse
 
-    @POST("v1/prepare/agreement")
-    suspend fun prepareAgreement(
-        @Body requestBody: PrepareAgreementRequest
-    ): PrepareAgreementResponse
+    @GET("v1/prepare/agreement")
+    suspend fun prepareAgreement(): PrepareAgreementResponse
 
     @POST("v1/verify/agreement")
     suspend fun verifyAgreement(

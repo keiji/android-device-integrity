@@ -197,15 +197,12 @@ class KeyAttestationViewModel @Inject constructor(
                 )
             }
 
-            val newSessionId = UUID.randomUUID().toString()
-            _uiState.update { it.copy(sessionId = newSessionId) }
-
             try {
                 if (_uiState.value.selectedKeyType == CryptoAlgorithm.ECDH) {
-                    val request = PrepareAgreementRequest(sessionId = newSessionId)
-                    val response = keyAttestationRepository.prepareAgreement(request)
+                    val response = keyAttestationRepository.prepareAgreement()
                     _uiState.update {
                         it.copy(
+                            sessionId = response.sessionId,
                             nonce = response.nonceBase64UrlEncoded,
                             challenge = response.challengeBase64UrlEncoded,
                             serverPublicKey = response.publicKeyBase64UrlEncoded,
@@ -214,10 +211,10 @@ class KeyAttestationViewModel @Inject constructor(
                         )
                     }
                 } else {
-                    val request = PrepareSignatureRequest(sessionId = newSessionId)
-                    val response = keyAttestationRepository.prepareSignature(request)
+                    val response = keyAttestationRepository.prepareSignature()
                     _uiState.update {
                         it.copy(
+                            sessionId = response.sessionId,
                             nonce = response.nonceBase64UrlEncoded,
                             challenge = response.challengeBase64UrlEncoded,
                             status = successMessage,

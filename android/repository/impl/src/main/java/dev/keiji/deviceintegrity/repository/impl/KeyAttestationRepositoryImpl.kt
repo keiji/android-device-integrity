@@ -2,9 +2,7 @@ package dev.keiji.deviceintegrity.repository.impl
 
 import android.util.Log
 import dev.keiji.deviceintegrity.api.keyattestation.KeyAttestationVerifyApiClient
-import dev.keiji.deviceintegrity.api.keyattestation.PrepareAgreementRequest
 import dev.keiji.deviceintegrity.api.keyattestation.PrepareAgreementResponse
-import dev.keiji.deviceintegrity.api.keyattestation.PrepareSignatureRequest
 import dev.keiji.deviceintegrity.api.keyattestation.PrepareResponse
 import dev.keiji.deviceintegrity.api.keyattestation.VerifyAgreementRequest
 import dev.keiji.deviceintegrity.api.keyattestation.VerifyAgreementResponse // Added missing import
@@ -26,11 +24,9 @@ class KeyAttestationRepositoryImpl @Inject constructor(
     }
 
     @Throws(ServerException::class, IOException::class)
-    override suspend fun prepareSignature(
-        requestBody: PrepareSignatureRequest
-    ): PrepareResponse {
+    override suspend fun prepareSignature(): PrepareResponse {
         try {
-            return apiClient.prepareSignature(requestBody)
+            return apiClient.prepareSignature()
         } catch (e: HttpException) {
             val errorBody = e.response()?.errorBody()?.string()
             val errorMessage = parseErrorMessage(errorBody)
@@ -66,11 +62,9 @@ class KeyAttestationRepositoryImpl @Inject constructor(
     }
 
     @Throws(ServerException::class, IOException::class)
-    override suspend fun prepareAgreement(
-        requestBody: PrepareAgreementRequest
-    ): PrepareAgreementResponse {
+    override suspend fun prepareAgreement(): PrepareAgreementResponse {
         try {
-            return apiClient.prepareAgreement(requestBody)
+            return apiClient.prepareAgreement()
         } catch (e: HttpException) {
             val errorBody = e.response()?.errorBody()?.string()
             val errorMessage = parseErrorMessage(errorBody)
