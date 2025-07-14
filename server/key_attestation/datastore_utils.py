@@ -32,7 +32,7 @@ def store_key_attestation_session(datastore_client, session_id: str, nonce_encod
         if datastore_client.get(key):
             # Entity already exists, so this is a collision.
             # Raise a specific exception to be caught by the caller's retry loop.
-            from google.cloud.datastore.exceptions import Conflict
+            from google.cloud.exceptions import Conflict
             raise Conflict(f'Session ID {session_id} already exists.')
         datastore_client.put(entity)
         logger.info(f'Stored key attestation session for session_id: {session_id}')
@@ -66,7 +66,7 @@ def store_agreement_key_attestation_session(datastore_client, session_id: str, n
 
     with datastore_client.transaction():
         if datastore_client.get(key):
-            from google.cloud.datastore.exceptions import Conflict
+            from google.cloud.exceptions import Conflict
             raise Conflict(f'Session ID {session_id} already exists.')
         datastore_client.put(entity)
         logger.info(f'Stored agreement key attestation session for session_id: {session_id}')

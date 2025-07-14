@@ -6,7 +6,7 @@ from unittest.mock import patch, MagicMock
 
 from server.key_attestation.key_attestation import app
 from server.key_attestation.cryptographic_utils import base64url_encode, base64url_decode
-from google.cloud import datastore
+from google.cloud.exceptions import Conflict
 
 class KeyAttestationPreparationTest(unittest.TestCase):
     def setUp(self):
@@ -50,7 +50,7 @@ class KeyAttestationPreparationTest(unittest.TestCase):
     @patch('server.key_attestation.key_attestation.store_key_attestation_session')
     def test_prepare_signature_session_id_collision(self, mock_store_key_attestation_session):
         # Simulate a session ID collision on the first attempt
-        mock_store_key_attestation_session.side_effect = [datastore.exceptions.Conflict('Collision'), None]
+        mock_store_key_attestation_session.side_effect = [Conflict('Collision'), None]
 
         response = self.app.get('/v1/prepare/signature')
         self.assertEqual(response.status_code, 200)
@@ -132,7 +132,7 @@ class KeyAttestationAgreementTest(unittest.TestCase):
         nonce = 'test_nonce'
         challenge = 'test_challenge'
         server_private_key = 'test_server_private_key'
-        encrypted_.py
+        encrypted_data = 'test_encrypted_data'
         salt = 'test_salt'
         certificate_chain = ['cert1', 'cert2']
         device_info = {'brand': 'Google', 'model': 'Pixel 7'}
