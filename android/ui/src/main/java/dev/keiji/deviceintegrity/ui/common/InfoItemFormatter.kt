@@ -1,7 +1,5 @@
 package dev.keiji.deviceintegrity.ui.common
 
-import dev.keiji.deviceintegrity.ui.common.InfoItem
-
 object InfoItemFormatter {
     fun formatInfoItems(items: List<InfoItem>): String {
         return items.joinToString("\n") { item ->

@@ -133,7 +133,11 @@ fun StandardPlayIntegrityContent(
             status = statusToDisplay,
             isVerifiedSuccessfully = uiState.resultInfoItems.isNotEmpty() && uiState.errorMessages.isEmpty() && statusToDisplay.contains("complete", ignoreCase = true) && !statusToDisplay.contains("Failed", ignoreCase = true),
             infoItems = uiState.resultInfoItems,
-            deviceRecognitionVerdict = uiState.serverVerificationPayload?.playIntegrityResponse?.tokenPayloadExternal?.deviceIntegrity?.deviceRecognitionVerdict ?: emptyList(),
+            headContent = {
+                uiState.serverVerificationPayload?.playIntegrityResponse?.tokenPayloadExternal?.deviceIntegrity?.deviceRecognitionVerdict?.let {
+                    DeviceIntegrityResults(deviceRecognitionVerdict = it)
+                }
+            },
             onCopyClick = {
                 val textToCopy = InfoItemFormatter.formatInfoItems(uiState.resultInfoItems)
                 clipboardManager.setText(AnnotatedString(textToCopy))

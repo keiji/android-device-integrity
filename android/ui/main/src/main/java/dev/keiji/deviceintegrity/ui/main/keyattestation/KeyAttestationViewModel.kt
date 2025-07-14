@@ -22,8 +22,8 @@ import dev.keiji.deviceintegrity.ui.main.common.KEY_ATTESTATION_DELAY_MS
 import dev.keiji.deviceintegrity.ui.common.ProgressConstants
 import dev.keiji.deviceintegrity.ui.util.Base64Utils
 import dev.keiji.deviceintegrity.ui.common.InfoItemFormatter
-import dev.keiji.deviceintegrity.ui.main.util.DateFormatUtil
-import dev.keiji.deviceintegrity.ui.main.util.KeyUtils
+import dev.keiji.deviceintegrity.ui.util.DateFormatUtil
+import dev.keiji.deviceintegrity.ui.util.KeyUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
