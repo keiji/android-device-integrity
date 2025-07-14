@@ -27,8 +27,8 @@ data class KeyAttestationUiState(
     // Step 1 is now Key Selection, enabled if not loading
     val isStep1KeySelectionEnabled: Boolean get() = !isLoading
 
-    // Step 2 is Fetch Nonce/Salt/Challenge, enabled if not loading and a key type is selected (always true by default)
-    val isStep2FetchNonceOrSaltChallengeEnabled: Boolean get() = !isLoading
+    // Step 2 is Fetch Nonce/Challenge, enabled if not loading and a key type is selected (always true by default)
+    val isStep2FetchNonceChallengeEnabled: Boolean get() = !isLoading
 
     // Step 3 is Generate KeyPair, enabled if not loading, and nonce and challenge are present
     val isStep3GenerateKeyPairEnabled: Boolean get() = !isLoading && nonce.isNotEmpty() && challenge.isNotEmpty()
