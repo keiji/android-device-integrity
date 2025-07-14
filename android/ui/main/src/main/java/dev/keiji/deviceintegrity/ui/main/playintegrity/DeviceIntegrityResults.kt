@@ -38,7 +38,9 @@ fun DeviceIntegrityResults(
         Spacer(modifier = Modifier.height(8.dp))
 
         integrityLevels.forEach { level ->
-            val text = level.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
+            val text = level.split("_").joinToString(" ") { it ->
+                it.lowercase().replaceFirstChar { it.uppercase() }
+            }
             val hasLevel = deviceRecognitionVerdict.contains(level)
             val iconRes =
                 if (hasLevel) R.drawable.shield_48dp_000000_fill1_wght400_grad0_opsz48 else R.drawable.gpp_bad_48dp_000000_fill0_wght400_grad0_opsz48
