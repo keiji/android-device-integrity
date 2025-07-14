@@ -92,6 +92,11 @@ fun InfoItemContent(
                         .padding(12.dp)
                 ) {
                     infoItems.forEachIndexed { index, item ->
+                        if (item == InfoItem.DIVIDER) {
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                            return@forEachIndexed
+                        }
+
                         val textStyle = if (item.isHeader) {
                             MaterialTheme.typography.titleSmall
                         } else {
@@ -132,7 +137,7 @@ fun InfoItemContent(
 
                                     SelectionContainer {
                                         Text(
-                                            text = item.value,
+                                            text = item.value ?: "",
                                             style = textStyle,
                                         )
                                     }

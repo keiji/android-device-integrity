@@ -130,8 +130,8 @@ class StandardPlayIntegrityViewModel @Inject constructor(
             items.add(InfoItem("Security Info (Reported by Client)", "", isHeader = true, indentLevel = 0))
             items.add(InfoItem("Device Lock Enabled", si.isDeviceLockEnabled?.toString() ?: "N/A", indentLevel = 1))
             items.add(InfoItem("Biometrics Enabled", si.isBiometricsEnabled?.toString() ?: "N/A", indentLevel = 1))
-            items.add(InfoItem("Has Class3 Authenticator", si.hasClass3Authenticator?.toString() ?: "N/A", indentLevel = 1))
-            items.add(InfoItem("Has Strongbox", si.hasStrongbox?.toString() ?: "N/A", indentLevel = 1))
+            items.add(InfoItem("Class 3 Authenticator", si.hasClass3Authenticator?.toString() ?: "N/A", indentLevel = 1))
+            items.add(InfoItem("StrongBox", si.hasStrongbox?.toString() ?: "N/A", indentLevel = 1))
         }
 
         payload.googlePlayDeveloperServiceInfo?.let { gps ->

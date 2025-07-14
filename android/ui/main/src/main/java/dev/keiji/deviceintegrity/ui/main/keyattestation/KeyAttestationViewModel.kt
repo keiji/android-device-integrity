@@ -637,10 +637,10 @@ class KeyAttestationViewModel @Inject constructor(
         securityInfo ?: return emptyList()
         val items = mutableListOf<InfoItem>()
         items.add(InfoItem("Security Info (Reported by Client)", "", isHeader = true, indentLevel = 0))
-        items.add(InfoItem("Is Device Lock Enabled", securityInfo.isDeviceLockEnabled.toString(), indentLevel = 1))
-        items.add(InfoItem("Is Biometrics Enabled", securityInfo.isBiometricsEnabled.toString(), indentLevel = 1))
-        items.add(InfoItem("Has Class3 Authenticator", securityInfo.hasClass3Authenticator.toString(), indentLevel = 1))
-        items.add(InfoItem("Has Strongbox", securityInfo.hasStrongbox.toString(), indentLevel = 1))
+        items.add(InfoItem("Device Lock Enabled", securityInfo.isDeviceLockEnabled.toString(), indentLevel = 1))
+        items.add(InfoItem("Biometrics Enabled", securityInfo.isBiometricsEnabled.toString(), indentLevel = 1))
+        items.add(InfoItem("Class 3 Authenticator", securityInfo.hasClass3Authenticator.toString(), indentLevel = 1))
+        items.add(InfoItem("StrongBox", securityInfo.hasStrongbox.toString(), indentLevel = 1))
         return items
     }
 
@@ -648,8 +648,11 @@ class KeyAttestationViewModel @Inject constructor(
         val items = mutableListOf<InfoItem>()
 
         items.add(InfoItem("Session ID", response.sessionId))
-        items.add(InfoItem("Is Verified", response.isVerified.toString()))
-        response.reason?.let { items.add(InfoItem("Reason", it)) }
+        items.add(InfoItem("Verified", response.isVerified.toString()))
+        response.reason?.let {
+            items.add(InfoItem("Reason", it))
+            items.add(InfoItem.DIVIDER)
+        }
 
         response.attestationInfo?.let { attestationInfo ->
             items.add(InfoItem("Attestation Version", attestationInfo.attestationVersion.toString()))

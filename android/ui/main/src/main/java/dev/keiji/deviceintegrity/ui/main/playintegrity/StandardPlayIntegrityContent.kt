@@ -58,7 +58,7 @@ fun StandardPlayIntegrityContent(
         verticalArrangement = Arrangement.Top
     ) {
         Text(text = "Step 1. 検証に使うコンテンツを設定")
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         OutlinedTextField(
             value = uiState.contentBinding,
             onValueChange = { onContentBindingChange(it) },
@@ -68,10 +68,9 @@ fun StandardPlayIntegrityContent(
             maxLines = 5
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
+        Spacer(modifier = Modifier.height(24.dp))
         Text(text = "Step 2. トークンを取得")
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         Button(
             onClick = { onRequestToken() },
             enabled = uiState.isRequestTokenButtonEnabled,
@@ -87,10 +86,9 @@ fun StandardPlayIntegrityContent(
             Text(text = "requestHash: ${uiState.requestHashValue}")
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
+        Spacer(modifier = Modifier.height(24.dp))
         Text(text = "Step 3. トークンを検証")
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         Button(
             onClick = { onRequestVerify() },
             enabled = uiState.isVerifyTokenButtonEnabled,
