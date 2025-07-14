@@ -73,7 +73,6 @@ fun KeyAttestationScreen(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Top
     ) {
-        Spacer(modifier = Modifier.height(24.dp))
         Text(text = "Step 1. 鍵のアルゴリズムを選択")
         Spacer(modifier = Modifier.height(12.dp))
         Box(modifier = Modifier.fillMaxWidth()) {
