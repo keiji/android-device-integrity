@@ -7,10 +7,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,28 +31,40 @@ fun DeviceIntegrityResults(
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Text(
             text = "Device Integrity",
-            fontSize = 18.sp, // Slightly larger font size
+            style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = 4.dp)
         )
 
-        integrityLevels.forEach { level ->
-            val hasLevel = deviceRecognitionVerdict.contains(level)
-            val iconRes = if (hasLevel) R.drawable.ic_shield_fill else R.drawable.ic_gpp_bad
-            val text = level.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
+        Spacer(modifier = Modifier.height(8.dp))
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
+        integrityLevels.forEach { level ->
+            val text = level.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
+            val hasLevel = deviceRecognitionVerdict.contains(level)
+            val iconRes =
+                if (hasLevel) R.drawable.shield_48dp_000000_fill1_wght400_grad0_opsz48 else R.drawable.gpp_bad_48dp_000000_fill0_wght400_grad0_opsz48
+            val alpha = if (hasLevel) 1f else 0.5f
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(start = 4.dp)
+            ) {
                 Icon(
                     painter = painterResource(id = iconRes),
                     contentDescription = text,
-                    modifier = Modifier.size(28.dp) // Slightly larger icon size
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .alpha(alpha)
+                        .size(36.dp)
                 )
                 Text(
                     text = text,
-                    fontSize = 16.sp, // Slightly larger font size
-                    modifier = Modifier.padding(start = 8.dp)
+                    fontSize = 20.sp,
+                    modifier = Modifier
+                        .alpha(alpha)
+                        .padding(start = 8.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
