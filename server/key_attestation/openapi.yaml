@@ -44,27 +44,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
   /v1/prepare/signature:
-    post:
+    get:
       summary: Prepare Key Attestation Signature
-      description: Generates a nonce and challenge for Key Attestation Signature.
+      description: Generates a session_id, nonce and challenge for Key Attestation Signature.
       operationId: prepareSignatureKeyAttestation
       tags:
         - KeyAttestationV1
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PrepareRequestBody'
       responses:
         '200':
-          description: Successfully generated nonce and challenge.
+          description: Successfully generated session_id, nonce and challenge.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PrepareResponseBody'
         '400':
-          description: Bad Request (e.g., missing session_id).
+          description: Bad Request.
           content:
             application/json:
               schema:
@@ -131,27 +125,21 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   /v1/prepare/agreement:
-    post:
+    get:
       summary: Prepare Key Attestation Agreement
-      description: Generates a salt and challenge for Key Attestation Agreement.
+      description: Generates a session_id, salt and challenge for Key Attestation Agreement.
       operationId: prepareAgreementKeyAttestation
       tags:
         - KeyAttestationV1
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PrepareAgreementRequestBody'
       responses:
         '200':
-          description: Successfully generated salt and challenge.
+          description: Successfully generated session_id, salt and challenge.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PrepareAgreementResponseBody'
         '400':
-          description: Bad Request (e.g., missing session_id).
+          description: Bad Request.
           content:
             application/json:
               schema:
@@ -165,21 +153,17 @@ paths:
 
 components:
   schemas:
-    PrepareRequestBody:
-      type: object
-      required:
-        - session_id
-      properties:
-        session_id:
-          type: string
-          description: Client session ID.
-          example: "session-12345-abcde"
     PrepareResponseBody:
       type: object
       required:
+        - session_id
         - nonce
         - challenge
       properties:
+        session_id:
+          type: string
+          description: Server-generated session ID.
+          example: "session-12345-abcde"
         nonce:
           type: string
           format: byte
@@ -190,22 +174,18 @@ components:
           format: byte
           description: Base64URL-encoded challenge.
           example: "Q2hhbGxlbmdlMTIzNDU2Nzg5MA=="
-    PrepareAgreementRequestBody:
-      type: object
-      required:
-        - session_id
-      properties:
-        session_id:
-          type: string
-          description: Client session ID.
-          example: "session-abcde-67890"
     PrepareAgreementResponseBody:
       type: object
       required:
+        - session_id
         - nonce
         - challenge
         - public_key
       properties:
+        session_id:
+          type: string
+          description: Server-generated session ID.
+          example: "session-abcde-67890"
         nonce:
           type: string
           format: byte
