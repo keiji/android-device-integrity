@@ -73,9 +73,9 @@ fun KeyAttestationScreen(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Top
     ) {
-        // Step 1: Select Key Algorithm (Moved from original Step 2)
+        Spacer(modifier = Modifier.height(24.dp))
         Text(text = "Step 1. 鍵のアルゴリズムを選択")
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         Box(modifier = Modifier.fillMaxWidth()) {
             ExposedDropdownMenuBox(
                 expanded = keyTypeExpanded,
@@ -118,11 +118,9 @@ fun KeyAttestationScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Step 2: Fetch Nonce/Salt and Challenge (Original Step 1, now with dynamic labels)
+        Spacer(modifier = Modifier.height(24.dp))
         Text(text = step2Label)
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         Button(
             onClick = onFetchNonceOrSaltChallenge, // Use renamed function
             modifier = Modifier
@@ -141,13 +139,10 @@ fun KeyAttestationScreen(
         if (uiState.isChallengeVisible) {
             Text(text = "Challenge: ${uiState.challenge}")
         }
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Step 3: Generate KeyPair (Original Step 3)
+        Spacer(modifier = Modifier.height(24.dp))
         Text(text = "Step 3. キーペア（構成証明付き）を生成")
-
+        Spacer(modifier = Modifier.height(12.dp))
         if (uiState.isStep3PreferStrongBoxVisible) {
-            Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -161,7 +156,6 @@ fun KeyAttestationScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
         Button(
             onClick = onGenerateKeyPair,
             modifier = Modifier
@@ -172,11 +166,9 @@ fun KeyAttestationScreen(
             Text(text = "Generate KeyPair")
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Step 4: Verify Key Attestation (Original Step 4)
+        Spacer(modifier = Modifier.height(24.dp))
         Text(text = "Step 4. キーペアと構成証明を検証")
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         Button(
             onClick = onRequestVerifyKeyAttestation,
             modifier = Modifier
