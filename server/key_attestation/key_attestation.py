@@ -370,6 +370,15 @@ def verify_agreement_attestation():
         logger.error(f'An unexpected error occurred in /verify/agreement: {e}', exc_info=True)
         return jsonify({'error': 'An unexpected error occurred'}), 500
 
+@app.route('/v1/revision', methods=['GET'])
+def get_revision():
+    """
+    Returns the commit hash of the running revision.
+    """
+    commit_hash = os.environ.get('COMMIT_HASH', 'unknown')
+    return jsonify({'revision': commit_hash})
+
+
 if __name__ == '__main__':
     # This is used when running locally only.
     # When deploying to Google App Engine, a webserver process such as Gunicorn will serve the app.
