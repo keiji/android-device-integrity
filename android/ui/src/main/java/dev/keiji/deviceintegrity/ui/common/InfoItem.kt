@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.main
+package dev.keiji.deviceintegrity.ui.common
 
 data class InfoItem(
     val label: String,

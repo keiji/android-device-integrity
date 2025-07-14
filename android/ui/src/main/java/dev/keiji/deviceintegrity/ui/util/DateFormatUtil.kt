@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.main.util
+package dev.keiji.deviceintegrity.ui.util
 
 import java.text.SimpleDateFormat
 import java.util.Date

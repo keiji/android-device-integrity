@@ -2,12 +2,13 @@ package dev.keiji.deviceintegrity.ui.main.playintegrity
 
 import dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload
 import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfo
-import dev.keiji.deviceintegrity.ui.main.InfoItem
+import dev.keiji.deviceintegrity.ui.common.InfoItem
+import dev.keiji.deviceintegrity.ui.common.ProgressConstants
 
 data class StandardPlayIntegrityUiState(
     val contentBinding: String = "",
     val integrityToken: String = "",
-    val progressValue: Float = PlayIntegrityProgressConstants.NO_PROGRESS,
+    val progressValue: Float = ProgressConstants.NO_PROGRESS,
     val status: String = "",
     val serverVerificationPayload: ServerVerificationPayload? = null, // Keep for now
     val errorMessages: List<String> = emptyList(), // Will be combined into status
@@ -17,7 +18,7 @@ data class StandardPlayIntegrityUiState(
     val resultInfoItems: List<InfoItem> = emptyList() // New field
 ) {
     val isLoading: Boolean
-        get() = progressValue != PlayIntegrityProgressConstants.NO_PROGRESS
+        get() = progressValue != ProgressConstants.NO_PROGRESS
 
     val requestHashVisible: Boolean
         get() = requestHashValue.isNotEmpty()

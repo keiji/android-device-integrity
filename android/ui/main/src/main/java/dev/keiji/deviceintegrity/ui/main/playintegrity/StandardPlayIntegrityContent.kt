@@ -28,10 +28,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import dev.keiji.deviceintegrity.ui.main.InfoItem
-import dev.keiji.deviceintegrity.ui.main.InfoItemContent
-import dev.keiji.deviceintegrity.ui.main.keyattestation.InfoItemFormatter
+import dev.keiji.deviceintegrity.ui.common.InfoItem
+import dev.keiji.deviceintegrity.ui.common.InfoItemContent
+import dev.keiji.deviceintegrity.ui.common.InfoItemFormatter
 import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
+import dev.keiji.deviceintegrity.ui.common.ProgressConstants
 import kotlinx.coroutines.launch
 
 @Composable
@@ -104,10 +105,10 @@ fun StandardPlayIntegrityContent(
 
         // Progress Indicators
         val isProgressVisible =
-            uiState.progressValue != PlayIntegrityProgressConstants.NO_PROGRESS
+            uiState.progressValue != ProgressConstants.NO_PROGRESS
 
         if (isProgressVisible) {
-            val progress = if (uiState.progressValue == PlayIntegrityProgressConstants.INDETERMINATE_PROGRESS) {
+            val progress = if (uiState.progressValue == ProgressConstants.INDETERMINATE_PROGRESS) {
                 null
             } else {
                 uiState.progressValue
@@ -132,7 +133,11 @@ fun StandardPlayIntegrityContent(
             status = statusToDisplay,
             isVerifiedSuccessfully = uiState.resultInfoItems.isNotEmpty() && uiState.errorMessages.isEmpty() && statusToDisplay.contains("complete", ignoreCase = true) && !statusToDisplay.contains("Failed", ignoreCase = true),
             infoItems = uiState.resultInfoItems,
-            deviceRecognitionVerdict = uiState.serverVerificationPayload?.playIntegrityResponse?.tokenPayloadExternal?.deviceIntegrity?.deviceRecognitionVerdict ?: emptyList(),
+            headContent = {
+                uiState.serverVerificationPayload?.playIntegrityResponse?.tokenPayloadExternal?.deviceIntegrity?.deviceRecognitionVerdict?.let {
+                    DeviceIntegrityResults(deviceRecognitionVerdict = it)
+                }
+            },
             onCopyClick = {
                 val textToCopy = InfoItemFormatter.formatInfoItems(uiState.resultInfoItems)
                 clipboardManager.setText(AnnotatedString(textToCopy))

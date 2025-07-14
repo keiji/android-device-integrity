@@ -1,6 +1,4 @@
-package dev.keiji.deviceintegrity.ui.main.keyattestation
-
-import dev.keiji.deviceintegrity.ui.main.InfoItem
+package dev.keiji.deviceintegrity.ui.common
 
 object InfoItemFormatter {
     fun formatInfoItems(items: List<InfoItem>): String {

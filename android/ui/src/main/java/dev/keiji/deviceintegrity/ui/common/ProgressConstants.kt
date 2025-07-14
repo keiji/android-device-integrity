@@ -1,6 +1,6 @@
-package dev.keiji.deviceintegrity.ui.main.playintegrity
+package dev.keiji.deviceintegrity.ui.common
 
-object PlayIntegrityProgressConstants {
+object ProgressConstants {
     const val NO_PROGRESS = 0.0F
     const val FULL_PROGRESS = 1.0F
     const val INDETERMINATE_PROGRESS = -1.0F

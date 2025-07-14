@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.main.util
+package dev.keiji.deviceintegrity.ui.util
 
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.Base64.PaddingOption // Corrected import

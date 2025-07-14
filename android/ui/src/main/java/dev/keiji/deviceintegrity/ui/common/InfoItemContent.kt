@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.main
+package dev.keiji.deviceintegrity.ui.common
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.selection.SelectionContainer
-// Removed Material Icons imports
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -19,21 +18,19 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource // Added
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import dev.keiji.deviceintegrity.ui.main.R // Import for R.drawable
-import dev.keiji.deviceintegrity.ui.main.playintegrity.DeviceIntegrityResults
+import dev.keiji.deviceintegrity.ui.R
 
 @Composable
 fun InfoItemContent(
     status: String,
     isVerifiedSuccessfully: Boolean,
     infoItems: List<InfoItem>,
-    deviceRecognitionVerdict: List<String> = emptyList(), // Added parameter
+    headContent: (@Composable () -> Unit)? = null,
     onCopyClick: () -> Unit,
     onShareClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -42,7 +39,11 @@ fun InfoItemContent(
         Text(
             text = status,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            color = if (status.contains("Failed", ignoreCase = true) || status.contains("Error", ignoreCase = true)) {
+            color = if (status.contains("Failed", ignoreCase = true) || status.contains(
+                    "Error",
+                    ignoreCase = true
+                )
+            ) {
                 MaterialTheme.colorScheme.error
             } else {
                 Color.Unspecified
@@ -51,8 +52,8 @@ fun InfoItemContent(
         )
 
         // Display DeviceIntegrityResults if the verdict is not empty
-        if (deviceRecognitionVerdict.isNotEmpty()) {
-            DeviceIntegrityResults(deviceRecognitionVerdict = deviceRecognitionVerdict)
+        headContent?.let {
+            it()
         }
 
         if (infoItems.isNotEmpty()) {
