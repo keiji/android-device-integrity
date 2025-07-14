@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import hmac
+import uuid
 
 from flask import Flask, request, jsonify
 from google.cloud import datastore
@@ -51,112 +52,118 @@ except Exception as e:
 
 # --- Endpoints ---
 
-@app.route('/v1/prepare/signature', methods=['POST'])
+@app.route('/v1/prepare/signature', methods=['GET'])
 def prepare_signature_attestation():
     """
     Prepares for key attestation signature by generating a nonce and challenge.
-    Request body: { "session_id": "string" }
-    Response body: { "nonce": "string (Base64URLEncoded)", "challenge": "string (Base64URLEncoded)" }
+    Response body: { "session_id": "string", "nonce": "string (Base64URLEncoded)", "challenge": "string (Base64URLEncoded)" }
     """
     if not datastore_client:
         logger.error('Datastore client not available for /prepare endpoint.')
         return jsonify({'error': 'Datastore service not available'}), 503
 
-    try:
-        data = request.get_json()
-        if not data:
-            logger.warning('Prepare request missing JSON payload.')
-            return jsonify({'error': 'Missing JSON payload'}), 400
-
-        session_id = data.get('session_id')
-        if not session_id or not isinstance(session_id, str) or not session_id.strip():
-            logger.warning(f'Prepare request with invalid session_id: {session_id}')
-            return jsonify({'error': '\'session_id\' must be a non-empty string'}), 400
-
-        nonce_bytes = generate_random_bytes()
-        challenge_bytes = generate_random_bytes()
-        nonce_encoded = base64url_encode(nonce_bytes)
-        challenge_encoded = base64url_encode(challenge_bytes)
-
+    for attempt in range(8): # Retry up to 8 times
+        session_id = str(uuid.uuid4())
         try:
+            nonce_bytes = generate_random_bytes()
+            challenge_bytes = generate_random_bytes()
+            nonce_encoded = base64url_encode(nonce_bytes)
+            challenge_encoded = base64url_encode(challenge_bytes)
+
             store_key_attestation_session(datastore_client, session_id, nonce_encoded, challenge_encoded)
-        except ConnectionError as e: # Catch if datastore_client was None during helper call
-             logger.error(f'Datastore connection error during store_key_attestation_session: {e}')
-             return jsonify({'error': 'Failed to store session due to datastore connectivity'}), 503
+
+            response_data = {
+                'session_id': session_id,
+                'nonce': nonce_encoded,
+                'challenge': challenge_encoded
+            }
+            logger.info(f'Successfully prepared attestation for session_id: {session_id}')
+            return jsonify(response_data), 200
+
+        except ConnectionError as e:
+             logger.error(f'Datastore connection error during store_key_attestation_session on attempt {attempt+1}: {e}')
+             if attempt >= 7:
+                return jsonify({'error': 'Failed to store session due to datastore connectivity'}), 503
+        except datastore.exceptions.Conflict:
+            logger.warning(f'Session ID {session_id} collision on attempt {attempt+1}. Retrying...')
+            if attempt >= 7:
+                logger.error(f'Failed to generate unique session ID after 8 attempts.')
+                return jsonify({'error': 'Failed to generate unique session ID'}), 500
         except Exception as e:
-            logger.error(f'Failed to store key attestation session for sessionId {session_id}: {e}')
-            return jsonify({'error': 'Failed to store session data'}), 500
+            logger.error(f'An unexpected error occurred in /prepare endpoint on attempt {attempt+1} for session_id {session_id}: {e}')
+            if attempt >= 7:
+                return jsonify({'error': 'An unexpected error occurred'}), 500
 
-        response_data = {
-            'nonce': nonce_encoded,
-            'challenge': challenge_encoded
-        }
-        logger.info(f'Successfully prepared attestation for sessionId: {session_id}')
-        return jsonify(response_data), 200
-    except Exception as e:
-        logger.error(f'Error in /prepare endpoint: {e}')
-        return jsonify({'error': 'An unexpected error occurred'}), 500
+    # This part should ideally not be reached if the loop is exited correctly.
+    logger.error('Exited retry loop unexpectedly in /prepare/signature.')
+    return jsonify({'error': 'Failed to process request after multiple retries'}), 500
 
-@app.route('/v1/prepare/agreement', methods=['POST'])
+@app.route('/v1/prepare/agreement', methods=['GET'])
 def prepare_agreement_attestation():
     """
-    Prepares for key attestation agreement by generating a nonce and challenge.
-    Request body: { "session_id": "string" }
-    Response body: { "nonce": "string (Base64URLEncoded)", "challenge": "string (Base64URLEncoded)", "public_key": "string (Base64URLEncoded, optional)" }
+    Prepares for key attestation agreement by generating a nonce, challenge, and a server-side key pair.
+    Response body: { "session_id": "string", "nonce": "string (Base64URLEncoded)", "challenge": "string (Base64URLEncoded)", "public_key": "string (Base64URLEncoded)" }
     """
     if not datastore_client:
         logger.error('Datastore client not available for /prepare/agreement endpoint.')
         return jsonify({'error': 'Datastore service not available'}), 503
 
-    try:
-        data = request.get_json()
-        if not data:
-            logger.warning('Prepare agreement request missing JSON payload.')
-            return jsonify({'error': 'Missing JSON payload'}), 400
-
-        session_id = data.get('session_id')
-        if not session_id or not isinstance(session_id, str) or not session_id.strip():
-            logger.warning(f'Prepare agreement request with invalid session_id: {session_id}')
-            return jsonify({'error': '\'session_id\' must be a non-empty string'}), 400
-
-        nonce_bytes = generate_random_bytes()
-        challenge_bytes = generate_random_bytes()
-        nonce_encoded = base64url_encode(nonce_bytes)
-        challenge_encoded = base64url_encode(challenge_bytes)
-
-        private_key = ec.generate_private_key(ec.SECP256R1())
-        public_key = private_key.public_key()
-        public_key_bytes = public_key.public_bytes(
-            encoding=serialization.Encoding.DER,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo # Standard X.509 format
-        )
-        public_key_encoded = base64url_encode(public_key_bytes)
-        private_key_bytes = private_key.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption()
-        )
-        private_key_encoded = base64url_encode(private_key_bytes)
-
+    for attempt in range(8): # Retry up to 8 times
+        session_id = str(uuid.uuid4())
         try:
-            store_agreement_key_attestation_session(datastore_client, session_id, nonce_encoded, challenge_encoded, public_key_encoded, private_key_encoded)
-        except ConnectionError as e:
-             logger.error(f'Datastore connection error during store_agreement_key_attestation_session: {e}')
-             return jsonify({'error': 'Failed to store session due to datastore connectivity'}), 503
-        except Exception as e:
-            logger.error(f'Failed to store agreement key attestation session for sessionId {session_id}: {e}')
-            return jsonify({'error': 'Failed to store session data'}), 500
+            nonce_bytes = generate_random_bytes()
+            challenge_bytes = generate_random_bytes()
+            nonce_encoded = base64url_encode(nonce_bytes)
+            challenge_encoded = base64url_encode(challenge_bytes)
 
-        response_data = {
-            'nonce': nonce_encoded,
-            'challenge': challenge_encoded,
-            'public_key': public_key_encoded
-        }
-        logger.info(f'Successfully prepared agreement attestation for sessionId: {session_id}')
-        return jsonify(response_data), 200
-    except Exception as e:
-        logger.error(f'Error in /prepare/agreement endpoint: {e}')
-        return jsonify({'error': 'An unexpected error occurred'}), 500
+            private_key = ec.generate_private_key(ec.SECP256R1())
+            public_key = private_key.public_key()
+            public_key_bytes = public_key.public_bytes(
+                encoding=serialization.Encoding.DER,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo
+            )
+            public_key_encoded = base64url_encode(public_key_bytes)
+            private_key_pem_bytes = private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption()
+            )
+            private_key_pem_encoded = base64url_encode(private_key_pem_bytes)
+
+            store_agreement_key_attestation_session(
+                datastore_client,
+                session_id,
+                nonce_encoded,
+                challenge_encoded,
+                public_key_encoded,
+                private_key_pem_encoded
+            )
+
+            response_data = {
+                'session_id': session_id,
+                'nonce': nonce_encoded,
+                'challenge': challenge_encoded,
+                'public_key': public_key_encoded
+            }
+            logger.info(f'Successfully prepared agreement attestation for session_id: {session_id}')
+            return jsonify(response_data), 200
+
+        except ConnectionError as e:
+            logger.error(f'Datastore connection error during store_agreement_key_attestation_session on attempt {attempt+1}: {e}')
+            if attempt >= 7:
+                return jsonify({'error': 'Failed to store session due to datastore connectivity'}), 503
+        except datastore.exceptions.Conflict:
+            logger.warning(f'Session ID {session_id} collision on attempt {attempt+1}. Retrying...')
+            if attempt >= 7:
+                logger.error(f'Failed to generate unique session ID after 8 attempts.')
+                return jsonify({'error': 'Failed to generate unique session ID'}), 500
+        except Exception as e:
+            logger.error(f'An unexpected error occurred in /prepare/agreement endpoint on attempt {attempt+1} for session_id {session_id}: {e}')
+            if attempt >= 7:
+                return jsonify({'error': 'An unexpected error occurred'}), 500
+
+    logger.error('Exited retry loop unexpectedly in /prepare/agreement.')
+    return jsonify({'error': 'Failed to process request after multiple retries'}), 500
 
 def _verify_common(session_id, certificate_chain_b64, challenge_from_store_b64):
     """

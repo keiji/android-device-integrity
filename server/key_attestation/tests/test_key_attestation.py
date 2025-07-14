@@ -5,8 +5,58 @@ import os
 from unittest.mock import patch, MagicMock
 
 from server.key_attestation.key_attestation import app
-from server.key_attestation.cryptographic_utils import base64url_encode
+from server.key_attestation.cryptographic_utils import base64url_encode, base64url_decode
 from google.cloud import datastore
+
+class KeyAttestationPreparationTest(unittest.TestCase):
+    def setUp(self):
+        self.app = app.test_client()
+        self.app.testing = True
+
+        # Mock the datastore client
+        self.mock_datastore_client = MagicMock()
+        self.patcher = patch('server.key_attestation.key_attestation.datastore_client', self.mock_datastore_client)
+        self.patcher.start()
+
+    def tearDown(self):
+        self.patcher.stop()
+
+    @patch('server.key_attestation.key_attestation.store_key_attestation_session')
+    def test_prepare_signature_success(self, mock_store_key_attestation_session):
+        response = self.app.get('/v1/prepare/signature')
+        self.assertEqual(response.status_code, 200)
+        response_data = json.loads(response.data)
+        self.assertIn('session_id', response_data)
+        self.assertIn('nonce', response_data)
+        self.assertIn('challenge', response_data)
+        # Ensure the store function was called with the generated session_id
+        mock_store_key_attestation_session.assert_called_once()
+        self.assertEqual(mock_store_key_attestation_session.call_args[0][1], response_data['session_id'])
+
+
+    @patch('server.key_attestation.key_attestation.store_agreement_key_attestation_session')
+    def test_prepare_agreement_success(self, mock_store_agreement_key_attestation_session):
+        response = self.app.get('/v1/prepare/agreement')
+        self.assertEqual(response.status_code, 200)
+        response_data = json.loads(response.data)
+        self.assertIn('session_id', response_data)
+        self.assertIn('nonce', response_data)
+        self.assertIn('challenge', response_data)
+        self.assertIn('public_key', response_data)
+        # Ensure the store function was called with the generated session_id
+        mock_store_agreement_key_attestation_session.assert_called_once()
+        self.assertEqual(mock_store_agreement_key_attestation_session.call_args[0][1], response_data['session_id'])
+
+    @patch('server.key_attestation.key_attestation.store_key_attestation_session')
+    def test_prepare_signature_session_id_collision(self, mock_store_key_attestation_session):
+        # Simulate a session ID collision on the first attempt
+        mock_store_key_attestation_session.side_effect = [datastore.exceptions.Conflict('Collision'), None]
+
+        response = self.app.get('/v1/prepare/signature')
+        self.assertEqual(response.status_code, 200)
+        response_data = json.loads(response.data)
+        self.assertIn('session_id', response_data)
+        self.assertEqual(mock_store_key_attestation_session.call_count, 2)
 
 class KeyAttestationAgreementTest(unittest.TestCase):
 
@@ -82,7 +132,7 @@ class KeyAttestationAgreementTest(unittest.TestCase):
         nonce = 'test_nonce'
         challenge = 'test_challenge'
         server_private_key = 'test_server_private_key'
-        encrypted_data = 'test_encrypted_data'
+        encrypted_.py
         salt = 'test_salt'
         certificate_chain = ['cert1', 'cert2']
         device_info = {'brand': 'Google', 'model': 'Pixel 7'}
