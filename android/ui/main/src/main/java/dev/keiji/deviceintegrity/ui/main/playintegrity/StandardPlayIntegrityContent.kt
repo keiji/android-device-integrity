@@ -57,7 +57,6 @@ fun StandardPlayIntegrityContent(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Top
     ) {
-        Spacer(modifier = Modifier.height(24.dp))
         Text(text = "Step 1. 検証に使うコンテンツを設定")
         Spacer(modifier = Modifier.height(12.dp))
         OutlinedTextField(
