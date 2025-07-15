@@ -8,6 +8,7 @@ env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GCP_CLOUD_RUN_REGION: ${{ secrets.GCP_CLOUD_RUN_REGION }}
   GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+  PRODUCT_PLAY_INTEGRITY_PACKAGE_NAME: ${{ secrets.PRODUCT_PLAY_INTEGRITY_PACKAGE_NAME }}
   IMAGE_REGISTRY_HOST: gcr.io # Or your Artifact Registry host if preferred
 
 jobs:
@@ -63,7 +64,7 @@ jobs:
             --region "${{ env.GCP_CLOUD_RUN_REGION }}" \
             --project "${{ env.GCP_PROJECT_ID }}" \
             --allow-unauthenticated \
-            --set-env-vars "COMMIT_HASH=${{ github.sha }}" \
+            --set-env-vars "COMMIT_HASH=${{ github.sha }},PLAY_INTEGRITY_PACKAGE_NAME=${{ env.PRODUCT_PLAY_INTEGRITY_PACKAGE_NAME }}" \
             --quiet
 
   deploy_play_integrity:
