@@ -13,7 +13,7 @@ data class ClassicPlayIntegrityUiState(
     val serverVerificationPayload: ServerVerificationPayload? = null, // Keep for now, maybe used by other logic
     val googlePlayDeveloperServiceInfo: GooglePlayDeveloperServiceInfo? = null,
     val errorMessages: List<String> = emptyList(), // Will be combined into status for InfoItemContent
-    val currentSessionId: String = "",
+    val currentSessionId: String? = null,
     val resultInfoItems: List<InfoItem> = emptyList() // New field
 ) {
     val isLoading: Boolean

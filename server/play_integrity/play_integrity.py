@@ -2,12 +2,14 @@ import os
 import base64
 import hashlib
 import logging
+import uuid
 from flask import Flask, request, jsonify
 from google.cloud import datastore
+from google.cloud.datastore.query import Or
 import google.auth
-
-from .datastore_utils import (
-    generate_and_store_nonce_with_session,
+from google.api_core.exceptions import Conflict
+    store_nonce_with_session_v1,
+    store_nonce_with_session_v2,
     get_nonce_entity,
     delete_nonce,
     store_verification_attempt,
@@ -61,7 +63,7 @@ def create_nonce_endpoint():
 
     try:
         raw_nonce = os.urandom(24)
-        nonce, generated_datetime = generate_and_store_nonce_with_session(datastore_client, session_id, raw_nonce)
+        nonce, generated_datetime = store_nonce_with_session_v1(datastore_client, session_id, raw_nonce)
 
         response = {
             "nonce": nonce,
@@ -72,6 +74,36 @@ def create_nonce_endpoint():
     except Exception as e:
         logger.error(f"Error in create_nonce_endpoint: {e}", exc_info=True)
         return jsonify({"error": "Failed to process nonce request"}), 500
+
+
+# Constants
+SESSION_ID_RETRY_COUNT = 8
+
+@app.route('/play-integrity/classic/v2/nonce', methods=['GET'])
+def create_nonce_v2_endpoint():
+    """
+    Generates a nonce for Play Integrity classic API requests.
+    """
+    if not datastore_client:
+        logger.error('Datastore client not available for /nonce endpoint.')
+        return jsonify({'error': 'Datastore service not available'}), 503
+
+    for _ in range(SESSION_ID_RETRY_COUNT):
+        session_id = str(uuid.uuid4())
+        try:
+            raw_nonce = os.urandom(24)
+            nonce = store_nonce_with_session_v2(datastore_client, session_id, raw_nonce)
+            response = {
+                "session_id": session_id,
+                "nonce": nonce
+            }
+            return jsonify(response), 200
+        except Conflict:
+            logger.warning(f"Session ID collision for {session_id}, retrying...")
+            continue
+
+    logger.error(f"Failed to generate a unique session_id after {SESSION_ID_RETRY_COUNT} attempts.")
+    return jsonify({"error": "Failed to generate a unique session_id"}), 500
 
 
 @app.route('/play-integrity/classic/v1/verify', methods=['POST'])
