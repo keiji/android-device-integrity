@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch, ANY
 from datetime import datetime, timezone, timedelta
 
 from server.play_integrity.datastore_utils import (
-    generate_and_store_nonce_with_session,
+    store_nonce_with_session_v1,
     get_nonce_entity,
     delete_nonce,
     store_verification_attempt,
@@ -22,7 +22,7 @@ class TestDatastoreUtils(unittest.TestCase):
 
     @patch('server.play_integrity.datastore_utils.cleanup_expired_nonces')
     @patch('server.play_integrity.datastore_utils.datastore.Entity')
-    def test_generate_and_store_nonce_with_session(self, mock_entity_class, mock_cleanup):
+    def test_store_nonce_with_session_v1(self, mock_entity_class, mock_cleanup):
         session_id = "test_session_1"
         raw_nonce = b"test_raw_nonce"
 
@@ -31,7 +31,7 @@ class TestDatastoreUtils(unittest.TestCase):
         self.mock_datastore_client.key.return_value = mock_key
         mock_entity_class.return_value = mock_entity_instance
 
-        nonce, gen_time = generate_and_store_nonce_with_session(self.mock_datastore_client, session_id, raw_nonce)
+        nonce, gen_time = store_nonce_with_session_v1(self.mock_datastore_client, session_id, raw_nonce)
 
         self.mock_datastore_client.key.assert_called_once_with(NONCE_KIND, session_id)
         mock_entity_class.assert_called_once_with(key=mock_key)
