@@ -43,6 +43,9 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO) # Configure logging
 logger = logging.getLogger(__name__)
 
+# Constants
+MAX_SESSION_ID_GENERATION_ATTEMPTS = 8
+
 # Initialize Datastore client
 try:
     datastore_client = datastore.Client()
@@ -63,7 +66,7 @@ def prepare_signature_attestation():
         logger.error('Datastore client not available for /prepare endpoint.')
         return jsonify({'error': 'Datastore service not available'}), 503
 
-    for attempt in range(8): # Retry up to 8 times
+    for attempt in range(MAX_SESSION_ID_GENERATION_ATTEMPTS):
         session_id = str(uuid.uuid4())
         try:
             nonce_bytes = generate_random_bytes()
@@ -83,16 +86,16 @@ def prepare_signature_attestation():
 
         except ConnectionError as e:
              logger.error(f'Datastore connection error during store_key_attestation_session on attempt {attempt+1}: {e}')
-             if attempt >= 7:
+             if attempt >= MAX_SESSION_ID_GENERATION_ATTEMPTS - 1:
                 return jsonify({'error': 'Failed to store session due to datastore connectivity'}), 503
         except Conflict:
             logger.warning(f'Session ID {session_id} collision on attempt {attempt+1}. Retrying...')
-            if attempt >= 7:
-                logger.error(f'Failed to generate unique session ID after 8 attempts.')
+            if attempt >= MAX_SESSION_ID_GENERATION_ATTEMPTS - 1:
+                logger.error(f'Failed to generate unique session ID after {MAX_SESSION_ID_GENERATION_ATTEMPTS} attempts.')
                 return jsonify({'error': 'Failed to generate unique session ID'}), 500
         except Exception as e:
             logger.error(f'An unexpected error occurred in /prepare endpoint on attempt {attempt+1} for session_id {session_id}: {e}')
-            if attempt >= 7:
+            if attempt >= MAX_SESSION_ID_GENERATION_ATTEMPTS - 1:
                 return jsonify({'error': 'An unexpected error occurred'}), 500
 
     # This part should ideally not be reached if the loop is exited correctly.
@@ -109,7 +112,7 @@ def prepare_agreement_attestation():
         logger.error('Datastore client not available for /prepare/agreement endpoint.')
         return jsonify({'error': 'Datastore service not available'}), 503
 
-    for attempt in range(8): # Retry up to 8 times
+    for attempt in range(MAX_SESSION_ID_GENERATION_ATTEMPTS):
         session_id = str(uuid.uuid4())
         try:
             nonce_bytes = generate_random_bytes()
@@ -151,16 +154,16 @@ def prepare_agreement_attestation():
 
         except ConnectionError as e:
             logger.error(f'Datastore connection error during store_agreement_key_attestation_session on attempt {attempt+1}: {e}')
-            if attempt >= 7:
+            if attempt >= MAX_SESSION_ID_GENERATION_ATTEMPTS - 1:
                 return jsonify({'error': 'Failed to store session due to datastore connectivity'}), 503
         except Conflict:
             logger.warning(f'Session ID {session_id} collision on attempt {attempt+1}. Retrying...')
-            if attempt >= 7:
-                logger.error(f'Failed to generate unique session ID after 8 attempts.')
+            if attempt >= MAX_SESSION_ID_GENERATION_ATTEMPTS - 1:
+                logger.error(f'Failed to generate unique session ID after {MAX_SESSION_ID_GENERATION_ATTEMPTS} attempts.')
                 return jsonify({'error': 'Failed to generate unique session ID'}), 500
         except Exception as e:
             logger.error(f'An unexpected error occurred in /prepare/agreement endpoint on attempt {attempt+1} for session_id {session_id}: {e}')
-            if attempt >= 7:
+            if attempt >= MAX_SESSION_ID_GENERATION_ATTEMPTS - 1:
                 return jsonify({'error': 'An unexpected error occurred'}), 500
 
     logger.error('Exited retry loop unexpectedly in /prepare/agreement.')
