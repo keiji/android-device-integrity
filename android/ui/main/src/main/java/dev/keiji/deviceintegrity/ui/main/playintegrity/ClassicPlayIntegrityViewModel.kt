@@ -43,8 +43,6 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ClassicPlayIntegrityUiState())
     val uiState: StateFlow<ClassicPlayIntegrityUiState> = _uiState.asStateFlow()
 
-    private var currentSessionId: String = ""
-
     init {
         viewModelScope.launch {
             val info = googlePlayDeveloperServiceInfoProvider.provide()
@@ -53,7 +51,6 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
     }
 
     fun fetchNonce() {
-        currentSessionId = UUID.randomUUID().toString()
         _uiState.update {
             it.copy(
                 integrityToken = "",
@@ -83,13 +80,13 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                     progressValue = ProgressConstants.INDETERMINATE_PROGRESS,
                     status = "Finalizing nonce request..."
                 ) }
-                val response = playIntegrityRepository.getNonce(currentSessionId)
+                val response = playIntegrityRepository.getNonceV2()
                 _uiState.update {
                     it.copy(
                         nonce = response.nonce,
                         progressValue = ProgressConstants.NO_PROGRESS,
                         status = "Nonce fetched: ${response.nonce}",
-                        currentSessionId = currentSessionId
+                        currentSessionId = response.sessionId
                     )
                 }
             } catch (e: ServerException) {
@@ -136,11 +133,13 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
         _uiState.update { it.copy(nonce = newNonce, errorMessages = emptyList()) }
     }
 
-    private fun transformPayloadToInfoItems(payload: ServerVerificationPayload?, currentSessionId: String): List<InfoItem> {
+    private fun transformPayloadToInfoItems(payload: ServerVerificationPayload?, currentSessionId: String?): List<InfoItem> {
         val items = mutableListOf<InfoItem>()
         if (payload == null) return items
 
-        items.add(InfoItem("Session ID (Current)", currentSessionId, indentLevel = 0))
+        currentSessionId?.let {
+            items.add(InfoItem("Session ID (Current)", it, indentLevel = 0))
+        }
 
         payload.playIntegrityResponse.tokenPayloadExternal.let { token ->
             items.add(InfoItem("Play Integrity API Response", "", isHeader = true, indentLevel = 0))
@@ -314,12 +313,23 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                     hasClass3Authenticator = deviceSecurityStateProvider.hasClass3Authenticator, hasStrongbox = deviceSecurityStateProvider.hasStrongBox
                 )
                 val googlePlayDeveloperServiceInfo = googlePlayDeveloperServiceInfoProvider.provide()
+                val sessionId = _uiState.value.currentSessionId
+                if (sessionId == null) {
+                    _uiState.update {
+                        it.copy(
+                            status = "Session ID is not set.",
+                            errorMessages = listOf("Session ID is required for verification.")
+                        )
+                    }
+                    return@launch
+                }
+
                 val verifyResponse = playIntegrityRepository.verifyTokenClassic(
-                    integrityToken = token, sessionId = currentSessionId, deviceInfo = deviceInfoData,
+                    integrityToken = token, sessionId = sessionId, deviceInfo = deviceInfoData,
                     securityInfo = securityInfo, googlePlayDeveloperServiceInfo = googlePlayDeveloperServiceInfo
                 )
                 Log.d("ClassicPlayIntegrityVM", "Verification Response: ${verifyResponse.playIntegrityResponse.tokenPayloadExternal}")
-                val resultItems = transformPayloadToInfoItems(verifyResponse, currentSessionId)
+                val resultItems = transformPayloadToInfoItems(verifyResponse, sessionId)
                 val finalStatus = "Token verification complete."
                 _uiState.update {
                     it.copy(
@@ -328,7 +338,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                         serverVerificationPayload = verifyResponse,
                         resultInfoItems = resultItems,
                         errorMessages = emptyList(),
-                        currentSessionId = currentSessionId
+                        currentSessionId = sessionId
                     )
                 }
             } catch (e: ServerException) {

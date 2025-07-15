@@ -6,13 +6,19 @@ import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInf
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
 
 private const val API_VERSION_V1 = "v1"
+private const val API_VERSION_V2 = "v2"
 
 interface PlayIntegrityTokenVerifyApiClient {
+    @Deprecated("Use getNonceV2 instead. It does not require a request body.")
     @POST("/play-integrity/classic/$API_VERSION_V1/nonce")
     suspend fun getNonce(@Body request: CreateNonceRequest): NonceResponse
+
+    @GET("/play-integrity/classic/$API_VERSION_V2/nonce")
+    suspend fun getNonceV2(): NonceResponseV2
 
     @POST("/play-integrity/classic/$API_VERSION_V1/verify")
     suspend fun verifyTokenClassic(@Body request: VerifyTokenRequest): ServerVerificationPayload
@@ -57,6 +63,12 @@ data class TokenPayloadExternal(
 data class NonceResponse(
     val nonce: String,
     @SerialName("generated_datetime") val generatedDatetime: Long
+)
+
+@Serializable
+data class NonceResponseV2(
+    @SerialName("session_id") val sessionId: String,
+    val nonce: String
 )
 
 @Serializable
