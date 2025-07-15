@@ -6,6 +6,7 @@ import uuid
 
 from flask import Flask, request, jsonify
 from google.cloud import datastore
+from google.api_core.exceptions import Conflict
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 
@@ -84,7 +85,7 @@ def prepare_signature_attestation():
              logger.error(f'Datastore connection error during store_key_attestation_session on attempt {attempt+1}: {e}')
              if attempt >= 7:
                 return jsonify({'error': 'Failed to store session due to datastore connectivity'}), 503
-        except datastore.exceptions.Conflict:
+        except Conflict:
             logger.warning(f'Session ID {session_id} collision on attempt {attempt+1}. Retrying...')
             if attempt >= 7:
                 logger.error(f'Failed to generate unique session ID after 8 attempts.')
@@ -152,7 +153,7 @@ def prepare_agreement_attestation():
             logger.error(f'Datastore connection error during store_agreement_key_attestation_session on attempt {attempt+1}: {e}')
             if attempt >= 7:
                 return jsonify({'error': 'Failed to store session due to datastore connectivity'}), 503
-        except datastore.exceptions.Conflict:
+        except Conflict:
             logger.warning(f'Session ID {session_id} collision on attempt {attempt+1}. Retrying...')
             if attempt >= 7:
                 logger.error(f'Failed to generate unique session ID after 8 attempts.')

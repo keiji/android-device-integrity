@@ -26,7 +26,9 @@ class TestDatastoreUtils(unittest.TestCase):
         mock_key = MagicMock()
 
         mock_datastore_client.key.return_value = mock_key
-        mock_datastore_client.entity.return_value = mock_entity # Changed from Entity to entity
+        mock_datastore_client.entity.return_value = mock_entity
+        # Ensure that the transaction doesn't find an existing entity
+        mock_datastore_client.get.return_value = None
 
         session_id = "test_session_123"
         nonce_encoded = "test_nonce_encoded"
