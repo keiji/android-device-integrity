@@ -29,8 +29,26 @@ jobs:
           play_integrity:
             - 'server/play_integrity/**'
 
+  lint:
+    name: Python Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install lint dependencies
+        run: |
+          pip install flake8
+      - name: Run flake8
+        run: |
+          flake8 server/
   test_key_attestation:
-    needs: filters
+    needs: [filters, lint]
     if: needs.filters.outputs.key_attestation == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -48,7 +66,7 @@ jobs:
       run: python -m unittest discover server/key_attestation/tests
 
   test_play_integrity:
-    needs: filters
+    needs: [filters, lint]
     if: needs.filters.outputs.play_integrity == 'true'
     runs-on: ubuntu-latest
     steps:
