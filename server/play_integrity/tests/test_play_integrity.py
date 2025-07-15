@@ -22,12 +22,12 @@ class TestPlayIntegrityEndpoints(unittest.TestCase):
     def tearDown(self):
         patch.stopall()
 
-    @patch('server.play_integrity.play_integrity.generate_and_store_nonce_with_session')
-    def test_create_nonce_endpoint_success(self, mock_generate_nonce):
+    @patch('server.play_integrity.play_integrity.store_nonce_with_session_v1')
+    def test_create_nonce_endpoint_success(self, mock_store_nonce):
         session_id = "session-12345"
         expected_nonce = "generated-nonce-string"
         expected_time = 1678886400000
-        mock_generate_nonce.return_value = (expected_nonce, expected_time)
+        mock_store_nonce.return_value = (expected_nonce, expected_time)
 
         response = self.app.post('/play-integrity/classic/v1/nonce',
                                  data=json.dumps({'session_id': session_id}),
@@ -37,7 +37,7 @@ class TestPlayIntegrityEndpoints(unittest.TestCase):
         response_data = json.loads(response.data)
         self.assertEqual(response_data['nonce'], expected_nonce)
         self.assertEqual(response_data['generated_datetime'], expected_time)
-        mock_generate_nonce.assert_called_once_with(self.mock_datastore_instance, session_id, unittest.mock.ANY)
+        mock_store_nonce.assert_called_once_with(self.mock_datastore_instance, session_id, unittest.mock.ANY)
 
     def test_create_nonce_endpoint_no_json(self):
         response = self.app.post('/play-integrity/classic/v1/nonce',
