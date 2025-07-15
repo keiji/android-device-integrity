@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, Any
 from google.cloud import datastore
+from google.api_core.exceptions import Conflict
 
 from .utils import generate_unique_id
 
@@ -20,25 +21,6 @@ RESULT_SUCCESS = "Success"
 RESULT_FAILED = "Failed"
 RESULT_ERROR = "Error"
 
-
-def store_nonce(datastore_client: datastore.Client, session_id: str, nonce: str) -> None:
-    """
-    Stores a nonce with a session_id in Datastore.
-    """
-    now = datetime.now(timezone.utc)
-    expiry_datetime = now + timedelta(minutes=NONCE_EXPIRY_MINUTES)
-
-    key = datastore_client.key(NONCE_KIND, session_id)
-    entity = datastore.Entity(key=key)
-    entity.update({
-        'nonce': nonce,
-        'generated_datetime': int(now.timestamp() * 1000),
-        'expiry_datetime': expiry_datetime,
-        'session_id': session_id
-    })
-
-    datastore_client.put(entity)
-    logger.info(f"Stored nonce for session_id: {session_id}")
 
 def cleanup_expired_nonces(datastore_client: datastore.Client):
     """Removes expired nonce entities from Datastore."""
@@ -59,7 +41,7 @@ def cleanup_expired_nonces(datastore_client: datastore.Client):
         logger.error(f"Error during Datastore cleanup of expired nonces: {e}", exc_info=True)
 
 
-def generate_and_store_nonce_with_session(datastore_client: datastore.Client, session_id: str, raw_nonce: bytes) -> tuple[str, int]:
+def generate_and_store_nonce_with_session(datastore_client: datastore.Client, session_id: str, raw_nonce: bytes, overwrite: bool = False) -> tuple[str, int]:
     """
     Generates a cryptographically secure nonce, associates it with a session_id,
     stores it in Datastore, and returns it.
@@ -81,7 +63,17 @@ def generate_and_store_nonce_with_session(datastore_client: datastore.Client, se
         'session_id': session_id
     })
 
-    datastore_client.put(entity)
+    if not overwrite:
+        try:
+            with datastore_client.transaction():
+                if datastore_client.get(key):
+                    raise Conflict("Session ID already exists")
+                datastore_client.put(entity)
+        except Conflict:
+            raise
+    else:
+        datastore_client.put(entity)
+
     logger.info(f"Stored/Updated nonce for session_id: {session_id}")
 
     cleanup_expired_nonces(datastore_client)
