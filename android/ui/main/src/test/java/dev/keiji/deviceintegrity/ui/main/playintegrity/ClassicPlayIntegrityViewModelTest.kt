@@ -1,7 +1,7 @@
 package dev.keiji.deviceintegrity.ui.main.playintegrity
 
 import dev.keiji.deviceintegrity.api.DeviceInfo
-import dev.keiji.deviceintegrity.api.playintegrity.NonceResponse
+import dev.keiji.deviceintegrity.api.playintegrity.NonceResponseV2
 import dev.keiji.deviceintegrity.api.playintegrity.PlayIntegrityResponseWrapper
 import dev.keiji.deviceintegrity.api.SecurityInfo
 import dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload
@@ -123,8 +123,9 @@ class ClassicPlayIntegrityViewModelTest {
     @Test
     fun `fetchNonce success updates uiState with nonce`() = runTest {
         val nonce = "test-nonce"
-        val expectedResponse = NonceResponse(nonce, System.currentTimeMillis())
-        whenever(mockPlayIntegrityRepository.getNonce(any())).thenReturn(expectedResponse)
+        val sessionId = "test-session-id"
+        val expectedResponse = NonceResponseV2(sessionId, nonce)
+        whenever(mockPlayIntegrityRepository.getNonceV2()).thenReturn(expectedResponse)
 
         viewModel.fetchNonce()
         testDispatcher.scheduler.advanceUntilIdle() // Execute coroutines
@@ -132,13 +133,14 @@ class ClassicPlayIntegrityViewModelTest {
         val uiState = viewModel.uiState.first()
         assertEquals(nonce, uiState.nonce)
         assertEquals("Nonce fetched: $nonce", uiState.status)
+        assertEquals(sessionId, uiState.currentSessionId)
         assertTrue(uiState.errorMessages.isEmpty())
     }
 
     @Test
     fun `fetchNonce serverException updates uiState with error`() = runTest {
         val serverException = ServerException(500, "Server error")
-        whenever(mockPlayIntegrityRepository.getNonce(any())).thenThrow(serverException)
+        whenever(mockPlayIntegrityRepository.getNonceV2()).thenThrow(serverException)
 
         viewModel.fetchNonce()
         advanceUntilIdle()
@@ -152,7 +154,7 @@ class ClassicPlayIntegrityViewModelTest {
     @Test
     fun `fetchNonce ioException updates uiState with error`() = runTest {
         val ioException = IOException("Network error")
-        whenever(mockPlayIntegrityRepository.getNonce(any())).thenThrow(ioException)
+        whenever(mockPlayIntegrityRepository.getNonceV2()).thenThrow(ioException)
 
         viewModel.fetchNonce()
         advanceUntilIdle()
