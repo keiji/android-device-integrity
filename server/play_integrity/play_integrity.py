@@ -7,12 +7,7 @@ from flask import Flask, request, jsonify
 from google.cloud import datastore
 from google.cloud.datastore.query import Or
 import google.auth
-
 from google.api_core.exceptions import Conflict
-
-from google.api_core.exceptions import Conflict
-
-from .datastore_utils import (
     store_nonce_with_session_v1,
     store_nonce_with_session_v2,
     get_nonce_entity,
