@@ -20,6 +20,26 @@ RESULT_SUCCESS = "Success"
 RESULT_FAILED = "Failed"
 RESULT_ERROR = "Error"
 
+
+def store_nonce(datastore_client: datastore.Client, session_id: str, nonce: str) -> None:
+    """
+    Stores a nonce with a session_id in Datastore.
+    """
+    now = datetime.now(timezone.utc)
+    expiry_datetime = now + timedelta(minutes=NONCE_EXPIRY_MINUTES)
+
+    key = datastore_client.key(NONCE_KIND, session_id)
+    entity = datastore.Entity(key=key)
+    entity.update({
+        'nonce': nonce,
+        'generated_datetime': int(now.timestamp() * 1000),
+        'expiry_datetime': expiry_datetime,
+        'session_id': session_id
+    })
+
+    datastore_client.put(entity)
+    logger.info(f"Stored nonce for session_id: {session_id}")
+
 def cleanup_expired_nonces(datastore_client: datastore.Client):
     """Removes expired nonce entities from Datastore."""
     try:

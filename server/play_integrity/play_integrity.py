@@ -2,14 +2,17 @@ import os
 import base64
 import hashlib
 import logging
+import uuid
 from flask import Flask, request, jsonify
 from google.cloud import datastore
+from google.cloud.datastore.query import Or
 import google.auth
 
 from .datastore_utils import (
     generate_and_store_nonce_with_session,
     get_nonce_entity,
     delete_nonce,
+    store_nonce,
     store_verification_attempt,
     RESULT_SUCCESS,
     RESULT_FAILED,
@@ -71,6 +74,41 @@ def create_nonce_endpoint():
 
     except Exception as e:
         logger.error(f"Error in create_nonce_endpoint: {e}", exc_info=True)
+        return jsonify({"error": "Failed to process nonce request"}), 500
+
+
+@app.route('/play-integrity/classic/v2/nonce', methods=['GET'])
+def create_nonce_v2_endpoint():
+    """
+    Generates a nonce for Play Integrity classic API requests.
+    """
+    if not datastore_client:
+        logger.error('Datastore client not available for /nonce endpoint.')
+        return jsonify({'error': 'Datastore service not available'}), 503
+
+    for _ in range(8):
+        session_id = str(uuid.uuid4())
+        key = datastore_client.key('PlayIntegrityNonce', session_id)
+        if not datastore_client.get(key):
+            break
+    else:
+        logger.error("Failed to generate a unique session_id after 8 attempts.")
+        return jsonify({"error": "Failed to generate a unique session_id"}), 500
+
+    try:
+        raw_nonce = os.urandom(24)
+        nonce = base64.urlsafe_b64encode(raw_nonce).decode('utf-8').rstrip('=')
+
+        store_nonce(datastore_client, session_id, nonce)
+
+        response = {
+            "session_id": session_id,
+            "nonce": nonce
+        }
+        return jsonify(response), 200
+
+    except Exception as e:
+        logger.error(f"Error in create_nonce_v2_endpoint: {e}", exc_info=True)
         return jsonify({"error": "Failed to process nonce request"}), 500
 
 

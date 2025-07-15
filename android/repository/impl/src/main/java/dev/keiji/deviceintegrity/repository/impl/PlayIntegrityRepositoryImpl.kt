@@ -3,6 +3,7 @@ package dev.keiji.deviceintegrity.repository.impl
 import dev.keiji.deviceintegrity.api.playintegrity.CreateNonceRequest
 import dev.keiji.deviceintegrity.api.DeviceInfo
 import dev.keiji.deviceintegrity.api.playintegrity.NonceResponse
+import dev.keiji.deviceintegrity.api.playintegrity.NonceResponseV2
 import dev.keiji.deviceintegrity.api.playintegrity.PlayIntegrityTokenVerifyApiClient
 import dev.keiji.deviceintegrity.api.SecurityInfo
 import dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload
@@ -78,6 +79,18 @@ class PlayIntegrityRepositoryImpl @Inject constructor(
         return try {
             val request = CreateNonceRequest(sessionId = sessionId)
             playIntegrityTokenVerifyApiClient.getNonce(request)
+        } catch (e: HttpException) {
+            throw ServerException(
+                errorCode = e.code(),
+                errorMessage = e.response()?.errorBody()?.string(),
+                cause = e
+            )
+        }
+    }
+
+    override suspend fun getNonceV2(): NonceResponseV2 {
+        return try {
+            playIntegrityTokenVerifyApiClient.getNonceV2()
         } catch (e: HttpException) {
             throw ServerException(
                 errorCode = e.code(),

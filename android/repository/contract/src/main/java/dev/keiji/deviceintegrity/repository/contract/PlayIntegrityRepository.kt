@@ -64,4 +64,13 @@ interface PlayIntegrityRepository {
     suspend fun getNonce(
         sessionId: String
     ): NonceResponse
+
+    /**
+     * Prepares a challenge (nonce) for classic integrity or Play Integrity API usage.
+     * @return [NonceResponseV2] containing the challenge and session ID.
+     * @throws ServerException if there is an issue communicating with the server or the server returns an error.
+     * @throws java.io.IOException for other network or I/O related issues.
+     */
+    @Throws(ServerException::class, java.io.IOException::class)
+    suspend fun getNonceV2(): dev.keiji.deviceintegrity.api.playintegrity.NonceResponseV2
 }
