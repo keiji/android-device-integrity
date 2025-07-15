@@ -3,7 +3,6 @@ from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, Any
 from google.cloud import datastore
 from google.api_core.exceptions import Conflict
-
 from .utils import generate_unique_id
 
 # Configure logging
