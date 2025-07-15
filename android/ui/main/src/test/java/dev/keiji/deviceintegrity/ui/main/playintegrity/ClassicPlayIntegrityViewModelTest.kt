@@ -199,7 +199,7 @@ class ClassicPlayIntegrityViewModelTest {
         viewModel.fetchIntegrityToken()
         testDispatcher.scheduler.advanceUntilIdle()
 
-        whenever(mockPlayIntegrityRepository.verifyTokenClassic(any(), eq(currentSessionId), any(), any(), any()))
+        whenever(mockPlayIntegrityRepository.verifyTokenClassic(any(), eq(currentSessionId!!), any(), any(), any()))
             .thenReturn(dummyServerVerificationPayload)
 
         viewModel.verifyToken()
@@ -231,7 +231,7 @@ class ClassicPlayIntegrityViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val serverException = ServerException(403, "Forbidden by server")
-        whenever(mockPlayIntegrityRepository.verifyTokenClassic(any(), eq(currentSessionId), any(), any(), any()))
+        whenever(mockPlayIntegrityRepository.verifyTokenClassic(any(), eq(currentSessionId!!), any(), any(), any()))
             .thenThrow(serverException)
 
         viewModel.verifyToken()
@@ -263,7 +263,7 @@ class ClassicPlayIntegrityViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val ioException = IOException("Network connection lost")
-        whenever(mockPlayIntegrityRepository.verifyTokenClassic(any(), eq(currentSessionId), any(), any(), any()))
+        whenever(mockPlayIntegrityRepository.verifyTokenClassic(any(), eq(currentSessionId!!), any(), any(), any()))
             .thenThrow(ioException)
 
         viewModel.verifyToken()
@@ -305,7 +305,7 @@ class ClassicPlayIntegrityViewModelTest {
 
         whenever(mockPlayIntegrityRepository.verifyTokenClassic(
             eq(token),
-            eq(currentSessionId), // sessionId
+            eq(currentSessionId!!), // sessionId
             any(), // deviceInfo
             any(), // securityInfo
             eq(dummyGooglePlayDeveloperServiceInfo) // Explicitly check this arg
