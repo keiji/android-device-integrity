@@ -23,9 +23,10 @@ fun DeviceIntegrityResults(
     deviceRecognitionVerdict: List<String>
 ) {
     val integrityLevels = listOf(
-        "MEETS_STRONG_INTEGRITY",
-        "MEETS_DEVICE_INTEGRITY",
-        "MEETS_BASIC_INTEGRITY"
+        DeviceIntegrityVerdict.MEETS_STRONG_INTEGRITY,
+        DeviceIntegrityVerdict.MEETS_DEVICE_INTEGRITY,
+        DeviceIntegrityVerdict.MEETS_VIRTUAL_INTEGRITY,
+        DeviceIntegrityVerdict.MEETS_BASIC_INTEGRITY
     )
 
     Column(modifier = Modifier.padding(vertical = 8.dp)) {

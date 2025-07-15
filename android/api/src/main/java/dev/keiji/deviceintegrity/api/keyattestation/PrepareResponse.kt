@@ -5,6 +5,8 @@ import kotlinx.serialization.SerialName
 
 @Serializable
 data class PrepareResponse(
+    @SerialName("session_id")
+    val sessionId: String,
     @SerialName("nonce")
     val nonceBase64UrlEncoded: String,
     @SerialName("challenge")

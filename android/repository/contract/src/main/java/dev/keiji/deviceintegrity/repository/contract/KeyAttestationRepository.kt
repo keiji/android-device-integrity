@@ -1,10 +1,8 @@
 package dev.keiji.deviceintegrity.repository.contract
 
 // API model imports
-import dev.keiji.deviceintegrity.api.keyattestation.PrepareAgreementRequest
 import dev.keiji.deviceintegrity.api.keyattestation.PrepareAgreementResponse
 import dev.keiji.deviceintegrity.api.keyattestation.PrepareResponse
-import dev.keiji.deviceintegrity.api.keyattestation.PrepareSignatureRequest
 import dev.keiji.deviceintegrity.api.keyattestation.VerifyAgreementRequest
 import dev.keiji.deviceintegrity.api.keyattestation.VerifyAgreementResponse
 import dev.keiji.deviceintegrity.api.keyattestation.VerifySignatureRequest
@@ -16,16 +14,13 @@ import java.io.IOException
 interface KeyAttestationRepository {
     /**
      * Prepares the key attestation process by fetching a nonce and challenge from the server.
-     * @param requestBody The request containing the session ID.
      * @return [PrepareResponse] containing the nonce and challenge.
      * @throws ServerException if the server returns an error (e.g., HTTP error codes).
      * @throws IOException if a network error occurs.
      * @throws Exception for other unexpected errors.
      */
     @Throws(ServerException::class, IOException::class)
-    suspend fun prepareSignature(
-        requestBody: PrepareSignatureRequest
-    ): PrepareResponse
+    suspend fun prepareSignature(): PrepareResponse
 
     /**
      * Verifies the key attestation signature with the server.
@@ -42,16 +37,13 @@ interface KeyAttestationRepository {
 
     /**
      * Prepares the key agreement process by fetching a salt and challenge from the server.
-     * @param requestBody The request containing the session ID.
      * @return [PrepareAgreementResponse] containing the salt and challenge.
      * @throws ServerException if the server returns an error (e.g., HTTP error codes).
      * @throws IOException if a network error occurs.
      * @throws Exception for other unexpected errors.
      */
     @Throws(ServerException::class, IOException::class)
-    suspend fun prepareAgreement(
-        requestBody: PrepareAgreementRequest
-    ): PrepareAgreementResponse
+    suspend fun prepareAgreement(): PrepareAgreementResponse
 
     /**
      * Verifies the key attestation agreement with the server.

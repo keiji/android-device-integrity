@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timezone, timedelta
+from google.api_core.exceptions import Conflict
 # from google.cloud import datastore # Avoid direct import if client is passed
 
 logger = logging.getLogger(__name__)
@@ -28,14 +29,17 @@ def store_key_attestation_session(datastore_client, session_id: str, nonce_encod
         'challenge': challenge_encoded,
         'generated_at': now,
     })
-    try:
+    with datastore_client.transaction():
+        if datastore_client.get(key):
+            # Entity already exists, so this is a collision.
+            # Raise a specific exception to be caught by the caller's retry loop.
+            raise Conflict(f'Session ID {session_id} already exists.')
         datastore_client.put(entity)
         logger.info(f'Stored key attestation session for session_id: {session_id}')
-        # Consider moving cleanup to a separate, scheduled task if frequent calls are an issue.
+    try:
         cleanup_expired_sessions(datastore_client, KEY_ATTESTATION_SESSION_KIND)
     except Exception as e:
-        logger.error(f"Failed to put key attestation session {session_id} to Datastore: {e}")
-        raise # Re-raise to allow caller to handle
+        logger.error(f"Failed to cleanup expired sessions for {KEY_ATTESTATION_SESSION_KIND}: {e}")
 
 
 def store_agreement_key_attestation_session(datastore_client, session_id: str, nonce_encoded: str, challenge_encoded: str, public_key_encoded: str = None, private_key_encoded: str = None):
@@ -60,13 +64,15 @@ def store_agreement_key_attestation_session(datastore_client, session_id: str, n
     if private_key_encoded: # Storing private keys needs careful consideration for security.
         entity['private_key'] = private_key_encoded
 
-    try:
+    with datastore_client.transaction():
+        if datastore_client.get(key):
+            raise Conflict(f'Session ID {session_id} already exists.')
         datastore_client.put(entity)
         logger.info(f'Stored agreement key attestation session for session_id: {session_id}')
+    try:
         cleanup_expired_sessions(datastore_client, AGREEMENT_KEY_ATTESTATION_SESSION_KIND)
     except Exception as e:
-        logger.error(f"Failed to put agreement key attestation session {session_id} to Datastore: {e}")
-        raise
+        logger.error(f"Failed to cleanup expired sessions for {AGREEMENT_KEY_ATTESTATION_SESSION_KIND}: {e}")
 
 
 def get_key_attestation_session(datastore_client, session_id: str):
