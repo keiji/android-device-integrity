@@ -183,15 +183,23 @@ class ClassicPlayIntegrityViewModelTest {
     @Test
     fun `verifyToken success updates uiState with response`() = runTest {
         val token = "test-token"
-        val sessionId = "test-session-id" // Need to ensure this is set or handled
-        viewModel.fetchNonce() // This sets a session ID internally
-        testDispatcher.scheduler.advanceUntilIdle() // Allow nonce (and session ID) to be set
-        viewModel.updateNonce("dummy-nonce-for-token-fetch") // Ensure nonce is present for fetchIntegrityToken
+        val nonce = "test-nonce"
+        val sessionId = "test-session-id"
+        val expectedNonceResponse = NonceResponseV2(sessionId, nonce)
+        whenever(mockPlayIntegrityRepository.getNonceV2()).thenReturn(expectedNonceResponse)
+
+        viewModel.fetchNonce()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val fetchedUiState = viewModel.uiState.first()
+        val currentSessionId = fetchedUiState.currentSessionId
+        assertEquals(sessionId, currentSessionId)
+
         whenever(mockClassicPlayIntegrityTokenRepository.getToken(any())).thenReturn(token)
         viewModel.fetchIntegrityToken()
-        testDispatcher.scheduler.advanceUntilIdle() // Ensure token is set
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        whenever(mockPlayIntegrityRepository.verifyTokenClassic(any(), any(), any(), any(), any()))
+        whenever(mockPlayIntegrityRepository.verifyTokenClassic(any(), eq(currentSessionId), any(), any(), any()))
             .thenReturn(dummyServerVerificationPayload)
 
         viewModel.verifyToken()
@@ -206,15 +214,24 @@ class ClassicPlayIntegrityViewModelTest {
     @Test
     fun `verifyToken serverException updates uiState with error`() = runTest {
         val token = "test-token"
+        val nonce = "test-nonce"
+        val sessionId = "test-session-id"
+        val expectedNonceResponse = NonceResponseV2(sessionId, nonce)
+        whenever(mockPlayIntegrityRepository.getNonceV2()).thenReturn(expectedNonceResponse)
+
         viewModel.fetchNonce()
         testDispatcher.scheduler.advanceUntilIdle()
-        viewModel.updateNonce("dummy-nonce-for-token-fetch")
+
+        val fetchedUiState = viewModel.uiState.first()
+        val currentSessionId = fetchedUiState.currentSessionId
+        assertEquals(sessionId, currentSessionId)
+
         whenever(mockClassicPlayIntegrityTokenRepository.getToken(any())).thenReturn(token)
         viewModel.fetchIntegrityToken()
         testDispatcher.scheduler.advanceUntilIdle()
 
         val serverException = ServerException(403, "Forbidden by server")
-        whenever(mockPlayIntegrityRepository.verifyTokenClassic(any(), any(), any(), any(), any()))
+        whenever(mockPlayIntegrityRepository.verifyTokenClassic(any(), eq(currentSessionId), any(), any(), any()))
             .thenThrow(serverException)
 
         viewModel.verifyToken()
@@ -229,15 +246,24 @@ class ClassicPlayIntegrityViewModelTest {
     @Test
     fun `verifyToken ioException updates uiState with error`() = runTest {
         val token = "test-token"
+        val nonce = "test-nonce"
+        val sessionId = "test-session-id"
+        val expectedNonceResponse = NonceResponseV2(sessionId, nonce)
+        whenever(mockPlayIntegrityRepository.getNonceV2()).thenReturn(expectedNonceResponse)
+
         viewModel.fetchNonce()
         testDispatcher.scheduler.advanceUntilIdle()
-        viewModel.updateNonce("dummy-nonce-for-token-fetch")
+
+        val fetchedUiState = viewModel.uiState.first()
+        val currentSessionId = fetchedUiState.currentSessionId
+        assertEquals(sessionId, currentSessionId)
+
         whenever(mockClassicPlayIntegrityTokenRepository.getToken(any())).thenReturn(token)
         viewModel.fetchIntegrityToken()
         testDispatcher.scheduler.advanceUntilIdle()
 
         val ioException = IOException("Network connection lost")
-        whenever(mockPlayIntegrityRepository.verifyTokenClassic(any(), any(), any(), any(), any()))
+        whenever(mockPlayIntegrityRepository.verifyTokenClassic(any(), eq(currentSessionId), any(), any(), any()))
             .thenThrow(ioException)
 
         viewModel.verifyToken()
@@ -261,16 +287,25 @@ class ClassicPlayIntegrityViewModelTest {
     @Test
     fun `verifyToken uses GooglePlayDeveloperServiceInfo from uiState`() = runTest {
         val token = "test-token"
+        val nonce = "test-nonce"
+        val sessionId = "test-session-id"
+        val expectedNonceResponse = NonceResponseV2(sessionId, nonce)
+        whenever(mockPlayIntegrityRepository.getNonceV2()).thenReturn(expectedNonceResponse)
+
         viewModel.fetchNonce()
         testDispatcher.scheduler.advanceUntilIdle()
-        viewModel.updateNonce("dummy-nonce-for-token-fetch")
+
+        val fetchedUiState = viewModel.uiState.first()
+        val currentSessionId = fetchedUiState.currentSessionId
+        assertEquals(sessionId, currentSessionId)
+
         whenever(mockClassicPlayIntegrityTokenRepository.getToken(any())).thenReturn(token)
         viewModel.fetchIntegrityToken()
-        testDispatcher.scheduler.advanceUntilIdle() // Ensure token and GPDS info are set
+        testDispatcher.scheduler.advanceUntilIdle()
 
         whenever(mockPlayIntegrityRepository.verifyTokenClassic(
             eq(token),
-            any(), // sessionId
+            eq(currentSessionId), // sessionId
             any(), // deviceInfo
             any(), // securityInfo
             eq(dummyGooglePlayDeveloperServiceInfo) // Explicitly check this arg
