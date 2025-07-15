@@ -10,8 +10,11 @@ import google.auth
 
 from google.api_core.exceptions import Conflict
 
+from google.api_core.exceptions import Conflict
+
 from .datastore_utils import (
-    generate_and_store_nonce_with_session,
+    store_nonce_with_session_v1,
+    store_nonce_with_session_v2,
     get_nonce_entity,
     delete_nonce,
     store_verification_attempt,
@@ -65,7 +68,7 @@ def create_nonce_endpoint():
 
     try:
         raw_nonce = os.urandom(24)
-        nonce, generated_datetime = generate_and_store_nonce_with_session(datastore_client, session_id, raw_nonce)
+        nonce, generated_datetime = store_nonce_with_session_v1(datastore_client, session_id, raw_nonce)
 
         response = {
             "nonce": nonce,
@@ -94,7 +97,7 @@ def create_nonce_v2_endpoint():
         session_id = str(uuid.uuid4())
         try:
             raw_nonce = os.urandom(24)
-            nonce, _ = generate_and_store_nonce_with_session(datastore_client, session_id, raw_nonce)
+            nonce = store_nonce_with_session_v2(datastore_client, session_id, raw_nonce)
             response = {
                 "session_id": session_id,
                 "nonce": nonce

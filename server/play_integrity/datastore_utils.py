@@ -41,7 +41,7 @@ def cleanup_expired_nonces(datastore_client: datastore.Client):
         logger.error(f"Error during Datastore cleanup of expired nonces: {e}", exc_info=True)
 
 
-def generate_and_store_nonce_with_session(datastore_client: datastore.Client, session_id: str, raw_nonce: bytes, overwrite: bool = False) -> tuple[str, int]:
+def store_nonce_with_session_v1(datastore_client: datastore.Client, session_id: str, raw_nonce: bytes) -> tuple[str, int]:
     """
     Generates a cryptographically secure nonce, associates it with a session_id,
     stores it in Datastore, and returns it.
@@ -63,22 +63,49 @@ def generate_and_store_nonce_with_session(datastore_client: datastore.Client, se
         'session_id': session_id
     })
 
-    if not overwrite:
-        try:
-            with datastore_client.transaction():
-                if datastore_client.get(key):
-                    raise Conflict("Session ID already exists")
-                datastore_client.put(entity)
-        except Conflict:
-            raise
-    else:
-        datastore_client.put(entity)
-
+    datastore_client.put(entity)
     logger.info(f"Stored/Updated nonce for session_id: {session_id}")
 
     cleanup_expired_nonces(datastore_client)
 
     return encoded_nonce, generated_datetime_ms
+
+
+def store_nonce_with_session_v2(datastore_client: datastore.Client, session_id: str, raw_nonce: bytes) -> str:
+    """
+    Generates a cryptographically secure nonce, associates it with a session_id,
+    stores it in Datastore, and returns it.
+    If an entity for the session_id already exists, it raises a Conflict exception.
+    """
+    import base64
+    encoded_nonce = base64.urlsafe_b64encode(raw_nonce).decode('utf-8').rstrip('=')
+
+    now = datetime.now(timezone.utc)
+    generated_datetime_ms = int(now.timestamp() * 1000)
+    expiry_datetime = now + timedelta(minutes=NONCE_EXPIRY_MINUTES)
+
+    key = datastore_client.key(NONCE_KIND, session_id)
+    entity = datastore.Entity(key=key)
+    entity.update({
+        'nonce': encoded_nonce,
+        'generated_datetime': generated_datetime_ms,
+        'expiry_datetime': expiry_datetime,
+        'session_id': session_id
+    })
+
+    try:
+        with datastore_client.transaction():
+            if datastore_client.get(key):
+                raise Conflict("Session ID already exists")
+            datastore_client.put(entity)
+    except Conflict:
+        raise
+
+    logger.info(f"Stored nonce for session_id: {session_id}")
+
+    cleanup_expired_nonces(datastore_client)
+
+    return encoded_nonce
 
 
 def get_nonce_entity(datastore_client: datastore.Client, session_id: str) -> Optional[datastore.Entity]:
