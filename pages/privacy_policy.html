@@ -57,16 +57,23 @@
         <section id="what" class="mb-20 scroll-mt-20">
             <div class="text-center mb-12">
                 <h2 class="text-3xl font-bold text-slate-900">取得するデータ：APIレスポンスの構成要素</h2>
-                <p class="mt-2 text-slate-600">本ツールが取得する各データは、Play Integrity APIのレスポンスを構成する要素です。</p>
+                <p class="mt-2 text-slate-600">本ツールが取得する各データは、Play Integrity APIのレスポンス、およびデバイスが生成する暗号鍵の構成証明書（Key Attestation）を構成する要素です。</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
                 <!-- Data Item Cards -->
                 <div class="data-card bg-white p-6 rounded-lg shadow-md border border-slate-200">
                     <h3 class="font-bold text-lg text-slate-800 mb-2">Play Integrity APIの検証結果</h3>
                     <div class="details text-sm text-slate-600 space-y-2">
                         <p><strong class="font-semibold text-slate-700">これは何？</strong><br>Googleによるデバイスとアプリの完全性評価（セッションIDを含む）です。</p>
                         <p><strong class="font-semibold text-slate-700">なぜ必要？</strong><br>このツールの主目的であり、APIからのレスポンスを開発者に提示します。</p>
+                    </div>
+                </div>
+                 <div class="data-card bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                    <h3 class="font-bold text-lg text-slate-800 mb-2">構成証明書（Key Attestation）の検証結果</h3>
+                    <div class="details text-sm text-slate-600 space-y-2">
+                        <p><strong class="font-semibold text-slate-700">これは何？</strong><br>デバイスのハードウェアに裏付けられた、暗号鍵の正当性を証明する仕組みです。</p>
+                        <p><strong class="font-semibold text-slate-700">なぜ必要？</strong><br>ハードウェアレベルでの信頼性を確認し、より高度なセキュリティ検証を可能にするためです。</p>
                     </div>
                 </div>
                 <div class="data-card bg-white p-6 rounded-lg shadow-md border border-slate-200">
@@ -121,7 +128,7 @@
                             </tr>
                             <tr>
                                 <td class="border border-slate-300 p-2 pl-6">&emsp;<strong>セッションID</strong></td>
-                                <td class="border border-slate-300 p-2">アプリケーションによる生成（UUIDv4）</td>
+                                <td class="border border-slate-300 p-2">サーバーによる生成（UUIDv4）</td>
                                 <td class="border border-slate-300 p-2">本検証ツールのセッションを維持・管理し、開発者による円滑な利用を可能にするため。</td>
                             </tr>
                             <tr>
@@ -150,13 +157,48 @@
                                 <td class="border border-slate-300 p-2">Play Integrity APIが呼び出されたデバイスのセキュリティ設定を開発者が確認できるようにするため。</td>
                             </tr>
                         </tbody>
+                        <tbody>
+                            <tr>
+                                <td colspan="3" class="border border-slate-300 p-2 font-semibold bg-slate-50"><strong>構成証明書（Key Attestation）</strong></td>
+                            </tr>
+                             <tr>
+                                <td class="border border-slate-300 p-2 pl-6">&emsp;<strong>セッションID</strong></td>
+                                <td class="border border-slate-300 p-2">サーバーによる生成（UUIDv4）</td>
+                                <td class="border border-slate-300 p-2">本検証ツールのセッションを維持・管理し、開発者による円滑な利用を可能にするため。</td>
+                            </tr>
+                            <tr>
+                                <td class="border border-slate-300 p-2 pl-6">&emsp;<strong>検証結果</strong></td>
+                                <td class="border border-slate-300 p-2">サーバーがアプリケーションからのリクエストに含まれる構成証明書を読み取って取得</td>
+                                <td class="border border-slate-300 p-2">デバイスが生成する暗号鍵の構成証明を開発者に対して表示し、テスト及び分析を可能にするため。</td>
+                            </tr>
+                            <tr>
+                                <td class="border border-slate-300 p-2 pl-6">&emsp;<strong>デバイス情報</strong> (メーカー名、デバイス名、製造事業者)</td>
+                                <td class="border border-slate-300 p-2">アプリケーションによる自動取得</td>
+                                <td class="border border-slate-300 p-2">Key Attestationの検証が行われたデバイス環境のコンテキストを開発者に提供し、包括的なテストを可能にするため。</td>
+                            </tr>
+                            <tr>
+                                <td class="border border-slate-300 p-2 pl-6">&emsp;<strong>システム情報</strong> (OSバージョン、セキュリティパッチレベル)</td>
+                                <td class="border border-slate-300 p-2">アプリケーションによる自動取得</td>
+                                <td class="border border-slate-300 p-2">Key Attestationの検証結果に影響を与える可能性のあるOSバージョンやパッチレベル等のコンテキストを開発者に提供するため。</td>
+                            </tr>
+                            <tr>
+                                <td class="border border-slate-300 p-2 pl-6">&emsp;<strong>セキュリティ設定情報</strong> (デバイスロックの有効/無効、生体認証の有効/無効、高度なセキュリティハードウェア(StrongBox)の搭載有無)</td>
+                                <td class="border border-slate-300 p-2">アプリケーションによる自動取得</td>
+                                <td class="border border-slate-300 p-2">Key Attestationが呼び出されたデバイスのセキュリティ設定を開発者が確認できるようにするため。</td>
+                            </tr>
+                        </tbody>
                     </table>
 
                     <h4 class="font-bold">第3条（外部送信、第三者提供、情報収集モジュール）</h4>
                     <p>1. **外部送信**: 当社は、第2条に定める利用者情報を、当社の管理するサーバーに送信し、保存します。</p>
                     <p>2. **第三者提供**: 当社は、本ツールが開発者向けの技術検証ツールであるという特性上、取得した利用者情報を、本サービスの改善、技術的な分析、またはその他の正当な目的のために、第三者に提供し、または不特定多数に公開することがあります。</p>
                     <p>3. **取扱いの委託**: 当社は、利用目的の達成に必要な範囲内において、利用者情報の取扱いの全部又は一部を外部の事業者に委託することがあります。この場合、当社は、委託先において情報の適切な安全管理が図られるよう、必要かつ適切な監督を行います。</p>
-                    <p>4. **情報収集モジュール**: 当社は、本アプリにGoogle LLCが提供する「Play Integrity API」を組み込み、これを利用して利用者情報を取得します。提供者による利用目的はGoogleのプライバシーポリシーに定めるとおりです。</p>
+                    <p>4. **情報収集モジュール等**: 当社は、本アプリに以下の情報収集モジュール等を組み込み、これを利用して利用者情報を取得します。
+                        <ul class="list-disc list-inside mt-2">
+                            <li>モジュール提供者: Google LLC<br>モジュールの名称: Play Integrity API<br>提供者による利用目的: Googleのプライバシーポリシーに定めるとおり (<a href="https://policies.google.com/privacy" target="_blank" class="text-teal-600 hover:underline">https://policies.google.com/privacy</a>)</li>
+                            <li class="mt-2">機能: Android Keystore system (Key Attestation)<br>概要: デバイスのハードウェアに保護されたキーのプロパティを検証する機能。この機能はAndroid OSに標準で組み込まれています。</li>
+                        </ul>
+                    </p>
 
                     <h4 class="font-bold">第4条（安全管理措置）</h4>
                     <p>当社は、取得した利用者情報の漏えい、滅失又は毀損の防止その他利用者情報の安全管理のために、組織的、物理的、技術的安全管理措置を講じます。</p>
