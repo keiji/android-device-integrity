@@ -25,12 +25,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.keiji.deviceintegrity.ui.common.InfoItem
 import dev.keiji.deviceintegrity.ui.common.InfoItemContent
 import dev.keiji.deviceintegrity.ui.common.InfoItemFormatter
+import dev.keiji.deviceintegrity.ui.main.R
 import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
 import dev.keiji.deviceintegrity.ui.common.ProgressConstants
 import kotlinx.coroutines.launch
@@ -57,19 +59,19 @@ fun StandardPlayIntegrityContent(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Top
     ) {
-        Text(text = "Step 1. 検証に使うコンテンツを設定")
+        Text(text = stringResource(id = R.string.standard_pi_title_step1))
         Spacer(modifier = Modifier.height(12.dp))
         OutlinedTextField(
             value = uiState.contentBinding,
             onValueChange = { onContentBindingChange(it) },
-            label = { Text("Content") },
+            label = { Text(stringResource(id = R.string.standard_pi_label_content)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = false,
             maxLines = 5
         )
 
         Spacer(modifier = Modifier.height(24.dp))
-        Text(text = "Step 2. トークンを取得")
+        Text(text = stringResource(id = R.string.standard_pi_title_step2))
         Spacer(modifier = Modifier.height(12.dp))
         Button(
             onClick = { onRequestToken() },
@@ -78,16 +80,16 @@ fun StandardPlayIntegrityContent(
                 .fillMaxWidth()
                 .height(ButtonHeight)
         ) {
-            Text(text = "Request Integrity Token")
+            Text(text = stringResource(id = R.string.standard_pi_button_request_integrity_token))
         }
 
         if (uiState.requestHashVisible) {
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "requestHash: ${uiState.requestHashValue}")
+            Text(text = stringResource(id = R.string.standard_pi_label_request_hash, uiState.requestHashValue))
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-        Text(text = "Step 3. トークンを検証")
+        Text(text = stringResource(id = R.string.standard_pi_title_step3))
         Spacer(modifier = Modifier.height(12.dp))
         Button(
             onClick = { onRequestVerify() },
@@ -96,7 +98,7 @@ fun StandardPlayIntegrityContent(
                 .fillMaxWidth()
                 .height(ButtonHeight)
         ) {
-            Text(text = "Request Verify Token")
+            Text(text = stringResource(id = R.string.standard_pi_button_request_verify_token))
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -122,7 +124,7 @@ fun StandardPlayIntegrityContent(
         }
 
         val statusToDisplay = if (uiState.errorMessages.isNotEmpty()) {
-            "Error: ${uiState.errorMessages.joinToString("\n")}"
+            stringResource(id = R.string.standard_pi_label_error, uiState.errorMessages.joinToString("\n"))
         } else {
             uiState.status
         }

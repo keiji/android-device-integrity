@@ -2,4 +2,47 @@
     <string name="app_screen_play_integrity_label" translatable="false">Play Integrity</string>
     <string name="app_screen_key_attestation_label" translatable="false">Key Attestation</string>
     <string name="app_screen_menu_label" translatable="false">Menu</string>
+
+    <string name="copied_to_clipboard">Copied to clipboard</string>
+    <string name="key_attestation_result_label">Key Attestation Result</string>
+
+    <string name="key_attestation_title_step1">Step 1. 鍵のアルゴリズムを選択</string>
+    <string name="key_attestation_label_key_algorithm">Key Algorithm</string>
+    <string name="key_attestation_title_step2">Step 2. サーバーからNonce/Challengeを取得</string>
+    <string name="key_attestation_title_step2_ecdh">Step 2. サーバーからNonce/Challenge/PublicKeyを取得</string>
+    <string name="key_attestation_button_fetch_nonce_challenge">Fetch Nonce/Challenge</string>
+    <string name="key_attestation_button_fetch_nonce_challenge_ecdh">Fetch Nonce/Challenge/PublicKey</string>
+    <string name="key_attestation_label_nonce">Nonce: %s</string>
+    <string name="key_attestation_label_challenge">Challenge: %s</string>
+    <string name="key_attestation_title_step3">Step 3. キーペア（構成証明付き）を生成</string>
+    <string name="key_attestation_checkbox_label_strongbox">StrongBoxで鍵を生成する</string>
+    <string name="key_attestation_button_generate_keypair">Generate KeyPair</string>
+    <string name="key_attestation_title_step4">Step 4. キーペアと構成証明を検証</string>
+    <string name="key_attestation_button_request_verify_key_attestation">Request Verify KeyAttestation</string>
+
+    <string name="classic_pi_title_step1">Step 1. サーバーからNonceを取得</string>
+    <string name="classic_pi_button_fetch_nonce">Fetch Nonce</string>
+    <string name="classic_pi_label_nonce">Nonce: %s</string>
+    <string name="classic_pi_title_step2">Step 2. トークンを取得</string>
+    <string name="classic_pi_button_request_integrity_token">Request Integrity Token</string>
+    <string name="classic_pi_title_step3">Step 3. トークンを検証</string>
+    <string name="classic_pi_button_request_verify_token">Request Verify Token</string>
+    <string name="classic_pi_label_error">Error: %s</string>
+
+    <string name="standard_pi_title_step1">Step 1. 検証に使うコンテンツを設定</string>
+    <string name="standard_pi_label_content">Content</string>
+    <string name="standard_pi_title_step2">Step 2. トークンを取得</string>
+    <string name="standard_pi_button_request_integrity_token">Request Integrity Token</string>
+    <string name="standard_pi_label_request_hash">requestHash: %s</string>
+    <string name="standard_pi_title_step3">Step 3. トークンを検証</string>
+    <string name="standard_pi_button_request_verify_token">Request Verify Token</string>
+    <string name="standard_pi_label_error">Error: %s</string>
+
+    <string name="settings_title_app_version">アプリのバージョン</string>
+    <string name="settings_title_device_name">端末名</string>
+    <string name="settings_title_os_version">OSバージョン</string>
+    <string name="settings_title_security_patch">セキュリティパッチ</string>
+    <string name="settings_title_privacy_policy">プライバシーポリシー</string>
+    <string name="settings_title_oss_licenses">オープンソースライセンス</string>
+    <string name="settings_title_support_site">サポートサイト</string>
 </resources>
