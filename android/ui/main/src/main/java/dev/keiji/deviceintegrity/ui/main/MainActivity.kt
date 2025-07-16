@@ -109,19 +109,10 @@ fun DeviceIntegrityApp(
             }
         }
 
-        if (dev.keiji.deviceintegrity.ui.main.BuildConfig.DEBUG) {
-            LaunchedEffect(Unit) {
-                if (!mainViewModel.isAgreed.value) { // Avoid re-launching if already agreed during recomposition
-                    val intent = agreementNavigator.newIntent(context)
-                    agreementLauncher.launch(intent)
-                }
-            }
-        } else {
-            LaunchedEffect(Unit) {
-                if (!mainViewModel.isAgreed.value) {
-                    val intent = agreementNavigator.newIntent(context)
-                    agreementLauncher.launch(intent)
-                }
+        LaunchedEffect(Unit) {
+            if (!mainViewModel.isAgreed.value) {
+                val intent = agreementNavigator.newIntent(context)
+                agreementLauncher.launch(intent)
             }
         }
 
