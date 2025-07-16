@@ -3,6 +3,7 @@
     <string name="app_screen_key_attestation_label" translatable="false">Key Attestation</string>
     <string name="app_screen_menu_label" translatable="false">Menu</string>
 
+    <string name="copied_to_clipboard">Copied to clipboard</string>
     <string name="key_attestation_result_label">Key Attestation Result</string>
 
     <string name="key_attestation_title_step1">Step 1. Select Key Algorithm</string>
