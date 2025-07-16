@@ -21,6 +21,7 @@ def store_key_attestation_session(datastore_client, session_id: str, nonce_encod
         raise ConnectionError('Datastore client not initialized or provided.')
 
     now = datetime.now(timezone.utc)
+    expiry_datetime = now + timedelta(minutes=NONCE_EXPIRY_MINUTES)
     key = datastore_client.key(KEY_ATTESTATION_SESSION_KIND, session_id)
     entity = datastore_client.entity(key=key) # Use datastore_client.entity for new entities
     entity.update({
@@ -28,6 +29,7 @@ def store_key_attestation_session(datastore_client, session_id: str, nonce_encod
         'nonce': nonce_encoded,
         'challenge': challenge_encoded,
         'generated_at': now,
+        'expiry_datetime': expiry_datetime,
     })
     with datastore_client.transaction():
         if datastore_client.get(key):
@@ -51,6 +53,7 @@ def store_agreement_key_attestation_session(datastore_client, session_id: str, n
         raise ConnectionError('Datastore client not initialized or provided.')
 
     now = datetime.now(timezone.utc)
+    expiry_datetime = now + timedelta(minutes=NONCE_EXPIRY_MINUTES)
     key = datastore_client.key(AGREEMENT_KEY_ATTESTATION_SESSION_KIND, session_id)
     entity = datastore_client.entity(key=key)
     entity.update({
@@ -58,6 +61,7 @@ def store_agreement_key_attestation_session(datastore_client, session_id: str, n
         'nonce': nonce_encoded,
         'challenge': challenge_encoded,
         'generated_at': now,
+        'expiry_datetime': expiry_datetime,
     })
     if public_key_encoded:
         entity['public_key'] = public_key_encoded
@@ -96,26 +100,21 @@ def get_key_attestation_session(datastore_client, session_id: str):
         logger.warning(f'Session not found for session_id: {session_id} (Kind: {KEY_ATTESTATION_SESSION_KIND})')
         return None
 
-    generated_at = entity.get('generated_at')
-    if not generated_at:
-        logger.error(f'Session {session_id} is missing \'generated_at\' timestamp.')
-        return None # Data integrity issue
+    expiry_datetime = entity.get('expiry_datetime')
+    if not expiry_datetime:
+        logger.error(f'Session {session_id} is missing \'expiry_datetime\' timestamp.')
+        return None
 
-    if not isinstance(generated_at, datetime):
-         logger.error(f'Session {session_id} has invalid \'generated_at\' type: {type(generated_at)}.')
-         # Attempt to parse if it's a string, or handle as error. For now, treat as error.
-         return None
+    if not isinstance(expiry_datetime, datetime):
+        logger.error(f'Session {session_id} has invalid \'expiry_datetime\' type: {type(expiry_datetime)}.')
+        return None
 
+    # Ensure expiry_datetime is offset-aware for comparison
+    if expiry_datetime.tzinfo is None:
+        expiry_datetime = expiry_datetime.replace(tzinfo=timezone.utc)
 
-    # Ensure generated_at is offset-aware for comparison
-    if generated_at.tzinfo is None:
-        generated_at = generated_at.replace(tzinfo=timezone.utc)
-
-    expiry_datetime = generated_at + timedelta(minutes=NONCE_EXPIRY_MINUTES)
     if datetime.now(timezone.utc) > expiry_datetime:
-        logger.warning(f'Session expired for session_id: {session_id}. Generated at: {generated_at}, Expired at: {expiry_datetime}')
-        # Optionally delete the expired entity here or rely on cleanup_expired_sessions
-        # delete_key_attestation_session(datastore_client, session_id, KEY_ATTESTATION_SESSION_KIND) # if we want immediate deletion
+        logger.warning(f'Session expired for session_id: {session_id}. Expired at: {expiry_datetime}')
         return None
 
     logger.info(f'Successfully retrieved and validated session for session_id: {session_id} (Kind: {KEY_ATTESTATION_SESSION_KIND})')
@@ -141,22 +140,20 @@ def get_agreement_key_attestation_session(datastore_client, session_id: str):
         logger.warning(f'Agreement session not found for session_id: {session_id} (Kind: {AGREEMENT_KEY_ATTESTATION_SESSION_KIND})')
         return None
 
-    generated_at = entity.get('generated_at')
-    if not generated_at:
-        logger.error(f'Agreement session {session_id} is missing \'generated_at\' timestamp.')
+    expiry_datetime = entity.get('expiry_datetime')
+    if not expiry_datetime:
+        logger.error(f'Agreement session {session_id} is missing \'expiry_datetime\' timestamp.')
         return None
 
-    if not isinstance(generated_at, datetime):
-         logger.error(f'Agreement session {session_id} has invalid \'generated_at\' type: {type(generated_at)}.')
-         return None
+    if not isinstance(expiry_datetime, datetime):
+        logger.error(f'Agreement session {session_id} has invalid \'expiry_datetime\' type: {type(expiry_datetime)}.')
+        return None
 
-    if generated_at.tzinfo is None:
-        generated_at = generated_at.replace(tzinfo=timezone.utc)
+    if expiry_datetime.tzinfo is None:
+        expiry_datetime = expiry_datetime.replace(tzinfo=timezone.utc)
 
-    expiry_datetime = generated_at + timedelta(minutes=NONCE_EXPIRY_MINUTES)
     if datetime.now(timezone.utc) > expiry_datetime:
-        logger.warning(f'Agreement session expired for session_id: {session_id}. Generated at: {generated_at}, Expired at: {expiry_datetime}')
-        # delete_key_attestation_session(datastore_client, session_id, AGREEMENT_KEY_ATTESTATION_SESSION_KIND)
+        logger.warning(f'Agreement session expired for session_id: {session_id}. Expired at: {expiry_datetime}')
         return None
 
     logger.info(f'Successfully retrieved and validated agreement session for session_id: {session_id} (Kind: {AGREEMENT_KEY_ATTESTATION_SESSION_KIND})')
@@ -168,14 +165,8 @@ def cleanup_expired_sessions(datastore_client, kind: str):
         logger.warning(f'Datastore client not provided. Skipping cleanup of expired {kind} sessions.')
         return
     try:
-        # Ensure NONCE_EXPIRY_MINUTES is positive to avoid issues with timedelta
-        if NONCE_EXPIRY_MINUTES <= 0:
-            logger.warning(f"NONCE_EXPIRY_MINUTES ({NONCE_EXPIRY_MINUTES}) is not positive. Skipping cleanup for kind {kind}.")
-            return
-
-        expiry_time_check = datetime.now(timezone.utc) - timedelta(minutes=NONCE_EXPIRY_MINUTES)
         query = datastore_client.query(kind=kind)
-        query.add_filter('generated_at', '<', expiry_time_check)
+        query.add_filter('expiry_datetime', '<', datetime.now(timezone.utc))
         # Fetching only keys can be more efficient if entities are large
         query.keys_only()
         expired_entity_keys = [entity.key for entity in query.fetch()]
