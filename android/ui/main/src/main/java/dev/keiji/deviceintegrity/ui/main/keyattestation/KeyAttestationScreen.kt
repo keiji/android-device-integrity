@@ -30,11 +30,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.keiji.deviceintegrity.ui.common.InfoItem
 import dev.keiji.deviceintegrity.ui.common.InfoItemContent
 import dev.keiji.deviceintegrity.ui.common.ProgressConstants
+import dev.keiji.deviceintegrity.ui.main.R
 import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -57,12 +59,12 @@ fun KeyAttestationScreen(
         uiState.progressValue != ProgressConstants.NO_PROGRESS
 
     val step2Label = when (uiState.selectedKeyType) {
-        CryptoAlgorithm.ECDH -> "Step 2. サーバーからNonce/Challenge/PublicKeyを取得"
-        else -> "Step 2. サーバーからNonce/Challengeを取得"
+        CryptoAlgorithm.ECDH -> stringResource(id = R.string.key_attestation_title_step2_ecdh)
+        else -> stringResource(id = R.string.key_attestation_title_step2)
     }
     val step2ButtonText = when (uiState.selectedKeyType) {
-        CryptoAlgorithm.ECDH -> "Fetch Nonce/Challenge/PublicKey"
-        else -> "Fetch Nonce/Challenge"
+        CryptoAlgorithm.ECDH -> stringResource(id = R.string.key_attestation_button_fetch_nonce_challenge_ecdh)
+        else -> stringResource(id = R.string.key_attestation_button_fetch_nonce_challenge)
     }
 
     Column(
@@ -73,7 +75,7 @@ fun KeyAttestationScreen(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Top
     ) {
-        Text(text = "Step 1. 鍵のアルゴリズムを選択")
+        Text(text = stringResource(id = R.string.key_attestation_title_step1))
         Spacer(modifier = Modifier.height(12.dp))
         Box(modifier = Modifier.fillMaxWidth()) {
             ExposedDropdownMenuBox(
@@ -88,7 +90,7 @@ fun KeyAttestationScreen(
                     value = uiState.selectedKeyType.label,
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Key Algorithm") },
+                    label = { Text(stringResource(id = R.string.key_attestation_label_key_algorithm)) },
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = keyTypeExpanded)
                     },
@@ -132,14 +134,14 @@ fun KeyAttestationScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
         if (uiState.isNonceVisible) {
-            Text(text = "Nonce: ${uiState.nonce}")
+            Text(text = stringResource(id = R.string.key_attestation_label_nonce, uiState.nonce))
         }
         Spacer(modifier = Modifier.height(8.dp))
         if (uiState.isChallengeVisible) {
-            Text(text = "Challenge: ${uiState.challenge}")
+            Text(text = stringResource(id = R.string.key_attestation_label_challenge, uiState.challenge))
         }
         Spacer(modifier = Modifier.height(24.dp))
-        Text(text = "Step 3. キーペア（構成証明付き）を生成")
+        Text(text = stringResource(id = R.string.key_attestation_title_step3))
         Spacer(modifier = Modifier.height(12.dp))
         if (uiState.isStep3PreferStrongBoxVisible) {
             Row(
@@ -151,7 +153,7 @@ fun KeyAttestationScreen(
                     onCheckedChange = onPreferStrongBoxChanged,
                     enabled = uiState.isStep3PreferStrongBoxEnabled,
                 )
-                Text("StrongBoxで鍵を生成する")
+                Text(stringResource(id = R.string.key_attestation_checkbox_label_strongbox))
             }
         }
 
@@ -162,11 +164,11 @@ fun KeyAttestationScreen(
                 .height(ButtonHeight),
             enabled = uiState.isStep3GenerateKeyPairEnabled // UiState already updated for this
         ) {
-            Text(text = "Generate KeyPair")
+            Text(text = stringResource(id = R.string.key_attestation_button_generate_keypair))
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-        Text(text = "Step 4. キーペアと構成証明を検証")
+        Text(text = stringResource(id = R.string.key_attestation_title_step4))
         Spacer(modifier = Modifier.height(12.dp))
         Button(
             onClick = onRequestVerifyKeyAttestation,
@@ -175,7 +177,7 @@ fun KeyAttestationScreen(
                 .height(ButtonHeight),
             enabled = uiState.isStep4VerifyAttestationEnabled // UiState already updated for this
         ) {
-            Text(text = "Request Verify KeyAttestation")
+            Text(text = stringResource(id = R.string.key_attestation_button_request_verify_key_attestation))
         }
 
         Spacer(modifier = Modifier.height(16.dp))

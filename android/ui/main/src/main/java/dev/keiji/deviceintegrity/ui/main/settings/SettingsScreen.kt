@@ -22,9 +22,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.keiji.deviceintegrity.ui.main.R
 
 @Composable
 fun SettingsScreen(
@@ -44,31 +46,31 @@ fun SettingsScreen(
             .padding(vertical = 8.dp)
     ) {
         SettingsMenuItem(
-            title = "アプリのバージョン",
+            title = stringResource(id = R.string.settings_title_app_version),
             subtitle = uiState.appVersionName,
         )
         SettingsMenuItem(
-            title = "端末名",
+            title = stringResource(id = R.string.settings_title_device_name),
             subtitle = uiState.deviceName,
         )
         SettingsMenuItem(
-            title = "OSバージョン",
+            title = stringResource(id = R.string.settings_title_os_version),
             subtitle = uiState.osVersion,
         )
         SettingsMenuItem(
-            title = "セキュリティパッチ",
+            title = stringResource(id = R.string.settings_title_security_patch),
             subtitle = uiState.securityPatchLevel,
         )
         SettingsMenuItem(
-            title = "プライバシーポリシー",
+            title = stringResource(id = R.string.settings_title_privacy_policy),
             onClick = onNavigateToPrivacyPolicy
         )
         SettingsMenuItem(
-            title = "オープンソースライセンス",
+            title = stringResource(id = R.string.settings_title_oss_licenses),
             onClick = onNavigateToOssLicenses
         )
         SettingsMenuItem(
-            title = "サポートサイト",
+            title = stringResource(id = R.string.settings_title_support_site),
             onClick = onNavigateToDeveloperInfo
         )
     }

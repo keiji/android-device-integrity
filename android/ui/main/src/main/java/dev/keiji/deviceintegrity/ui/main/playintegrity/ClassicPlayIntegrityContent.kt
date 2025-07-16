@@ -24,12 +24,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.keiji.deviceintegrity.ui.common.InfoItem
 import dev.keiji.deviceintegrity.ui.common.InfoItemContent
 import dev.keiji.deviceintegrity.ui.common.InfoItemFormatter
+import dev.keiji.deviceintegrity.ui.main.R
 import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
 import dev.keiji.deviceintegrity.ui.common.ProgressConstants
 import kotlinx.coroutines.launch
@@ -56,7 +58,7 @@ fun ClassicPlayIntegrityContent(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Top
     ) {
-        Text(text = "Step 1. サーバーからNonceを取得")
+        Text(text = stringResource(id = R.string.classic_pi_title_step1))
         Spacer(modifier = Modifier.height(12.dp))
         Button(
             onClick = { onFetchNonce() },
@@ -65,14 +67,14 @@ fun ClassicPlayIntegrityContent(
                 .fillMaxWidth()
                 .height(ButtonHeight)
         ) {
-            Text(text = "Fetch Nonce")
+            Text(text = stringResource(id = R.string.classic_pi_button_fetch_nonce))
         }
         if (uiState.nonce.isNotEmpty()) {
-            Text(text = "Nonce: ${uiState.nonce}")
+            Text(text = stringResource(id = R.string.classic_pi_label_nonce, uiState.nonce))
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-        Text(text = "Step 2. トークンを取得")
+        Text(text = stringResource(id = R.string.classic_pi_title_step2))
         Spacer(modifier = Modifier.height(12.dp))
         Button(
             onClick = { onRequestToken() },
@@ -81,11 +83,11 @@ fun ClassicPlayIntegrityContent(
                 .fillMaxWidth()
                 .height(ButtonHeight)
         ) {
-            Text(text = "Request Integrity Token")
+            Text(text = stringResource(id = R.string.classic_pi_button_request_integrity_token))
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-        Text(text = "Step 3. トークンを検証")
+        Text(text = stringResource(id = R.string.classic_pi_title_step3))
         Spacer(modifier = Modifier.height(12.dp))
         Button(
             onClick = { onRequestVerify() },
@@ -94,7 +96,7 @@ fun ClassicPlayIntegrityContent(
                 .fillMaxWidth()
                 .height(ButtonHeight)
         ) {
-            Text(text = "Request Verify Token")
+            Text(text = stringResource(id = R.string.classic_pi_button_request_verify_token))
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -120,7 +122,7 @@ fun ClassicPlayIntegrityContent(
         }
 
         val statusToDisplay = if (uiState.errorMessages.isNotEmpty()) {
-            "Error: ${uiState.errorMessages.joinToString("\n")}"
+            stringResource(id = R.string.classic_pi_label_error, uiState.errorMessages.joinToString("\n"))
         } else {
             uiState.status
         }
