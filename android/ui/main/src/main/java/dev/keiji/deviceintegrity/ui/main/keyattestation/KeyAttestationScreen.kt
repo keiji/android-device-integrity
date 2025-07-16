@@ -51,11 +51,6 @@ fun KeyAttestationScreen(
     onClickCopy: () -> Unit,
     onClickShare: () -> Unit
 ) {
-    if (!uiState.isKeyAttestationSupported) {
-        KeyAttestationUnsupportedScreen()
-        return
-    }
-
     val scrollState = rememberScrollState()
     var keyTypeExpanded by remember { mutableStateOf(false) }
     val keyTypes = CryptoAlgorithm.values().toList()
