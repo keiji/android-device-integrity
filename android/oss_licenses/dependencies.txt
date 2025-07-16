@@ -1,14 +1,17 @@
+Starting a Gradle Daemon (subsequent builds will be faster)
 Calculating task graph as no cached configuration is available for tasks: clean :app:dependencies --configuration releaseRuntimeClasspath
 
 > Configure project :app
 Info: Using keystore.properties for release signing.
 
-> Task :ui:clean
-> Task :provider:contract:clean
+> Task :crypto:contract:clean
 > Task :repository:contract:clean
+> Task :provider:contract:clean
+> Task :ui:clean
+> Task :provider:impl:clean
 > Task :api:clean
+> Task :crypto:impl:clean
 > Task :ui:agreement:clean
-> Task :ui:license:clean
 
 > Task :app:dependencies
 
@@ -152,7 +155,7 @@ releaseRuntimeClasspath - Runtime classpath of '/release'.
 |    |    |         \--- org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0 (*)
 |    |    \--- project :provider:contract
 |    |         +--- com.google.android.play:integrity:1.4.0
-|    |         |    +--- com.google.android.gms:play-services-basement:18.4.0 -> 18.7.0
+|    |         |    +--- com.google.android.gms:play-services-basement:18.4.0 -> 18.7.1
 |    |         |    |    +--- androidx.collection:collection:1.0.0 -> 1.5.0 (*)
 |    |         |    |    +--- androidx.core:core:1.2.0 -> 1.16.0 (*)
 |    |         |    |    \--- androidx.fragment:fragment:1.1.0 -> 1.5.1
@@ -299,8 +302,8 @@ releaseRuntimeClasspath - Runtime classpath of '/release'.
 |    |         |    |         |         +--- androidx.annotation:annotation:1.0.0 -> 1.9.1 (*)
 |    |         |    |         |         \--- androidx.core:core:1.0.0 -> 1.16.0 (*)
 |    |         |    |         \--- org.jetbrains.kotlin:kotlin-stdlib:1.6.21 -> 2.2.0 (*)
-|    |         |    +--- com.google.android.gms:play-services-tasks:18.2.0 -> 18.3.0
-|    |         |    |    \--- com.google.android.gms:play-services-basement:18.7.0 (*)
+|    |         |    +--- com.google.android.gms:play-services-tasks:18.2.0 -> 18.3.2
+|    |         |    |    \--- com.google.android.gms:play-services-basement:18.7.1 (*)
 |    |         |    \--- com.google.android.play:core-common:2.0.4
 |    |         +--- org.jetbrains.kotlin:kotlin-stdlib:2.2.0 (*)
 |    |         +--- com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0 (*)
@@ -396,6 +399,7 @@ releaseRuntimeClasspath - Runtime classpath of '/release'.
 |    |    |         |    |    +--- org.jetbrains.kotlin:kotlin-stdlib -> 2.2.0 (*)
 |    |    |         |    |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3 -> 1.10.2 (*)
 |    |    |         |    |    +--- androidx.lifecycle:lifecycle-common:2.9.1 (c)
+|    |    |         |    |    +--- androidx.lifecycle:lifecycle-livedata-core:2.9.1 (c)
 |    |    |         |    |    +--- androidx.lifecycle:lifecycle-runtime:2.9.1 (c)
 |    |    |         |    |    +--- androidx.lifecycle:lifecycle-runtime-compose:2.9.1 (c)
 |    |    |         |    |    +--- androidx.lifecycle:lifecycle-runtime-ktx:2.9.1 (c)
@@ -403,7 +407,6 @@ releaseRuntimeClasspath - Runtime classpath of '/release'.
 |    |    |         |    |    +--- androidx.lifecycle:lifecycle-viewmodel-compose:2.9.1 (c)
 |    |    |         |    |    +--- androidx.lifecycle:lifecycle-viewmodel-savedstate:2.9.1 (c)
 |    |    |         |    |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.2.0 (c)
-|    |    |         |    |    +--- androidx.lifecycle:lifecycle-livedata-core:2.9.1 (c)
 |    |    |         |    |    +--- androidx.lifecycle:lifecycle-common-java8:2.9.1 (c)
 |    |    |         |    |    +--- androidx.lifecycle:lifecycle-livedata:2.9.1 (c)
 |    |    |         |    |    +--- androidx.lifecycle:lifecycle-livedata-core-ktx:2.9.1 (c)
@@ -709,8 +712,8 @@ releaseRuntimeClasspath - Runtime classpath of '/release'.
 |    |    |         |    +--- androidx.lifecycle:lifecycle-livedata-core-ktx:2.9.1 (c)
 |    |    |         |    \--- androidx.lifecycle:lifecycle-process:2.9.1 (c)
 |    |    |         \--- org.jetbrains.kotlin:kotlin-stdlib-common:1.8.22 -> 2.2.0 (*)
-|    |    +--- androidx.navigation:navigation-compose:2.9.0
-|    |    |    \--- androidx.navigation:navigation-compose-android:2.9.0
+|    |    +--- androidx.navigation:navigation-compose:2.9.1
+|    |    |    \--- androidx.navigation:navigation-compose-android:2.9.1
 |    |    |         +--- androidx.activity:activity:1.8.0 -> 1.10.1 (*)
 |    |    |         +--- androidx.activity:activity-compose:1.8.0 -> 1.10.1 (*)
 |    |    |         +--- androidx.annotation:annotation:1.8.0 -> 1.9.1 (*)
@@ -749,8 +752,8 @@ releaseRuntimeClasspath - Runtime classpath of '/release'.
 |    |    |         |         \--- androidx.lifecycle:lifecycle-process:2.9.1 (c)
 |    |    |         +--- androidx.lifecycle:lifecycle-viewmodel-compose:2.9.0 -> 2.9.1 (*)
 |    |    |         +--- androidx.lifecycle:lifecycle-viewmodel-savedstate:2.9.0 -> 2.9.1 (*)
-|    |    |         +--- androidx.navigation:navigation-common:2.9.0
-|    |    |         |    \--- androidx.navigation:navigation-common-android:2.9.0
+|    |    |         +--- androidx.navigation:navigation-common:2.9.1
+|    |    |         |    \--- androidx.navigation:navigation-common-android:2.9.1
 |    |    |         |         +--- androidx.annotation:annotation:1.8.1 -> 1.9.1 (*)
 |    |    |         |         +--- androidx.collection:collection:1.4.2 -> 1.5.0 (*)
 |    |    |         |         +--- androidx.core:core-ktx:1.1.0 -> 1.16.0 (*)
@@ -760,14 +763,13 @@ releaseRuntimeClasspath - Runtime classpath of '/release'.
 |    |    |         |         +--- androidx.lifecycle:lifecycle-viewmodel-savedstate:2.9.0 -> 2.9.1 (*)
 |    |    |         |         +--- androidx.profileinstaller:profileinstaller:1.4.0 (*)
 |    |    |         |         +--- androidx.savedstate:savedstate:1.3.0 (*)
-|    |    |         |         +--- androidx.savedstate:savedstate-ktx:1.3.0 (*)
 |    |    |         |         +--- org.jetbrains.kotlin:kotlin-stdlib -> 2.2.0 (*)
 |    |    |         |         +--- org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.3 -> 1.9.0 (*)
-|    |    |         |         +--- androidx.navigation:navigation-compose:2.9.0 (c)
-|    |    |         |         +--- androidx.navigation:navigation-runtime:2.9.0 (c)
+|    |    |         |         +--- androidx.navigation:navigation-compose:2.9.1 (c)
+|    |    |         |         +--- androidx.navigation:navigation-runtime:2.9.1 (c)
 |    |    |         |         \--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.2.0 (c)
-|    |    |         +--- androidx.navigation:navigation-runtime:2.9.0
-|    |    |         |    \--- androidx.navigation:navigation-runtime-android:2.9.0
+|    |    |         +--- androidx.navigation:navigation-runtime:2.9.1
+|    |    |         |    \--- androidx.navigation:navigation-runtime-android:2.9.1
 |    |    |         |         +--- androidx.activity:activity-ktx:1.7.1 -> 1.10.1 (*)
 |    |    |         |         +--- androidx.annotation:annotation-experimental:1.4.1 (*)
 |    |    |         |         +--- androidx.collection:collection:1.4.2 -> 1.5.0 (*)
@@ -777,12 +779,12 @@ releaseRuntimeClasspath - Runtime classpath of '/release'.
 |    |    |         |         +--- androidx.lifecycle:lifecycle-runtime-ktx:2.8.7 -> 2.9.1 (*)
 |    |    |         |         +--- androidx.lifecycle:lifecycle-viewmodel:2.8.7 -> 2.9.1 (*)
 |    |    |         |         +--- androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7 -> 2.9.1 (*)
-|    |    |         |         +--- androidx.navigation:navigation-common:2.9.0 (*)
+|    |    |         |         +--- androidx.navigation:navigation-common:2.9.1 (*)
 |    |    |         |         +--- org.jetbrains.kotlin:kotlin-stdlib -> 2.2.0 (*)
 |    |    |         |         +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3 -> 1.10.2 (*)
 |    |    |         |         +--- org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.3 -> 1.9.0 (*)
-|    |    |         |         +--- androidx.navigation:navigation-common:2.9.0 (c)
-|    |    |         |         +--- androidx.navigation:navigation-compose:2.9.0 (c)
+|    |    |         |         +--- androidx.navigation:navigation-common:2.9.1 (c)
+|    |    |         |         +--- androidx.navigation:navigation-compose:2.9.1 (c)
 |    |    |         |         \--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.2.0 (c)
 |    |    |         +--- androidx.savedstate:savedstate:1.3.0 (*)
 |    |    |         +--- androidx.savedstate:savedstate-compose:1.3.0
@@ -796,8 +798,8 @@ releaseRuntimeClasspath - Runtime classpath of '/release'.
 |    |    |         +--- org.jetbrains.kotlin:kotlin-stdlib -> 2.2.0 (*)
 |    |    |         +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3 -> 1.10.2 (*)
 |    |    |         +--- org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.3 -> 1.9.0 (*)
-|    |    |         +--- androidx.navigation:navigation-common:2.9.0 (c)
-|    |    |         +--- androidx.navigation:navigation-runtime:2.9.0 (c)
+|    |    |         +--- androidx.navigation:navigation-common:2.9.1 (c)
+|    |    |         +--- androidx.navigation:navigation-runtime:2.9.1 (c)
 |    |    |         \--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.2.0 (c)
 |    |    +--- androidx.lifecycle:lifecycle-runtime-compose:2.9.1 (*)
 |    |    +--- androidx.lifecycle:lifecycle-viewmodel-compose:2.9.1 (*)
@@ -810,39 +812,6 @@ releaseRuntimeClasspath - Runtime classpath of '/release'.
 |    |    +--- androidx.compose.ui:ui -> 1.8.3 (*)
 |    |    +--- androidx.compose.ui:ui-graphics -> 1.8.3 (*)
 |    |    \--- androidx.compose.material3:material3 -> 1.3.2 (*)
-|    +--- project :ui:api-endpoint-settings
-|    |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.2.0 (*)
-|    |    +--- project :ui (*)
-|    |    +--- project :ui:theme (*)
-|    |    +--- project :repository:contract
-|    |    |    +--- project :api (*)
-|    |    |    +--- project :provider:contract (*)
-|    |    |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.2.0 (*)
-|    |    |    +--- com.jakewharton.timber:timber:5.0.1 (*)
-|    |    |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2 (*)
-|    |    |    \--- org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0 (*)
-|    |    +--- androidx.core:core-ktx:1.16.0 (*)
-|    |    +--- androidx.lifecycle:lifecycle-runtime-ktx:2.9.1 (*)
-|    |    +--- androidx.activity:activity-compose:1.10.1 (*)
-|    |    +--- androidx.compose:compose-bom:2025.06.01 (*)
-|    |    +--- androidx.compose.ui:ui -> 1.8.3 (*)
-|    |    +--- androidx.compose.ui:ui-graphics -> 1.8.3 (*)
-|    |    +--- androidx.compose.ui:ui-tooling-preview -> 1.8.3 (*)
-|    |    +--- androidx.compose.material3:material3 -> 1.3.2 (*)
-|    |    +--- androidx.lifecycle:lifecycle-viewmodel-compose:2.9.1 (*)
-|    |    +--- androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.1 (*)
-|    |    +--- androidx.hilt:hilt-navigation-compose:1.2.0
-|    |    |    +--- androidx.compose.runtime:runtime:1.0.1 -> 1.8.3 (*)
-|    |    |    +--- androidx.compose.ui:ui:1.0.1 -> 1.8.3 (*)
-|    |    |    +--- androidx.hilt:hilt-navigation:1.2.0
-|    |    |    |    +--- androidx.annotation:annotation:1.1.0 -> 1.9.1 (*)
-|    |    |    |    +--- androidx.navigation:navigation-runtime:2.5.1 -> 2.9.0 (*)
-|    |    |    |    +--- com.google.dagger:hilt-android:2.49 -> 2.56.2 (*)
-|    |    |    |    \--- org.jetbrains.kotlin:kotlin-stdlib:1.8.22 -> 2.2.0 (*)
-|    |    |    +--- androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1 -> 2.9.1 (*)
-|    |    |    +--- androidx.navigation:navigation-compose:2.5.1 -> 2.9.0 (*)
-|    |    |    \--- org.jetbrains.kotlin:kotlin-stdlib:1.8.22 -> 2.2.0 (*)
-|    |    \--- com.google.dagger:hilt-android:2.56.2 (*)
 |    +--- project :ui:agreement
 |    |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.2.0 (*)
 |    |    +--- project :ui (*)
@@ -858,13 +827,32 @@ releaseRuntimeClasspath - Runtime classpath of '/release'.
 |    |    +--- androidx.compose.material3:material3 -> 1.3.2 (*)
 |    |    +--- androidx.lifecycle:lifecycle-viewmodel-compose:2.9.1 (*)
 |    |    +--- androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.1 (*)
-|    |    +--- androidx.hilt:hilt-navigation-compose:1.2.0 (*)
+|    |    +--- androidx.hilt:hilt-navigation-compose:1.2.0
+|    |    |    +--- androidx.compose.runtime:runtime:1.0.1 -> 1.8.3 (*)
+|    |    |    +--- androidx.compose.ui:ui:1.0.1 -> 1.8.3 (*)
+|    |    |    +--- androidx.hilt:hilt-navigation:1.2.0
+|    |    |    |    +--- androidx.annotation:annotation:1.1.0 -> 1.9.1 (*)
+|    |    |    |    +--- androidx.navigation:navigation-runtime:2.5.1 -> 2.9.1 (*)
+|    |    |    |    +--- com.google.dagger:hilt-android:2.49 -> 2.56.2 (*)
+|    |    |    |    \--- org.jetbrains.kotlin:kotlin-stdlib:1.8.22 -> 2.2.0 (*)
+|    |    |    +--- androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1 -> 2.9.1 (*)
+|    |    |    +--- androidx.navigation:navigation-compose:2.5.1 -> 2.9.1 (*)
+|    |    |    \--- org.jetbrains.kotlin:kotlin-stdlib:1.8.22 -> 2.2.0 (*)
 |    |    \--- com.google.dagger:hilt-android:2.56.2 (*)
 |    +--- project :provider:contract (*)
-|    +--- project :repository:contract (*)
+|    +--- project :repository:contract
+|    |    +--- project :api (*)
+|    |    +--- project :provider:contract (*)
+|    |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.2.0 (*)
+|    |    +--- com.jakewharton.timber:timber:5.0.1 (*)
+|    |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2 (*)
+|    |    \--- org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0 (*)
 |    +--- project :ui:nav:contract
 |    |    +--- androidx.activity:activity-ktx:1.10.1 (*)
 |    |    \--- org.jetbrains.kotlin:kotlin-stdlib:2.2.0 (*)
+|    +--- project :crypto:contract
+|    |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.2.0 (*)
+|    |    \--- javax.inject:javax.inject:1
 |    +--- androidx.core:core-ktx:1.16.0 (*)
 |    +--- androidx.lifecycle:lifecycle-runtime-ktx:2.9.1 (*)
 |    +--- androidx.activity:activity-compose:1.10.1 (*)
@@ -873,7 +861,7 @@ releaseRuntimeClasspath - Runtime classpath of '/release'.
 |    +--- androidx.compose.ui:ui-graphics -> 1.8.3 (*)
 |    +--- androidx.compose.ui:ui-tooling-preview -> 1.8.3 (*)
 |    +--- androidx.compose.material3:material3 -> 1.3.2 (*)
-|    +--- androidx.navigation:navigation-compose:2.9.0 (*)
+|    +--- androidx.navigation:navigation-compose:2.9.1 (*)
 |    +--- androidx.lifecycle:lifecycle-runtime-compose:2.9.1 (*)
 |    +--- androidx.lifecycle:lifecycle-viewmodel-compose:2.9.1 (*)
 |    +--- androidx.hilt:hilt-navigation-compose:1.2.0 (*)
@@ -891,11 +879,10 @@ releaseRuntimeClasspath - Runtime classpath of '/release'.
 |    +--- androidx.compose.material3:material3 -> 1.3.2 (*)
 |    +--- com.google.dagger:hilt-android:2.56.2 (*)
 |    +--- androidx.hilt:hilt-navigation-compose:1.2.0 (*)
-|    +--- androidx.navigation:navigation-compose:2.9.0 (*)
+|    +--- androidx.navigation:navigation-compose:2.9.1 (*)
 |    +--- project :ui:theme (*)
 |    +--- project :ui:nav:contract (*)
 |    \--- project :repository:contract (*)
-+--- project :ui:api-endpoint-settings (*)
 +--- project :provider:impl
 |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.2.0 (*)
 |    +--- project :provider:contract (*)
@@ -904,15 +891,15 @@ releaseRuntimeClasspath - Runtime classpath of '/release'.
 |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.2
 |    |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2 (*)
 |    |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.10.2 (*)
-|    |    +--- com.google.android.gms:play-services-tasks:16.0.1 -> 18.3.0 (*)
+|    |    +--- com.google.android.gms:play-services-tasks:16.0.1 -> 18.3.2 (*)
 |    |    \--- org.jetbrains.kotlin:kotlin-stdlib:2.1.0 -> 2.2.0 (*)
 |    +--- com.google.dagger:hilt-android:2.56.2 (*)
-|    +--- com.google.android.gms:play-services-base:18.7.0
+|    +--- com.google.android.gms:play-services-base:18.7.2
 |    |    +--- androidx.collection:collection:1.0.0 -> 1.5.0 (*)
 |    |    +--- androidx.core:core:1.2.0 -> 1.16.0 (*)
 |    |    +--- androidx.fragment:fragment:1.1.0 -> 1.5.1 (*)
-|    |    +--- com.google.android.gms:play-services-basement:18.7.0 (*)
-|    |    \--- com.google.android.gms:play-services-tasks:18.3.0 (*)
+|    |    +--- com.google.android.gms:play-services-basement:18.7.1 (*)
+|    |    \--- com.google.android.gms:play-services-tasks:18.3.2 (*)
 |    +--- com.jakewharton.timber:timber:5.0.1 (*)
 |    \--- androidx.biometric:biometric-ktx:1.4.0-alpha02
 |         +--- androidx.biometric:biometric:1.4.0-alpha02
@@ -951,6 +938,12 @@ releaseRuntimeClasspath - Runtime classpath of '/release'.
 |         +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3 -> 1.10.2 (*)
 |         \--- androidx.biometric:biometric:1.4.0-alpha02 (c)
 +--- project :provider:contract (*)
++--- project :crypto:contract (*)
++--- project :crypto:impl
+|    +--- project :crypto:contract (*)
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.2.0 (*)
+|    +--- javax.inject:javax.inject:1
+|    \--- com.google.dagger:hilt-android:2.56.2 (*)
 +--- project :repository:impl
 |    +--- project :repository:contract (*)
 |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.2.0 (*)
@@ -999,7 +992,6 @@ releaseRuntimeClasspath - Runtime classpath of '/release'.
 |    +--- project :ui:nav:contract (*)
 |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.2.0 (*)
 |    +--- project :ui:agreement (*)
-|    +--- project :ui:api-endpoint-settings (*)
 |    +--- project :ui:license (*)
 |    +--- javax.inject:javax.inject:1
 |    \--- androidx.activity:activity-ktx:1.10.1 (*)
@@ -1016,15 +1008,14 @@ releaseRuntimeClasspath - Runtime classpath of '/release'.
 
 A web-based, searchable dependency report is available by adding the --scan option.
 
-> Task :ui:api-endpoint-settings:clean
-> Task :provider:impl:clean
+> Task :repository:impl:clean
 > Task :ui:theme:clean
 > Task :ui:nav:contract:clean
-> Task :repository:impl:clean
 > Task :ui:nav:impl:clean
+> Task :ui:license:clean
 > Task :ui:main:clean
 > Task :app:clean
 
-BUILD SUCCESSFUL in 3s
-15 actionable tasks: 15 executed
+BUILD SUCCESSFUL in 11s
+16 actionable tasks: 16 executed
 Configuration cache entry stored.

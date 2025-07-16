@@ -23,7 +23,7 @@
         {
             "group_id": "com.google.android.gms",
             "artifact_id": "play-services-base",
-            "version": "18.7.0",
+            "version": "18.7.2",
             "name": "play-services-base",
             "url": null,
             "licenses": [
@@ -95,7 +95,7 @@
         {
             "group_id": "com.google.android.gms",
             "artifact_id": "play-services-basement",
-            "version": "18.7.0",
+            "version": "18.7.1",
             "name": "play-services-basement",
             "url": null,
             "licenses": [
@@ -114,7 +114,7 @@
         {
             "group_id": "com.google.android.gms",
             "artifact_id": "play-services-tasks",
-            "version": "18.3.0",
+            "version": "18.3.2",
             "name": "play-services-tasks",
             "url": null,
             "licenses": [
