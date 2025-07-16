@@ -46,6 +46,7 @@ class TestDatastoreUtils(unittest.TestCase):
                 'nonce': nonce_encoded,
                 'challenge': challenge_encoded,
                 'generated_at': ANY, # datetime.now(timezone.utc) is called
+                'expiry_datetime': ANY,
             })
             mock_datastore_client.put.assert_called_once_with(mock_entity)
             mock_cleanup.assert_called_once_with(mock_datastore_client, KEY_ATTESTATION_SESSION_KIND)
@@ -59,13 +60,13 @@ class TestDatastoreUtils(unittest.TestCase):
         session_id = "test_session_abc"
         stored_nonce = "stored_nonce"
         stored_challenge = "stored_challenge"
-        # Generate a 'generated_at' that is recent (e.g., 5 minutes ago)
-        generated_time = datetime.now(timezone.utc) - timedelta(minutes=5)
+        # Generate a non-expired expiry_datetime
+        expiry_time = datetime.now(timezone.utc) + timedelta(minutes=5)
 
         mock_entity.get.side_effect = lambda key: {
             'nonce': stored_nonce,
             'challenge': stored_challenge,
-            'generated_at': generated_time
+            'expiry_datetime': expiry_time
         }.get(key)
 
         # Make the entity itself behave like a dictionary for .get calls
@@ -75,7 +76,7 @@ class TestDatastoreUtils(unittest.TestCase):
             'session_id': session_id, # Though not strictly checked by get_key_attestation_session
             'nonce': stored_nonce,
             'challenge': stored_challenge,
-            'generated_at': generated_time
+            'expiry_datetime': expiry_time
         }
 
         mock_datastore_client.key.return_value = mock_key
@@ -94,11 +95,11 @@ class TestDatastoreUtils(unittest.TestCase):
         mock_key = MagicMock()
         session_id = "test_session_expired"
 
-        # Generate a 'generated_at' that is older than NONCE_EXPIRY_MINUTES
-        expired_time = datetime.now(timezone.utc) - timedelta(minutes=NONCE_EXPIRY_MINUTES + 5)
+        # Generate an expired expiry_datetime
+        expired_time = datetime.now(timezone.utc) - timedelta(minutes=5)
 
         mock_expired_entity = {
-            'generated_at': expired_time
+            'expiry_datetime': expired_time
         }
         mock_datastore_client.key.return_value = mock_key
         mock_datastore_client.get.return_value = mock_expired_entity
@@ -185,7 +186,7 @@ class TestDatastoreUtils(unittest.TestCase):
         cleanup_expired_sessions(mock_datastore_client, KEY_ATTESTATION_SESSION_KIND)
 
         mock_datastore_client.query.assert_called_once_with(kind=KEY_ATTESTATION_SESSION_KIND)
-        mock_query.add_filter.assert_called_once_with('generated_at', '<', ANY)
+        mock_query.add_filter.assert_called_once_with('expiry_datetime', '<', ANY)
         mock_query.keys_only.assert_called_once()
         mock_query.fetch.assert_called_once()
         mock_datastore_client.delete_multi.assert_called_once_with([expired_key1, expired_key2])
@@ -200,7 +201,7 @@ class TestDatastoreUtils(unittest.TestCase):
         cleanup_expired_sessions(mock_datastore_client, KEY_ATTESTATION_SESSION_KIND)
 
         mock_datastore_client.query.assert_called_once_with(kind=KEY_ATTESTATION_SESSION_KIND)
-        mock_query.add_filter.assert_called_once_with('generated_at', '<', ANY)
+        mock_query.add_filter.assert_called_once_with('expiry_datetime', '<', ANY)
         mock_query.keys_only.assert_called_once()
         mock_query.fetch.assert_called_once()
         mock_datastore_client.delete_multi.assert_not_called()
