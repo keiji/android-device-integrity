@@ -36,18 +36,11 @@ class MainViewModel @Inject constructor(
             }
         }
 
-        val availableScreens = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            listOf(
-                AppScreen.PlayIntegrity,
-                AppScreen.KeyAttestation,
-                AppScreen.Menu
-            )
-        } else {
-            listOf(
-                AppScreen.PlayIntegrity,
-                AppScreen.Menu
-            )
-        }
+        val availableScreens = listOf(
+            AppScreen.PlayIntegrity,
+            AppScreen.KeyAttestation,
+            AppScreen.Menu
+        )
         _uiState.value = MainUiState(bottomNavigationItems = availableScreens)
     }
 
