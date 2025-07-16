@@ -1,4 +1,7 @@
 <resources>
+    <string name="copied_to_clipboard">クリップボードにコピーしました</string>
+    <string name="key_attestation_result_label" >構成証明書の検証結果</string>
+
     <string name="key_attestation_title_step1">Step 1. 鍵のアルゴリズムを選択</string>
     <string name="key_attestation_title_step2">Step 2. サーバーからNonce/Challengeを取得</string>
     <string name="key_attestation_title_step2_ecdh">Step 2. サーバーからNonce/Challenge/PublicKeyを取得</string>
