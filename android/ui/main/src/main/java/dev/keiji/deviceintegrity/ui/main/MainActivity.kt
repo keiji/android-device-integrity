@@ -146,7 +146,6 @@ fun DeviceIntegrityApp(
                             },
                             label = { Text(stringResource(id = screen.label)) },
                             selected = selected,
-                            enabled = isEnabled,
                             onClick = {
                                 navController.navigate(screen.route) {
                                     popUpTo(navController.graph.findStartDestination().id) {
