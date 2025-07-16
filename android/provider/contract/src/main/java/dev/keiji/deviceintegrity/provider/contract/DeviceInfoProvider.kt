@@ -23,6 +23,5 @@ interface DeviceInfoProvider {
     val TIME: Long
     val SECURITY_PATCH: String
 
-    val isKeyAttestationAvailable: Boolean
     val isEcdhKeyAttestationAvailable: Boolean
 }

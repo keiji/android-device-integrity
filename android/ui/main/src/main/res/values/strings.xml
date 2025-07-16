@@ -19,7 +19,6 @@
     <string name="key_attestation_button_generate_keypair" translatable="false">Generate KeyPair</string>
     <string name="key_attestation_title_step4">Step 4. Verify KeyPair and Attestation</string>
     <string name="key_attestation_button_request_verify_key_attestation" translatable="false">Request Verify KeyAttestation</string>
-    <string name="key_attestation_unsupported">Key Attestation is not supported on this device.</string>
 
     <string name="classic_pi_title_step1">Step 1. Fetch Nonce from Server</string>
     <string name="classic_pi_button_fetch_nonce" translatable="false">Fetch Nonce</string>
