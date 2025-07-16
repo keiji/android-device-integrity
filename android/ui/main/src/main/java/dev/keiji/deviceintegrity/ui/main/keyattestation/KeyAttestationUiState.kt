@@ -5,6 +5,7 @@ import dev.keiji.deviceintegrity.ui.common.InfoItem
 import dev.keiji.deviceintegrity.ui.common.ProgressConstants
 
 data class KeyAttestationUiState(
+    val isKeyAttestationSupported: Boolean = true,
     val nonce: String = "",
     val challenge: String = "",
     val selectedKeyType: CryptoAlgorithm = CryptoAlgorithm.EC, // Default to EC
