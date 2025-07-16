@@ -54,6 +54,7 @@ class KeyAttestationViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(
         KeyAttestationUiState(
+            isKeyAttestationSupported = deviceInfoProvider.isKeyAttestationAvailable,
             isEcdhAvailable = deviceInfoProvider.isEcdhKeyAttestationAvailable,
             isStrongboxSupported = deviceSecurityStateProvider.hasStrongBox,
         )
