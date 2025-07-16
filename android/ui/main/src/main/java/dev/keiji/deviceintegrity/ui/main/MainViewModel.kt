@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
 import dev.keiji.deviceintegrity.repository.contract.PreferencesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
-    private val preferencesRepository: PreferencesRepository
+    private val preferencesRepository: PreferencesRepository,
+    private val deviceInfoProvider: DeviceInfoProvider
 ) : ViewModel() {
 
     companion object {
@@ -36,19 +38,15 @@ class MainViewModel @Inject constructor(
             }
         }
 
-        val availableScreens = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            listOf(
-                AppScreen.PlayIntegrity,
-                AppScreen.KeyAttestation,
-                AppScreen.Menu
-            )
-        } else {
-            listOf(
-                AppScreen.PlayIntegrity,
-                AppScreen.Menu
-            )
-        }
-        _uiState.value = MainUiState(bottomNavigationItems = availableScreens)
+        val availableScreens = listOf(
+            AppScreen.PlayIntegrity,
+            AppScreen.KeyAttestation,
+            AppScreen.Menu
+        )
+        _uiState.value = MainUiState(
+            bottomNavigationItems = availableScreens,
+            isKeyAttestationSupported = deviceInfoProvider.isKeyAttestationAvailable
+        )
     }
 
     fun setAgreed(agreed: Boolean) {

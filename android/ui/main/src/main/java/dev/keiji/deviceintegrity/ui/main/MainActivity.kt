@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -39,6 +40,7 @@ import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import dev.keiji.deviceintegrity.provider.contract.AppInfoProvider
 import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationScreen
+import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationUnsupportedScreen
 import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationViewModel
 import dev.keiji.deviceintegrity.ui.main.playintegrity.ClassicPlayIntegrityViewModel
 import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityScreen
@@ -48,6 +50,7 @@ import dev.keiji.deviceintegrity.ui.main.settings.SettingsUiEvent
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsViewModel
 import dev.keiji.deviceintegrity.ui.nav.contract.AgreementNavigator
 import dev.keiji.deviceintegrity.ui.nav.contract.LicenseNavigator
+import dev.keiji.deviceintegrity.ui.main.BuildConfig
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 import timber.log.Timber
 import javax.inject.Inject
@@ -106,12 +109,12 @@ fun DeviceIntegrityApp(
             }
         }
 
-        // The outer if condition was removed as per user request.
-        // The LaunchedEffect will now run based on isAgreed state regardless of isDebugBuild.
-        LaunchedEffect(Unit) {
-            if (!mainViewModel.isAgreed.value) { // Avoid re-launching if already agreed during recomposition
-                val intent = agreementNavigator.newIntent(context)
-                agreementLauncher.launch(intent)
+        if (BuildConfig.DEBUG) {
+            LaunchedEffect(Unit) {
+                if (!mainViewModel.isAgreed.value) { // Avoid re-launching if already agreed during recomposition
+                    val intent = agreementNavigator.newIntent(context)
+                    agreementLauncher.launch(intent)
+                }
             }
         }
 
@@ -121,16 +124,32 @@ fun DeviceIntegrityApp(
                 NavigationBar {
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentDestination = navBackStackEntry?.destination
+
                     uiState.bottomNavigationItems.forEach { screen ->
+                        val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
+                        val isKeyAttestationScreen = screen.route == AppScreen.KeyAttestation.route
+                        val isEnabled = if (isKeyAttestationScreen) {
+                            uiState.isKeyAttestationSupported
+                        } else {
+                            true
+                        }
+
                         NavigationBarItem(
                             icon = {
+                                val iconTint = if (isEnabled) {
+                                    LocalContentColor.current
+                                } else {
+                                    LocalContentColor.current.copy(alpha = 0.38f)
+                                }
                                 Icon(
                                     painter = androidx.compose.ui.res.painterResource(id = screen.icon),
-                                    contentDescription = stringResource(id = screen.label)
+                                    contentDescription = stringResource(id = screen.label),
+                                    tint = iconTint
                                 )
                             },
                             label = { Text(stringResource(id = screen.label)) },
-                            selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                            selected = selected,
+                            enabled = isEnabled,
                             onClick = {
                                 navController.navigate(screen.route) {
                                     popUpTo(navController.graph.findStartDestination().id) {
@@ -168,49 +187,53 @@ fun DeviceIntegrityApp(
                     )
                 }
                 composable(AppScreen.KeyAttestation.route) {
-                    val keyAttestationViewModel: KeyAttestationViewModel = hiltViewModel()
-                    val keyAttestationUiState by keyAttestationViewModel.uiState.collectAsStateWithLifecycle()
-                    val currentContext = LocalContext.current
+                    if (uiState.isKeyAttestationSupported) {
+                        val keyAttestationViewModel: KeyAttestationViewModel = hiltViewModel()
+                        val keyAttestationUiState by keyAttestationViewModel.uiState.collectAsStateWithLifecycle()
+                        val currentContext = LocalContext.current
 
-                    LaunchedEffect(keyAttestationViewModel.shareEventFlow) {
-                        keyAttestationViewModel.shareEventFlow.collect { textToShare ->
-                            val sendIntent: Intent = Intent().apply {
-                                action = Intent.ACTION_SEND
-                                putExtra(Intent.EXTRA_TEXT, textToShare)
-                                type = "text/plain"
+                        LaunchedEffect(keyAttestationViewModel.shareEventFlow) {
+                            keyAttestationViewModel.shareEventFlow.collect { textToShare ->
+                                val sendIntent: Intent = Intent().apply {
+                                    action = Intent.ACTION_SEND
+                                    putExtra(Intent.EXTRA_TEXT, textToShare)
+                                    type = "text/plain"
+                                }
+                                val shareIntent = Intent.createChooser(sendIntent, null)
+                                currentContext.startActivity(shareIntent)
                             }
-                            val shareIntent = Intent.createChooser(sendIntent, null)
-                            currentContext.startActivity(shareIntent)
                         }
-                    }
 
-                    LaunchedEffect(keyAttestationViewModel.copyEventFlow) {
-                        keyAttestationViewModel.copyEventFlow.collect { textToCopy ->
-                            val clipboard =
-                                currentContext.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                            val clip = ClipData.newPlainText(
-                                currentContext.getString(R.string.key_attestation_result_label),
-                                textToCopy
-                            )
-                            clipboard.setPrimaryClip(clip)
-                            Toast.makeText(
-                                currentContext,
-                                currentContext.getString(R.string.copied_to_clipboard),
-                                Toast.LENGTH_SHORT
-                            ).show()
+                        LaunchedEffect(keyAttestationViewModel.copyEventFlow) {
+                            keyAttestationViewModel.copyEventFlow.collect { textToCopy ->
+                                val clipboard =
+                                    currentContext.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                val clip = ClipData.newPlainText(
+                                    currentContext.getString(R.string.key_attestation_result_label),
+                                    textToCopy
+                                )
+                                clipboard.setPrimaryClip(clip)
+                                Toast.makeText(
+                                    currentContext,
+                                    currentContext.getString(R.string.copied_to_clipboard),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                         }
-                    }
 
-                    KeyAttestationScreen(
-                        uiState = keyAttestationUiState,
-                        onSelectedKeyTypeChange = { keyAttestationViewModel.onSelectedKeyTypeChange(it) },
-                        onPreferStrongBoxChanged = { keyAttestationViewModel.onPreferStrongBoxChanged(it) },
-                        onFetchNonceChallenge = { keyAttestationViewModel.fetchNonceChallenge() },
-                        onGenerateKeyPair = { keyAttestationViewModel.generateKeyPair() },
-                        onRequestVerifyKeyAttestation = { keyAttestationViewModel.requestVerifyKeyAttestation() },
-                        onClickCopy = { keyAttestationViewModel.onCopyResultsClicked() },
-                        onClickShare = { keyAttestationViewModel.onShareResultsClicked() }
-                    )
+                        KeyAttestationScreen(
+                            uiState = keyAttestationUiState,
+                            onSelectedKeyTypeChange = { keyAttestationViewModel.onSelectedKeyTypeChange(it) },
+                            onPreferStrongBoxChanged = { keyAttestationViewModel.onPreferStrongBoxChanged(it) },
+                            onFetchNonceChallenge = { keyAttestationViewModel.fetchNonceChallenge() },
+                            onGenerateKeyPair = { keyAttestationViewModel.generateKeyPair() },
+                            onRequestVerifyKeyAttestation = { keyAttestationViewModel.requestVerifyKeyAttestation() },
+                            onClickCopy = { keyAttestationViewModel.onCopyResultsClicked() },
+                            onClickShare = { keyAttestationViewModel.onShareResultsClicked() }
+                        )
+                    } else {
+                        KeyAttestationUnsupportedScreen()
+                    }
                 }
                 composable(AppScreen.Menu.route) {
                     val viewModel: SettingsViewModel = hiltViewModel()
