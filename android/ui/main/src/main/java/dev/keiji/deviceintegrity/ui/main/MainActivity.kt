@@ -51,6 +51,7 @@ import dev.keiji.deviceintegrity.ui.nav.contract.LicenseNavigator
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 import timber.log.Timber
 import javax.inject.Inject
+import dev.keiji.deviceintegrity.ui.main.R
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -187,10 +188,16 @@ fun DeviceIntegrityApp(
                         keyAttestationViewModel.copyEventFlow.collect { textToCopy ->
                             val clipboard =
                                 currentContext.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                            val clip = ClipData.newPlainText("Key Attestation Result", textToCopy)
+                            val clip = ClipData.newPlainText(
+                                currentContext.getString(R.string.key_attestation_result_label),
+                                textToCopy
+                            )
                             clipboard.setPrimaryClip(clip)
-                            Toast.makeText(currentContext, "Copied to clipboard", Toast.LENGTH_SHORT)
-                                .show()
+                            Toast.makeText(
+                                currentContext,
+                                currentContext.getString(R.string.copied_to_clipboard),
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     }
 
