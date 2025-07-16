@@ -8,6 +8,7 @@
     <string name="key_attestation_title_step3">Step 3. キーペア（構成証明付き）を生成</string>
     <string name="key_attestation_checkbox_label_strongbox">StrongBoxで鍵を生成する</string>
     <string name="key_attestation_title_step4">Step 4. キーペアと構成証明を検証</string>
+    <string name="key_attestation_unsupported">この端末はKey Attestation（構成証明）をサポートしていません</string>
     <string name="classic_pi_title_step1">Step 1. サーバーからNonceを取得</string>
     <string name="classic_pi_title_step2">Step 2. トークンを取得</string>
     <string name="classic_pi_title_step3">Step 3. トークンを検証</string>
