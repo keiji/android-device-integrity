@@ -116,6 +116,13 @@ fun DeviceIntegrityApp(
                     agreementLauncher.launch(intent)
                 }
             }
+        } else {
+            LaunchedEffect(Unit) {
+                if (!mainViewModel.isAgreed.value) {
+                    val intent = agreementNavigator.newIntent(context)
+                    agreementLauncher.launch(intent)
+                }
+            }
         }
 
         Scaffold(
