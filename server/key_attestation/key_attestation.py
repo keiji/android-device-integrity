@@ -277,7 +277,6 @@ def verify_signature_attestation():
 
         try:
             certificate_chain_b64_json_str = json.dumps(certificate_chain_b64)
-            certificate_chain_b64_json_str = json.dumps(certificate_chain_b64)
             # Create a copy for storing, and remove the certificate_chain from it
             # as it is now stored in its own property.
             final_response_for_payload = final_response.copy()
@@ -397,7 +396,7 @@ def verify_agreement_attestation():
         }
 
         try:
-            certificate_chain_b64_json_str = json.dumps(final_response['certificate_chain'])
+            certificate_chain_b64_json_str = json.dumps(certificate_chain_b64)
             # Create a copy for storing, and remove the certificate_chain from it
             # as it is now stored in its own property.
             final_response_for_payload = final_response.copy()
