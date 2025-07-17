@@ -275,6 +275,22 @@ def verify_signature_attestation():
             'certificate_chain': extracted_cert_details
         }
 
+        try:
+            payload_data_json_str = json.dumps(final_response)
+            attestation_data_json_str = json.dumps(final_response.get('attestation_info', {}))
+            store_ds_key_attestation_result(
+                datastore_client,
+                session_id=session_id,
+                result='verified',
+                reason='Key attestation verified successfully.',
+                payload_data_json_str=payload_data_json_str,
+                attestation_data_json_str=attestation_data_json_str
+            )
+            logger.info(f'Successfully stored key attestation result for session_id: {session_id}')
+        except Exception as e:
+            logger.error(f'Failed to store key attestation result for session_id {session_id}: {e}', exc_info=True)
+            # Decide if this should be a critical failure. For now, we'll log and continue.
+
         delete_ds_key_attestation_session(datastore_client, session_id, KEY_ATTESTATION_SESSION_KIND)
         return jsonify(final_response), 200
 
@@ -372,7 +388,23 @@ def verify_agreement_attestation():
             'certificate_chain': extracted_cert_details
         }
 
-        delete_ds_key_attestation_session(datastore_client, session_id, AGREEMENT_KEY_ATTESTATION_SESSION_KIND)
+        try:
+            payload_data_json_str = json.dumps(final_response)
+            attestation_data_json_str = json.dumps(final_response.get('attestation_info', {}))
+            store_ds_key_attestation_result(
+                datastore_client,
+                session_id=session_id,
+                result='verified',
+                reason='Key agreement and attestation verified successfully.',
+                payload_data_json_str=payload_data_json_str,
+                attestation_data_json_str=attestation_data_json_str
+            )
+            logger.info(f'Successfully stored key attestation result for session_id: {session_id}')
+        except Exception as e:
+            logger.error(f'Failed to store key attestation result for session_id {session_id}: {e}', exc_info=True)
+            # Decide if this should be a critical failure. For now, we'll log and continue.
+
+        delete_ds_key_attestation_session(datastore_client, session_id, AGREEMENT_KEY_ATTESSTATION_SESSION_KIND)
         return jsonify(final_response), 200
 
     except ValueError as e:
