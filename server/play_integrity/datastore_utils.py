@@ -151,7 +151,7 @@ def store_verification_attempt(
     try:
         generated_id = generate_unique_id()
         payload_key = datastore_client.key(VERIFIED_PAYLOAD_KIND, generated_id)
-        payload_entity = datastore.Entity(key=payload_key)
+        payload_entity = datastore.Entity(key=payload_key, exclude_from_indexes=['api_response', 'payload_data'])
         now = datetime.now(timezone.utc)
 
         payload_to_store = {}
