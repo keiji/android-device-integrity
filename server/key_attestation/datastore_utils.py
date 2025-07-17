@@ -5,9 +5,9 @@ from google.api_core.exceptions import Conflict
 
 logger = logging.getLogger(__name__)
 
-KEY_ATTESTATION_SESSION_KIND = 'SignatureKeyAttestationSession'
-AGREEMENT_KEY_ATTESTATION_SESSION_KIND = 'AgreementKeyAttestationSession'
-KEY_ATTESTATION_RESULT_KIND = 'KeyAttestationResult'
+KEY_ATTESTATION_SESSION_KIND = 'KeyAttestationSignatureSession'
+AGREEMENT_KEY_ATTESTATION_SESSION_KIND = 'KeyAttestationAgreementSession'
+KEY_ATTESTATION_RESULT_KIND = 'KeyAttestationVerifiedPayload'
 NONCE_EXPIRY_MINUTES = 10
 
 def store_key_attestation_session(datastore_client, session_id: str, nonce_encoded: str, challenge_encoded: str):
@@ -192,7 +192,7 @@ def delete_key_attestation_session(datastore_client, session_id: str, kind: str)
         logger.error(f'Error deleting {kind} session {session_id} from Datastore: {e}')
         # Optionally re-raise or handle more gracefully
 
-def store_key_attestation_result(datastore_client, session_id: str, result: str, reason: str, payload_data_json_str: str, attestation_data_json_str: str):
+def store_key_attestation_result(datastore_client, session_id: str, result: str, reason: str, payload_data_json_str: str, attestation_data_json_str: str, certificate_chain_b64_json_str: str):
     """Stores the key attestation verification result in Datastore."""
     if not datastore_client:
         logger.error('Datastore client not provided. Cannot store attestation result.')
@@ -212,7 +212,8 @@ def store_key_attestation_result(datastore_client, session_id: str, result: str,
         'result': result,  # e.g., "verified", "failed"
         'reason': reason,  # Detailed reason for failure, or success message
         'payload_data': payload_data_json_str, # JSON string of original request payload (device_info, etc.)
-        'attestation_data': attestation_data_json_str # JSON string of parsed attestation properties
+        'attestation_data': attestation_data_json_str, # JSON string of parsed attestation properties
+        'certificate_chain': certificate_chain_b64_json_str,
     })
     try:
         datastore_client.put(entity)

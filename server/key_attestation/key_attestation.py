@@ -276,15 +276,22 @@ def verify_signature_attestation():
         }
 
         try:
-            payload_data_json_str = json.dumps(final_response)
+            certificate_chain_b64_json_str = json.dumps(final_response['certificate_chain'])
+            # Create a copy for storing, and remove the certificate_chain from it
+            # as it is now stored in its own property.
+            final_response_for_payload = final_response.copy()
+            del final_response_for_payload['certificate_chain']
+            payload_data_json_str = json.dumps(final_response_for_payload)
             attestation_data_json_str = json.dumps(final_response.get('attestation_info', {}))
+
             store_ds_key_attestation_result(
                 datastore_client,
                 session_id=session_id,
                 result='verified',
                 reason='Key attestation verified successfully.',
                 payload_data_json_str=payload_data_json_str,
-                attestation_data_json_str=attestation_data_json_str
+                attestation_data_json_str=attestation_data_json_str,
+                certificate_chain_b64_json_str=certificate_chain_b64_json_str
             )
             logger.info(f'Successfully stored key attestation result for session_id: {session_id}')
         except Exception as e:
@@ -389,7 +396,12 @@ def verify_agreement_attestation():
         }
 
         try:
-            payload_data_json_str = json.dumps(final_response)
+            certificate_chain_b64_json_str = json.dumps(final_response['certificate_chain'])
+            # Create a copy for storing, and remove the certificate_chain from it
+            # as it is now stored in its own property.
+            final_response_for_payload = final_response.copy()
+            del final_response_for_payload['certificate_chain']
+            payload_data_json_str = json.dumps(final_response_for_payload)
             attestation_data_json_str = json.dumps(final_response.get('attestation_info', {}))
             store_ds_key_attestation_result(
                 datastore_client,
@@ -397,7 +409,8 @@ def verify_agreement_attestation():
                 result='verified',
                 reason='Key agreement and attestation verified successfully.',
                 payload_data_json_str=payload_data_json_str,
-                attestation_data_json_str=attestation_data_json_str
+                attestation_data_json_str=attestation_data_json_str,
+                certificate_chain_b64_json_str=certificate_chain_b64_json_str
             )
             logger.info(f'Successfully stored key attestation result for session_id: {session_id}')
         except Exception as e:

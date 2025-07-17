@@ -14,6 +14,7 @@ from datastore_utils import (
     store_key_attestation_result,
     cleanup_expired_sessions,
     KEY_ATTESTATION_SESSION_KIND,
+    AGREEMENT_KEY_ATTESTATION_SESSION_KIND,
     KEY_ATTESTATION_RESULT_KIND,
     NONCE_EXPIRY_MINUTES
 )
@@ -150,8 +151,9 @@ class TestDatastoreUtils(unittest.TestCase):
         reason = "All checks passed."
         payload_str = "{'device_info': {}}"
         attestation_str = "{'attestation_version': 4}"
+        cert_chain_str = "[{'cert': 'details'}]"
 
-        store_key_attestation_result(mock_datastore_client, session_id, result, reason, payload_str, attestation_str)
+        store_key_attestation_result(mock_datastore_client, session_id, result, reason, payload_str, attestation_str, cert_chain_str)
 
         mock_datastore_client.key.assert_called_once_with(KEY_ATTESTATION_RESULT_KIND, session_id)
         mock_datastore_client.entity.assert_called_once_with(
@@ -164,7 +166,8 @@ class TestDatastoreUtils(unittest.TestCase):
             'result': result,
             'reason': reason,
             'payload_data': payload_str,
-            'attestation_data': attestation_str
+            'attestation_data': attestation_str,
+            'certificate_chain': cert_chain_str
         })
         mock_datastore_client.put.assert_called_once_with(mock_entity)
 
