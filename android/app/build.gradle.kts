@@ -68,10 +68,6 @@ android {
         versionName = versionProps.getProperty("versionName", "1.0.0")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        buildConfigField("Long", "PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER", serverEndpointProps.getProperty("PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER", "0L"))
-        buildConfigField("String", "PLAY_INTEGRITY_BASE_URL", "\"${serverEndpointProps.getProperty("PLAY_INTEGRITY_BASE_URL", "https://playintegrity.googleapis.com/")}\"")
-        buildConfigField("String", "KEY_ATTESTATION_BASE_URL", "\"${serverEndpointProps.getProperty("KEY_ATTESTATION_BASE_URL", "https://keyattestation.googleapis.com/")}\"")
     }
 
     buildTypes {
@@ -83,6 +79,22 @@ android {
             )
             signingConfig = signingConfigs.getByName("release")
             versionNameSuffix = "-$commitHash"
+
+            buildConfigField(
+                "Long",
+                "PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER",
+                serverEndpointProps.getProperty("PRODUCT_PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER", "0L")
+            )
+            buildConfigField(
+                "String",
+                "PLAY_INTEGRITY_BASE_URL",
+                "\"${serverEndpointProps.getProperty("PRODUCT_PLAY_INTEGRITY_BASE_URL", "https://playintegrity.googleapis.com/")}\""
+            )
+            buildConfigField(
+                "String",
+                "KEY_ATTESTATION_BASE_URL",
+                "\"${serverEndpointProps.getProperty("PRODUCT_KEY_ATTESTATION_BASE_URL", "https://keyattestation.googleapis.com/")}\""
+            )
         }
         create("develop") {
             initWith(getByName("release"))
@@ -92,10 +104,62 @@ android {
             matchingFallbacks.add("debug")
             // proguardFiles are inherited from release.
             // versionNameSuffix is inherited from release.
+
+            buildConfigField(
+                "Long",
+                "PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER",
+                serverEndpointProps.getProperty("DEVELOP_PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER", "0L")
+            )
+            buildConfigField(
+                "String",
+                "PLAY_INTEGRITY_BASE_URL",
+                "\"${
+                    serverEndpointProps.getProperty(
+                        "DEVELOP_PLAY_INTEGRITY_BASE_URL",
+                        "https://playintegrity.googleapis.com/"
+                    )
+                }\""
+            )
+            buildConfigField(
+                "String",
+                "KEY_ATTESTATION_BASE_URL",
+                "\"${
+                    serverEndpointProps.getProperty(
+                        "DEVELOP_KEY_ATTESTATION_BASE_URL",
+                        "https://keyattestation.googleapis.com/"
+                    )
+                }\""
+            )
         }
         debug {
             applicationIdSuffix = ".develop"
             versionNameSuffix = "-$commitHash"
+
+            buildConfigField(
+                "Long",
+                "PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER",
+                serverEndpointProps.getProperty("DEVELOP_PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER", "0L")
+            )
+            buildConfigField(
+                "String",
+                "PLAY_INTEGRITY_BASE_URL",
+                "\"${
+                    serverEndpointProps.getProperty(
+                        "DEVELOP_PLAY_INTEGRITY_BASE_URL",
+                        "https://playintegrity.googleapis.com/"
+                    )
+                }\""
+            )
+            buildConfigField(
+                "String",
+                "KEY_ATTESTATION_BASE_URL",
+                "\"${
+                    serverEndpointProps.getProperty(
+                        "DEVELOP_KEY_ATTESTATION_BASE_URL",
+                        "https://keyattestation.googleapis.com/"
+                    )
+                }\""
+            )
         }
     }
     compileOptions {
