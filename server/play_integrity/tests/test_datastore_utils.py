@@ -106,7 +106,7 @@ class TestDatastoreUtils(unittest.TestCase):
         )
 
         self.mock_datastore_client.key.assert_called_once_with(VERIFIED_PAYLOAD_KIND, "unique-id-123")
-        mock_entity_class.assert_called_once_with(key=mock_key)
+        mock_entity_class.assert_called_once_with(key=mock_key, exclude_from_indexes=['api_response', 'payload_data'])
         mock_entity_instance.update.assert_called_once()
         self.mock_datastore_client.put.assert_called_once_with(mock_entity_instance)
 

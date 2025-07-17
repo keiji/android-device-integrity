@@ -203,7 +203,9 @@ def store_key_attestation_result(datastore_client, session_id: str, result: str,
     # If a session_id could lead to multiple distinct results needing storage,
     # a different keying strategy (e.g., generating a unique ID for the result entity) would be needed.
     key = datastore_client.key(KEY_ATTESTATION_RESULT_KIND, session_id)
-    entity = datastore_client.entity(key=key)
+    entity = datastore_client.entity(
+        key=key,
+        exclude_from_indexes=['payload_data', 'attestation_data'])
     entity.update({
         'session_id': session_id,
         'created_at': datetime.now(timezone.utc),

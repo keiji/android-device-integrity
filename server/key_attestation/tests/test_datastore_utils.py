@@ -154,7 +154,10 @@ class TestDatastoreUtils(unittest.TestCase):
         store_key_attestation_result(mock_datastore_client, session_id, result, reason, payload_str, attestation_str)
 
         mock_datastore_client.key.assert_called_once_with(KEY_ATTESTATION_RESULT_KIND, session_id)
-        mock_datastore_client.entity.assert_called_once_with(key=mock_key)
+        mock_datastore_client.entity.assert_called_once_with(
+            key=mock_key,
+            exclude_from_indexes=['payload_data', 'attestation_data']
+        )
         mock_entity.update.assert_called_once_with({
             'session_id': session_id,
             'created_at': ANY, # datetime.now(timezone.utc)
