@@ -205,7 +205,7 @@ def store_key_attestation_result(datastore_client, session_id: str, result: str,
     key = datastore_client.key(KEY_ATTESTATION_RESULT_KIND, session_id)
     entity = datastore_client.entity(
         key=key,
-        exclude_from_indexes=['payload_data', 'attestation_data'])
+        exclude_from_indexes=['payload_data', 'attestation_data', 'certificate_chain'])
     entity.update({
         'session_id': session_id,
         'created_at': datetime.now(timezone.utc),
