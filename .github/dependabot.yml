@@ -24,10 +24,10 @@ updates:
           - "com.google.android.play*"
 
   - package-ecosystem: "pip"
-    directory: "/server/play-integrity"
+    directory: "/server/play_integrity"
     schedule:
       interval: "daily"
   - package-ecosystem: "pip"
-    directory: "/server/key-attestation"
+    directory: "/server/key_attestation"
     schedule:
       interval: "daily"
