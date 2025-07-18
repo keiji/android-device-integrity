@@ -1,7 +1,17 @@
 import argparse
 import json
-from . import attestation_parser
-from . import cryptographic_utils
+import sys
+import os
+
+# Add the parent directory to the path to allow relative imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+try:
+    from . import attestation_parser
+    from . import cryptographic_utils
+except ImportError:
+    import attestation_parser
+    import cryptographic_utils
 
 def main():
     """The main function to be executed when the script is run."""
@@ -36,11 +46,15 @@ def main():
         cert_chain_json["certificateChain"][0]
     )
 
+    leaf_cert_pem = cryptographic_utils.get_pem_encoded_certificate_from_der_bytes(
+        leaf_cert_bytes
+    )
+
     (
         tee_enforced,
         software_enforced,
     ) = attestation_parser.get_attestation_properties_from_certificate(
-        leaf_cert_bytes
+        leaf_cert_pem
     )
 
     output_data = {
