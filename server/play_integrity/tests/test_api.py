@@ -2,7 +2,7 @@ import unittest
 import json
 from unittest.mock import patch, MagicMock
 
-from server.play_integrity.play_integrity import app
+from server.play_integrity.api import app
 
 class TestPlayIntegrityEndpoints(unittest.TestCase):
 
@@ -15,14 +15,14 @@ class TestPlayIntegrityEndpoints(unittest.TestCase):
         self.mock_datastore_instance = self.mock_datastore_class.return_value
 
         # Also mock the datastore_client instance in the play_integrity module
-        self.patcher_datastore_instance = patch('server.play_integrity.play_integrity.datastore_client', self.mock_datastore_instance)
+        self.patcher_datastore_instance = patch('server.play_integrity.api.datastore_client', self.mock_datastore_instance)
         self.patcher_datastore_instance.start()
 
 
     def tearDown(self):
         patch.stopall()
 
-    @patch('server.play_integrity.play_integrity.store_nonce_with_session_v1')
+    @patch('server.play_integrity.api.store_nonce_with_session_v1')
     def test_create_nonce_endpoint_success(self, mock_store_nonce):
         session_id = "session-12345"
         expected_nonce = "generated-nonce-string"
@@ -47,11 +47,11 @@ class TestPlayIntegrityEndpoints(unittest.TestCase):
         response_data = json.loads(response.data)
         self.assertIn('Bad Request', response_data['error'])
 
-    @patch('server.play_integrity.play_integrity.get_nonce_entity')
-    @patch('server.play_integrity.play_integrity.decode_integrity_token')
-    @patch('server.play_integrity.play_integrity.compare_nonces', return_value=True)
-    @patch('server.play_integrity.play_integrity.delete_nonce')
-    @patch('server.play_integrity.play_integrity.store_verification_attempt')
+    @patch('server.play_integrity.api.get_nonce_entity')
+    @patch('server.play_integrity.api.decode_integrity_token')
+    @patch('server.play_integrity.api.compare_nonces', return_value=True)
+    @patch('server.play_integrity.api.delete_nonce')
+    @patch('server.play_integrity.api.store_verification_attempt')
     def test_verify_classic_success(self, mock_store, mock_delete, mock_compare, mock_decode, mock_get_nonce):
         session_id = "session-verify-ok"
         token = "valid-integrity-token"
@@ -82,8 +82,8 @@ class TestPlayIntegrityEndpoints(unittest.TestCase):
         mock_delete.assert_called_once_with(self.mock_datastore_instance, session_id)
         mock_store.assert_called_once()
 
-    @patch('server.play_integrity.play_integrity.get_nonce_entity')
-    @patch('server.play_integrity.play_integrity.store_verification_attempt')
+    @patch('server.play_integrity.api.get_nonce_entity')
+    @patch('server.play_integrity.api.store_verification_attempt')
     def test_verify_classic_invalid_session(self, mock_store, mock_get_nonce):
         mock_get_nonce.return_value = None
 
@@ -96,8 +96,8 @@ class TestPlayIntegrityEndpoints(unittest.TestCase):
         self.assertIn("Invalid session_id", response_data['error'])
         mock_store.assert_called_once()
 
-    @patch('server.play_integrity.play_integrity.decode_integrity_token')
-    @patch('server.play_integrity.play_integrity.store_verification_attempt')
+    @patch('server.play_integrity.api.decode_integrity_token')
+    @patch('server.play_integrity.api.store_verification_attempt')
     def test_verify_standard_success(self, mock_store, mock_decode):
         session_id = "session-standard-ok"
         token = "valid-standard-token"
