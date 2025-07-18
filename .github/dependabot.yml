@@ -23,7 +23,11 @@ updates:
         patterns:
           - "com.google.android.play*"
 
-  - package-ecosystem: "pip" # Pythonのパッケージマネージャー
-    directory: "/server" # requirements.txt があるディレクトリ
+  - package-ecosystem: "pip"
+    directory: "/server/play-integrity"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "pip"
+    directory: "/server/key-attestation"
     schedule:
       interval: "daily"
