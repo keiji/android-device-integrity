@@ -9,7 +9,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from key_attestation.attestation_parser import get_attestation_extension_properties
 from key_attestation.cryptographic_utils import decode_certificate_chain
 from key_attestation.cryptographic_utils import extract_certificate_details
-from key_attestation.utils import convert_bytes_to_hex_str
+from key_attestation.utils import convert_bytes_to_hex_str, base64url_encode
 
 
 def main():
@@ -42,6 +42,8 @@ def main():
       if isinstance(value, bytes):
         cert[key] = convert_bytes_to_hex_str(value)
 
+  leaf_cert_attestation_props['attestation_challenge'] = base64url_encode(
+      leaf_cert_attestation_props['attestation_challenge'])
   json_output = {
       'attestation_info': leaf_cert_attestation_props,
       'certificate_chain': cert_details,
@@ -50,8 +52,8 @@ def main():
   if args.output:
     with open(args.output, 'w') as f:
       json.dump(json_output, f, indent=2)
-  else:
-    print(json.dumps(json_output, indent=2))
+
+  print(json.dumps(json_output, indent=2))
 
 
 if __name__ == '__main__':
