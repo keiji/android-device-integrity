@@ -1,7 +1,7 @@
 import argparse
 import json
-from key_attestation import attestation_parser
-from key_attestation import cryptographic_utils
+from . import attestation_parser
+from . import cryptographic_utils
 
 def main():
     """The main function to be executed when the script is run."""
