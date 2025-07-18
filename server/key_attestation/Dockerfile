@@ -21,4 +21,4 @@ EXPOSE $PORT
 ENV PORT 8080
 
 # Run app.py when the container launches
-CMD exec gunicorn -b :$PORT key_attestation_pkg.key_attestation:app
+CMD exec gunicorn -b :$PORT key_attestation_pkg.api:app

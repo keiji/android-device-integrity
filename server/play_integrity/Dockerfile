@@ -23,4 +23,4 @@ ENV PORT 8080
 ENV PLAY_INTEGRITY_PACKAGE_NAME="dev.keiji.deviceintegrity"
 
 # Run app.py when the container launches
-CMD exec gunicorn -b :$PORT play_integrity_pkg.play_integrity:app
+CMD exec gunicorn -b :$PORT play_integrity_pkg.api:app
