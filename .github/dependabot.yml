@@ -27,3 +27,11 @@ updates:
     directory: "/server" # requirements.txt があるディレクトリ
     schedule:
       interval: "daily"
+  - package-ecosystem: "pip"
+    directory: "/server/play-integrity"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "pip"
+    directory: "/server/key-attestation"
+    schedule:
+      interval: "daily"
