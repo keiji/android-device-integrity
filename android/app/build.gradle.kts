@@ -179,6 +179,7 @@ android {
 
 dependencies {
     implementation(project(":ui:main"))
+    implementation(project(":ui:play-integrity"))
     implementation(project(":ui:license"))
     implementation(project(":provider:impl"))
     implementation(project(":provider:contract"))

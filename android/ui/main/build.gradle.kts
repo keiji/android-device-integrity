@@ -36,7 +36,6 @@ dependencies {
     implementation(project(":ui"))
     implementation(project(":ui:theme"))
     implementation(project(":ui:agreement"))
-    implementation(project(":ui:play-integrity"))
     implementation(project(":ui:key-attestation"))
     implementation(project(":provider:contract"))
     implementation(project(":repository:contract"))

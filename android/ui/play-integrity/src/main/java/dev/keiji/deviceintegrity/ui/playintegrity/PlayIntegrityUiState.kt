@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.main.playintegrity
+package dev.keiji.deviceintegrity.ui.playintegrity
 
 data class PlayIntegrityUiState(
     val nonce: String = "my-test-nonce", // Default nonce

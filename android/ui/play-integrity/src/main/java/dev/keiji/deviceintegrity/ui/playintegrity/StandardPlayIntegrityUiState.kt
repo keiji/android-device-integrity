@@ -1,30 +1,31 @@
-package dev.keiji.deviceintegrity.ui.main.playintegrity
+package dev.keiji.deviceintegrity.ui.playintegrity
 
 import dev.keiji.deviceintegrity.api.playintegrity.ServerVerificationPayload
 import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfo
 import dev.keiji.deviceintegrity.ui.common.InfoItem
 import dev.keiji.deviceintegrity.ui.common.ProgressConstants
 
-data class ClassicPlayIntegrityUiState(
-    val nonce: String = "",
+data class StandardPlayIntegrityUiState(
+    val contentBinding: String = "",
     val integrityToken: String = "",
     val progressValue: Float = ProgressConstants.NO_PROGRESS,
     val status: String = "",
-    val serverVerificationPayload: ServerVerificationPayload? = null, // Keep for now, maybe used by other logic
+    val serverVerificationPayload: ServerVerificationPayload? = null, // Keep for now
+    val errorMessages: List<String> = emptyList(), // Will be combined into status
+    val requestHashValue: String = "",
+    val currentSessionId: String = "",
     val googlePlayDeveloperServiceInfo: GooglePlayDeveloperServiceInfo? = null,
-    val errorMessages: List<String> = emptyList(), // Will be combined into status for InfoItemContent
-    val currentSessionId: String? = null,
     val resultInfoItems: List<InfoItem> = emptyList() // New field
 ) {
     val isLoading: Boolean
         get() = progressValue != ProgressConstants.NO_PROGRESS
 
-    val isFetchNonceButtonEnabled: Boolean
-        get() = !isLoading
+    val requestHashVisible: Boolean
+        get() = requestHashValue.isNotEmpty()
 
     val isRequestTokenButtonEnabled: Boolean
-        get() = !isLoading && nonce.isNotEmpty()
+        get() = !isLoading // Allow empty contentBinding
 
     val isVerifyTokenButtonEnabled: Boolean
-        get() = !isLoading && nonce.isNotEmpty() && integrityToken.isNotEmpty()
+        get() = !isLoading && integrityToken.isNotEmpty()
 }

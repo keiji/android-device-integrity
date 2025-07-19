@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.main.playintegrity
+package dev.keiji.deviceintegrity.ui.playintegrity
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -14,11 +14,11 @@ import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInf
 import dev.keiji.deviceintegrity.repository.contract.ClassicPlayIntegrityTokenRepository
 import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
-import dev.keiji.deviceintegrity.ui.main.common.DEBUG_VERIFY_TOKEN_DELAY_MS
-import dev.keiji.deviceintegrity.ui.main.common.VERIFY_TOKEN_DELAY_MS
 import dev.keiji.deviceintegrity.ui.common.InfoItem
 import dev.keiji.deviceintegrity.ui.util.DateFormatUtil
 import dev.keiji.deviceintegrity.ui.common.ProgressConstants
+import dev.keiji.deviceintegrity.ui.playintegrity.common.DEBUG_VERIFY_TOKEN_DELAY_MS
+import dev.keiji.deviceintegrity.ui.playintegrity.common.VERIFY_TOKEN_DELAY_MS
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
