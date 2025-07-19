@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_screen_play_integrity_label" translatable="false">Play Integrity</string>
     <string name="app_screen_key_attestation_label" translatable="false">Key Attestation</string>
     <string name="app_screen_menu_label" translatable="false">Menu</string>
 
@@ -20,24 +19,6 @@
     <string name="key_attestation_title_step4">Step 4. Verify KeyPair and Attestation</string>
     <string name="key_attestation_button_request_verify_key_attestation" translatable="false">Request Verify KeyAttestation</string>
     <string name="key_attestation_unsupported">This device does not support Key Attestation.</string>
-
-    <string name="classic_pi_title_step1">Step 1. Fetch Nonce from Server</string>
-    <string name="classic_pi_button_fetch_nonce" translatable="false">Fetch Nonce</string>
-    <string name="classic_pi_label_nonce" translatable="false">Nonce: %s</string>
-    <string name="classic_pi_title_step2">Step 2. Request Token</string>
-    <string name="classic_pi_button_request_integrity_token" translatable="false">Request Integrity Token</string>
-    <string name="classic_pi_title_step3">Step 3. Verify Token</string>
-    <string name="classic_pi_button_request_verify_token" translatable="false">Request Verify Token</string>
-    <string name="classic_pi_label_error" translatable="false">Error: %s</string>
-
-    <string name="standard_pi_title_step1">Step 1. Set Content to Verify</string>
-    <string name="standard_pi_label_content" translatable="false">Content</string>
-    <string name="standard_pi_title_step2">Step 2. Request Token</string>
-    <string name="standard_pi_button_request_integrity_token" translatable="false">Request Integrity Token</string>
-    <string name="standard_pi_label_request_hash" translatable="false">requestHash: %s</string>
-    <string name="standard_pi_title_step3">Step 3. Verify Token</string>
-    <string name="standard_pi_button_request_verify_token" translatable="false">Request Verify Token</string>
-    <string name="standard_pi_label_error" translatable="false">Error: %s</string>
 
     <string name="settings_title_app_version">App Version</string>
     <string name="settings_title_device_name">Device Name</string>
