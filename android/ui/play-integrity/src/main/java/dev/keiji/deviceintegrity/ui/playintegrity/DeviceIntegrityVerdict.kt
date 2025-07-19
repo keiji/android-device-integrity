@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.main.playintegrity
+package dev.keiji.deviceintegrity.ui.playintegrity
 
 object DeviceIntegrityVerdict {
     const val MEETS_DEVICE_INTEGRITY = "MEETS_DEVICE_INTEGRITY"
