@@ -4,7 +4,7 @@
         {
             "group_id": "androidx.compose",
             "artifact_id": "compose-bom",
-            "version": "2025.06.01",
+            "version": "2025.07.00",
             "name": "Jetpack Compose Libraries BOM",
             "url": "https://developer.android.com/jetpack",
             "licenses": [
