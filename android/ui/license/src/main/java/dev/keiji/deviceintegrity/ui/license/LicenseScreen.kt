@@ -60,7 +60,13 @@ fun LicenseItem(
     ) {
         Column(
             modifier = Modifier
-                .clickable(onClick = onClick)
+                .then(
+                    if (licenseInfo.licenseUrl != null) {
+                        Modifier.clickable(onClick = onClick)
+                    } else {
+                        Modifier
+                    }
+                )
                 .padding(16.dp)
         ) {
             Text(
@@ -83,8 +89,7 @@ fun LicenseItem(
                 Text(
                     text = licenseUrl,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.clickable(onClick = onClick)
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
