@@ -39,6 +39,8 @@ include(
     ":ui:nav:contract",
     ":ui:nav:impl",
     ":ui:license",
-    ":ui:agreement"
+    ":ui:agreement",
+    ":ui:play-integrity",
+    ":ui:key-attestation"
 )
 include(":api")

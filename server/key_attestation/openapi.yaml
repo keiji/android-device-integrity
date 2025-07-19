@@ -14,11 +14,11 @@ tags:
     description: Operations related to Key Attestation v1
 
 servers:
-  - url: /key-attestation
+  - url: /
     description: Key Attestation Service Base URL
 
 paths:
-  /v1/revision:
+  /key-attestation/v1/revision:
     get:
       summary: Get Revision
       description: Returns the commit hash of the running revision.
@@ -43,7 +43,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /v1/prepare/signature:
+  /key-attestation/v1/prepare/signature:
     get:
       summary: Prepare Key Attestation Signature
       description: Generates a session_id, nonce and challenge for Key Attestation Signature.
@@ -64,7 +64,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /v1/verify/agreement:
+  /key-attestation/v1/verify/agreement:
     post:
       summary: Verify Key Attestation Agreement
       description: Verifies the Key Attestation Agreement (mock implementation).
@@ -97,7 +97,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /v1/verify/signature:
+  /key-attestation/v1/verify/signature:
     post:
       summary: Verify Key Attestation Signature
       description: Verifies the Key Attestation Signature (mock implementation).
@@ -124,7 +124,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /v1/prepare/agreement:
+  /key-attestation/v1/prepare/agreement:
     get:
       summary: Prepare Key Attestation Agreement
       description: Generates a session_id, salt and challenge for Key Attestation Agreement.

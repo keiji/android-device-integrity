@@ -4,7 +4,7 @@ import logging
 import hmac
 import uuid
 
-from flask import Blueprint, request, jsonify
+from flask import Flask, request, jsonify
 from google.cloud import datastore
 from google.api_core.exceptions import Conflict
 from cryptography.hazmat.primitives import serialization
@@ -39,7 +39,7 @@ from .utils import (
 )
 
 
-key_attestation_api = Blueprint('key_attestation_api', __name__)
+app = Flask(__name__)
 logging.basicConfig(level=logging.INFO) # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ except Exception as e:
 
 # --- Endpoints ---
 
-@key_attestation_api.route('/v1/prepare/signature', methods=['GET'])
+@app.route('/key-attestation/v1/prepare/signature', methods=['GET'])
 def prepare_signature_attestation():
     """
     Prepares for key attestation signature by generating a nonce and challenge.
@@ -102,7 +102,7 @@ def prepare_signature_attestation():
     logger.error('Exited retry loop unexpectedly in /prepare/signature.')
     return jsonify({'error': 'Failed to process request after multiple retries'}), 500
 
-@key_attestation_api.route('/v1/prepare/agreement', methods=['GET'])
+@app.route('/key-attestation/v1/prepare/agreement', methods=['GET'])
 def prepare_agreement_attestation():
     """
     Prepares for key attestation agreement by generating a nonce, challenge, and a server-side key pair.
@@ -216,7 +216,7 @@ def _verify_common(session_id, certificate_chain_b64, challenge_from_store_b64):
     logger.info(f'Attestation challenge matched successfully for session_id: {session_id}')
     return certificates, attestation_properties, extracted_cert_details
 
-@key_attestation_api.route('/v1/verify/signature', methods=['POST'])
+@app.route('/key-attestation/v1/verify/signature', methods=['POST'])
 def verify_signature_attestation():
     """
     Verifies the Key Attestation Signature.
@@ -308,7 +308,7 @@ def verify_signature_attestation():
         logger.error(f'An unexpected error occurred in /verify/signature: {e}', exc_info=True)
         return jsonify({'error': 'An unexpected error occurred'}), 500
 
-@key_attestation_api.route('/v1/verify/agreement', methods=['POST'])
+@app.route('/key-attestation/v1/verify/agreement', methods=['POST'])
 def verify_agreement_attestation():
     """
     Verifies the Key Attestation Agreement.
@@ -426,7 +426,7 @@ def verify_agreement_attestation():
         logger.error(f'An unexpected error occurred in /verify/agreement: {e}', exc_info=True)
         return jsonify({'error': 'An unexpected error occurred'}), 500
 
-@key_attestation_api.route('/v1/revision', methods=['GET'])
+@app.route('/key-attestation/v1/revision', methods=['GET'])
 def get_revision():
     """
     Returns the commit hash of the running revision.
@@ -435,3 +435,10 @@ def get_revision():
     return jsonify({'revision': commit_hash})
 
 
+if __name__ == '__main__':
+    # This is used when running locally only.
+    # When deploying to Google App Engine, a webserver process such as Gunicorn will serve the app.
+    # This can be configured by adding an `entrypoint` to app.yaml.
+    # The PORT environment variable is provided by App Engine.
+    port = int(os.environ.get('PORT', 8081))
+    app.run(host='0.0.0.0', port=port, debug=True)

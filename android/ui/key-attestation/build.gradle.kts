@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "dev.keiji.deviceintegrity.ui.main"
+    namespace = "dev.keiji.deviceintegrity.ui.keyattestation"
     compileSdk = libs.versions.androidCompileSdk.get().toInt()
 
     defaultConfig {
@@ -36,8 +36,6 @@ dependencies {
     implementation(project(":ui"))
     implementation(project(":ui:theme"))
     implementation(project(":ui:agreement"))
-    implementation(project(":ui:play-integrity"))
-    implementation(project(":ui:key-attestation"))
     implementation(project(":provider:contract"))
     implementation(project(":repository:contract"))
     implementation(project(":ui:nav:contract"))
