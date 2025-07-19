@@ -23,7 +23,7 @@ class KeyAttestationPreparationTest(unittest.TestCase):
 
     @patch('server.key_attestation.api.store_key_attestation_session')
     def test_prepare_signature_success(self, mock_store_key_attestation_session):
-        response = self.app.get('/v1/prepare/signature')
+        response = self.app.get('/key-attestation/v1/prepare/signature')
         self.assertEqual(response.status_code, 200)
         response_data = json.loads(response.data)
         self.assertIn('session_id', response_data)
@@ -36,7 +36,7 @@ class KeyAttestationPreparationTest(unittest.TestCase):
 
     @patch('server.key_attestation.api.store_agreement_key_attestation_session')
     def test_prepare_agreement_success(self, mock_store_agreement_key_attestation_session):
-        response = self.app.get('/v1/prepare/agreement')
+        response = self.app.get('/key-attestation/v1/prepare/agreement')
         self.assertEqual(response.status_code, 200)
         response_data = json.loads(response.data)
         self.assertIn('session_id', response_data)
@@ -52,7 +52,7 @@ class KeyAttestationPreparationTest(unittest.TestCase):
         # Simulate a session ID collision on the first attempt
         mock_store_key_attestation_session.side_effect = [Conflict('Collision'), None]
 
-        response = self.app.get('/v1/prepare/signature')
+        response = self.app.get('/key-attestation/v1/prepare/signature')
         self.assertEqual(response.status_code, 200)
         response_data = json.loads(response.data)
         self.assertIn('session_id', response_data)
@@ -111,7 +111,7 @@ class KeyAttestationAgreementTest(unittest.TestCase):
             mock_cert.public_key.return_value = mock_public_key
             mock_decode_certificate_chain.return_value = [mock_cert]
 
-            response = self.app.post('/v1/verify/agreement',
+            response = self.app.post('/key-attestation/v1/verify/agreement',
                                      data=json.dumps({
                                          'session_id': session_id,
                                          'encrypted_data': base64url_encode(encrypted_data.encode()),
@@ -160,7 +160,7 @@ class KeyAttestationAgreementTest(unittest.TestCase):
             }
             mock_extract_certificate_details.return_value = {"name": "test_cert"}
 
-            response = self.app.post('/v1/verify/agreement',
+            response = self.app.post('/key-attestation/v1/verify/agreement',
                                      data=json.dumps({
                                          'session_id': session_id,
                                          'encrypted_data': base64url_encode(encrypted_data.encode()),
