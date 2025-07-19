@@ -46,6 +46,12 @@ jobs:
             gradle-${{ hashFiles('**/*.gradle*') }}-
             gradle-
 
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
       # Grant execute permission for gradlew
       - name: Grant execute permission for gradlew
         run: chmod +x android/gradlew
@@ -56,21 +62,14 @@ jobs:
         run: ./gradlew build
         working-directory: ./android
 
-      - name: Enable KVM for Android emulator
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm-permissions.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger
-          sudo usermod -a -G kvm $USER
-
       - name: Run tests on emulator
         uses: reactivecircus/android-emulator-runner@v2
-        timeout-minutes: 20
+        timeout-minutes: 30
         with:
           api-level: 30
           target: google_apis
           arch: x86 # Explicitly set, though it's default
-          # emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim # Using default options is often fine, can add if needed
+          emulator-options: -accel on -no-snapshot -no-window -noaudio -no-boot-anim
           disable-animations: true
           working-directory: ./android # Important for gradle script path
           script: |
