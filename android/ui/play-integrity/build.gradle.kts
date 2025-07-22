@@ -41,6 +41,7 @@ dependencies {
     implementation(project(":ui:nav:contract"))
     implementation(project(":crypto:contract"))
 
+    implementation(libs.play.integrity)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
