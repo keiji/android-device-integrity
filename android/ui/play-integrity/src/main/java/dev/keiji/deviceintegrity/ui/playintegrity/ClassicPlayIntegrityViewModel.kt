@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.main.playintegrity
+package dev.keiji.deviceintegrity.ui.playintegrity
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -11,11 +11,11 @@ import dev.keiji.deviceintegrity.provider.contract.AppInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
 import dev.keiji.deviceintegrity.provider.contract.DeviceSecurityStateProvider
 import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInfoProvider
-import dev.keiji.deviceintegrity.repository.contract.StandardPlayIntegrityTokenRepository
+import dev.keiji.deviceintegrity.repository.contract.ClassicPlayIntegrityTokenRepository
 import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
-import dev.keiji.deviceintegrity.ui.main.common.DEBUG_VERIFY_TOKEN_DELAY_MS
-import dev.keiji.deviceintegrity.ui.main.common.VERIFY_TOKEN_DELAY_MS
+import dev.keiji.deviceintegrity.ui.common.DEBUG_VERIFY_TOKEN_DELAY_MS
+import dev.keiji.deviceintegrity.ui.common.VERIFY_TOKEN_DELAY_MS
 import dev.keiji.deviceintegrity.ui.common.InfoItem
 import dev.keiji.deviceintegrity.ui.util.DateFormatUtil
 import dev.keiji.deviceintegrity.ui.common.ProgressConstants
@@ -25,8 +25,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.security.MessageDigest
-import android.util.Base64
 import java.io.IOException
 import java.util.UUID
 import javax.inject.Inject
@@ -34,18 +32,16 @@ import javax.inject.Inject
 // ProgressConstants will be imported from the new common file
 
 @HiltViewModel
-class StandardPlayIntegrityViewModel @Inject constructor(
-    private val standardPlayIntegrityTokenRepository: StandardPlayIntegrityTokenRepository,
+class ClassicPlayIntegrityViewModel @Inject constructor(
+    private val classicPlayIntegrityTokenRepository: ClassicPlayIntegrityTokenRepository,
     private val playIntegrityRepository: PlayIntegrityRepository,
     private val deviceInfoProvider: DeviceInfoProvider,
     private val deviceSecurityStateProvider: DeviceSecurityStateProvider,
     private val googlePlayDeveloperServiceInfoProvider: GooglePlayDeveloperServiceInfoProvider,
     private val appInfoProvider: AppInfoProvider
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(StandardPlayIntegrityUiState())
-    val uiState: StateFlow<StandardPlayIntegrityUiState> = _uiState.asStateFlow()
-
-    private var currentSessionId: String = ""
+    private val _uiState = MutableStateFlow(ClassicPlayIntegrityUiState())
+    val uiState: StateFlow<ClassicPlayIntegrityUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -54,22 +50,95 @@ class StandardPlayIntegrityViewModel @Inject constructor(
         }
     }
 
-    fun updateContentBinding(newContent: String) {
+    fun fetchNonce() {
         _uiState.update {
             it.copy(
-                contentBinding = newContent,
-                requestHashValue = ""
+                integrityToken = "",
+                progressValue = ProgressConstants.FULL_PROGRESS,
+                status = "Fetching nonce from server...",
+                serverVerificationPayload = null,
+                resultInfoItems = emptyList(), // Clear previous results
+                errorMessages = emptyList()
             )
+        }
+        viewModelScope.launch {
+            try {
+                val delayMs = VERIFY_TOKEN_DELAY_MS
+                val totalSteps = (delayMs / ProgressConstants.PROGRESS_UPDATE_INTERVAL_MS).toInt()
+                var currentStep = 0
+                while (currentStep < totalSteps) {
+                    delay(ProgressConstants.PROGRESS_UPDATE_INTERVAL_MS)
+                    currentStep++
+                    if (currentStep < totalSteps) {
+                        val newProgress = ProgressConstants.FULL_PROGRESS - (currentStep.toFloat() / totalSteps)
+                        _uiState.update { currentState ->
+                            currentState.copy(progressValue = newProgress.coerceAtLeast(ProgressConstants.NO_PROGRESS))
+                        }
+                    }
+                }
+                _uiState.update { it.copy(
+                    progressValue = ProgressConstants.INDETERMINATE_PROGRESS,
+                    status = "Finalizing nonce request..."
+                ) }
+                val response = playIntegrityRepository.getNonceV2()
+                _uiState.update {
+                    it.copy(
+                        nonce = response.nonce,
+                        progressValue = ProgressConstants.NO_PROGRESS,
+                        status = "Nonce fetched: ${response.nonce}",
+                        currentSessionId = response.sessionId
+                    )
+                }
+            } catch (e: ServerException) {
+                Log.e("ClassicPlayIntegrityVM", "Server error fetching nonce: ${e.errorCode} - ${e.errorMessage}", e)
+                val specificErrorMessage = "Server error: ${e.errorCode ?: "N/A"} - ${e.errorMessage ?: "Unknown"}"
+                val userFacingStatus = "Server error fetching nonce: ${e.errorMessage ?: "Unknown"}"
+                _uiState.update {
+                    it.copy(
+                        progressValue = ProgressConstants.NO_PROGRESS,
+                        status = userFacingStatus,
+                        errorMessages = listOf(specificErrorMessage), // For test assertion on errorMessages.first()
+                        resultInfoItems = emptyList()
+                    )
+                }
+            } catch (e: IOException) {
+                Log.e("ClassicPlayIntegrityVM", "Network error fetching nonce", e)
+                val specificErrorMessage = e.message ?: "Unknown network error."
+                val userFacingStatus = "Network error fetching nonce: $specificErrorMessage"
+                _uiState.update {
+                    it.copy(
+                        progressValue = ProgressConstants.NO_PROGRESS,
+                        status = userFacingStatus,
+                        errorMessages = listOf(specificErrorMessage), // For test assertion on errorMessages.first()
+                        resultInfoItems = emptyList()
+                    )
+                }
+            } catch (e: Exception) { // General exceptions
+                Log.e("ClassicPlayIntegrityVM", "Unknown error fetching nonce", e)
+                val specificErrorMessage = e.message ?: "An unexpected error occurred."
+                val userFacingStatus = "Unknown error fetching nonce: $specificErrorMessage"
+                _uiState.update {
+                    it.copy(
+                        progressValue = ProgressConstants.NO_PROGRESS,
+                        status = userFacingStatus,
+                        errorMessages = listOf(specificErrorMessage),
+                        resultInfoItems = emptyList()
+                    )
+                }
+            }
         }
     }
 
-    private fun transformPayloadToInfoItems(payload: ServerVerificationPayload?, currentSessionId: String, requestHashValue: String): List<InfoItem> {
+    fun updateNonce(newNonce: String) {
+        _uiState.update { it.copy(nonce = newNonce, errorMessages = emptyList()) }
+    }
+
+    private fun transformPayloadToInfoItems(payload: ServerVerificationPayload?, currentSessionId: String?): List<InfoItem> {
         val items = mutableListOf<InfoItem>()
         if (payload == null) return items
 
-        items.add(InfoItem("Session ID (Current)", currentSessionId, indentLevel = 0))
-        if (requestHashValue.isNotEmpty()){
-            items.add(InfoItem("Request Hash (Calculated by Client)", requestHashValue, indentLevel = 0))
+        currentSessionId?.let {
+            items.add(InfoItem("Session ID (Current)", it, indentLevel = 0))
         }
 
         payload.playIntegrityResponse.tokenPayloadExternal.let { token ->
@@ -78,8 +147,8 @@ class StandardPlayIntegrityViewModel @Inject constructor(
             token.requestDetails?.let { rd ->
                 items.add(InfoItem("Request Details", "", isHeader = true, indentLevel = 1))
                 items.add(InfoItem("Request Package Name", rd.requestPackageName ?: "N/A", indentLevel = 2))
-                rd.nonce?.let { items.add(InfoItem("Nonce", it, indentLevel = 2)) }
-                items.add(InfoItem("Request Hash (from Server Response)", rd.requestHash ?: "N/A", indentLevel = 2))
+                items.add(InfoItem("Nonce", rd.nonce ?: "N/A", indentLevel = 2))
+                items.add(InfoItem("Request Hash", rd.requestHash ?: "N/A", indentLevel = 2))
                 items.add(InfoItem("Timestamp", DateFormatUtil.formatEpochMilliToISO8601(rd.timestampMillis), indentLevel = 2))
             }
 
@@ -143,58 +212,45 @@ class StandardPlayIntegrityViewModel @Inject constructor(
     }
 
     fun fetchIntegrityToken() {
-        currentSessionId = UUID.randomUUID().toString()
-        val currentContent = _uiState.value.contentBinding
-        var encodedHash = ""
-        val stringToHash = currentSessionId + currentContent
-        if (stringToHash.isNotEmpty()) {
-            try {
-                val digest = MessageDigest.getInstance("SHA-256")
-                val hashBytes = digest.digest(stringToHash.toByteArray(Charsets.UTF_8))
-                encodedHash = Base64.encodeToString(hashBytes, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
-            } catch (e: Exception) {
-                Log.e("StandardPlayIntegrityVM", "Error generating SHA-256 hash for '$stringToHash'", e)
+        val currentNonce = _uiState.value.nonce
+        if (currentNonce.isBlank()) {
+            _uiState.update {
+                it.copy(
+                    status = "Nonce cannot be empty.",
+                    errorMessages = listOf("Nonce is required to fetch a token.")
+                )
             }
+            return
         }
         _uiState.update {
             it.copy(
                 progressValue = ProgressConstants.INDETERMINATE_PROGRESS,
                 status = "Fetching token...",
-                requestHashValue = "",
                 errorMessages = emptyList(),
-                resultInfoItems = emptyList(),
+                resultInfoItems = emptyList(), // Clear previous results
                 serverVerificationPayload = null
             )
         }
         viewModelScope.launch {
             try {
-                val hashToPass = if (currentContent.isNotEmpty()) encodedHash else null
-                val token = standardPlayIntegrityTokenRepository.getToken(hashToPass)
-                Log.d("StandardPlayIntegrityVM", "Integrity Token (Standard): $token")
+                val token = classicPlayIntegrityTokenRepository.getToken(currentNonce)
+                Log.d("ClassicPlayIntegrityVM", "Integrity Token: $token")
                 _uiState.update {
                     it.copy(
                         progressValue = ProgressConstants.NO_PROGRESS,
                         integrityToken = token,
-                        status = "Token fetched successfully (Standard API, see Logcat for token)",
-                        errorMessages = emptyList(),
-                        requestHashValue = if (currentContent.isNotEmpty()) encodedHash else "",
-                        currentSessionId = currentSessionId
+                        status = "Token fetched successfully (see Logcat for token)",
+                        errorMessages = emptyList()
                     )
                 }
             } catch (e: Exception) {
-                Log.e("StandardPlayIntegrityVM", "Error fetching integrity token (Standard)", e)
-                val specificErrorMessage = if (e is ServerException) {
-                    "Server error: ${e.errorCode ?: "N/A"} - ${e.errorMessage ?: "Unknown"}"
-                } else {
-                    e.message ?: "Unknown error fetching integrity token (Standard)."
-                }
-                val userFacingStatus = "Error fetching integrity token (Standard): ${e.message ?: "Unknown error"}"
+                Log.e("ClassicPlayIntegrityVM", "Error fetching integrity token", e)
+                val errorStatus = "Error fetching integrity token: ${e.message ?: "Unknown error."}"
                 _uiState.update {
                     it.copy(
                         progressValue = ProgressConstants.NO_PROGRESS,
-                        status = userFacingStatus,
-                        errorMessages = listOf(specificErrorMessage),
-                        requestHashValue = ""
+                        status = errorStatus,
+                        errorMessages = listOfNotNull(e.message)
                     )
                 }
             }
@@ -202,17 +258,13 @@ class StandardPlayIntegrityViewModel @Inject constructor(
     }
 
     fun verifyToken() {
-        val currentUiState = _uiState.value
-        val token = currentUiState.integrityToken
+        val token = _uiState.value.integrityToken
         if (token.isBlank()) {
             _uiState.update {
-                it.copy(status = "Token not available for verification.", errorMessages = listOf("Token is required for verification."))
-            }
-            return
-        }
-        if (currentSessionId.isBlank()) {
-            _uiState.update {
-                it.copy(status = "Session ID not available for verification.", errorMessages = listOf("Session ID is missing."))
+                it.copy(
+                    status = "Token not available for verification.",
+                    errorMessages = listOf("Token is required for verification.")
+                )
             }
             return
         }
@@ -221,11 +273,10 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                 progressValue = ProgressConstants.INDETERMINATE_PROGRESS,
                 status = "Preparing to verify token...",
                 errorMessages = emptyList(),
-                resultInfoItems = emptyList(),
+                resultInfoItems = emptyList(), // Clear previous results
                 serverVerificationPayload = null
             )
         }
-        val contentBindingForVerification = currentUiState.contentBinding
         viewModelScope.launch {
             try {
                 val delayMs = if (appInfoProvider.isDebugBuild) DEBUG_VERIFY_TOKEN_DELAY_MS else VERIFY_TOKEN_DELAY_MS
@@ -261,22 +312,37 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                     isDeviceLockEnabled = deviceSecurityStateProvider.isDeviceLockEnabled, isBiometricsEnabled = deviceSecurityStateProvider.isBiometricsEnabled,
                     hasClass3Authenticator = deviceSecurityStateProvider.hasClass3Authenticator, hasStrongbox = deviceSecurityStateProvider.hasStrongBox
                 )
-                val response = playIntegrityRepository.verifyTokenStandard(
-                    integrityToken = token, sessionId = currentSessionId, contentBinding = contentBindingForVerification,
-                    deviceInfo = deviceInfoData, securityInfo = securityInfo, googlePlayDeveloperServiceInfo = googlePlayDeveloperServiceInfoProvider.provide()
+                val googlePlayDeveloperServiceInfo = googlePlayDeveloperServiceInfoProvider.provide()
+                val sessionId = _uiState.value.currentSessionId
+                if (sessionId == null) {
+                    _uiState.update {
+                        it.copy(
+                            status = "Session ID is not set.",
+                            errorMessages = listOf("Session ID is required for verification.")
+                        )
+                    }
+                    return@launch
+                }
+
+                val verifyResponse = playIntegrityRepository.verifyTokenClassic(
+                    integrityToken = token, sessionId = sessionId, deviceInfo = deviceInfoData,
+                    securityInfo = securityInfo, googlePlayDeveloperServiceInfo = googlePlayDeveloperServiceInfo
                 )
-                Log.d("StandardPlayIntegrityVM", "Verification Response: ${response.playIntegrityResponse.tokenPayloadExternal}")
-                val resultItems = transformPayloadToInfoItems(response, currentSessionId, currentUiState.requestHashValue)
+                Log.d("ClassicPlayIntegrityVM", "Verification Response: ${verifyResponse.playIntegrityResponse.tokenPayloadExternal}")
+                val resultItems = transformPayloadToInfoItems(verifyResponse, sessionId)
                 val finalStatus = "Token verification complete."
                 _uiState.update {
                     it.copy(
-                        progressValue = ProgressConstants.NO_PROGRESS, status = finalStatus,
-                        serverVerificationPayload = response, resultInfoItems = resultItems,
-                        errorMessages = emptyList(), currentSessionId = currentSessionId
+                        progressValue = ProgressConstants.NO_PROGRESS,
+                        status = finalStatus,
+                        serverVerificationPayload = verifyResponse,
+                        resultInfoItems = resultItems,
+                        errorMessages = emptyList(),
+                        currentSessionId = sessionId
                     )
                 }
             } catch (e: ServerException) {
-                Log.e("StandardPlayIntegrityVM", "Server error verifying token: ${e.errorCode} - ${e.errorMessage}", e)
+                Log.e("ClassicPlayIntegrityVM", "Server error verifying token: ${e.errorCode} - ${e.errorMessage}", e)
                 val specificErrorMessage = "Server error: ${e.errorCode ?: "N/A"} - ${e.errorMessage ?: "Unknown"}"
                 val userFacingStatus = "Server error verifying token: ${e.errorMessage ?: "Unknown"}"
                 _uiState.update {
@@ -286,7 +352,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                     )
                 }
             } catch (e: IOException) {
-                Log.e("StandardPlayIntegrityVM", "Network error verifying token", e)
+                Log.e("ClassicPlayIntegrityVM", "Network error verifying token", e)
                 val specificErrorMessage = e.message ?: "Unknown network error."
                 val userFacingStatus = "Network error verifying token: $specificErrorMessage"
                 _uiState.update {
@@ -296,7 +362,7 @@ class StandardPlayIntegrityViewModel @Inject constructor(
                     )
                 }
             } catch (e: Exception) {
-                Log.e("StandardPlayIntegrityVM", "Unknown error verifying token", e)
+                Log.e("ClassicPlayIntegrityVM", "Unknown error verifying token", e)
                 val specificErrorMessage = e.message ?: "An unexpected error occurred."
                 val userFacingStatus = "Unknown error verifying token: $specificErrorMessage"
                 _uiState.update {
