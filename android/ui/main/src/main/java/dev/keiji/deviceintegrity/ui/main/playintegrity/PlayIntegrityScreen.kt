@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 
 enum class PlayIntegrityTab {
-    Classic, Standard
+    Standard, Classic
 }
 
 @Composable
@@ -29,7 +29,7 @@ fun PlayIntegrityScreen(
     onStandardRequestToken: () -> Unit,
     onStandardRequestVerify: () -> Unit,
 ) {
-    var selectedTab by remember { mutableStateOf(PlayIntegrityTab.Classic) }
+    var selectedTab by remember { mutableStateOf(PlayIntegrityTab.Standard) }
     // val classicUiState by classicViewModel.uiState.collectAsState() // Removed
     // val standardUiState by standardViewModel.uiState.collectAsState() // Removed
 
