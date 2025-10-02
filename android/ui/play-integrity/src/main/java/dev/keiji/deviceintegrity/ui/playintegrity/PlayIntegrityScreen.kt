@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.main.playintegrity
+package dev.keiji.deviceintegrity.ui.playintegrity
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize

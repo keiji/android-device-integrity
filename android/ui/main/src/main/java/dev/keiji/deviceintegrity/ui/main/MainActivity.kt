@@ -39,12 +39,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import dev.keiji.deviceintegrity.provider.contract.AppInfoProvider
-import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationScreen
-import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationUnsupportedScreen
-import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationViewModel
-import dev.keiji.deviceintegrity.ui.main.playintegrity.ClassicPlayIntegrityViewModel
-import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityScreen
-import dev.keiji.deviceintegrity.ui.main.playintegrity.StandardPlayIntegrityViewModel
+import dev.keiji.deviceintegrity.ui.keyattestation.KeyAttestationScreen
+import dev.keiji.deviceintegrity.ui.keyattestation.KeyAttestationUnsupportedScreen
+import dev.keiji.deviceintegrity.ui.keyattestation.KeyAttestationViewModel
+import dev.keiji.deviceintegrity.ui.playintegrity.ClassicPlayIntegrityViewModel
+import dev.keiji.deviceintegrity.ui.playintegrity.PlayIntegrityScreen
+import dev.keiji.deviceintegrity.ui.playintegrity.StandardPlayIntegrityViewModel
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsScreen
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsUiEvent
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsViewModel
@@ -53,7 +53,6 @@ import dev.keiji.deviceintegrity.ui.nav.contract.LicenseNavigator
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 import timber.log.Timber
 import javax.inject.Inject
-import dev.keiji.deviceintegrity.ui.main.R
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -205,13 +204,13 @@ fun DeviceIntegrityApp(
                                 val clipboard =
                                     currentContext.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                 val clip = ClipData.newPlainText(
-                                    currentContext.getString(R.string.key_attestation_result_label),
+                                    currentContext.getString(dev.keiji.deviceintegrity.ui.keyattestation.R.string.key_attestation_result_label),
                                     textToCopy
                                 )
                                 clipboard.setPrimaryClip(clip)
                                 Toast.makeText(
                                     currentContext,
-                                    currentContext.getString(R.string.copied_to_clipboard),
+                                    currentContext.getString(dev.keiji.deviceintegrity.ui.R.string.copied_to_clipboard),
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }

@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.main.playintegrity
+package dev.keiji.deviceintegrity.ui.playintegrity
 
 import android.content.Intent
 import android.util.Log
@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import dev.keiji.deviceintegrity.ui.common.InfoItem
 import dev.keiji.deviceintegrity.ui.common.InfoItemContent
 import dev.keiji.deviceintegrity.ui.common.InfoItemFormatter
-import dev.keiji.deviceintegrity.ui.main.R
+import dev.keiji.deviceintegrity.ui.playintegrity.R
 import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
 import dev.keiji.deviceintegrity.ui.common.ProgressConstants
 import kotlinx.coroutines.launch
