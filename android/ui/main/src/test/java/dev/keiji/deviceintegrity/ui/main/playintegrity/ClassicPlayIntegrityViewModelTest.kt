@@ -14,6 +14,8 @@ import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInf
 import dev.keiji.deviceintegrity.repository.contract.ClassicPlayIntegrityTokenRepository
 import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
+import dev.keiji.deviceintegrity.ui.playintegrity.ClassicPlayIntegrityViewModel
+import dev.keiji.deviceintegrity.ui.playintegrity.ClassicPlayIntegrityUiState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -51,7 +53,6 @@ class ClassicPlayIntegrityViewModelTest {
     private lateinit var mockGooglePlayDeveloperServiceInfoProvider: GooglePlayDeveloperServiceInfoProvider
     private lateinit var mockAppInfoProvider: AppInfoProvider
 
-    // Dummy data
     private val dummyDeviceInfo = DeviceInfo("brand", "model", "device", "product", "manufacturer", "hardware", "board", "bootloader", "release", 30, "fingerprint", "patch")
     private val dummySecurityInfo = SecurityInfo(true, true, true, true)
     private val dummyGooglePlayDeveloperServiceInfo = GooglePlayDeveloperServiceInfo(123L, "1.2.3")
@@ -75,33 +76,21 @@ class ClassicPlayIntegrityViewModelTest {
         mockGooglePlayDeveloperServiceInfoProvider = mock()
         mockAppInfoProvider = mock()
 
-        // Mock provider methods to return dummy data
         whenever(mockGooglePlayDeveloperServiceInfoProvider.provide()).thenReturn(dummyGooglePlayDeveloperServiceInfo)
         whenever(mockDeviceInfoProvider.BRAND).thenReturn("TestBrand")
         whenever(mockDeviceInfoProvider.MODEL).thenReturn("TestModel")
         whenever(mockDeviceInfoProvider.DEVICE).thenReturn("TestDevice")
         whenever(mockDeviceInfoProvider.PRODUCT).thenReturn("TestDevice")
         whenever(mockDeviceInfoProvider.BOARD).thenReturn("TestDevice")
-        whenever(mockDeviceInfoProvider.BASE_OS).thenReturn("TestDevice")
         whenever(mockDeviceInfoProvider.BOOTLOADER).thenReturn("TestDevice")
-        whenever(mockDeviceInfoProvider.DISPLAY).thenReturn("TestDevice")
         whenever(mockDeviceInfoProvider.FINGERPRINT).thenReturn("TestDevice")
         whenever(mockDeviceInfoProvider.HARDWARE).thenReturn("TestDevice")
-        whenever(mockDeviceInfoProvider.HOST).thenReturn("TestDevice")
-        whenever(mockDeviceInfoProvider.ID).thenReturn("TestDevice")
         whenever(mockDeviceInfoProvider.MANUFACTURER).thenReturn("TestDevice")
         whenever(mockDeviceInfoProvider.SDK_INT).thenReturn(30)
         whenever(mockDeviceInfoProvider.SECURITY_PATCH).thenReturn("TestDevice")
-        whenever(mockDeviceInfoProvider.TAGS).thenReturn("TestDevice")
-        whenever(mockDeviceInfoProvider.TIME).thenReturn(0)
-        whenever(mockDeviceInfoProvider.TYPE).thenReturn("TestDevice")
-        whenever(mockDeviceInfoProvider.USER).thenReturn("TestDevice")
         whenever(mockDeviceInfoProvider.VERSION_RELEASE).thenReturn("TestDevice")
-        whenever(mockDeviceInfoProvider.VERSION_INCREMENTAL).thenReturn("TestDevice")
 
-        // ... mock other DeviceInfoProvider properties as needed
         whenever(mockDeviceSecurityStateProvider.isDeviceLockEnabled).thenReturn(true)
-        // ... mock other DeviceSecurityStateProvider properties
         whenever(mockAppInfoProvider.isDebugBuild).thenReturn(false)
 
 
@@ -128,11 +117,11 @@ class ClassicPlayIntegrityViewModelTest {
         whenever(mockPlayIntegrityRepository.getNonceV2()).thenReturn(expectedResponse)
 
         viewModel.fetchNonce()
-        testDispatcher.scheduler.advanceUntilIdle() // Execute coroutines
+        testDispatcher.scheduler.advanceUntilIdle()
 
         val uiState = viewModel.uiState.first()
         assertEquals(nonce, uiState.nonce)
-        assertEquals("Nonce fetched: $nonce", uiState.status)
+        assertEquals("Nonce fetched: ${nonce}", uiState.status)
         assertEquals(sessionId, uiState.currentSessionId)
         assertTrue(uiState.errorMessages.isEmpty())
     }
@@ -147,7 +136,7 @@ class ClassicPlayIntegrityViewModelTest {
 
         val uiState = viewModel.uiState.first()
         assertTrue(uiState.errorMessages.isNotEmpty())
-        assertEquals("Server error fetching nonce: Server error", uiState.status) // Updated
+        assertEquals("Server error fetching nonce: Server error", uiState.status)
         assertEquals("Server error: 500 - Server error", uiState.errorMessages.first())
     }
 
@@ -161,7 +150,7 @@ class ClassicPlayIntegrityViewModelTest {
 
         val uiState = viewModel.uiState.first()
         assertTrue(uiState.errorMessages.isNotEmpty())
-        assertEquals("Network error fetching nonce: Network error", uiState.status) // Updated
+        assertEquals("Network error fetching nonce: Network error", uiState.status)
         assertEquals("Network error", uiState.errorMessages.first())
     }
 
@@ -169,7 +158,7 @@ class ClassicPlayIntegrityViewModelTest {
     fun `fetchIntegrityToken success updates uiState with token`() = runTest {
         val nonce = "test-nonce"
         val token = "test-token"
-        viewModel.updateNonce(nonce) // Set nonce first
+        viewModel.updateNonce(nonce)
         whenever(mockClassicPlayIntegrityTokenRepository.getToken(nonce)).thenReturn(token)
 
         viewModel.fetchIntegrityToken()
@@ -238,7 +227,7 @@ class ClassicPlayIntegrityViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val uiState = viewModel.uiState.first()
-        assertEquals("Server error verifying token: Forbidden by server", uiState.status) // Updated
+        assertEquals("Server error verifying token: Forbidden by server", uiState.status)
         assertTrue(uiState.errorMessages.isNotEmpty())
         assertEquals("Server error: 403 - Forbidden by server", uiState.errorMessages.first())
     }
@@ -270,15 +259,14 @@ class ClassicPlayIntegrityViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val uiState = viewModel.uiState.first()
-        assertEquals("Network error verifying token: Network connection lost", uiState.status) // Updated
+        assertEquals("Network error verifying token: Network connection lost", uiState.status)
         assertTrue(uiState.errorMessages.isNotEmpty())
         assertEquals("Network connection lost", uiState.errorMessages.first())
     }
 
     @Test
     fun `init loads GooglePlayDeveloperServiceInfo and updates uiState`() = runTest {
-        // ViewModel is initialized in setUp, which should trigger the init block.
-        testDispatcher.scheduler.advanceUntilIdle() // Ensure coroutines in init complete
+        testDispatcher.scheduler.advanceUntilIdle()
 
         val uiState = viewModel.uiState.first()
         assertEquals(dummyGooglePlayDeveloperServiceInfo, uiState.googlePlayDeveloperServiceInfo)
@@ -305,10 +293,10 @@ class ClassicPlayIntegrityViewModelTest {
 
         whenever(mockPlayIntegrityRepository.verifyTokenClassic(
             eq(token),
-            eq(currentSessionId!!), // sessionId
-            any(), // deviceInfo
-            any(), // securityInfo
-            eq(dummyGooglePlayDeveloperServiceInfo) // Explicitly check this arg
+            eq(currentSessionId!!),
+            any(),
+            any(),
+            eq(dummyGooglePlayDeveloperServiceInfo)
         )).thenReturn(dummyServerVerificationPayload)
 
         viewModel.verifyToken()
@@ -316,6 +304,6 @@ class ClassicPlayIntegrityViewModelTest {
 
         val finalUiState = viewModel.uiState.first()
         assertEquals("Token verification complete.", finalUiState.status)
-        assertEquals(dummyServerVerificationPayload.playIntegrityResponse, finalUiState.serverVerificationPayload?.playIntegrityResponse)
+        assertEquals(dummyServerVerificationPayload, finalUiState.serverVerificationPayload)
     }
 }

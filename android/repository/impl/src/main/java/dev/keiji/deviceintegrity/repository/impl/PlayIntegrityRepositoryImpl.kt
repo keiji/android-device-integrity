@@ -75,19 +75,6 @@ class PlayIntegrityRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getNonce(sessionId: String): NonceResponse {
-        return try {
-            val request = CreateNonceRequest(sessionId = sessionId)
-            playIntegrityTokenVerifyApiClient.getNonce(request)
-        } catch (e: HttpException) {
-            throw ServerException(
-                errorCode = e.code(),
-                errorMessage = e.response()?.errorBody()?.string(),
-                cause = e
-            )
-        }
-    }
-
     override suspend fun getNonceV2(): NonceResponseV2 {
         return try {
             playIntegrityTokenVerifyApiClient.getNonceV2()
