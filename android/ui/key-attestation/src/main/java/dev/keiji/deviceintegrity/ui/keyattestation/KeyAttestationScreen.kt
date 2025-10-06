@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.main.keyattestation
+package dev.keiji.deviceintegrity.ui.keyattestation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.dp
 import dev.keiji.deviceintegrity.ui.common.InfoItem
 import dev.keiji.deviceintegrity.ui.common.InfoItemContent
 import dev.keiji.deviceintegrity.ui.common.ProgressConstants
-import dev.keiji.deviceintegrity.ui.main.R
+import dev.keiji.deviceintegrity.ui.keyattestation.R
 import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
 
 @OptIn(ExperimentalMaterial3Api::class)

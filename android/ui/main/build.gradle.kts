@@ -69,6 +69,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.hilt.android.testing)
+    testImplementation(project(":ui:play-integrity"))
     kspTest(libs.hilt.compiler)
 
     androidTestImplementation(libs.androidx.junit)

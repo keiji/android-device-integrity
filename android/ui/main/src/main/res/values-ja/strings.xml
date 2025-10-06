@@ -1,20 +1,4 @@
 <resources>
-    <string name="copied_to_clipboard">クリップボードにコピーしました</string>
-    <string name="key_attestation_result_label" >構成証明書の検証結果</string>
-
-    <string name="key_attestation_title_step1">Step 1. 鍵のアルゴリズムを選択</string>
-    <string name="key_attestation_title_step2">Step 2. サーバーからNonce/Challengeを取得</string>
-    <string name="key_attestation_title_step2_ecdh">Step 2. サーバーからNonce/Challenge/PublicKeyを取得</string>
-    <string name="key_attestation_title_step3">Step 3. キーペア（構成証明付き）を生成</string>
-    <string name="key_attestation_checkbox_label_strongbox">StrongBoxで鍵を生成する</string>
-    <string name="key_attestation_title_step4">Step 4. キーペアと構成証明を検証</string>
-    <string name="key_attestation_unsupported">この端末はKey Attestation（構成証明）をサポートしていません</string>
-    <string name="classic_pi_title_step1">Step 1. サーバーからNonceを取得</string>
-    <string name="classic_pi_title_step2">Step 2. トークンを取得</string>
-    <string name="classic_pi_title_step3">Step 3. トークンを検証</string>
-    <string name="standard_pi_title_step1">Step 1. 検証に使うコンテンツを設定</string>
-    <string name="standard_pi_title_step2">Step 2. トークンを取得</string>
-    <string name="standard_pi_title_step3">Step 3. トークンを検証</string>
     <string name="settings_title_app_version">アプリのバージョン</string>
     <string name="settings_title_device_name">端末名</string>
     <string name="settings_title_os_version">OSバージョン</string>

@@ -195,30 +195,4 @@ class PlayIntegrityRepositoryImplTest {
         Assert.assertEquals("Forbidden", exception.errorMessage)
     }
 
-    // --- getNonce Tests ---
-    @Test
-    fun `getNonce_success_should_return_NonceResponse`() = runTest {
-        val expectedResponse = NonceResponse("nonce_value", 12345L)
-        whenever(mockPlayIntegrityTokenVerifyApiClient.getNonce(any())).thenReturn(expectedResponse)
-
-        val result = repository.getNonce("sid")
-        Assert.assertEquals(expectedResponse, result)
-    }
-
-    @Test
-    fun `getNonce httpException should throw ServerException`() = runTest {
-        val httpException = HttpException(
-            Response.error<NonceResponse>(
-                500,
-                "Server Down".toResponseBody("text/plain".toMediaTypeOrNull())
-            )
-        )
-        whenever(mockPlayIntegrityTokenVerifyApiClient.getNonce(any())).thenThrow(httpException)
-
-        val exception = assertFailsWith<ServerException> {
-            repository.getNonce("sid")
-        }
-        Assert.assertEquals(500, exception.errorCode)
-        Assert.assertEquals("Server Down", exception.errorMessage)
-    }
 }

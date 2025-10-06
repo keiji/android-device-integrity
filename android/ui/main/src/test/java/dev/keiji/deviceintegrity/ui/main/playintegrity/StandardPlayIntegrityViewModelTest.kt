@@ -13,10 +13,13 @@ import dev.keiji.deviceintegrity.provider.contract.GooglePlayDeveloperServiceInf
 import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository
 import dev.keiji.deviceintegrity.repository.contract.StandardPlayIntegrityTokenRepository
 import dev.keiji.deviceintegrity.repository.contract.exception.ServerException
+import dev.keiji.deviceintegrity.ui.playintegrity.StandardPlayIntegrityViewModel
+import dev.keiji.deviceintegrity.ui.playintegrity.StandardPlayIntegrityUiState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -49,7 +52,6 @@ class StandardPlayIntegrityViewModelTest {
     private lateinit var mockGooglePlayDeveloperServiceInfoProvider: GooglePlayDeveloperServiceInfoProvider
     private lateinit var mockAppInfoProvider: AppInfoProvider
 
-    // Dummy data
     private val dummyDeviceInfo = DeviceInfo("brand", "model", "device", "product", "manufacturer", "hardware", "board", "bootloader", "release", 30, "fingerprint", "patch")
     private val dummySecurityInfo = SecurityInfo(true, true, true, true)
     private val dummyGooglePlayDeveloperServiceInfo = GooglePlayDeveloperServiceInfo(456L, "4.5.6")
@@ -78,22 +80,13 @@ class StandardPlayIntegrityViewModelTest {
         whenever(mockDeviceInfoProvider.DEVICE).thenReturn("TestDevice")
         whenever(mockDeviceInfoProvider.PRODUCT).thenReturn("TestDevice")
         whenever(mockDeviceInfoProvider.BOARD).thenReturn("TestDevice")
-        whenever(mockDeviceInfoProvider.BASE_OS).thenReturn("TestDevice")
         whenever(mockDeviceInfoProvider.BOOTLOADER).thenReturn("TestDevice")
-        whenever(mockDeviceInfoProvider.DISPLAY).thenReturn("TestDevice")
         whenever(mockDeviceInfoProvider.FINGERPRINT).thenReturn("TestDevice")
         whenever(mockDeviceInfoProvider.HARDWARE).thenReturn("TestDevice")
-        whenever(mockDeviceInfoProvider.HOST).thenReturn("TestDevice")
-        whenever(mockDeviceInfoProvider.ID).thenReturn("TestDevice")
         whenever(mockDeviceInfoProvider.MANUFACTURER).thenReturn("TestDevice")
         whenever(mockDeviceInfoProvider.SDK_INT).thenReturn(30)
         whenever(mockDeviceInfoProvider.SECURITY_PATCH).thenReturn("TestDevice")
-        whenever(mockDeviceInfoProvider.TAGS).thenReturn("TestDevice")
-        whenever(mockDeviceInfoProvider.TIME).thenReturn(0)
-        whenever(mockDeviceInfoProvider.TYPE).thenReturn("TestDevice")
-        whenever(mockDeviceInfoProvider.USER).thenReturn("TestDevice")
         whenever(mockDeviceInfoProvider.VERSION_RELEASE).thenReturn("TestDevice")
-        whenever(mockDeviceInfoProvider.VERSION_INCREMENTAL).thenReturn("TestDevice")
 
         whenever(mockDeviceSecurityStateProvider.isDeviceLockEnabled).thenReturn(true)
         whenever(mockAppInfoProvider.isDebugBuild).thenReturn(false)
@@ -116,8 +109,7 @@ class StandardPlayIntegrityViewModelTest {
     @Test
     fun `fetchIntegrityToken success updates uiState with token`() = runTest {
         val token = "test-standard-token"
-        viewModel.updateContentBinding("testContent") // Set content binding
-        // Assuming getToken might use the contentBinding to generate a hash
+        viewModel.updateContentBinding("testContent")
         whenever(mockStandardPlayIntegrityTokenRepository.getToken(any())).thenReturn(token)
 
         viewModel.fetchIntegrityToken()
@@ -126,7 +118,7 @@ class StandardPlayIntegrityViewModelTest {
         val uiState = viewModel.uiState.first()
         assertEquals(token, uiState.integrityToken)
         assertTrue(uiState.status.contains("Token fetched successfully (Standard API"))
-        assertTrue(uiState.requestHashValue.isNotBlank()) // Hash should be generated
+        assertTrue(uiState.requestHashValue.isNotBlank())
     }
 
     @Test
@@ -135,10 +127,9 @@ class StandardPlayIntegrityViewModelTest {
         val contentBinding = "testContent"
         viewModel.updateContentBinding(contentBinding)
 
-        // Simulate fetchIntegrityToken completing and setting currentSessionId
         whenever(mockStandardPlayIntegrityTokenRepository.getToken(any())).thenReturn(token)
         viewModel.fetchIntegrityToken()
-        testDispatcher.scheduler.advanceUntilIdle() // Ensure token and session ID are set
+        testDispatcher.scheduler.advanceUntilIdle()
 
         whenever(mockPlayIntegrityRepository.verifyTokenStandard(any(), any(), any(), any(), any(), any()))
             .thenReturn(dummyServerVerificationPayload)
@@ -169,7 +160,7 @@ class StandardPlayIntegrityViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val uiState = viewModel.uiState.first()
-        assertEquals("Server error verifying token: Bad Request from server", uiState.status) // Updated
+        assertEquals("Server error verifying token: Bad Request from server", uiState.status)
         assertTrue(uiState.errorMessages.isNotEmpty())
         assertEquals("Server error: 400 - Bad Request from server", uiState.errorMessages.first())
     }
@@ -191,7 +182,7 @@ class StandardPlayIntegrityViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val uiState = viewModel.uiState.first()
-        assertEquals("Network error verifying token: No internet", uiState.status) // Updated
+        assertEquals("Network error verifying token: No internet", uiState.status)
         assertTrue(uiState.errorMessages.isNotEmpty())
         assertEquals("No internet", uiState.errorMessages.first())
     }
@@ -215,11 +206,11 @@ class StandardPlayIntegrityViewModelTest {
 
         whenever(mockPlayIntegrityRepository.verifyTokenStandard(
             eq(token),
-            any(), // sessionId
+            any(),
             eq(contentBinding),
-            any(), // deviceInfo
-            any(), // securityInfo
-            eq(dummyGooglePlayDeveloperServiceInfo) // Explicitly check this arg
+            any(),
+            any(),
+            eq(dummyGooglePlayDeveloperServiceInfo)
         )).thenReturn(dummyServerVerificationPayload)
 
         viewModel.verifyToken()
@@ -227,6 +218,6 @@ class StandardPlayIntegrityViewModelTest {
 
         val finalUiState = viewModel.uiState.first()
         assertEquals("Token verification complete.", finalUiState.status)
-        assertEquals(dummyServerVerificationPayload.playIntegrityResponse, finalUiState.serverVerificationPayload?.playIntegrityResponse)
+        assertEquals(dummyServerVerificationPayload, finalUiState.serverVerificationPayload)
     }
 }

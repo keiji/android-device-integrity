@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.main.keyattestation
+package dev.keiji.deviceintegrity.ui.keyattestation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,7 +8,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import dev.keiji.deviceintegrity.ui.main.R
+import dev.keiji.deviceintegrity.ui.keyattestation.R
 
 @Composable
 fun KeyAttestationUnsupportedScreen(

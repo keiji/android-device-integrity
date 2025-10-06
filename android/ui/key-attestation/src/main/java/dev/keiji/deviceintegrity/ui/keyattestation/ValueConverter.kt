@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.main.keyattestation
+package dev.keiji.deviceintegrity.ui.keyattestation
 
 object ValueConverter {
 
