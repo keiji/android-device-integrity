@@ -42,9 +42,9 @@ import dev.keiji.deviceintegrity.provider.contract.AppInfoProvider
 import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationScreen
 import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationUnsupportedScreen
 import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationViewModel
-import dev.keiji.deviceintegrity.ui.main.playintegrity.ClassicPlayIntegrityViewModel
-import dev.keiji.deviceintegrity.ui.main.playintegrity.PlayIntegrityScreen
-import dev.keiji.deviceintegrity.ui.main.playintegrity.StandardPlayIntegrityViewModel
+import dev.keiji.deviceintegrity.ui.playintegrity.ClassicPlayIntegrityViewModel
+import dev.keiji.deviceintegrity.ui.playintegrity.PlayIntegrityScreen
+import dev.keiji.deviceintegrity.ui.playintegrity.StandardPlayIntegrityViewModel
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsScreen
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsUiEvent
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsViewModel
@@ -54,6 +54,7 @@ import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 import timber.log.Timber
 import javax.inject.Inject
 import dev.keiji.deviceintegrity.ui.main.R
+import dev.keiji.deviceintegrity.ui.R as UiR
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -211,7 +212,7 @@ fun DeviceIntegrityApp(
                                 clipboard.setPrimaryClip(clip)
                                 Toast.makeText(
                                     currentContext,
-                                    currentContext.getString(R.string.copied_to_clipboard),
+                                    currentContext.getString(UiR.string.copied_to_clipboard),
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }

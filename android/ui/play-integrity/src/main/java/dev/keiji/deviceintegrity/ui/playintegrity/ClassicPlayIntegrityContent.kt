@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.main.playintegrity
+package dev.keiji.deviceintegrity.ui.playintegrity
 
 import android.content.Intent
 import android.util.Log
@@ -15,9 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider // Kept for now
+import androidx.compose.material3.HorizontalDivider // Kept for now, though not directly used by InfoItemContent
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -32,15 +31,14 @@ import androidx.compose.ui.unit.dp
 import dev.keiji.deviceintegrity.ui.common.InfoItem
 import dev.keiji.deviceintegrity.ui.common.InfoItemContent
 import dev.keiji.deviceintegrity.ui.common.InfoItemFormatter
-import dev.keiji.deviceintegrity.ui.main.R
 import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
 import dev.keiji.deviceintegrity.ui.common.ProgressConstants
 import kotlinx.coroutines.launch
 
 @Composable
-fun StandardPlayIntegrityContent(
-    uiState: StandardPlayIntegrityUiState,
-    onContentBindingChange: (String) -> Unit,
+fun ClassicPlayIntegrityContent(
+    uiState: ClassicPlayIntegrityUiState,
+    onFetchNonce: () -> Unit,
     onRequestToken: () -> Unit,
     onRequestVerify: () -> Unit,
     modifier: Modifier = Modifier
@@ -59,19 +57,23 @@ fun StandardPlayIntegrityContent(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Top
     ) {
-        Text(text = stringResource(id = R.string.standard_pi_title_step1))
+        Text(text = stringResource(id = R.string.classic_pi_title_step1))
         Spacer(modifier = Modifier.height(12.dp))
-        OutlinedTextField(
-            value = uiState.contentBinding,
-            onValueChange = { onContentBindingChange(it) },
-            label = { Text(stringResource(id = R.string.standard_pi_label_content)) },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = false,
-            maxLines = 5
-        )
+        Button(
+            onClick = { onFetchNonce() },
+            enabled = uiState.isFetchNonceButtonEnabled,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(ButtonHeight)
+        ) {
+            Text(text = stringResource(id = R.string.classic_pi_button_fetch_nonce))
+        }
+        if (uiState.nonce.isNotEmpty()) {
+            Text(text = stringResource(id = R.string.classic_pi_label_nonce, uiState.nonce))
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
-        Text(text = stringResource(id = R.string.standard_pi_title_step2))
+        Text(text = stringResource(id = R.string.classic_pi_title_step2))
         Spacer(modifier = Modifier.height(12.dp))
         Button(
             onClick = { onRequestToken() },
@@ -80,16 +82,11 @@ fun StandardPlayIntegrityContent(
                 .fillMaxWidth()
                 .height(ButtonHeight)
         ) {
-            Text(text = stringResource(id = R.string.standard_pi_button_request_integrity_token))
-        }
-
-        if (uiState.requestHashVisible) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = stringResource(id = R.string.standard_pi_label_request_hash, uiState.requestHashValue))
+            Text(text = stringResource(id = R.string.classic_pi_button_request_integrity_token))
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-        Text(text = stringResource(id = R.string.standard_pi_title_step3))
+        Text(text = stringResource(id = R.string.classic_pi_title_step3))
         Spacer(modifier = Modifier.height(12.dp))
         Button(
             onClick = { onRequestVerify() },
@@ -98,7 +95,7 @@ fun StandardPlayIntegrityContent(
                 .fillMaxWidth()
                 .height(ButtonHeight)
         ) {
-            Text(text = stringResource(id = R.string.standard_pi_button_request_verify_token))
+            Text(text = stringResource(id = R.string.classic_pi_button_request_verify_token))
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -124,7 +121,7 @@ fun StandardPlayIntegrityContent(
         }
 
         val statusToDisplay = if (uiState.errorMessages.isNotEmpty()) {
-            stringResource(id = R.string.standard_pi_label_error, uiState.errorMessages.joinToString("\n"))
+            stringResource(id = R.string.classic_pi_label_error, uiState.errorMessages.joinToString("\n"))
         } else {
             uiState.status
         }
@@ -141,7 +138,7 @@ fun StandardPlayIntegrityContent(
             onCopyClick = {
                 val textToCopy = InfoItemFormatter.formatInfoItems(uiState.resultInfoItems)
                 clipboardManager.setText(AnnotatedString(textToCopy))
-                Log.d("StandardPlayIntegrity", "Copied: $textToCopy")
+                Log.d("ClassicPlayIntegrity", "Copied: $textToCopy")
             },
             onShareClick = {
                 val textToShare = InfoItemFormatter.formatInfoItems(uiState.resultInfoItems)
@@ -159,27 +156,25 @@ fun StandardPlayIntegrityContent(
 
 @Preview
 @Composable
-private fun StandardPlayIntegrityContentPreview() {
+private fun ClassicPlayIntegrityContentPreview() {
     val sampleItems = listOf(
-        InfoItem("Session ID (Current)", "preview-session-id-standard", indentLevel = 0),
-        InfoItem("Request Hash (Calculated by Client)", "client-calculated-hash", indentLevel = 0),
+        InfoItem("Session ID (Current)", "preview-session-id-classic", indentLevel = 0),
         InfoItem("Play Integrity API Response", "", isHeader = true, indentLevel = 0),
         InfoItem("Request Details", "", isHeader = true, indentLevel = 1),
-        InfoItem("Request Package Name", "dev.keiji.preview.standard", indentLevel = 2),
-        InfoItem("Request Hash (from Server Response)", "preview-request-hash-standard", indentLevel = 2),
+        InfoItem("Request Package Name", "dev.keiji.preview", indentLevel = 2),
+        InfoItem("Nonce", "preview-nonce-from-server", indentLevel = 2),
     )
-    StandardPlayIntegrityContent(
-        uiState = StandardPlayIntegrityUiState(
-            contentBinding = "preview-content-binding",
+    ClassicPlayIntegrityContent(
+        uiState = ClassicPlayIntegrityUiState(
+            nonce = "preview-nonce",
             integrityToken = "preview-token",
             progressValue = 0.0F,
-            status = "Preview status text for Standard.",
+            status = "Preview status text for Classic.",
             resultInfoItems = sampleItems,
-            currentSessionId = "preview-session-standard",
-            requestHashValue = "client-calculated-hash-preview",
+            currentSessionId = "preview-session-classic",
             serverVerificationPayload = null
         ),
-        onContentBindingChange = {},
+        onFetchNonce = {},
         onRequestToken = {},
         onRequestVerify = {}
     )
