@@ -1,13 +1,8 @@
 package dev.keiji.deviceintegrity.ui.main
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -23,7 +18,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.collectAsState
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -39,9 +33,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import dev.keiji.deviceintegrity.provider.contract.AppInfoProvider
-import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationScreen
-import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationUnsupportedScreen
-import dev.keiji.deviceintegrity.ui.main.keyattestation.KeyAttestationViewModel
+import dev.keiji.deviceintegrity.ui.keyattestation.keyAttestationScreen
 import dev.keiji.deviceintegrity.ui.playintegrity.ClassicPlayIntegrityViewModel
 import dev.keiji.deviceintegrity.ui.playintegrity.PlayIntegrityScreen
 import dev.keiji.deviceintegrity.ui.playintegrity.StandardPlayIntegrityViewModel
@@ -53,8 +45,7 @@ import dev.keiji.deviceintegrity.ui.nav.contract.LicenseNavigator
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 import timber.log.Timber
 import javax.inject.Inject
-import dev.keiji.deviceintegrity.ui.main.R
-import dev.keiji.deviceintegrity.ui.R as UiR
+import dev.keiji.deviceintegrity.ui.nav.contract.AppScreen
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -124,7 +115,8 @@ fun DeviceIntegrityApp(
                     val currentDestination = navBackStackEntry?.destination
 
                     uiState.bottomNavigationItems.forEach { screen ->
-                        val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
+                        val selected =
+                            currentDestination?.hierarchy?.any { it.route == screen.route } == true
                         val isKeyAttestationScreen = screen.route == AppScreen.KeyAttestation.route
                         val isEnabled = if (isKeyAttestationScreen) {
                             uiState.isKeyAttestationSupported
@@ -183,55 +175,7 @@ fun DeviceIntegrityApp(
                         onStandardRequestVerify = { standardViewModel.verifyToken() }
                     )
                 }
-                composable(AppScreen.KeyAttestation.route) {
-                    if (uiState.isKeyAttestationSupported) {
-                        val keyAttestationViewModel: KeyAttestationViewModel = hiltViewModel()
-                        val keyAttestationUiState by keyAttestationViewModel.uiState.collectAsStateWithLifecycle()
-                        val currentContext = LocalContext.current
-
-                        LaunchedEffect(keyAttestationViewModel.shareEventFlow) {
-                            keyAttestationViewModel.shareEventFlow.collect { textToShare ->
-                                val sendIntent: Intent = Intent().apply {
-                                    action = Intent.ACTION_SEND
-                                    putExtra(Intent.EXTRA_TEXT, textToShare)
-                                    type = "text/plain"
-                                }
-                                val shareIntent = Intent.createChooser(sendIntent, null)
-                                currentContext.startActivity(shareIntent)
-                            }
-                        }
-
-                        LaunchedEffect(keyAttestationViewModel.copyEventFlow) {
-                            keyAttestationViewModel.copyEventFlow.collect { textToCopy ->
-                                val clipboard =
-                                    currentContext.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                val clip = ClipData.newPlainText(
-                                    currentContext.getString(R.string.key_attestation_result_label),
-                                    textToCopy
-                                )
-                                clipboard.setPrimaryClip(clip)
-                                Toast.makeText(
-                                    currentContext,
-                                    currentContext.getString(UiR.string.copied_to_clipboard),
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        }
-
-                        KeyAttestationScreen(
-                            uiState = keyAttestationUiState,
-                            onSelectedKeyTypeChange = { keyAttestationViewModel.onSelectedKeyTypeChange(it) },
-                            onPreferStrongBoxChanged = { keyAttestationViewModel.onPreferStrongBoxChanged(it) },
-                            onFetchNonceChallenge = { keyAttestationViewModel.fetchNonceChallenge() },
-                            onGenerateKeyPair = { keyAttestationViewModel.generateKeyPair() },
-                            onRequestVerifyKeyAttestation = { keyAttestationViewModel.requestVerifyKeyAttestation() },
-                            onClickCopy = { keyAttestationViewModel.onCopyResultsClicked() },
-                            onClickShare = { keyAttestationViewModel.onShareResultsClicked() }
-                        )
-                    } else {
-                        KeyAttestationUnsupportedScreen()
-                    }
-                }
+                keyAttestationScreen()
                 composable(AppScreen.Menu.route) {
                     val viewModel: SettingsViewModel = hiltViewModel()
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
