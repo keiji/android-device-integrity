@@ -1,0 +1,8 @@
+<resources>
+    <string name="classic_pi_title_step1">Step 1. サーバーからNonceを取得</string>
+    <string name="classic_pi_title_step2">Step 2. トークンを取得</string>
+    <string name="classic_pi_title_step3">Step 3. トークンを検証</string>
+    <string name="standard_pi_title_step1">Step 1. 検証に使うコンテンツを設定</string>
+    <string name="standard_pi_title_step2">Step 2. トークンを取得</string>
+    <string name="standard_pi_title_step3">Step 3. トークンを検証</string>
+</resources>
