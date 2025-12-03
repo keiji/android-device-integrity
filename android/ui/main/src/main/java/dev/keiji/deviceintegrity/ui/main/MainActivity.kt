@@ -41,11 +41,11 @@ import dev.keiji.deviceintegrity.ui.main.settings.SettingsScreen
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsUiEvent
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsViewModel
 import dev.keiji.deviceintegrity.ui.nav.contract.AgreementNavigator
+import dev.keiji.deviceintegrity.ui.nav.contract.AppScreen
 import dev.keiji.deviceintegrity.ui.nav.contract.LicenseNavigator
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 import timber.log.Timber
 import javax.inject.Inject
-import dev.keiji.deviceintegrity.ui.nav.contract.AppScreen
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -88,7 +88,7 @@ fun DeviceIntegrityApp(
         val navController = rememberNavController()
         val context = LocalContext.current
         val isAgreed by mainViewModel.isAgreed.collectAsStateWithLifecycle()
-        val uiState by mainViewModel.uiState.collectAsState()
+        val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
 
         val agreementLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.StartActivityForResult()
@@ -114,10 +114,10 @@ fun DeviceIntegrityApp(
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentDestination = navBackStackEntry?.destination
 
-                    uiState.bottomNavigationItems.forEach { screen ->
+                    uiState.bottomNavigationItems.forEach { item ->
                         val selected =
-                            currentDestination?.hierarchy?.any { it.route == screen.route } == true
-                        val isKeyAttestationScreen = screen.route == AppScreen.KeyAttestation.route
+                            currentDestination?.hierarchy?.any { it.route == item.screen.route } == true
+                        val isKeyAttestationScreen = item.screen is AppScreen.KeyAttestation
                         val isEnabled = if (isKeyAttestationScreen) {
                             uiState.isKeyAttestationSupported
                         } else {
@@ -132,15 +132,15 @@ fun DeviceIntegrityApp(
                                     LocalContentColor.current.copy(alpha = 0.38f)
                                 }
                                 Icon(
-                                    painter = androidx.compose.ui.res.painterResource(id = screen.icon),
-                                    contentDescription = stringResource(id = screen.label),
+                                    painter = androidx.compose.ui.res.painterResource(id = item.icon),
+                                    contentDescription = stringResource(id = item.label),
                                     tint = iconTint
                                 )
                             },
-                            label = { Text(stringResource(id = screen.label)) },
+                            label = { Text(stringResource(id = item.label)) },
                             selected = selected,
                             onClick = {
-                                navController.navigate(screen.route) {
+                                navController.navigate(item.screen.route) {
                                     popUpTo(navController.graph.findStartDestination().id) {
                                         saveState = true
                                     }

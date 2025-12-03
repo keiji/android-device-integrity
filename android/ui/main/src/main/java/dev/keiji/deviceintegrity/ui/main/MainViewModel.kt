@@ -1,12 +1,12 @@
 package dev.keiji.deviceintegrity.ui.main
 
-import android.os.Build
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.keiji.deviceintegrity.provider.contract.DeviceInfoProvider
 import dev.keiji.deviceintegrity.repository.contract.PreferencesRepository
+import dev.keiji.deviceintegrity.ui.nav.contract.AppScreen
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,7 +42,8 @@ class MainViewModel @Inject constructor(
             AppScreen.PlayIntegrity,
             AppScreen.KeyAttestation,
             AppScreen.Menu
-        )
+        ).map { it.toBottomNavigationItem() }
+
         _uiState.value = MainUiState(
             bottomNavigationItems = availableScreens,
             isKeyAttestationSupported = deviceInfoProvider.isKeyAttestationAvailable
