@@ -1,5 +1,5 @@
 [versions]
-agp = "8.13.0-alpha03"
+agp = "9.0.0-beta03"
 datastoreVersion = "1.1.7"
 desugar_jdk_libs = "2.1.5"
 kotlin = "2.2.21"
