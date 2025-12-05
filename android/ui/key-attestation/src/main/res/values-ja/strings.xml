@@ -2,10 +2,18 @@
     <string name="key_attestation_result_label" >構成証明書の検証結果</string>
 
     <string name="key_attestation_title_step1">Step 1. 鍵のアルゴリズムを選択</string>
+    <string name="key_attestation_label_key_algorithm">鍵のアルゴリズム</string>
     <string name="key_attestation_title_step2">Step 2. サーバーからNonce/Challengeを取得</string>
     <string name="key_attestation_title_step2_ecdh">Step 2. サーバーからNonce/Challenge/PublicKeyを取得</string>
+    <string name="key_attestation_button_fetch_nonce_challenge">NonceとChallengeを取得</string>
+    <string name="key_attestation_button_fetch_nonce_challenge_ecdh">NonceとChallengeとPublicKeyを取得</string>
+    <string name="key_attestation_label_nonce">Nonce: %1$s</string>
+    <string name="key_attestation_label_challenge">Challenge: %1$s</string>
     <string name="key_attestation_title_step3">Step 3. キーペア（構成証明付き）を生成</string>
     <string name="key_attestation_checkbox_label_strongbox">StrongBoxで鍵を生成する</string>
+    <string name="key_attestation_checkbox_label_include_id_attestation">ID構成証明を含める（権限が必要です）</string>
+    <string name="key_attestation_button_generate_keypair">キーペアを生成</string>
     <string name="key_attestation_title_step4">Step 4. キーペアと構成証明を検証</string>
+    <string name="key_attestation_button_request_verify_key_attestation">構成証明を検証</string>
     <string name="key_attestation_unsupported">この端末はKey Attestation（構成証明）をサポートしていません</string>
 </resources>
