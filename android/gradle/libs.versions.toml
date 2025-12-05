@@ -28,7 +28,7 @@ retrofitKotlinxSerializationJson = "1.0.0" # retrofit2-kotlinx-serialization-con
 androidxBiometric = "1.4.0-alpha02"
 javaxInject = "1"
 testCoreKtx = "1.6.1"
-kotlinTest = "2.2.0"
+kotlinTest = "2.2.21"
 
 hilt = "2.57.2"
 ksp = "2.3.3"
