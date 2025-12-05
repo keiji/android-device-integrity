@@ -11,7 +11,7 @@
     <string name="key_attestation_label_challenge">Challenge: %1$s</string>
     <string name="key_attestation_title_step3">Step 3. キーペア（構成証明付き）を生成</string>
     <string name="key_attestation_checkbox_label_strongbox">StrongBoxで鍵を生成する</string>
-    <string name="key_attestation_checkbox_label_include_id_attestation">ID構成証明を含める（権限が必要です）</string>
+    <string name="key_attestation_checkbox_label_include_id_attestation">ID構成証明を含める</string>
     <string name="key_attestation_button_generate_keypair">キーペアを生成</string>
     <string name="key_attestation_title_step4">Step 4. キーペアと構成証明を検証</string>
     <string name="key_attestation_button_request_verify_key_attestation">構成証明を検証</string>

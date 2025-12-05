@@ -88,8 +88,10 @@ class KeyPairRepositoryImpl @Inject constructor(
                 .setKeySize(EC_KEY_SIZE)
                 .setAttestationChallenge(challenge)
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                specBuilder.setDevicePropertiesAttestationIncluded(includeIdAttestation)
+            if (deviceSecurityStateProvider.isDevicePropertiesAttestationSupported) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    specBuilder.setDevicePropertiesAttestationIncluded(includeIdAttestation)
+                }
             }
 
             if (preferStrongBox && deviceSecurityStateProvider.hasStrongBox) {
@@ -156,8 +158,10 @@ class KeyPairRepositoryImpl @Inject constructor(
                 .setKeySize(RSA_KEY_SIZE)
                 .setAttestationChallenge(challenge)
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                specBuilder.setDevicePropertiesAttestationIncluded(includeIdAttestation)
+            if (deviceSecurityStateProvider.isDevicePropertiesAttestationSupported) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    specBuilder.setDevicePropertiesAttestationIncluded(includeIdAttestation)
+                }
             }
 
             if (preferStrongBox && deviceSecurityStateProvider.hasStrongBox) {
@@ -223,7 +227,14 @@ class KeyPairRepositoryImpl @Inject constructor(
                 .setKeySize(EC_KEY_SIZE)
                 .setAttestationChallenge(challenge)
 
-            specBuilder.setDevicePropertiesAttestationIncluded(includeIdAttestation)
+            if (deviceSecurityStateProvider.isDevicePropertiesAttestationSupported) {
+                // ECDH is supported on S+ so this check is redundant but safe, and we need to call the method.
+                // However, since we are inside generateEcdhKeyPair which checks S+ at top, we can just call it
+                // OR follow the pattern. Let's follow the pattern for consistency or just call it if provider says yes.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    specBuilder.setDevicePropertiesAttestationIncluded(includeIdAttestation)
+                }
+            }
 
             if (preferStrongBox && deviceSecurityStateProvider.hasStrongBox) {
                 @SuppressLint("NewApi")
