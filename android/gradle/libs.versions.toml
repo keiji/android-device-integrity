@@ -31,7 +31,7 @@ testCoreKtx = "1.6.1"
 kotlinTest = "2.2.0"
 
 hilt = "2.57.2"
-ksp = "2.3.0"
+ksp = "2.3.3"
 
 timber = "5.0.1"
 
