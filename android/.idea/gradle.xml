@@ -23,11 +23,13 @@
             <option value="$PROJECT_DIR$/repository/impl" />
             <option value="$PROJECT_DIR$/ui" />
             <option value="$PROJECT_DIR$/ui/agreement" />
+            <option value="$PROJECT_DIR$/ui/key-attestation" />
             <option value="$PROJECT_DIR$/ui/license" />
             <option value="$PROJECT_DIR$/ui/main" />
             <option value="$PROJECT_DIR$/ui/nav" />
             <option value="$PROJECT_DIR$/ui/nav/contract" />
             <option value="$PROJECT_DIR$/ui/nav/impl" />
+            <option value="$PROJECT_DIR$/ui/play-integrity" />
             <option value="$PROJECT_DIR$/ui/theme" />
           </set>
         </option>
