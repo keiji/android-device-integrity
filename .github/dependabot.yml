@@ -23,16 +23,6 @@ updates:
       androidx-test:
         patterns:
           - "androidx.test.*"
-      androidx:
-        patterns:
-          - "androidx.*"
-        exclude-patterns:
-          - "androidx.compose.*"
-          - "androidx.navigation.*"
-          - "androidx.hilt.*"
-          - "androidx.datastore.*"
-          - "androidx.lifecycle.*"
-          - "androidx.test.*"
       android:
         patterns:
           - "com.android.*"
