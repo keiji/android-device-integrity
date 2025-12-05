@@ -17,7 +17,8 @@ data class KeyAttestationUiState(
     val isEcdhAvailable: Boolean = false,
     val serverPublicKey: String = "",
     val isStrongboxSupported: Boolean = false,
-    val preferStrongBox: Boolean = false
+    val preferStrongBox: Boolean = false,
+    val isIdAttestationIncluded: Boolean = false,
 ) {
     val isNonceVisible: Boolean get() = nonce.isNotEmpty()
     val isChallengeVisible: Boolean get() = challenge.isNotEmpty()
@@ -36,6 +37,7 @@ data class KeyAttestationUiState(
 
     val isStep3PreferStrongBoxVisible: Boolean get() = isStrongboxSupported
     val isStep3PreferStrongBoxEnabled: Boolean get() = isStep3GenerateKeyPairEnabled
+    val isStep3IncludeIdAttestationEnabled: Boolean get() = isStep3GenerateKeyPairEnabled
 
     // Step 4 is Verify Attestation, enabled if not loading and key pair is generated
     val isStep4VerifyAttestationEnabled: Boolean get() = !isLoading && generatedKeyPairData != null

@@ -102,6 +102,35 @@ class KeyAttestationViewModel @Inject constructor(
         }
     }
 
+    fun onIdAttestationIncludedChanged(isIdAttestationIncluded: Boolean) {
+        if (isIdAttestationIncluded == _uiState.value.isIdAttestationIncluded) {
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value.generatedKeyPairData?.keyAlias?.let { alias ->
+                try {
+                    keyPairRepository.removeKeyPair(alias)
+                } catch (e: Exception) {
+                    Log.e(
+                        "KeyAttestationViewModel",
+                        "Failed to delete key pair on includeIdAttestation change",
+                        e
+                    )
+                }
+            }
+            _uiState.update {
+                it.copy(
+                    isIdAttestationIncluded = isIdAttestationIncluded,
+                    generatedKeyPairData = null,
+                    infoItems = emptyList(),
+                    status = "ID Attestation preference changed. Please generate a new key pair.",
+                    progressValue = ProgressConstants.NO_PROGRESS,
+                )
+            }
+        }
+    }
+
     fun onPreferStrongBoxChanged(preferStrongBox: Boolean) {
         if (preferStrongBox == _uiState.value.preferStrongBox) {
             return
@@ -292,22 +321,29 @@ class KeyAttestationViewModel @Inject constructor(
 
                 val keyPairDataResult = withContext(Dispatchers.IO) {
                     val preferStrongBox = _uiState.value.preferStrongBox
+                    val includeIdAttestation = _uiState.value.isIdAttestationIncluded
                     when (uiState.value.selectedKeyType) {
                         CryptoAlgorithm.RSA -> keyPairRepository.generateRsaKeyPair(
                             decodedChallenge,
-                            preferStrongBox
+                            preferStrongBox,
+                            includeIdAttestation
                         )
 
                         CryptoAlgorithm.EC -> keyPairRepository.generateEcKeyPair(
                             decodedChallenge,
-                            preferStrongBox
+                            preferStrongBox,
+                            includeIdAttestation
                         )
 
                         CryptoAlgorithm.ECDH -> {
                             if (!deviceInfoProvider.isEcdhKeyAttestationAvailable) {
                                 throw UnsupportedOperationException("このデバイスのAndroidのバージョンは構成証明付きのECDH鍵ペアに対応していません")
                             }
-                            keyPairRepository.generateEcdhKeyPair(decodedChallenge, preferStrongBox)
+                            keyPairRepository.generateEcdhKeyPair(
+                                decodedChallenge,
+                                preferStrongBox,
+                                includeIdAttestation
+                            )
                         }
                     }
                 }

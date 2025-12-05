@@ -56,6 +56,7 @@ fun NavGraphBuilder.keyAttestationScreen(
             uiState = keyAttestationUiState,
             onSelectedKeyTypeChange = { keyAttestationViewModel.onSelectedKeyTypeChange(it) },
             onPreferStrongBoxChanged = { keyAttestationViewModel.onPreferStrongBoxChanged(it) },
+            onIncludeIdAttestationChanged = { keyAttestationViewModel.onIdAttestationIncludedChanged(it) },
             onFetchNonceChallenge = { keyAttestationViewModel.fetchNonceChallenge() },
             onGenerateKeyPair = { keyAttestationViewModel.generateKeyPair() },
             onRequestVerifyKeyAttestation = { keyAttestationViewModel.requestVerifyKeyAttestation() },
