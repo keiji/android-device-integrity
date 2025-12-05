@@ -9,6 +9,7 @@ from pyasn1.codec.der import encoder as der_encoder
 from server.key_attestation.attestation_parser import parse_key_description, parse_authorization_list, OID_ANDROID_KEY_ATTESTATION, get_attestation_extension_properties
 from server.key_attestation.attestation_parser import SecurityLevel, AuthorizationList
 from server.key_attestation.attestation_parser import TAG_OS_VERSION, TAG_OS_PATCH_LEVEL, TAG_PURPOSE, TAG_ALGORITHM, TAG_EC_CURVE, TAG_DEVICE_UNIQUE_ATTESTATION, TAG_KEY_SIZE
+from server.key_attestation.attestation_parser import TAG_ATTESTATION_ID_BRAND, TAG_ATTESTATION_ID_DEVICE, TAG_ATTESTATION_ID_PRODUCT, TAG_ATTESTATION_ID_MANUFACTURER, TAG_ATTESTATION_ID_MODEL, TAG_ATTESTATION_ID_SERIAL, TAG_ATTESTATION_ID_IMEI, TAG_ATTESTATION_ID_MEID
 
 # --- Mock ASN.1 data generation helpers ---
 # These helpers are currently problematic for generating DER for complex nested explicit tags
@@ -128,6 +129,57 @@ class TestAttestationParser(unittest.TestCase):
         parsed = parse_authorization_list(auth_list_obj, attestation_version=400)
         self.assertEqual(parsed.get('os_version'), 11)
         self.assertEqual(parsed.get('os_patch_level'), 20230305)
+
+    def test_parse_id_attestation_fields(self):
+        # Create an AuthorizationList object
+        auth_list = AuthorizationList()
+
+        # Helper to create tagged value matching the schema
+        def set_tagged_field(name, tag_id, value_bytes):
+            # We must create a value that matches the schema's type definition.
+            # The schema uses: univ.OctetString().subtype(explicitTag=...)
+            # We can retrieve the component type from the schema to be sure.
+            component_type = auth_list.getComponentType()[name].getType()
+
+            # Create the value
+            val = component_type.clone(value_bytes)
+            auth_list.setComponentByName(name, val)
+
+        # Set fields
+        fields = [
+            ('attestationIdBrand', TAG_ATTESTATION_ID_BRAND, b'BrandX'),
+            ('attestationIdDevice', TAG_ATTESTATION_ID_DEVICE, b'DeviceY'),
+            ('attestationIdProduct', TAG_ATTESTATION_ID_PRODUCT, b'ProductZ'),
+            ('attestationIdSerial', TAG_ATTESTATION_ID_SERIAL, b'Serial123'),
+            ('attestationIdImei', TAG_ATTESTATION_ID_IMEI, b'IMEI999'),
+            ('attestationIdMeid', TAG_ATTESTATION_ID_MEID, b'MEID888'),
+            ('attestationIdManufacturer', TAG_ATTESTATION_ID_MANUFACTURER, b'MfgA'),
+            ('attestationIdModel', TAG_ATTESTATION_ID_MODEL, b'ModelB'),
+        ]
+
+        for name, tag_id, val in fields:
+            set_tagged_field(name, tag_id, val)
+
+        # Encode
+        encoded_auth_list = der_encoder.encode(auth_list)
+
+        # Verify encoding by decoding back using the same schema
+        # This step ensures that our manually constructed object is valid ASN.1 structure for AuthorizationList
+        from pyasn1.codec.der import decoder as der_decoder
+        decoded, rest = der_decoder.decode(encoded_auth_list, asn1Spec=AuthorizationList())
+        self.assertFalse(rest)
+
+        # Now use the parse_authorization_list function from the module to verify extraction
+        parsed_props = parse_authorization_list(decoded, attestation_version=400)
+
+        self.assertEqual(parsed_props.get('attestation_id_brand'), 'BrandX')
+        self.assertEqual(parsed_props.get('attestation_id_device'), 'DeviceY')
+        self.assertEqual(parsed_props.get('attestation_id_product'), 'ProductZ')
+        self.assertEqual(parsed_props.get('attestation_id_serial'), 'Serial123')
+        self.assertEqual(parsed_props.get('attestation_id_imei'), 'IMEI999')
+        self.assertEqual(parsed_props.get('attestation_id_meid'), 'MEID888')
+        self.assertEqual(parsed_props.get('attestation_id_manufacturer'), 'MfgA')
+        self.assertEqual(parsed_props.get('attestation_id_model'), 'ModelB')
 
     def test_parse_key_description_malformed_sequence(self):
         malformed_bytes = b'\x01\x02\x03\x04'
