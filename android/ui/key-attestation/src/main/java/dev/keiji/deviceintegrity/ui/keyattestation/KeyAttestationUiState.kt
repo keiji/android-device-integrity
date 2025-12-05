@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.main.keyattestation
+package dev.keiji.deviceintegrity.ui.keyattestation
 
 import dev.keiji.deviceintegrity.repository.contract.KeyPairData
 import dev.keiji.deviceintegrity.ui.common.InfoItem

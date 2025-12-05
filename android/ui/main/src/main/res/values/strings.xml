@@ -2,23 +2,6 @@
     <string name="app_screen_key_attestation_label" translatable="false">Key Attestation</string>
     <string name="app_screen_menu_label" translatable="false">Menu</string>
 
-    <string name="key_attestation_result_label">Key Attestation Result</string>
-
-    <string name="key_attestation_title_step1">Step 1. Select Key Algorithm</string>
-    <string name="key_attestation_label_key_algorithm" translatable="false">Key Algorithm</string>
-    <string name="key_attestation_title_step2">Step 2. Fetch Nonce/Challenge from Server</string>
-    <string name="key_attestation_title_step2_ecdh">Step 2. Fetch Nonce/Challenge/PublicKey from Server</string>
-    <string name="key_attestation_button_fetch_nonce_challenge" translatable="false">Fetch Nonce/Challenge</string>
-    <string name="key_attestation_button_fetch_nonce_challenge_ecdh" translatable="false">Fetch Nonce/Challenge/PublicKey</string>
-    <string name="key_attestation_label_nonce" translatable="false">Nonce: %s</string>
-    <string name="key_attestation_label_challenge" translatable="false">Challenge: %s</string>
-    <string name="key_attestation_title_step3">Step 3. Generate KeyPair (with Attestation)</string>
-    <string name="key_attestation_checkbox_label_strongbox">Generate Key in StrongBox</string>
-    <string name="key_attestation_button_generate_keypair" translatable="false">Generate KeyPair</string>
-    <string name="key_attestation_title_step4">Step 4. Verify KeyPair and Attestation</string>
-    <string name="key_attestation_button_request_verify_key_attestation" translatable="false">Request Verify KeyAttestation</string>
-    <string name="key_attestation_unsupported">This device does not support Key Attestation.</string>
-
     <string name="settings_title_app_version">App Version</string>
     <string name="settings_title_device_name">Device Name</string>
     <string name="settings_title_os_version">OS Version</string>
