@@ -8,11 +8,31 @@ updates:
       androidx-compose:
         patterns:
           - "androidx.compose.*"
+      androidx-navigation:
+        patterns:
+          - "androidx.navigation.*"
+      androidx-hilt:
+        patterns:
+          - "androidx.hilt.*"
+      androidx-datastore:
+        patterns:
+          - "androidx.datastore.*"
+      androidx-lifecycle:
+        patterns:
+          - "androidx.lifecycle.*"
+      androidx-test:
+        patterns:
+          - "androidx.test.*"
       androidx:
         patterns:
           - "androidx.*"
         exclude-patterns:
-          - "androidx.compose.*" # compose グループとの重複を避ける
+          - "androidx.compose.*"
+          - "androidx.navigation.*"
+          - "androidx.hilt.*"
+          - "androidx.datastore.*"
+          - "androidx.lifecycle.*"
+          - "androidx.test.*"
       android:
         patterns:
           - "com.android.*"
