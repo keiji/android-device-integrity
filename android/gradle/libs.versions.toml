@@ -35,7 +35,7 @@ ksp = "2.3.0"
 
 timber = "5.0.1"
 
-robolectric = "4.15.1"
+robolectric = "4.16"
 
 # SDK Versions
 androidCompileSdk = "36"
