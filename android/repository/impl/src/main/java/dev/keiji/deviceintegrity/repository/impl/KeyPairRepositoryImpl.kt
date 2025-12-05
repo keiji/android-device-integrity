@@ -89,7 +89,8 @@ class KeyPairRepositoryImpl @Inject constructor(
                 .setAttestationChallenge(challenge)
 
             if (includeIdAttestation) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     specBuilder.setDevicePropertiesAttestationIncluded(true)
                 }
             }
