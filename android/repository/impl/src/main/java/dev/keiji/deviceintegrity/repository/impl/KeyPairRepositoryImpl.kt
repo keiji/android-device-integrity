@@ -88,11 +88,8 @@ class KeyPairRepositoryImpl @Inject constructor(
                 .setKeySize(EC_KEY_SIZE)
                 .setAttestationChallenge(challenge)
 
-            if (includeIdAttestation) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    specBuilder.setDevicePropertiesAttestationIncluded(true)
-                }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                specBuilder.setDevicePropertiesAttestationIncluded(includeIdAttestation)
             }
 
             if (preferStrongBox && deviceSecurityStateProvider.hasStrongBox) {
@@ -159,10 +156,8 @@ class KeyPairRepositoryImpl @Inject constructor(
                 .setKeySize(RSA_KEY_SIZE)
                 .setAttestationChallenge(challenge)
 
-            if (includeIdAttestation) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    specBuilder.setDevicePropertiesAttestationIncluded(true)
-                }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                specBuilder.setDevicePropertiesAttestationIncluded(includeIdAttestation)
             }
 
             if (preferStrongBox && deviceSecurityStateProvider.hasStrongBox) {
@@ -228,9 +223,7 @@ class KeyPairRepositoryImpl @Inject constructor(
                 .setKeySize(EC_KEY_SIZE)
                 .setAttestationChallenge(challenge)
 
-            if (includeIdAttestation) {
-                specBuilder.setDevicePropertiesAttestationIncluded(true)
-            }
+            specBuilder.setDevicePropertiesAttestationIncluded(includeIdAttestation)
 
             if (preferStrongBox && deviceSecurityStateProvider.hasStrongBox) {
                 @SuppressLint("NewApi")

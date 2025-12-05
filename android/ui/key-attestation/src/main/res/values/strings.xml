@@ -15,7 +15,6 @@
     <string name="key_attestation_title_step4">Step 4: Verify Key Attestation</string>
     <string name="key_attestation_button_request_verify_key_attestation">Request Verify Key Attestation</string>
 
-    <!-- Missing strings -->
     <string name="key_attestation_result_label">Key Attestation Results</string>
     <string name="key_attestation_unsupported">Key Attestation is not supported on this device.</string>
 </resources>
