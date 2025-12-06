@@ -19,6 +19,7 @@ data class KeyAttestationUiState(
     val isStrongboxSupported: Boolean = false,
     val preferStrongBox: Boolean = false,
     val isIdAttestationIncluded: Boolean = false,
+    val isIdAttestationSupported: Boolean = false,
 ) {
     val isNonceVisible: Boolean get() = nonce.isNotEmpty()
     val isChallengeVisible: Boolean get() = challenge.isNotEmpty()
@@ -35,7 +36,6 @@ data class KeyAttestationUiState(
     // Step 3 is Generate KeyPair, enabled if not loading, and nonce and challenge are present
     val isStep3GenerateKeyPairEnabled: Boolean get() = !isLoading && nonce.isNotEmpty() && challenge.isNotEmpty()
 
-    val isStep3PreferStrongBoxVisible: Boolean get() = isStrongboxSupported
     val isStep3PreferStrongBoxEnabled: Boolean get() = isStep3GenerateKeyPairEnabled
     val isStep3IncludeIdAttestationEnabled: Boolean get() = isStep3GenerateKeyPairEnabled
 

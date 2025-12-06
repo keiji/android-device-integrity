@@ -10,7 +10,9 @@
     <string name="key_attestation_label_challenge">Challenge: %1$s</string>
     <string name="key_attestation_title_step3">Step 3: Generate KeyPair</string>
     <string name="key_attestation_checkbox_label_strongbox">Prefer StrongBox</string>
+    <string name="key_attestation_checkbox_label_strongbox_unsupported">StrongBox is not supported</string>
     <string name="key_attestation_checkbox_label_include_id_attestation">Include ID Attestation</string>
+    <string name="key_attestation_checkbox_label_include_id_attestation_unsupported">ID Attestation is not supported</string>
     <string name="key_attestation_button_generate_keypair">Generate KeyPair</string>
     <string name="key_attestation_title_step4">Step 4: Verify Key Attestation</string>
     <string name="key_attestation_button_request_verify_key_attestation">Request Verify Key Attestation</string>
