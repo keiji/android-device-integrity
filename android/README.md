@@ -69,3 +69,11 @@ To use the Play Integrity API, you need to:
 -   **Code Style**: The project follows the standard Kotlin coding conventions.
 -   **Dependencies**: Dependencies are managed using Gradle and are defined in the `build.gradle.kts` files for each module and in the `gradle/libs.versions.toml` file.
 -   **AI Agent Instructions**: For AI software engineers, detailed instructions on environment setup, building, and troubleshooting are available in `android/AGENTS.md`. It is crucial to follow these instructions to ensure a consistent development environment.
+
+## License Generation
+
+Run the following command to regenerate the open-source software license files (`licenses.json` and `licenses-incomplete.json`). These files are used to display license information within the application.
+
+```bash
+./gradlew generateLicense
+```
