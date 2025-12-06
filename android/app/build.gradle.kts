@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.license.generator)
 }
 
 val versionPropertiesFile = rootProject.file("version.properties")
@@ -174,6 +175,45 @@ android {
     buildFeatures {
         buildConfig = true
 
+    }
+}
+
+mavenLicenseGenerator {
+    workingDir = rootProject.layout.buildDirectory.dir("maven-license-generator").get().asFile.absolutePath
+
+    localRepositoryDirs = listOf(System.getProperty("user.home") + "/.m2/repository")
+    repositoryUrls = listOf(
+        "https://repo1.maven.org/maven2",
+        "https://dl.google.com/android/maven2",
+        "https://maven.repository.redhat.com/ga"
+    )
+    removeConflictingVersions = true
+    ignoreScopes = listOf("test", "provided")
+    includeDependencies = true
+    includeSettings = true
+
+    targets {
+        create("main") {
+            configurations = listOf("releaseRuntimeClasspath")
+        }
+    }
+
+    outputSettings {
+        create("complete") {
+            path = rootProject.layout.projectDirectory.file("licenses/licenses.json").asFile.absolutePath
+            includeSettings = false
+            prettyPrintEnabled = false
+        }
+        create("incomplete") {
+            path = rootProject.layout.projectDirectory.file("licenses/licenses-incomplete.json").asFile.absolutePath
+            includeSettings = false
+            prettyPrintEnabled = true
+        }
+
+        removeConflictingVersions = true
+        ignoreScopes = listOf("test", "runtime")
+        includeDependencies = false
+        includeSettings = false
     }
 }
 

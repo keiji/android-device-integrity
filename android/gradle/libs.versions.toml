@@ -32,6 +32,7 @@ kotlinTest = "2.2.21"
 
 hilt = "2.57.2"
 ksp = "2.3.3"
+licenseGenerator = "0.0.4"
 
 timber = "5.0.1"
 
@@ -110,3 +111,4 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 protobuf = { id = "com.google.protobuf", version.ref = "protobufPlugin" }
+license-generator = { id = "dev.keiji.license.maven-license-generator", version.ref = "licenseGenerator" }

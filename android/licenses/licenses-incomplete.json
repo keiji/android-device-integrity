@@ -13,24 +13,15 @@
                     "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
                 }
             ],
-            "developers": [
-                {
-                    "name":"The Android Open Source Project",
-                    "url":null
-                }
-            ],
-            "organization": {
-                "name":"The Android Open Source Project",
-                "url":null
-            },
-            "dependencies": [
-            ],
+            "developers": [],
+            "organization": null,
+            "dependencies": [],
             "depth": 2
         },
         {
             "group_id": "com.google.android.gms",
             "artifact_id": "play-services-base",
-            "version": "18.7.2",
+            "version": "18.9.0",
             "name": "play-services-base",
             "url": null,
             "licenses": [
@@ -39,17 +30,15 @@
                     "url": "https://developer.android.com/studio/terms.html"
                 }
             ],
-            "developers": [
-            ],
+            "developers": [],
             "organization": null,
-            "dependencies": [
-            ],
+            "dependencies": [],
             "depth": 2
         },
         {
             "group_id": "com.google.android.play",
             "artifact_id": "integrity",
-            "version": "1.4.0",
+            "version": "1.6.0",
             "name": "integrity",
             "url": null,
             "licenses": [
@@ -58,34 +47,21 @@
                     "url": "https://developer.android.com/google/play/integrity/overview#tos"
                 }
             ],
-            "developers": [
-            ],
+            "developers": [],
             "organization": null,
-            "dependencies": [
-            ],
+            "dependencies": [],
             "depth": 2
         },
         {
             "group_id": "com.google.protobuf",
             "artifact_id": "protobuf-kotlin-lite",
-            "version": "4.31.1",
+            "version": "4.33.1",
             "name": "Protocol Buffers [Kotlin-Lite]",
             "url": null,
-            "licenses": [
-                {
-                    "name": "The 3-Clause BSD License",
-                    "url": "https://github.com/protocolbuffers/protobuf/blob/main/LICENSE"
-                }
-            ],
-            "developers": [
-                {
-                    "name": "The 3-Clause BSD License",
-                    "url": "https://github.com/protocolbuffers/protobuf/blob/main/LICENSE"
-                }
-            ],
+            "licenses": [],
+            "developers": [],
             "organization": null,
-            "dependencies": [
-            ],
+            "dependencies": [],
             "depth": 2
         },
         {
@@ -100,17 +76,15 @@
                     "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
                 }
             ],
-            "developers": [
-            ],
+            "developers": [],
             "organization": null,
-            "dependencies": [
-            ],
+            "dependencies": [],
             "depth": 2
         },
         {
             "group_id": "com.google.android.gms",
             "artifact_id": "play-services-basement",
-            "version": "18.7.1",
+            "version": "18.9.0",
             "name": "play-services-basement",
             "url": null,
             "licenses": [
@@ -119,17 +93,15 @@
                     "url": "https://developer.android.com/studio/terms.html"
                 }
             ],
-            "developers": [
-            ],
+            "developers": [],
             "organization": null,
-            "dependencies": [
-            ],
+            "dependencies": [],
             "depth": 3
         },
         {
             "group_id": "com.google.android.gms",
             "artifact_id": "play-services-tasks",
-            "version": "18.3.2",
+            "version": "18.4.0",
             "name": "play-services-tasks",
             "url": null,
             "licenses": [
@@ -138,11 +110,9 @@
                     "url": "https://developer.android.com/studio/terms.html"
                 }
             ],
-            "developers": [
-            ],
+            "developers": [],
             "organization": null,
-            "dependencies": [
-            ],
+            "dependencies": [],
             "depth": 3
         },
         {
@@ -157,30 +127,21 @@
                     "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
                 }
             ],
-            "developers": [
-            ],
+            "developers": [],
             "organization": null,
-            "dependencies": [
-            ],
+            "dependencies": [],
             "depth": 3
         },
         {
             "group_id": "com.google.protobuf",
             "artifact_id": "protobuf-javalite",
-            "version": "4.31.1",
+            "version": "4.33.1",
             "name": "Protocol Buffers [Lite]",
             "url": null,
-            "licenses": [
-                {
-                    "name": "The 3-Clause BSD License",
-                    "url": "https://github.com/protocolbuffers/protobuf/blob/main/LICENSE"
-                }
-            ],
-            "developers": [
-            ],
+            "licenses": [],
+            "developers": [],
             "organization": null,
-            "dependencies": [
-            ],
+            "dependencies": [],
             "depth": 3
         },
         {
@@ -195,11 +156,9 @@
                     "url": "https://developer.android.com/guide/playcore/license"
                 }
             ],
-            "developers": [
-            ],
+            "developers": [],
             "organization": null,
-            "dependencies": [
-            ],
+            "dependencies": [],
             "depth": 4
         },
         {
@@ -214,14 +173,9 @@
                     "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
                 }
             ],
-            "developers": [
-            ],
-            "organization": {
-                "name":"Square, Inc.",
-                "url":null
-            },
-            "dependencies": [
-            ],
+            "developers": [],
+            "organization": null,
+            "dependencies": [],
             "depth": 6
         },
         {
@@ -230,13 +184,10 @@
             "version": "1.17",
             "name": "Animal Sniffer Annotations",
             "url": null,
-            "licenses": [
-            ],
-            "developers": [
-            ],
+            "licenses": [],
+            "developers": [],
             "organization": null,
-            "dependencies": [
-            ],
+            "dependencies": [],
             "depth": 6
         },
         {
@@ -244,18 +195,11 @@
             "artifact_id": "listenablefuture",
             "version": "1.0",
             "name": "Guava ListenableFuture only",
-            "url": "https://mvnrepository.com/artifact/com.google.guava/listenablefuture/1.0",
-            "licenses": [
-                {
-                    "name": "The Apache Software License, Version 2.0",
-                    "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-                }
-            ],
-            "developers": [
-            ],
+            "url": null,
+            "licenses": [],
+            "developers": [],
             "organization": null,
-            "dependencies": [
-            ],
+            "dependencies": [],
             "depth": 7
         },
         {
@@ -264,13 +208,10 @@
             "version": "7",
             "name": "Sonatype OSS Parent",
             "url": "http://nexus.sonatype.org/oss-repository-hosting.html",
-            "licenses": [
-            ],
-            "developers": [
-            ],
+            "licenses": [],
+            "developers": [],
             "organization": null,
-            "dependencies": [
-            ],
+            "dependencies": [],
             "depth": 7
         }
     ]
