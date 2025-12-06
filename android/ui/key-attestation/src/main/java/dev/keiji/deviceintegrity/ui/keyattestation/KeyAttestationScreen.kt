@@ -149,31 +149,43 @@ fun KeyAttestationScreen(
         Spacer(modifier = Modifier.height(24.dp))
         Text(text = stringResource(id = R.string.key_attestation_title_step3))
         Spacer(modifier = Modifier.height(12.dp))
-        if (uiState.isStep3PreferStrongBoxVisible) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Checkbox(
-                    checked = uiState.preferStrongBox,
-                    onCheckedChange = onPreferStrongBoxChanged,
-                    enabled = uiState.isStep3PreferStrongBoxEnabled,
-                )
-                Text(stringResource(id = R.string.key_attestation_checkbox_label_strongbox))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val strongBoxText = if (uiState.isStrongboxSupported) {
+                stringResource(id = R.string.key_attestation_checkbox_label_strongbox)
+            } else {
+                stringResource(id = R.string.key_attestation_checkbox_label_strongbox_unsupported)
             }
+
+            Checkbox(
+                checked = uiState.preferStrongBox,
+                onCheckedChange = onPreferStrongBoxChanged,
+                enabled = uiState.isStep3PreferStrongBoxEnabled && uiState.isStrongboxSupported,
+            )
+            Text(text = strongBoxText)
         }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val idAttestationText = if (uiState.isIdAttestationSupported) {
+                stringResource(id = R.string.key_attestation_checkbox_label_include_id_attestation)
+            } else {
+                stringResource(id = R.string.key_attestation_checkbox_label_include_id_attestation_unsupported)
+            }
+
             Checkbox(
                 checked = uiState.isIdAttestationIncluded,
                 onCheckedChange = onIncludeIdAttestationChanged,
-                enabled = uiState.isStep3IncludeIdAttestationEnabled,
+                enabled = uiState.isStep3IncludeIdAttestationEnabled && uiState.isIdAttestationSupported,
             )
-            Text(stringResource(id = R.string.key_attestation_checkbox_label_include_id_attestation))
+            Text(text = idAttestationText)
         }
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         Button(
             onClick = onGenerateKeyPair,
@@ -273,7 +285,8 @@ private fun KeyAttestationScreenPreview() {
             infoItems = previewItems,
             isEcdhAvailable = true, // Assuming ECDH is available for preview
             isStrongboxSupported = true,
-            preferStrongBox = true
+            preferStrongBox = true,
+            isIdAttestationSupported = true
         ),
         onSelectedKeyTypeChange = { System.out.println("Preview: Key type changed to ${it.label}") },
         onPreferStrongBoxChanged = { System.out.println("Preview: Prefer StrongBox changed to $it") },

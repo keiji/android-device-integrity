@@ -57,6 +57,7 @@ class KeyAttestationViewModel @Inject constructor(
             isKeyAttestationSupported = deviceInfoProvider.isKeyAttestationAvailable,
             isEcdhAvailable = deviceInfoProvider.isEcdhKeyAttestationAvailable,
             isStrongboxSupported = deviceSecurityStateProvider.hasStrongBox,
+            isIdAttestationSupported = deviceSecurityStateProvider.isDevicePropertiesAttestationSupported,
         )
     )
     val uiState: StateFlow<KeyAttestationUiState> = _uiState.asStateFlow()
