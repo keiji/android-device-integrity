@@ -14,6 +14,10 @@
                 }
             ],
             "developers": [
+                {
+                    "name": "The Android Open Source Project",
+                    "url": null
+                }
             ],
             "organization": null,
             "dependencies": [
@@ -23,7 +27,7 @@
         {
             "group_id": "com.google.android.gms",
             "artifact_id": "play-services-base",
-            "version": "18.7.2",
+            "version": "18.9.0",
             "name": "play-services-base",
             "url": null,
             "licenses": [
@@ -34,7 +38,10 @@
             ],
             "developers": [
             ],
-            "organization": null,
+            "organization": {
+                "name": "Google, Inc.",
+                "url": "https://www.google.com"
+            },
             "dependencies": [
             ],
             "depth": 2
@@ -42,7 +49,7 @@
         {
             "group_id": "com.google.android.play",
             "artifact_id": "integrity",
-            "version": "1.4.0",
+            "version": "1.6.0",
             "name": "integrity",
             "url": null,
             "licenses": [
@@ -53,7 +60,10 @@
             ],
             "developers": [
             ],
-            "organization": null,
+            "organization": {
+                "name": "Google, Inc.",
+                "url": "https://www.google.com"
+            },
             "dependencies": [
             ],
             "depth": 2
@@ -61,10 +71,14 @@
         {
             "group_id": "com.google.protobuf",
             "artifact_id": "protobuf-kotlin-lite",
-            "version": "4.31.1",
+            "version": "4.33.1",
             "name": "Protocol Buffers [Kotlin-Lite]",
             "url": null,
             "licenses": [
+                {
+                    "name": "The 3-Clause BSD License",
+                    "url": "https://github.com/protocolbuffers/protobuf/blob/main/LICENSE"
+                }
             ],
             "developers": [
             ],
@@ -95,7 +109,7 @@
         {
             "group_id": "com.google.android.gms",
             "artifact_id": "play-services-basement",
-            "version": "18.7.1",
+            "version": "18.9.0",
             "name": "play-services-basement",
             "url": null,
             "licenses": [
@@ -106,7 +120,10 @@
             ],
             "developers": [
             ],
-            "organization": null,
+            "organization": {
+                "name": "Google, Inc.",
+                "url": "https://www.google.com"
+            },
             "dependencies": [
             ],
             "depth": 3
@@ -114,7 +131,7 @@
         {
             "group_id": "com.google.android.gms",
             "artifact_id": "play-services-tasks",
-            "version": "18.3.2",
+            "version": "18.4.0",
             "name": "play-services-tasks",
             "url": null,
             "licenses": [
@@ -125,7 +142,10 @@
             ],
             "developers": [
             ],
-            "organization": null,
+            "organization": {
+                "name": "Google, Inc.",
+                "url": "https://www.google.com"
+            },
             "dependencies": [
             ],
             "depth": 3
@@ -152,7 +172,7 @@
         {
             "group_id": "com.google.protobuf",
             "artifact_id": "protobuf-javalite",
-            "version": "4.31.1",
+            "version": "4.33.1",
             "name": "Protocol Buffers [Lite]",
             "url": null,
             "licenses": [
@@ -197,7 +217,11 @@
             ],
             "developers": [
             ],
-            "organization": null,
+            "organization":                 {
+                "name": "Square, Inc.",
+                "url": null
+            }
+        ,
             "dependencies": [
             ],
             "depth": 6
@@ -227,7 +251,10 @@
             ],
             "developers": [
             ],
-            "organization": null,
+            "organization": {
+                "name": "Google, Inc.",
+                "url": "https://www.google.com"
+            },
             "dependencies": [
             ],
             "depth": 7
@@ -240,8 +267,7 @@
             "url": "http://nexus.sonatype.org/oss-repository-hosting.html",
             "licenses": [
             ],
-            "developers": [
-            ],
+            "developers": [],
             "organization": null,
             "dependencies": [
             ],
