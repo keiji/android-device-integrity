@@ -54,7 +54,8 @@ class KeyPairRepositoryImpl @Inject constructor(
 
     override suspend fun generateEcKeyPair(
         challenge: ByteArray,
-        preferStrongBox: Boolean
+        preferStrongBox: Boolean,
+        includeIdAttestation: Boolean
     ): KeyPairData =
         withContext(dispatcher) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
@@ -87,6 +88,11 @@ class KeyPairRepositoryImpl @Inject constructor(
                 .setKeySize(EC_KEY_SIZE)
                 .setAttestationChallenge(challenge)
 
+            if (deviceSecurityStateProvider.isDevicePropertiesAttestationSupported) {
+                @SuppressLint("NewApi")
+                specBuilder.setDevicePropertiesAttestationIncluded(includeIdAttestation)
+            }
+
             if (preferStrongBox && deviceSecurityStateProvider.hasStrongBox) {
                 @SuppressLint("NewApi")
                 specBuilder.setIsStrongBoxBacked(true)
@@ -116,7 +122,8 @@ class KeyPairRepositoryImpl @Inject constructor(
 
     override suspend fun generateRsaKeyPair(
         challenge: ByteArray,
-        preferStrongBox: Boolean
+        preferStrongBox: Boolean,
+        includeIdAttestation: Boolean
     ): KeyPairData =
         withContext(dispatcher) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
@@ -150,6 +157,11 @@ class KeyPairRepositoryImpl @Inject constructor(
                 .setKeySize(RSA_KEY_SIZE)
                 .setAttestationChallenge(challenge)
 
+            if (deviceSecurityStateProvider.isDevicePropertiesAttestationSupported) {
+                @SuppressLint("NewApi")
+                specBuilder.setDevicePropertiesAttestationIncluded(includeIdAttestation)
+            }
+
             if (preferStrongBox && deviceSecurityStateProvider.hasStrongBox) {
                 @SuppressLint("NewApi")
                 specBuilder.setIsStrongBoxBacked(true)
@@ -179,7 +191,8 @@ class KeyPairRepositoryImpl @Inject constructor(
 
     override suspend fun generateEcdhKeyPair(
         challenge: ByteArray,
-        preferStrongBox: Boolean
+        preferStrongBox: Boolean,
+        includeIdAttestation: Boolean
     ): KeyPairData =
         withContext(dispatcher) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
@@ -211,6 +224,9 @@ class KeyPairRepositoryImpl @Inject constructor(
                 .setDigests(KeyProperties.DIGEST_SHA256)
                 .setKeySize(EC_KEY_SIZE)
                 .setAttestationChallenge(challenge)
+
+            @SuppressLint("NewApi")
+            specBuilder.setDevicePropertiesAttestationIncluded(includeIdAttestation)
 
             if (preferStrongBox && deviceSecurityStateProvider.hasStrongBox) {
                 @SuppressLint("NewApi")

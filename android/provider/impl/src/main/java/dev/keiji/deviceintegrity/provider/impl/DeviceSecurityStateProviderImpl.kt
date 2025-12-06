@@ -45,4 +45,7 @@ class DeviceSecurityStateProviderImpl internal constructor(
                 false
             }
         }
+
+    override val isDevicePropertiesAttestationSupported: Boolean
+        get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 }

@@ -172,7 +172,7 @@ class KeyPairRepositoryImplTest {
                 return@runTest
             }
 
-            val result = keyPairRepository.generateEcKeyPair(challenge, false)
+            val result = keyPairRepository.generateEcKeyPair(challenge, false, false)
 
             assertNotNull(result)
             assertTrue(result.keyAlias.isNotEmpty())
@@ -199,12 +199,12 @@ class KeyPairRepositoryImplTest {
         }
 
         // Generate one key
-        val keyPairData1 = keyPairRepository.generateEcKeyPair(challenge, false)
+        val keyPairData1 = keyPairRepository.generateEcKeyPair(challenge, false, false)
         assertNotNull(keyPairData1)
         assertTrue(keyStore.containsAlias(keyPairData1.keyAlias))
 
         // Generate another key - should have a different alias due to UUID and retry
-        val keyPairData2 = keyPairRepository.generateEcKeyPair(challenge, false)
+        val keyPairData2 = keyPairRepository.generateEcKeyPair(challenge, false, false)
         assertNotNull(keyPairData2)
         assertTrue(keyStore.containsAlias(keyPairData2.keyAlias))
 
@@ -227,7 +227,7 @@ class KeyPairRepositoryImplTest {
                 "test_challenge_pre_N".toByteArray() // Challenge content doesn't matter for this exception
             var exceptionThrown = false
             try {
-                keyPairRepository.generateEcKeyPair(challenge, false)
+                keyPairRepository.generateEcKeyPair(challenge, false, false)
             } catch (e: UnsupportedOperationException) {
                 exceptionThrown = true
                 assertTrue(e.message?.contains("not supported before Android N") == true)
@@ -249,7 +249,7 @@ class KeyPairRepositoryImplTest {
             val emptyChallenge = byteArrayOf()
             var exceptionThrown = false
             try {
-                keyPairRepository.generateEcKeyPair(emptyChallenge, false)
+                keyPairRepository.generateEcKeyPair(emptyChallenge, false, false)
             } catch (e: IllegalArgumentException) {
                 exceptionThrown = true
                 assertTrue(e.message?.contains("Challenge cannot be empty") == true)
@@ -274,7 +274,7 @@ class KeyPairRepositoryImplTest {
                 return@runTest
             }
 
-            val result = keyPairRepository.generateEcKeyPair(challenge, true)
+            val result = keyPairRepository.generateEcKeyPair(challenge, true, false)
 
             assertNotNull(result)
             assertTrue(result.keyAlias.isNotEmpty())
@@ -335,7 +335,7 @@ class KeyPairRepositoryImplTest {
                 return@runTest
             }
 
-            val result = keyPairRepository.generateRsaKeyPair(challenge, false)
+            val result = keyPairRepository.generateRsaKeyPair(challenge, false, false)
 
             assertNotNull(result)
             assertTrue(result.keyAlias.isNotEmpty())
@@ -362,7 +362,7 @@ class KeyPairRepositoryImplTest {
                 return@runTest
             }
 
-            val result = keyPairRepository.generateRsaKeyPair(challenge, true)
+            val result = keyPairRepository.generateRsaKeyPair(challenge, true, false)
 
             assertNotNull(result)
             assertTrue(result.keyAlias.isNotEmpty())
@@ -390,7 +390,7 @@ class KeyPairRepositoryImplTest {
             val challenge = "test_challenge_pre_N_rsa".toByteArray()
             var exceptionThrown = false
             try {
-                keyPairRepository.generateRsaKeyPair(challenge, false)
+                keyPairRepository.generateRsaKeyPair(challenge, false, false)
             } catch (e: UnsupportedOperationException) {
                 exceptionThrown = true
                 assertTrue(e.message?.contains("not supported before Android N") == true)
@@ -412,7 +412,7 @@ class KeyPairRepositoryImplTest {
             val emptyChallenge = byteArrayOf()
             var exceptionThrown = false
             try {
-                keyPairRepository.generateRsaKeyPair(emptyChallenge, false)
+                keyPairRepository.generateRsaKeyPair(emptyChallenge, false, false)
             } catch (e: IllegalArgumentException) {
                 exceptionThrown = true
                 assertTrue(e.message?.contains("Challenge cannot be empty") == true)
@@ -433,7 +433,7 @@ class KeyPairRepositoryImplTest {
                 return@runTest
             }
 
-            val result = keyPairRepository.generateEcdhKeyPair(challenge, false)
+            val result = keyPairRepository.generateEcdhKeyPair(challenge, false, false)
 
             assertNotNull(result)
             assertTrue(result.keyAlias.isNotEmpty())
@@ -460,7 +460,7 @@ class KeyPairRepositoryImplTest {
                 return@runTest
             }
 
-            val result = keyPairRepository.generateEcdhKeyPair(challenge, true)
+            val result = keyPairRepository.generateEcdhKeyPair(challenge, true, false)
 
             assertNotNull(result)
             assertTrue(result.keyAlias.isNotEmpty())
@@ -488,7 +488,7 @@ class KeyPairRepositoryImplTest {
             val challenge = "test_challenge_pre_S_ecdh".toByteArray()
             var exceptionThrown = false
             try {
-                keyPairRepository.generateEcdhKeyPair(challenge, false)
+                keyPairRepository.generateEcdhKeyPair(challenge, false, false)
             } catch (e: UnsupportedOperationException) {
                 exceptionThrown = true
                 assertTrue(e.message?.contains("not supported before Android S") == true)
@@ -510,7 +510,7 @@ class KeyPairRepositoryImplTest {
             val emptyChallenge = byteArrayOf()
             var exceptionThrown = false
             try {
-                keyPairRepository.generateEcdhKeyPair(emptyChallenge, false)
+                keyPairRepository.generateEcdhKeyPair(emptyChallenge, false, false)
             } catch (e: IllegalArgumentException) {
                 exceptionThrown = true
                 assertTrue(e.message?.contains("Challenge cannot be empty") == true)

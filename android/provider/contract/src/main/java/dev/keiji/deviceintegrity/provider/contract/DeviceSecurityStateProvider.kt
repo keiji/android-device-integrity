@@ -5,4 +5,5 @@ interface DeviceSecurityStateProvider {
     val isBiometricsEnabled: Boolean
     val hasClass3Authenticator: Boolean
     val hasStrongBox: Boolean
+    val isDevicePropertiesAttestationSupported: Boolean
 }

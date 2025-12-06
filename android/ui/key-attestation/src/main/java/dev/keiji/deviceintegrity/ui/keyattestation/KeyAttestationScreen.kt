@@ -45,6 +45,7 @@ fun KeyAttestationScreen(
     uiState: KeyAttestationUiState, // uiState collected and passed from MainActivity
     onSelectedKeyTypeChange: (CryptoAlgorithm) -> Unit,
     onPreferStrongBoxChanged: (Boolean) -> Unit,
+    onIncludeIdAttestationChanged: (Boolean) -> Unit,
     onFetchNonceChallenge: () -> Unit,
     onGenerateKeyPair: () -> Unit,
     onRequestVerifyKeyAttestation: () -> Unit,
@@ -162,6 +163,18 @@ fun KeyAttestationScreen(
             }
         }
 
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(
+                checked = uiState.isIdAttestationIncluded,
+                onCheckedChange = onIncludeIdAttestationChanged,
+                enabled = uiState.isStep3IncludeIdAttestationEnabled,
+            )
+            Text(stringResource(id = R.string.key_attestation_checkbox_label_include_id_attestation))
+        }
+
         Button(
             onClick = onGenerateKeyPair,
             modifier = Modifier
@@ -264,6 +277,7 @@ private fun KeyAttestationScreenPreview() {
         ),
         onSelectedKeyTypeChange = { System.out.println("Preview: Key type changed to ${it.label}") },
         onPreferStrongBoxChanged = { System.out.println("Preview: Prefer StrongBox changed to $it") },
+        onIncludeIdAttestationChanged = { System.out.println("Preview: Include ID Attestation changed to $it") },
         onFetchNonceChallenge = { System.out.println("Preview: Fetch Nonce/Challenge clicked") },
         onGenerateKeyPair = { System.out.println("Preview: Generate KeyPair clicked") },
         onRequestVerifyKeyAttestation = { System.out.println("Preview: Request Verify KeyAttestation clicked") },
