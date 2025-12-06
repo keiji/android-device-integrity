@@ -189,8 +189,8 @@ mavenLicenseGenerator {
     )
     removeConflictingVersions = true
     ignoreScopes = listOf("test", "provided")
-    includeDependencies = true
-    includeSettings = true
+    includeDependencies = false
+    includeSettings = false
 
     targets {
         create("main") {
@@ -209,11 +209,6 @@ mavenLicenseGenerator {
             includeSettings = false
             prettyPrintEnabled = true
         }
-
-        removeConflictingVersions = true
-        ignoreScopes = listOf("test", "runtime")
-        includeDependencies = false
-        includeSettings = false
     }
 }
 
