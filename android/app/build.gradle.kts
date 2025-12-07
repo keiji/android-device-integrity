@@ -200,12 +200,12 @@ mavenLicenseGenerator {
 
     outputSettings {
         create("complete") {
-            path = rootProject.layout.projectDirectory.file("licenses/licenses.json").asFile.absolutePath
+            file = rootProject.layout.projectDirectory.file("licenses/licenses.json").asFile
             includeSettings = false
             prettyPrintEnabled = false
         }
         create("incomplete") {
-            path = rootProject.layout.projectDirectory.file("licenses/licenses-incomplete.json").asFile.absolutePath
+            file = rootProject.layout.projectDirectory.file("licenses/licenses-incomplete.json").asFile
             includeSettings = false
             prettyPrintEnabled = true
         }
