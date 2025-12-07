@@ -179,9 +179,8 @@ android {
 }
 
 mavenLicenseGenerator {
-    workingDir = rootProject.layout.buildDirectory.dir("maven-license-generator").get().asFile.absolutePath
-
-    localRepositoryDirs = listOf(System.getProperty("user.home") + "/.m2/repository")
+    workingDir = rootProject.layout.buildDirectory.dir("maven-license-generator").get().asFile
+    localRepositoryDirs = listOf(File(System.getProperty("user.home"), ".m2/repository"))
     repositoryUrls = listOf(
         "https://repo1.maven.org/maven2",
         "https://dl.google.com/android/maven2",
@@ -200,12 +199,12 @@ mavenLicenseGenerator {
 
     outputSettings {
         create("complete") {
-            file = rootProject.layout.projectDirectory.file("licenses/licenses.json").asFile
+            path = rootProject.layout.projectDirectory.file("licenses/licenses.json").asFile
             includeSettings = false
             prettyPrintEnabled = false
         }
         create("incomplete") {
-            file = rootProject.layout.projectDirectory.file("licenses/licenses-incomplete.json").asFile
+            path = rootProject.layout.projectDirectory.file("licenses/licenses-incomplete.json").asFile
             includeSettings = false
             prettyPrintEnabled = true
         }
