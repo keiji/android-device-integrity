@@ -121,3 +121,40 @@ You can run each Flask application locally for testing.
     # Run play_integrity on port 8082
     cd server/play_integrity && flask run -p 8082
     ```
+
+---
+
+## 4. CLI Tools
+
+### Attestation Decoder (`server/cli/decode_attestation.py`)
+
+This CLI tool decodes an Android Key Attestation certificate chain from a JSON input file and outputs the details to a JSON file and the console.
+
+#### Prerequisites
+
+Install the required Python packages:
+
+```bash
+pip install cryptography pyasn1
+```
+
+Or, if you are already set up for `key_attestation` development, the dependencies are included.
+
+#### Usage
+
+```bash
+export PYTHONPATH=$PYTHONPATH:.
+python3 server/cli/decode_attestation.py <input_json_file> <output_json_file>
+```
+
+- `<input_json_file>`: Path to a JSON file containing a list of Base64 encoded certificates.
+- `<output_json_file>`: Path where the decoded JSON output will be saved.
+
+#### Example Input JSON
+
+```json
+[
+  "MIICuDCCAl6gAwIBAgIBATAKBggqhkjOPQQDAjA/MSkwJwYDVQQDEyA0MzdmM2...",
+  "MIIB5DCCAYqgAwIBAgIQQ38772qZ8eW1AfT7kaebhTAKBggqhkjOPQQDAjApMR..."
+]
+```
