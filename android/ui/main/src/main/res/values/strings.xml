@@ -9,4 +9,8 @@
     <string name="settings_title_privacy_policy">Privacy Policy</string>
     <string name="settings_title_oss_licenses">Open Source Licenses</string>
     <string name="settings_title_support_site">Support Site</string>
+
+    <string name="startup_action_check_immediately">Check immediately</string>
+    <string name="startup_action_configure_details">Configure details</string>
+    <string name="startup_action_exit_app">Exit app</string>
 </resources>

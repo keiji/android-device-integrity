@@ -18,6 +18,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -42,6 +46,7 @@ import dev.keiji.deviceintegrity.ui.main.settings.SettingsUiEvent
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsViewModel
 import dev.keiji.deviceintegrity.ui.nav.contract.AgreementNavigator
 import dev.keiji.deviceintegrity.ui.nav.contract.AppScreen
+import dev.keiji.deviceintegrity.ui.nav.contract.ExpressModeNavigator
 import dev.keiji.deviceintegrity.ui.nav.contract.LicenseNavigator
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 import timber.log.Timber
@@ -57,6 +62,9 @@ class MainActivity : ComponentActivity() {
     lateinit var agreementNavigator: AgreementNavigator
 
     @Inject
+    lateinit var expressModeNavigator: ExpressModeNavigator
+
+    @Inject
     lateinit var appInfoProvider: AppInfoProvider
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,13 +74,35 @@ class MainActivity : ComponentActivity() {
         Timber.d("MainActivity onCreate")
 
         setContent {
-            val mainViewModel: MainViewModel = viewModel()
-            DeviceIntegrityApp(
-                mainViewModel = mainViewModel,
-                licenseNavigator = licenseNavigator,
-                agreementNavigator = agreementNavigator,
-                onFinishActivity = { finish() }
-            )
+            var showStartup by rememberSaveable { mutableStateOf(true) }
+
+            if (showStartup) {
+                StartupScreen(
+                    onCheckImmediately = {
+                        val intent = expressModeNavigator.newIntent(applicationContext)
+                        try {
+                            startActivity(intent)
+                            finish()
+                        } catch (e: Exception) {
+                            Timber.e(e, "Failed to start ExpressModeActivity")
+                        }
+                    },
+                    onConfigureDetails = {
+                        showStartup = false
+                    },
+                    onExitApp = {
+                        finish()
+                    }
+                )
+            } else {
+                val mainViewModel: MainViewModel = viewModel()
+                DeviceIntegrityApp(
+                    mainViewModel = mainViewModel,
+                    licenseNavigator = licenseNavigator,
+                    agreementNavigator = agreementNavigator,
+                    onFinishActivity = { finish() }
+                )
+            }
         }
     }
 }

@@ -214,6 +214,7 @@ mavenLicenseGenerator {
 dependencies {
     implementation(project(":ui:main"))
     implementation(project(":ui:license"))
+    implementation(project(":ui:express-mode"))
     implementation(project(":provider:impl"))
     implementation(project(":provider:contract"))
     implementation(project(":crypto:contract"))
