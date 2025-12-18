@@ -1,5 +1,6 @@
 package dev.keiji.deviceintegrity.ui.main
 
+import android.content.ComponentName
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -18,6 +19,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -66,13 +71,40 @@ class MainActivity : ComponentActivity() {
         Timber.d("MainActivity onCreate")
 
         setContent {
-            val mainViewModel: MainViewModel = viewModel()
-            DeviceIntegrityApp(
-                mainViewModel = mainViewModel,
-                licenseNavigator = licenseNavigator,
-                agreementNavigator = agreementNavigator,
-                onFinishActivity = { finish() }
-            )
+            var showStartup by rememberSaveable { mutableStateOf(true) }
+
+            if (showStartup) {
+                StartupScreen(
+                    onCheckImmediately = {
+                        val intent = Intent().apply {
+                            component = ComponentName(
+                                applicationContext.packageName,
+                                "dev.keiji.deviceintegrity.ExpressModeActivity"
+                            )
+                        }
+                        try {
+                            startActivity(intent)
+                            finish()
+                        } catch (e: Exception) {
+                            Timber.e(e, "Failed to start ExpressModeActivity")
+                        }
+                    },
+                    onConfigureDetails = {
+                        showStartup = false
+                    },
+                    onExitApp = {
+                        finish()
+                    }
+                )
+            } else {
+                val mainViewModel: MainViewModel = viewModel()
+                DeviceIntegrityApp(
+                    mainViewModel = mainViewModel,
+                    licenseNavigator = licenseNavigator,
+                    agreementNavigator = agreementNavigator,
+                    onFinishActivity = { finish() }
+                )
+            }
         }
     }
 }
