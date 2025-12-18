@@ -25,10 +25,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".ExpressModeActivity"
-            android:exported="false"
-            android:theme="@style/Theme.DeviceIntegrity" />
     </application>
 
 </manifest>

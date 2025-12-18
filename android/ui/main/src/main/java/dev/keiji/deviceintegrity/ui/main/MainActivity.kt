@@ -1,6 +1,5 @@
 package dev.keiji.deviceintegrity.ui.main
 
-import android.content.ComponentName
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -47,6 +46,7 @@ import dev.keiji.deviceintegrity.ui.main.settings.SettingsUiEvent
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsViewModel
 import dev.keiji.deviceintegrity.ui.nav.contract.AgreementNavigator
 import dev.keiji.deviceintegrity.ui.nav.contract.AppScreen
+import dev.keiji.deviceintegrity.ui.nav.contract.ExpressModeNavigator
 import dev.keiji.deviceintegrity.ui.nav.contract.LicenseNavigator
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 import timber.log.Timber
@@ -60,6 +60,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var agreementNavigator: AgreementNavigator
+
+    @Inject
+    lateinit var expressModeNavigator: ExpressModeNavigator
 
     @Inject
     lateinit var appInfoProvider: AppInfoProvider
@@ -76,12 +79,7 @@ class MainActivity : ComponentActivity() {
             if (showStartup) {
                 StartupScreen(
                     onCheckImmediately = {
-                        val intent = Intent().apply {
-                            component = ComponentName(
-                                applicationContext.packageName,
-                                "dev.keiji.deviceintegrity.ExpressModeActivity"
-                            )
-                        }
+                        val intent = expressModeNavigator.newIntent(applicationContext)
                         try {
                             startActivity(intent)
                             finish()

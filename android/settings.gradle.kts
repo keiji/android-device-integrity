@@ -41,6 +41,7 @@ include(
     ":ui:license",
     ":ui:agreement",
     ":ui:play-integrity",
-    ":ui:key-attestation"
+    ":ui:key-attestation",
+    ":ui:express-mode"
 )
 include(":api")
