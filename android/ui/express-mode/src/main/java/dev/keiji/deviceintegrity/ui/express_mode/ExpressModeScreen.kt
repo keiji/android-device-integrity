@@ -34,12 +34,11 @@ fun ExpressModeScreen(
         ) {
             Text(
                 text = "デバイスの完全性を確認します",
-                style = MaterialTheme.typography.titleLarge
+                style = MaterialTheme.typography.displaySmall
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "Play Integrity APIを実行しています",
-                style = MaterialTheme.typography.bodyLarge
             )
             Spacer(modifier = Modifier.height(32.dp))
 
