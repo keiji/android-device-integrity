@@ -30,22 +30,24 @@ fun ExpressModeScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.Start
         ) {
             Text(
                 text = "デバイスの完全性を確認します",
                 style = MaterialTheme.typography.displaySmall
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(32.dp))
             Text(
                 text = "Play Integrity APIを実行しています",
             )
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // CircularProgress with reserved space
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.size(48.dp) // Standard size for CircularProgressIndicator
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .size(48.dp) // Standard size for CircularProgressIndicator
             ) {
                 if (uiState.showProgress) {
                     CircularProgressIndicator()
