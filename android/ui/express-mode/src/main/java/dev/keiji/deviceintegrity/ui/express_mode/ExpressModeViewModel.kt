@@ -10,7 +10,9 @@ class ExpressModeViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(
         ExpressModeUiState(
             progress = 3,
-            maxProgress = 5
+            maxProgress = 5,
+            resultInfoItems = emptyList(),
+            status = "",
         )
     )
     val uiState: StateFlow<ExpressModeUiState> = _uiState.asStateFlow()
