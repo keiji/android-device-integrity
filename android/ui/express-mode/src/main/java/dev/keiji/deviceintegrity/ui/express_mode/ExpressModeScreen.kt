@@ -92,3 +92,21 @@ fun ExpressModeScreenPreview() {
         )
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+fun ExpressModeScreenResultPreview() {
+    DeviceIntegrityTheme {
+        ExpressModeScreen(
+            uiState = ExpressModeUiState(
+                progress = 5,
+                maxProgress = 5,
+                status = "Verification successful",
+                resultInfoItems = listOf(
+                    dev.keiji.deviceintegrity.ui.common.InfoItem("Result", "Success"),
+                    dev.keiji.deviceintegrity.ui.common.InfoItem("Details", "All checks passed")
+                )
+            )
+        )
+    }
+}
