@@ -9,7 +9,6 @@ class ExpressModeViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(
         ExpressModeUiState(
-            showProgress = true,
             progress = 3,
             maxProgress = 5
         )

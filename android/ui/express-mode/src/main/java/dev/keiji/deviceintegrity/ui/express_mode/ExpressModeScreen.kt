@@ -1,14 +1,11 @@
 package dev.keiji.deviceintegrity.ui.express_mode
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -42,30 +39,22 @@ fun ExpressModeScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // CircularProgress with reserved space
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .size(48.dp) // Standard size for CircularProgressIndicator
-            ) {
-                if (uiState.showProgress) {
-                    CircularProgressIndicator()
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
             // HorizontalProgress
-            val progress = if (uiState.maxProgress > 0) {
-                uiState.progress.toFloat() / uiState.maxProgress
+            if (uiState.progress == -1) {
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth()
+                )
             } else {
-                0f
+                val progress = if (uiState.maxProgress > 0) {
+                    uiState.progress.toFloat() / uiState.maxProgress
+                } else {
+                    0f
+                }
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
-            LinearProgressIndicator(
-                progress = { progress },
-                modifier = Modifier.fillMaxWidth()
-            )
         }
     }
 }
@@ -76,7 +65,6 @@ fun ExpressModeScreenPreview() {
     DeviceIntegrityTheme {
         ExpressModeScreen(
             uiState = ExpressModeUiState(
-                showProgress = true,
                 progress = 3,
                 maxProgress = 5
             )
