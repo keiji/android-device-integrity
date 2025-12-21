@@ -23,10 +23,8 @@ import dev.keiji.deviceintegrity.repository.contract.KeyPairRepository
 import dev.keiji.deviceintegrity.repository.contract.PlayIntegrityRepository
 import dev.keiji.deviceintegrity.repository.contract.StandardPlayIntegrityTokenRepository
 import dev.keiji.deviceintegrity.ui.common.InfoItem
-import dev.keiji.deviceintegrity.ui.common.ProgressConstants
 import dev.keiji.deviceintegrity.ui.util.Base64Utils
 import dev.keiji.deviceintegrity.ui.util.DateFormatUtil
-import dev.keiji.deviceintegrity.ui.util.KeyUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -98,7 +96,7 @@ class ExpressModeViewModel @Inject constructor(
                     progress = -1
                 )
             }
-            val playIntegrityItems = runPlayIntegrityCheck()
+            val (isPlayIntegritySuccess, playIntegrityItems) = runPlayIntegrityCheck()
 
             // 3. Key Attestation Check
             _uiState.update {
@@ -107,28 +105,24 @@ class ExpressModeViewModel @Inject constructor(
                     progress = -1
                 )
             }
-            val keyAttestationItems = runKeyAttestationCheck()
+            val (isKeyAttestationSuccess, keyAttestationItems) = runKeyAttestationCheck()
 
             // 4. Show Results
-            val allItems = mutableListOf<InfoItem>()
-            allItems.addAll(playIntegrityItems)
-            if (playIntegrityItems.isNotEmpty() && keyAttestationItems.isNotEmpty()) {
-                allItems.add(InfoItem.DIVIDER)
-            }
-            allItems.addAll(keyAttestationItems)
-
             _uiState.update {
                 it.copy(
                     progress = 0,
                     isProgressVisible = false,
                     status = "Verification Complete",
-                    resultInfoItems = allItems
+                    playIntegrityInfoItems = playIntegrityItems,
+                    keyAttestationInfoItems = keyAttestationItems,
+                    isPlayIntegritySuccess = isPlayIntegritySuccess,
+                    isKeyAttestationSuccess = isKeyAttestationSuccess
                 )
             }
         }
     }
 
-    private suspend fun runPlayIntegrityCheck(): List<InfoItem> {
+    private suspend fun runPlayIntegrityCheck(): Pair<Boolean, List<InfoItem>> {
         val currentSessionId = UUID.randomUUID().toString()
         val currentContent = UUID.randomUUID().toString() // Random content
         var encodedHash = ""
@@ -180,17 +174,17 @@ class ExpressModeViewModel @Inject constructor(
                 googlePlayDeveloperServiceInfo = googlePlayDeveloperServiceInfoProvider.provide()
             )
 
-            return transformPayloadToInfoItems(response, currentSessionId, encodedHash)
+            return true to transformPayloadToInfoItems(response, currentSessionId, encodedHash)
 
         } catch (e: Exception) {
             Log.e("ExpressModeViewModel", "Error in Play Integrity Check", e)
-            return listOf(
+            return false to listOf(
                 InfoItem("Play Integrity Check Failed", e.message ?: "Unknown Error", isHeader = true)
             )
         }
     }
 
-    private suspend fun runKeyAttestationCheck(): List<InfoItem> {
+    private suspend fun runKeyAttestationCheck(): Pair<Boolean, List<InfoItem>> {
         try {
             // 1. Fetch Nonce/Challenge
             val prepareResponse = keyAttestationRepository.prepareSignature()
@@ -276,11 +270,11 @@ class ExpressModeViewModel @Inject constructor(
              resultItems.addAll(convertDeviceInfoToAttestationItems(response.deviceInfo))
              resultItems.addAll(convertSecurityInfoToAttestationItems(response.securityInfo))
 
-             return resultItems
+             return response.isVerified to resultItems
 
         } catch (e: Exception) {
             Log.e("ExpressModeViewModel", "Error in Key Attestation Check", e)
-             return listOf(
+             return false to listOf(
                 InfoItem("Key Attestation Check Failed", e.message ?: "Unknown Error", isHeader = true)
             )
         }

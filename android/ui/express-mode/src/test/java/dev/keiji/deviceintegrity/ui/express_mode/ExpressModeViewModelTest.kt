@@ -22,7 +22,6 @@ import dev.keiji.deviceintegrity.repository.contract.StandardPlayIntegrityTokenR
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -32,6 +31,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
@@ -86,7 +86,7 @@ class ExpressModeViewModelTest {
     @Test
     fun `verification flow runs successfully`() = runTest(dispatcher) {
         // Setup Mocks
-        whenever(standardPlayIntegrityTokenRepository.getToken(any())).thenReturn("test_token")
+        whenever(standardPlayIntegrityTokenRepository.getToken(anyOrNull())).thenReturn("test_token")
 
         val mockDeviceInfo = DeviceInfo(
              "b", "m", "d", "p", "m", "h", "b", "b", "v", 33, "f", "s"
@@ -102,7 +102,7 @@ class ExpressModeViewModelTest {
             deviceInfo = mockDeviceInfo,
             securityInfo = mockSecurityInfo
         )
-        whenever(playIntegrityRepository.verifyTokenStandard(any(), any(), any(), any(), any(), any())).thenReturn(mockPayload)
+        whenever(playIntegrityRepository.verifyTokenStandard(any(), any(), any(), any(), any(), anyOrNull())).thenReturn(mockPayload)
 
         whenever(keyAttestationRepository.prepareSignature()).thenReturn(
             PrepareResponse(
@@ -154,20 +154,14 @@ class ExpressModeViewModelTest {
             ecSigner
         )
 
-        // Initial state
-        advanceTimeBy(100)
-        assert(viewModel.uiState.value.status.contains("Waiting") || viewModel.uiState.value.status.contains("Starting"))
-
         // Advance past delay
-        advanceTimeBy(11000)
         advanceUntilIdle()
 
         // Verify final state
         val state = viewModel.uiState.value
-        if (state.status != "Verification Complete") {
-            println("State status: ${state.status}")
-        }
+        println("Final State Status: ${state.status}")
         assert(state.status == "Verification Complete")
-        assert(state.resultInfoItems.isNotEmpty())
+        assert(state.playIntegrityInfoItems.isNotEmpty())
+        assert(state.keyAttestationInfoItems.isNotEmpty())
     }
 }

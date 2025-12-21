@@ -68,11 +68,24 @@ fun ExpressModeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (uiState.resultInfoItems.isNotEmpty()) {
+            if (uiState.playIntegrityInfoItems.isNotEmpty()) {
                 InfoItemContent(
-                    status = uiState.status,
-                    isVerifiedSuccessfully = !uiState.status.contains("Failed", ignoreCase = true) && !uiState.status.contains("Error", ignoreCase = true),
-                    infoItems = uiState.resultInfoItems,
+                    status = "Play Integrity",
+                    isVerifiedSuccessfully = uiState.isPlayIntegritySuccess,
+                    infoItems = uiState.playIntegrityInfoItems,
+                    onCopyClick = onCopyClick,
+                    onShareClick = onShareClick,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (uiState.keyAttestationInfoItems.isNotEmpty()) {
+                InfoItemContent(
+                    status = "Key Attestation",
+                    isVerifiedSuccessfully = uiState.isKeyAttestationSuccess,
+                    infoItems = uiState.keyAttestationInfoItems,
                     onCopyClick = onCopyClick,
                     onShareClick = onShareClick,
                     modifier = Modifier.fillMaxWidth()
