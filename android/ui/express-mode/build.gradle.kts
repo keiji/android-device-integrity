@@ -39,6 +39,10 @@ android {
 dependencies {
     implementation(project(":ui"))
     implementation(project(":ui:theme"))
+    implementation(project(":repository:contract"))
+    implementation(project(":provider:contract"))
+    implementation(project(":api"))
+    implementation(project(":crypto:contract"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -57,4 +61,10 @@ dependencies {
 
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockito.kotlin)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.kotlin.test)
 }
