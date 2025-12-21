@@ -44,9 +44,7 @@ import dev.keiji.deviceintegrity.ui.playintegrity.StandardPlayIntegrityViewModel
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsScreen
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsUiEvent
 import dev.keiji.deviceintegrity.ui.main.settings.SettingsViewModel
-import dev.keiji.deviceintegrity.ui.nav.contract.AgreementNavigator
 import dev.keiji.deviceintegrity.ui.nav.contract.AppScreen
-import dev.keiji.deviceintegrity.ui.nav.contract.ExpressModeNavigator
 import dev.keiji.deviceintegrity.ui.nav.contract.LicenseNavigator
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 import timber.log.Timber
@@ -59,12 +57,6 @@ class MainActivity : ComponentActivity() {
     lateinit var licenseNavigator: LicenseNavigator
 
     @Inject
-    lateinit var agreementNavigator: AgreementNavigator
-
-    @Inject
-    lateinit var expressModeNavigator: ExpressModeNavigator
-
-    @Inject
     lateinit var appInfoProvider: AppInfoProvider
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,35 +66,12 @@ class MainActivity : ComponentActivity() {
         Timber.d("MainActivity onCreate")
 
         setContent {
-            var showStartup by rememberSaveable { mutableStateOf(true) }
-
-            if (showStartup) {
-                StartupScreen(
-                    onCheckImmediately = {
-                        val intent = expressModeNavigator.newIntent(applicationContext)
-                        try {
-                            startActivity(intent)
-                            finish()
-                        } catch (e: Exception) {
-                            Timber.e(e, "Failed to start ExpressModeActivity")
-                        }
-                    },
-                    onConfigureDetails = {
-                        showStartup = false
-                    },
-                    onExitApp = {
-                        finish()
-                    }
-                )
-            } else {
-                val mainViewModel: MainViewModel = viewModel()
-                DeviceIntegrityApp(
-                    mainViewModel = mainViewModel,
-                    licenseNavigator = licenseNavigator,
-                    agreementNavigator = agreementNavigator,
-                    onFinishActivity = { finish() }
-                )
-            }
+            val mainViewModel: MainViewModel = viewModel()
+            DeviceIntegrityApp(
+                mainViewModel = mainViewModel,
+                licenseNavigator = licenseNavigator,
+                onFinishActivity = { finish() }
+            )
         }
     }
 }
@@ -111,31 +80,12 @@ class MainActivity : ComponentActivity() {
 fun DeviceIntegrityApp(
     mainViewModel: MainViewModel,
     licenseNavigator: LicenseNavigator,
-    agreementNavigator: AgreementNavigator,
     onFinishActivity: () -> Unit
 ) {
     DeviceIntegrityTheme {
         val navController = rememberNavController()
         val context = LocalContext.current
-        val isAgreed by mainViewModel.isAgreed.collectAsStateWithLifecycle()
         val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
-
-        val agreementLauncher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            if (result.resultCode == android.app.Activity.RESULT_OK) {
-                mainViewModel.setAgreed(true)
-            } else {
-                onFinishActivity()
-            }
-        }
-
-        LaunchedEffect(Unit) {
-            if (!mainViewModel.isAgreed.value) {
-                val intent = agreementNavigator.newIntent(context)
-                agreementLauncher.launch(intent)
-            }
-        }
 
         Scaffold(
             modifier = Modifier.fillMaxSize(),
