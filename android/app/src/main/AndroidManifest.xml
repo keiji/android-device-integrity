@@ -24,7 +24,8 @@
             android:name="dev.keiji.deviceintegrity.ui.agreement.AgreementActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.DeviceIntegrity">
+            android:theme="@style/Theme.DeviceIntegrity"
+            tools:replace="android:exported">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
