@@ -35,12 +35,21 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import dev.keiji.deviceintegrity.provider.contract.UrlProvider
+import dev.keiji.deviceintegrity.ui.nav.contract.ExpressModeNavigator
+import dev.keiji.deviceintegrity.ui.nav.contract.MainNavigator
 import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 import kotlinx.coroutines.flow.collectLatest
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class AgreementActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var mainNavigator: MainNavigator
+
+    @Inject
+    lateinit var expressModeNavigator: ExpressModeNavigator
 
     private val viewModel: AgreementViewModel by viewModels()
 
@@ -66,12 +75,14 @@ class AgreementActivity : ComponentActivity() {
                     AgreementScreen(
                         uiState = uiState,
                         onOpenPrivacyPolicy = { viewModel.openPrivacyPolicy() },
-                        onAgree = {
-                            setResult(Activity.RESULT_OK)
+                        onCheckImmediately = {
+                            startActivity(expressModeNavigator.newIntent(this@AgreementActivity))
+                        },
+                        onConfigureDetails = {
+                            startActivity(mainNavigator.newIntent(this@AgreementActivity))
                             finish()
                         },
-                        onDisagree = {
-                            setResult(Activity.RESULT_CANCELED)
+                        onExit = {
                             finish()
                         }
                     )
@@ -85,8 +96,9 @@ class AgreementActivity : ComponentActivity() {
 fun AgreementScreen(
     uiState: AgreementUiState,
     onOpenPrivacyPolicy: () -> Unit,
-    onAgree: () -> Unit,
-    onDisagree: () -> Unit,
+    onCheckImmediately: () -> Unit,
+    onConfigureDetails: () -> Unit,
+    onExit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -112,8 +124,17 @@ fun AgreementScreen(
             color = MaterialTheme.colorScheme.primary
         )
         Spacer(modifier = Modifier.weight(1f))
+        Button(
+            onClick = onCheckImmediately,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(64.dp)
+        ) {
+            Text(stringResource(R.string.agreement_screen_check_immediately))
+        }
+        Spacer(modifier = Modifier.height(8.dp))
         OutlinedButton(
-            onClick = onAgree,
+            onClick = onConfigureDetails,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp)
@@ -122,7 +143,7 @@ fun AgreementScreen(
         }
         Spacer(modifier = Modifier.height(8.dp))
         Button(
-            onClick = onDisagree,
+            onClick = onExit,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp)
@@ -139,8 +160,9 @@ fun AgreementScreenPreview() {
         AgreementScreen(
             uiState = AgreementUiState(),
             onOpenPrivacyPolicy = {},
-            onAgree = {},
-            onDisagree = {}
+            onCheckImmediately = {},
+            onConfigureDetails = {},
+            onExit = {}
         )
     }
 }

@@ -212,7 +212,7 @@ mavenLicenseGenerator {
 }
 
 dependencies {
-    implementation(project(":ui:main"))
+    implementation(project(":ui:agreement"))
     implementation(project(":ui:license"))
     implementation(project(":ui:express-mode"))
     implementation(project(":provider:impl"))
