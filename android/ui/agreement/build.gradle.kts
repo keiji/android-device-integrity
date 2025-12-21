@@ -42,8 +42,6 @@ dependencies {
     implementation(project(":ui"))
     implementation(project(":ui:theme"))
     implementation(project(":provider:contract"))
-    implementation(project(":ui:main"))
-    implementation(project(":ui:express-mode"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
