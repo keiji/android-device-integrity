@@ -68,8 +68,9 @@ jobs:
         with:
           api-level: 30
           target: google_apis
-          arch: x86 # Explicitly set, though it's default
-          emulator-options: -accel on -no-snapshot -no-window -noaudio -no-boot-anim
+          arch: x86_64 # Use x86_64 for better performance on CI
+          emulator-boot-timeout: 1200 # Increase boot timeout to 20 minutes
+          emulator-options: -accel on -no-snapshot -no-window -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           working-directory: ./android # Important for gradle script path
           script: |
