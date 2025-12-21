@@ -6,8 +6,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.keiji.deviceintegrity.ui.nav.contract.AgreementNavigator
 import dev.keiji.deviceintegrity.ui.nav.impl.AgreementNavigatorImpl
-import dev.keiji.deviceintegrity.ui.nav.contract.MainNavigator
-import dev.keiji.deviceintegrity.ui.nav.impl.MainNavigatorImpl
 import dev.keiji.deviceintegrity.ui.nav.contract.ExpressModeNavigator
 import dev.keiji.deviceintegrity.ui.nav.impl.ExpressModeNavigatorImpl
 import dev.keiji.deviceintegrity.ui.nav.contract.LicenseNavigator
@@ -28,12 +26,6 @@ object NavigationModule {
     @Provides
     fun provideAgreementNavigator(): AgreementNavigator {
         return AgreementNavigatorImpl()
-    }
-
-    @Singleton
-    @Provides
-    fun provideMainNavigator(): MainNavigator {
-        return MainNavigatorImpl()
     }
 
     @Singleton

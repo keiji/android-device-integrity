@@ -35,21 +35,15 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import dev.keiji.deviceintegrity.provider.contract.UrlProvider
-import dev.keiji.deviceintegrity.ui.nav.contract.ExpressModeNavigator
-import dev.keiji.deviceintegrity.ui.nav.contract.MainNavigator
+import android.content.Intent
+import dev.keiji.deviceintegrity.ui.express_mode.ExpressModeActivity
+import dev.keiji.deviceintegrity.ui.main.MainActivity
 import dev.keiji.deviceintegrity.ui.theme.ButtonHeight
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 import kotlinx.coroutines.flow.collectLatest
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class AgreementActivity : ComponentActivity() {
-
-    @Inject
-    lateinit var mainNavigator: MainNavigator
-
-    @Inject
-    lateinit var expressModeNavigator: ExpressModeNavigator
 
     private val viewModel: AgreementViewModel by viewModels()
 
@@ -76,10 +70,10 @@ class AgreementActivity : ComponentActivity() {
                         uiState = uiState,
                         onOpenPrivacyPolicy = { viewModel.openPrivacyPolicy() },
                         onCheckImmediately = {
-                            startActivity(expressModeNavigator.newIntent(this@AgreementActivity))
+                            startActivity(Intent(this@AgreementActivity, ExpressModeActivity::class.java))
                         },
                         onConfigureDetails = {
-                            startActivity(mainNavigator.newIntent(this@AgreementActivity))
+                            startActivity(Intent(this@AgreementActivity, MainActivity::class.java))
                             finish()
                         },
                         onExit = {
