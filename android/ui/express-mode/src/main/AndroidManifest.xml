@@ -3,7 +3,6 @@
     <application>
         <activity
             android:name=".ExpressModeActivity"
-            android:exported="false"
-            android:theme="@style/Theme.DeviceIntegrity" />
+            android:exported="false" />
     </application>
 </manifest>
