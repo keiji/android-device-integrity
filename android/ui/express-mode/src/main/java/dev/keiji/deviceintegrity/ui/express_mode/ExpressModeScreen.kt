@@ -48,20 +48,22 @@ fun ExpressModeScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // HorizontalProgress
-            if (uiState.progress == -1) {
-                LinearProgressIndicator(
-                    modifier = Modifier.fillMaxWidth()
-                )
-            } else {
-                val progress = if (uiState.maxProgress > 0) {
-                    uiState.progress.toFloat() / uiState.maxProgress
+            if (uiState.isProgressVisible) {
+                if (uiState.progress == -1) {
+                    LinearProgressIndicator(
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 } else {
-                    0f
+                    val progress = if (uiState.maxProgress > 0) {
+                        uiState.progress.toFloat() / uiState.maxProgress
+                    } else {
+                        0f
+                    }
+                    LinearProgressIndicator(
+                        progress = { progress },
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
-                LinearProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier.fillMaxWidth()
-                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
