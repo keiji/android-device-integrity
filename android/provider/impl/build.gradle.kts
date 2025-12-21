@@ -44,6 +44,7 @@ dependencies {
     // Hilt for Dependency Injection
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+    ksp(libs.kotlin.metadata.jvm)
 
     // GooglePlayServicesUtil for checking GooglePlayServices availability
     implementation(libs.play.services.base)

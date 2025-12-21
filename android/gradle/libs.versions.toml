@@ -38,6 +38,7 @@ timber = "5.0.1"
 
 robolectric = "4.16"
 
+
 # SDK Versions
 androidCompileSdk = "36"
 androidMinSdk = "23"
@@ -100,6 +101,7 @@ timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "tim
 retrofit-core = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-converter-kotlinx-serialization = { group = "com.jakewharton.retrofit", name = "retrofit2-kotlinx-serialization-converter", version.ref = "retrofitKotlinxSerializationJson" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinSerialization" }
+kotlin-metadata-jvm = { group = "org.jetbrains.kotlin", name = "kotlin-metadata-jvm", version.ref = "kotlin" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
