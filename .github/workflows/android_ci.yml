@@ -71,7 +71,7 @@ jobs:
         env:
             GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m"            
         with:
-          api-level: 29
+          api-level: 26
           target: google_apis
           arch: x86_64 # Use x86_64 for better performance on CI
           emulator-boot-timeout: 1200 # Increase boot timeout to 20 minutes
