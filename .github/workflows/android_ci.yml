@@ -24,6 +24,9 @@ on:
 jobs:
   buildAndTest:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+        JAVA_TOOL_OPTIONS: "-Xmx4g"
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
@@ -65,16 +68,21 @@ jobs:
       - name: Run tests on emulator
         uses: reactivecircus/android-emulator-runner@v2
         timeout-minutes: 30
+        env:
+            GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m"            
         with:
-          api-level: 30
+          api-level: 26
           target: google_apis
           arch: x86_64 # Use x86_64 for better performance on CI
           emulator-boot-timeout: 1200 # Increase boot timeout to 20 minutes
-          emulator-options: -accel on -no-snapshot -no-window -noaudio -no-boot-anim -camera-back none
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
           working-directory: ./android # Important for gradle script path
+          pre-emulator-launch-script: |
+                      echo "hw.dataPartition.size=1024M" >> ~/.android/avd/test.avd/config.ini
+                      echo "disk.dataPartition.size=1024M" >> ~/.android/avd/test.avd/config.ini
           script: |
             echo "Listing connected devices..."
             adb devices
             echo "Running Android connected tests..."
-            ./gradlew connectedAndroidTest
+            ./gradlew connectedAndroidTest --stacktrace
