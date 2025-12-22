@@ -24,7 +24,7 @@ on:
 jobs:
   buildAndTest:
     runs-on: ubuntu-latest
-    timeout-minuts: 30
+    timeout-minutes: 30
     env:
         JAVA_TOOL_OPTIONS: "-Xmx4g"
     steps:
