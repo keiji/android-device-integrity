@@ -3,7 +3,9 @@ package dev.keiji.deviceintegrity.ui.express_mode
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.content.Context
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.keiji.deviceintegrity.api.DeviceInfo
 import dev.keiji.deviceintegrity.api.SecurityInfo
 import dev.keiji.deviceintegrity.api.keyattestation.AuthorizationList
@@ -39,6 +41,7 @@ import kotlin.io.encoding.Base64
 
 @HiltViewModel
 class ExpressModeViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val standardPlayIntegrityTokenRepository: StandardPlayIntegrityTokenRepository,
     private val playIntegrityRepository: PlayIntegrityRepository,
     private val keyPairRepository: KeyPairRepository,
@@ -69,30 +72,33 @@ class ExpressModeViewModel @Inject constructor(
 
     private fun startVerification() {
         viewModelScope.launch {
-            // 1. Wait 10 seconds
+            // 1. Wait 10 seconds (count down every 50ms)
             val waitSeconds = 10
+            val interval = 50L
+            val totalSteps = (waitSeconds * 1000 / interval).toInt()
+
             _uiState.update {
                 it.copy(
-                    maxProgress = waitSeconds,
-                    progress = waitSeconds,
-                    status = "Waiting to start..."
+                    maxProgress = totalSteps,
+                    progress = totalSteps,
+                    status = context.getString(R.string.status_preparing)
                 )
             }
-            for (i in waitSeconds downTo 1) {
+            for (i in totalSteps downTo 1) {
                 _uiState.update {
                     it.copy(
                         progress = i,
-                        status = "Starting verification in $i seconds..."
+                        status = context.getString(R.string.status_preparing)
                     )
                 }
-                delay(1000)
+                delay(interval)
             }
-            _uiState.update { it.copy(progress = 0, status = "Starting...") }
+            _uiState.update { it.copy(progress = 0, status = context.getString(R.string.status_preparing)) }
 
             // 2. Play Integrity Check
             _uiState.update {
                 it.copy(
-                    status = "Play Integrityを検証しています",
+                    status = context.getString(R.string.status_play_integrity),
                     progress = -1
                 )
             }
@@ -101,7 +107,7 @@ class ExpressModeViewModel @Inject constructor(
             // 3. Key Attestation Check
             _uiState.update {
                 it.copy(
-                    status = "Key Attestationを検証しています",
+                    status = context.getString(R.string.status_key_attestation),
                     progress = -1
                 )
             }
@@ -112,7 +118,7 @@ class ExpressModeViewModel @Inject constructor(
                 it.copy(
                     progress = 0,
                     isProgressVisible = false,
-                    status = "Verification Complete",
+                    status = context.getString(R.string.status_complete),
                     playIntegrityInfoItems = playIntegrityItems,
                     keyAttestationInfoItems = keyAttestationItems,
                     isPlayIntegritySuccess = isPlayIntegritySuccess,

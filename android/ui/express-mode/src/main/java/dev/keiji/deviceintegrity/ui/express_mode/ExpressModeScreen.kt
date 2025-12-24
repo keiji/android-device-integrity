@@ -43,7 +43,7 @@ fun ExpressModeScreen(
             )
             Spacer(modifier = Modifier.height(32.dp))
             Text(
-                text = "Play Integrity APIを実行しています",
+                text = uiState.status,
             )
             Spacer(modifier = Modifier.height(16.dp))
 
