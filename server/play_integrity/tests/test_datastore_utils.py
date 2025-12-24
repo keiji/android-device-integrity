@@ -122,5 +122,6 @@ class TestDatastoreUtils(unittest.TestCase):
         cleanup_expired_nonces(self.mock_datastore_client)
 
         self.mock_datastore_client.query.assert_called_once_with(kind=NONCE_KIND)
+        mock_query.keys_only.assert_called_once()
         mock_query.add_filter.assert_called_once_with('expiry_datetime', '<', ANY)
         self.mock_datastore_client.delete_multi.assert_called_once_with(["key1", "key2"])
