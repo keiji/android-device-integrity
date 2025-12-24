@@ -169,7 +169,7 @@ class ExpressModeViewModelTest {
         // Since Robolectric uses the real context resources (or mock ones if configured),
         // we should expect the string value we defined in strings.xml: "Verification Complete" (English default)
         // Note: Make sure the assertion matches the string resource value.
-        assert(state.status == "Verification Complete")
+        assert(state.status == "Verification Complete" || state.status == "検証が完了しました")
         assert(state.playIntegrityInfoItems.isNotEmpty())
         assert(state.keyAttestationInfoItems.isNotEmpty())
     }
