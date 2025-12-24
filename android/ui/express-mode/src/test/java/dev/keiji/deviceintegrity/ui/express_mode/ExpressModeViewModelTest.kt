@@ -28,25 +28,24 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import android.content.Context
-import androidx.test.core.app.ApplicationProvider
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import org.robolectric.RobolectricTestRunner
 import java.security.KeyPair
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
 class ExpressModeViewModelTest {
 
     private val dispatcher = StandardTestDispatcher()
 
+    private val context: Context = mock()
     private val standardPlayIntegrityTokenRepository: StandardPlayIntegrityTokenRepository = mock()
     private val playIntegrityRepository: PlayIntegrityRepository = mock()
     private val keyPairRepository: KeyPairRepository = mock()
@@ -78,6 +77,11 @@ class ExpressModeViewModelTest {
         whenever(deviceSecurityStateProvider.isBiometricsEnabled).thenReturn(false)
         whenever(deviceSecurityStateProvider.hasClass3Authenticator).thenReturn(false)
         whenever(deviceSecurityStateProvider.hasStrongBox).thenReturn(false)
+
+        whenever(context.getString(R.string.status_preparing)).thenReturn("Preparing...")
+        whenever(context.getString(R.string.status_play_integrity)).thenReturn("Play Integrity...")
+        whenever(context.getString(R.string.status_key_attestation)).thenReturn("Key Attestation...")
+        whenever(context.getString(R.string.status_complete)).thenReturn("Verification Complete")
     }
 
     @After
@@ -143,8 +147,6 @@ class ExpressModeViewModelTest {
         )
         whenever(keyAttestationRepository.verifySignature(any())).thenReturn(mockVerifyResponse)
 
-        val context = ApplicationProvider.getApplicationContext<Context>()
-
         // Create ViewModel
         val viewModel = ExpressModeViewModel(
             context,
@@ -165,12 +167,9 @@ class ExpressModeViewModelTest {
         // Verify final state
         val state = viewModel.uiState.value
         println("Final State Status: ${state.status}")
-        // "Verification Complete" comes from context.getString(R.string.status_complete)
-        // Since Robolectric uses the real context resources (or mock ones if configured),
-        // we should expect the string value we defined in strings.xml: "Verification Complete" (English default)
-        // Note: Make sure the assertion matches the string resource value.
-        assert(state.status == "Verification Complete" || state.status == "検証が完了しました")
-        assert(state.playIntegrityInfoItems.isNotEmpty())
-        assert(state.keyAttestationInfoItems.isNotEmpty())
+
+        assertEquals("Verification Complete", state.status)
+        assertTrue(state.playIntegrityInfoItems.isNotEmpty())
+        assertTrue(state.keyAttestationInfoItems.isNotEmpty())
     }
 }
