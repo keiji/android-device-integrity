@@ -11,7 +11,7 @@ on:
       - '!.android/docs/**'
       - '.github/workflows/android_ci.yml' # To ensure changes to the workflow itself are checked
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "feature/**" ]
     paths:
       - 'android/**'
       - '!.android/docs/**'
