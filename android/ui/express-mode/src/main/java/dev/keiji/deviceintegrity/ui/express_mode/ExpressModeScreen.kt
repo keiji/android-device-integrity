@@ -43,8 +43,9 @@ fun ExpressModeScreen(
                 style = MaterialTheme.typography.displaySmall
             )
             Spacer(modifier = Modifier.height(32.dp))
+            val statusText = uiState.statusResId?.let { stringResource(it) } ?: ""
             Text(
-                text = uiState.status,
+                text = statusText,
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -117,7 +118,7 @@ fun ExpressModeScreenResultPreview() {
             uiState = ExpressModeUiState(
                 progress = 5,
                 maxProgress = 5,
-                status = "Verification successful",
+                statusResId = R.string.status_complete,
                 resultInfoItems = listOf(
                     dev.keiji.deviceintegrity.ui.common.InfoItem("Result", "Success"),
                     dev.keiji.deviceintegrity.ui.common.InfoItem("Details", "All checks passed")

@@ -4,4 +4,5 @@
     <string name="status_play_integrity">Play Integrity APIによる検証を実行しています</string>
     <string name="status_key_attestation">Key Attestationによる検証を実行しています</string>
     <string name="status_complete">検証が完了しました</string>
+    <string name="status_retry_without_id_attestation">ID構成証明に対応していません。ID構成証明を無効で再試行します</string>
 </resources>

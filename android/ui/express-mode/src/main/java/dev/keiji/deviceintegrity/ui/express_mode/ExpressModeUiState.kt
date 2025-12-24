@@ -11,5 +11,5 @@ data class ExpressModeUiState(
     val keyAttestationInfoItems: List<InfoItem> = emptyList(),
     val isPlayIntegritySuccess: Boolean = true,
     val isKeyAttestationSuccess: Boolean = true,
-    val status: String = "",
+    val statusResId: Int? = null,
 )

@@ -27,7 +27,6 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
-import android.content.Context
 import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.any
@@ -45,7 +44,6 @@ class ExpressModeViewModelTest {
 
     private val dispatcher = StandardTestDispatcher()
 
-    private val context: Context = mock()
     private val standardPlayIntegrityTokenRepository: StandardPlayIntegrityTokenRepository = mock()
     private val playIntegrityRepository: PlayIntegrityRepository = mock()
     private val keyPairRepository: KeyPairRepository = mock()
@@ -77,11 +75,6 @@ class ExpressModeViewModelTest {
         whenever(deviceSecurityStateProvider.isBiometricsEnabled).thenReturn(false)
         whenever(deviceSecurityStateProvider.hasClass3Authenticator).thenReturn(false)
         whenever(deviceSecurityStateProvider.hasStrongBox).thenReturn(false)
-
-        whenever(context.getString(R.string.status_preparing)).thenReturn("Preparing...")
-        whenever(context.getString(R.string.status_play_integrity)).thenReturn("Play Integrity...")
-        whenever(context.getString(R.string.status_key_attestation)).thenReturn("Key Attestation...")
-        whenever(context.getString(R.string.status_complete)).thenReturn("Verification Complete")
     }
 
     @After
@@ -149,7 +142,6 @@ class ExpressModeViewModelTest {
 
         // Create ViewModel
         val viewModel = ExpressModeViewModel(
-            context,
             standardPlayIntegrityTokenRepository,
             playIntegrityRepository,
             keyPairRepository,
@@ -166,9 +158,9 @@ class ExpressModeViewModelTest {
 
         // Verify final state
         val state = viewModel.uiState.value
-        println("Final State Status: ${state.status}")
+        println("Final State Status ID: ${state.statusResId}")
 
-        assertEquals("Verification Complete", state.status)
+        assertEquals(R.string.status_complete, state.statusResId)
         assertTrue(state.playIntegrityInfoItems.isNotEmpty())
         assertTrue(state.keyAttestationInfoItems.isNotEmpty())
     }
