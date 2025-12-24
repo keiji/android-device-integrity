@@ -15,6 +15,8 @@ CRL_CACHE_DIR = "/tmp/crl"
 _CRL_MEM_CACHE = None
 _CRL_MEM_CACHE_EXPIRY = None
 
+CRL_FILENAME_PATTERN = re.compile(r"crl-(\d+)\.json")
+
 
 def _get_cached_crl():
     """
@@ -36,7 +38,7 @@ def _get_cached_crl():
     for filename in os.listdir(CRL_CACHE_DIR):
         if filename.startswith("crl-") and filename.endswith(".json"):
             logger.info(f"Found potentially expiring CRL cache file: '{filename}'")
-            match = re.match(r"crl-(\d+)\.json", filename)
+            match = CRL_FILENAME_PATTERN.match(filename)
             if match:
                 expire_epoch = int(match.group(1))
                 logger.info(f"File has expiration epoch: {expire_epoch}. Current epoch: {current_time}.")

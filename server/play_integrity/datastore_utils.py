@@ -27,6 +27,7 @@ def cleanup_expired_nonces(datastore_client: datastore.Client):
         now = datetime.now(timezone.utc)
         query = datastore_client.query(kind=NONCE_KIND)
         query.add_filter('expiry_datetime', '<', now)
+        query.keys_only()
 
         expired_keys = [entity.key for entity in query.fetch()]
 
