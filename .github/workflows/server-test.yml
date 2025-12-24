@@ -8,6 +8,9 @@ on:
       - 'server/key_attestation/**'
       - 'server/play_integrity/**'
   pull_request:
+    branches:
+      - main
+      - feature/**
     paths:
       - 'server/key_attestation/**'
       - 'server/play_integrity/**'
