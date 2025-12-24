@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.keiji.deviceintegrity.ui.common.InfoItemContent
@@ -38,12 +39,12 @@ fun ExpressModeScreen(
             horizontalAlignment = Alignment.Start
         ) {
             Text(
-                text = "デバイスの完全性を確認します",
+                text = stringResource(R.string.title_checking_integrity),
                 style = MaterialTheme.typography.displaySmall
             )
             Spacer(modifier = Modifier.height(32.dp))
             Text(
-                text = "Play Integrity APIを実行しています",
+                text = uiState.status,
             )
             Spacer(modifier = Modifier.height(16.dp))
 
