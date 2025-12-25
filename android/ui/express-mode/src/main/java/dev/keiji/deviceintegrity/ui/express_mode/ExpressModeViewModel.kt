@@ -3,9 +3,7 @@ package dev.keiji.deviceintegrity.ui.express_mode
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import android.content.Context
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.keiji.deviceintegrity.api.DeviceInfo
 import dev.keiji.deviceintegrity.api.SecurityInfo
 import dev.keiji.deviceintegrity.api.keyattestation.AuthorizationList
@@ -41,7 +39,6 @@ import kotlin.io.encoding.Base64
 
 @HiltViewModel
 class ExpressModeViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val standardPlayIntegrityTokenRepository: StandardPlayIntegrityTokenRepository,
     private val playIntegrityRepository: PlayIntegrityRepository,
     private val keyPairRepository: KeyPairRepository,
@@ -58,7 +55,7 @@ class ExpressModeViewModel @Inject constructor(
             progress = 0,
             maxProgress = 10,
             resultInfoItems = emptyList(),
-            status = "",
+            statusResId = null,
         )
     )
     val uiState: StateFlow<ExpressModeUiState> = _uiState.asStateFlow()
@@ -81,24 +78,24 @@ class ExpressModeViewModel @Inject constructor(
                 it.copy(
                     maxProgress = totalSteps,
                     progress = totalSteps,
-                    status = context.getString(R.string.status_preparing)
+                    statusResId = R.string.status_preparing
                 )
             }
             for (i in totalSteps downTo 1) {
                 _uiState.update {
                     it.copy(
                         progress = i,
-                        status = context.getString(R.string.status_preparing)
+                        statusResId = R.string.status_preparing
                     )
                 }
                 delay(interval)
             }
-            _uiState.update { it.copy(progress = 0, status = context.getString(R.string.status_preparing)) }
+            _uiState.update { it.copy(progress = 0, statusResId = R.string.status_preparing) }
 
             // 2. Play Integrity Check
             _uiState.update {
                 it.copy(
-                    status = context.getString(R.string.status_play_integrity),
+                    statusResId = R.string.status_play_integrity,
                     progress = -1
                 )
             }
@@ -107,7 +104,7 @@ class ExpressModeViewModel @Inject constructor(
             // 3. Key Attestation Check
             _uiState.update {
                 it.copy(
-                    status = context.getString(R.string.status_key_attestation),
+                    statusResId = R.string.status_key_attestation,
                     progress = -1
                 )
             }
@@ -118,7 +115,7 @@ class ExpressModeViewModel @Inject constructor(
                 it.copy(
                     progress = 0,
                     isProgressVisible = false,
-                    status = context.getString(R.string.status_complete),
+                    statusResId = R.string.status_complete,
                     playIntegrityInfoItems = playIntegrityItems,
                     keyAttestationInfoItems = keyAttestationItems,
                     isPlayIntegritySuccess = isPlayIntegritySuccess,
@@ -213,7 +210,7 @@ class ExpressModeViewModel @Inject constructor(
             } catch (e: Exception) {
                 // Retry without ID Attestation
                 _uiState.update {
-                    it.copy(status = "ID構成証明に対応していません。ID構成証明を無効で再試行します")
+                    it.copy(statusResId = R.string.status_retry_without_id_attestation)
                 }
                 delay(2000) // Show message for a bit
 

@@ -27,22 +27,19 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import org.robolectric.RobolectricTestRunner
 import java.security.KeyPair
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
 class ExpressModeViewModelTest {
 
     private val dispatcher = StandardTestDispatcher()
@@ -143,11 +140,8 @@ class ExpressModeViewModelTest {
         )
         whenever(keyAttestationRepository.verifySignature(any())).thenReturn(mockVerifyResponse)
 
-        val context = ApplicationProvider.getApplicationContext<Context>()
-
         // Create ViewModel
         val viewModel = ExpressModeViewModel(
-            context,
             standardPlayIntegrityTokenRepository,
             playIntegrityRepository,
             keyPairRepository,
@@ -164,13 +158,10 @@ class ExpressModeViewModelTest {
 
         // Verify final state
         val state = viewModel.uiState.value
-        println("Final State Status: ${state.status}")
-        // "Verification Complete" comes from context.getString(R.string.status_complete)
-        // Since Robolectric uses the real context resources (or mock ones if configured),
-        // we should expect the string value we defined in strings.xml: "Verification Complete" (English default)
-        // Note: Make sure the assertion matches the string resource value.
-        assert(state.status == "Verification Complete" || state.status == "検証が完了しました")
-        assert(state.playIntegrityInfoItems.isNotEmpty())
-        assert(state.keyAttestationInfoItems.isNotEmpty())
+        println("Final State Status ID: ${state.statusResId}")
+
+        assertEquals(R.string.status_complete, state.statusResId)
+        assertTrue(state.playIntegrityInfoItems.isNotEmpty())
+        assertTrue(state.keyAttestationInfoItems.isNotEmpty())
     }
 }
