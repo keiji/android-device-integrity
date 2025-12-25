@@ -1,6 +1,5 @@
 package dev.keiji.deviceintegrity.ui.express_mode
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,7 +34,7 @@ import androidx.activity.compose.BackHandler
 import dev.keiji.deviceintegrity.ui.common.InfoItemContent
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpressModeScreen(
     uiState: ExpressModeUiState,
@@ -45,6 +44,7 @@ fun ExpressModeScreen(
     onExitApp: () -> Unit = {},
 ) {
     val showExitConfirmationDialog = remember { mutableStateOf(false) }
+    var selectedTabIndex by remember { mutableStateOf(0) }
 
     fun handleBackOrClose() {
         if (uiState.isProgressVisible) {
@@ -148,8 +148,7 @@ fun ExpressModeScreen(
             }
 
             if (!uiState.isProgressVisible) {
-                stickyHeader {
-                    var selectedTabIndex by remember { mutableStateOf(0) }
+                item {
                     val tabs = listOf("Play Integrity", "Key Attestation")
 
                     TabRow(
