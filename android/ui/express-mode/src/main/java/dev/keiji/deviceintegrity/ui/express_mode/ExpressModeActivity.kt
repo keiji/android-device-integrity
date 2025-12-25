@@ -19,9 +19,10 @@ class ExpressModeActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 NavHost(
                     navController = navController,
-                    startDestination = EXPRESS_MODE_ROUTE
+                    startDestination = EXPRESS_MODE_GRAPH_ROUTE
                 ) {
                     expressModeScreen(
+                        navController = navController,
                         onNavigateUp = {
                             if (!navController.popBackStack()) {
                                 finish()

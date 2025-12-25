@@ -1,7 +1,5 @@
 package dev.keiji.deviceintegrity.ui.express_mode
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,32 +17,34 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.activity.compose.BackHandler
-import dev.keiji.deviceintegrity.ui.common.InfoItemContent
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpressModeScreen(
     uiState: ExpressModeUiState,
-    onCopyClick: () -> Unit = {},
-    onShareClick: () -> Unit = {},
+    onNavigateToResult: () -> Unit = {},
     onBack: () -> Unit = {},
     onExitApp: () -> Unit = {},
 ) {
     val showExitConfirmationDialog = remember { mutableStateOf(false) }
+
+    // When verification is complete (progress not visible), navigate to Result screen
+    LaunchedEffect(uiState.isProgressVisible) {
+        if (!uiState.isProgressVisible) {
+            onNavigateToResult()
+        }
+    }
 
     fun handleBackOrClose() {
         if (uiState.isProgressVisible) {
@@ -146,62 +146,6 @@ fun ExpressModeScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
             }
-
-            if (!uiState.isProgressVisible) {
-                stickyHeader {
-                    var selectedTabIndex by remember { mutableStateOf(0) }
-                    val tabs = listOf("Play Integrity", "Key Attestation")
-
-                    TabRow(
-                        selectedTabIndex = selectedTabIndex,
-                        modifier = Modifier.background(MaterialTheme.colorScheme.background)
-                    ) {
-                        tabs.forEachIndexed { index, title ->
-                            Tab(
-                                selected = selectedTabIndex == index,
-                                onClick = { selectedTabIndex = index },
-                                text = { Text(text = title) }
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    when (selectedTabIndex) {
-                        0 -> {
-                            if (uiState.playIntegrityInfoItems.isNotEmpty()) {
-                                InfoItemContent(
-                                    status = "Play Integrity",
-                                    isVerifiedSuccessfully = uiState.isPlayIntegritySuccess,
-                                    infoItems = uiState.playIntegrityInfoItems,
-                                    showStatus = false,
-                                    onCopyClick = onCopyClick,
-                                    onShareClick = onShareClick,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp)
-                                )
-                            }
-                        }
-
-                        1 -> {
-                            if (uiState.keyAttestationInfoItems.isNotEmpty()) {
-                                InfoItemContent(
-                                    status = "Key Attestation",
-                                    isVerifiedSuccessfully = uiState.isKeyAttestationSuccess,
-                                    infoItems = uiState.keyAttestationInfoItems,
-                                    showStatus = false,
-                                    onCopyClick = onCopyClick,
-                                    onShareClick = onShareClick,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 }
@@ -214,24 +158,6 @@ fun ExpressModeScreenPreview() {
             uiState = ExpressModeUiState(
                 progress = 3,
                 maxProgress = 5
-            )
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun ExpressModeScreenResultPreview() {
-    DeviceIntegrityTheme {
-        ExpressModeScreen(
-            uiState = ExpressModeUiState(
-                progress = 5,
-                maxProgress = 5,
-                statusResId = R.string.status_complete,
-                resultInfoItems = listOf(
-                    dev.keiji.deviceintegrity.ui.common.InfoItem("Result", "Success"),
-                    dev.keiji.deviceintegrity.ui.common.InfoItem("Details", "All checks passed")
-                )
             )
         )
     }
