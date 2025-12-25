@@ -14,19 +14,19 @@ fun NavGraphBuilder.expressModeScreen(
     onCopyClick: () -> Unit = {},
     onShareClick: () -> Unit = {},
     onNavigateUp: () -> Unit = {},
+    onExitApp: () -> Unit = {},
 ) {
     composable(EXPRESS_MODE_ROUTE) {
         val viewModel: ExpressModeViewModel = hiltViewModel()
         val uiState by viewModel.uiState.collectAsState()
         val uiEvent by viewModel.uiEvent.collectAsState()
-        val context = LocalContext.current
 
         ExpressModeScreen(
             uiState = uiState,
             onCopyClick = onCopyClick,
             onShareClick = onShareClick,
             onBack = onNavigateUp,
-            onExitApp = { (context as? Activity)?.finishAffinity() }
+            onExitApp = onExitApp
         )
     }
 }

@@ -26,6 +26,9 @@ class ExpressModeActivity : ComponentActivity() {
                             if (!navController.popBackStack()) {
                                 finish()
                             }
+                        },
+                        onExitApp = {
+                            finishAffinity()
                         }
                     )
                 }
