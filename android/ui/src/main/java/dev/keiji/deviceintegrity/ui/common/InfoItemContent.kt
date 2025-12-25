@@ -31,25 +31,28 @@ fun InfoItemContent(
     isVerifiedSuccessfully: Boolean,
     infoItems: List<InfoItem>,
     headContent: (@Composable () -> Unit)? = null,
+    showStatus: Boolean = true,
     onCopyClick: () -> Unit,
     onShareClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
-        Text(
-            text = status,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            color = if (status.contains("Failed", ignoreCase = true) || status.contains(
-                    "Error",
-                    ignoreCase = true
-                )
-            ) {
-                MaterialTheme.colorScheme.error
-            } else {
-                Color.Unspecified
-            },
-            style = MaterialTheme.typography.titleMedium
-        )
+        if (showStatus) {
+            Text(
+                text = status,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                color = if (status.contains("Failed", ignoreCase = true) || status.contains(
+                        "Error",
+                        ignoreCase = true
+                    )
+                ) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    Color.Unspecified
+                },
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
 
         // Display DeviceIntegrityResults if the verdict is not empty
         headContent?.let {
@@ -57,7 +60,9 @@ fun InfoItemContent(
         }
 
         if (infoItems.isNotEmpty()) {
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            if (showStatus) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            }
 
             if (isVerifiedSuccessfully) {
                 Row(
