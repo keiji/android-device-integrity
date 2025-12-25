@@ -77,6 +77,7 @@ class AgreementActivity : ComponentActivity() {
                         onOpenPrivacyPolicy = { viewModel.openPrivacyPolicy() },
                         onCheckImmediately = {
                             startActivity(expressModeNavigator.newIntent(this@AgreementActivity))
+                            finish()
                         },
                         onConfigureDetails = {
                             startActivity(mainNavigator.newIntent(this@AgreementActivity))
