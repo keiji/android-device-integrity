@@ -41,9 +41,9 @@ import dev.keiji.deviceintegrity.ui.keyattestation.keyAttestationScreen
 import dev.keiji.deviceintegrity.ui.playintegrity.ClassicPlayIntegrityViewModel
 import dev.keiji.deviceintegrity.ui.playintegrity.PlayIntegrityScreen
 import dev.keiji.deviceintegrity.ui.playintegrity.StandardPlayIntegrityViewModel
-import dev.keiji.deviceintegrity.ui.main.settings.SettingsScreen
-import dev.keiji.deviceintegrity.ui.main.settings.SettingsUiEvent
-import dev.keiji.deviceintegrity.ui.main.settings.SettingsViewModel
+import dev.keiji.deviceintegrity.ui.menu.SettingsScreen
+import dev.keiji.deviceintegrity.ui.menu.SettingsUiEvent
+import dev.keiji.deviceintegrity.ui.menu.SettingsViewModel
 import dev.keiji.deviceintegrity.ui.nav.contract.AppScreen
 import dev.keiji.deviceintegrity.ui.nav.contract.LicenseNavigator
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
