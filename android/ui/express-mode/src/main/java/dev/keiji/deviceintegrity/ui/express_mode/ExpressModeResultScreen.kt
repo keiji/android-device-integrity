@@ -20,12 +20,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.keiji.deviceintegrity.ui.common.InfoItemContent
@@ -40,33 +42,36 @@ fun ExpressModeResultScreen(
     onExitApp: () -> Unit = {},
 ) {
     var selectedTabIndex by remember { mutableStateOf(0) }
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     BackHandler {
         onExitApp()
     }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { },
+                navigationIcon = {
+                    IconButton(onClick = { onExitApp() }) {
+                        Icon(
+                            imageVector = Icons.Filled.Close,
+                            contentDescription = "Close"
+                        )
+                    }
+                },
+                scrollBehavior = scrollBehavior
+            )
+        }
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
+                .fillMaxSize(),
+            contentPadding = innerPadding
         ) {
-            item {
-                CenterAlignedTopAppBar(
-                    title = { },
-                    navigationIcon = {
-                        IconButton(onClick = { onExitApp() }) {
-                            Icon(
-                                imageVector = Icons.Filled.Close,
-                                contentDescription = "Close"
-                            )
-                        }
-                    }
-                )
-            }
-
             stickyHeader {
                 val tabs = listOf("Play Integrity", "Key Attestation")
 
