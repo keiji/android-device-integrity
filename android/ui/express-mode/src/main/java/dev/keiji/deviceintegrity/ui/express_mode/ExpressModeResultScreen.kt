@@ -1,6 +1,7 @@
 package dev.keiji.deviceintegrity.ui.express_mode
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import dev.keiji.deviceintegrity.ui.common.InfoItemContent
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ExpressModeResultScreen(
     uiState: ExpressModeUiState,
@@ -46,19 +47,6 @@ fun ExpressModeResultScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { },
-                navigationIcon = {
-                    IconButton(onClick = { onExitApp() }) {
-                        Icon(
-                            imageVector = Icons.Filled.Close,
-                            contentDescription = "Close"
-                        )
-                    }
-                }
-            )
-        }
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -66,6 +54,20 @@ fun ExpressModeResultScreen(
                 .padding(innerPadding)
         ) {
             item {
+                CenterAlignedTopAppBar(
+                    title = { },
+                    navigationIcon = {
+                        IconButton(onClick = { onExitApp() }) {
+                            Icon(
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = "Close"
+                            )
+                        }
+                    }
+                )
+            }
+
+            stickyHeader {
                 val tabs = listOf("Play Integrity", "Key Attestation")
 
                 TabRow(
@@ -80,7 +82,9 @@ fun ExpressModeResultScreen(
                         )
                     }
                 }
+            }
 
+            item {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 when (selectedTabIndex) {
