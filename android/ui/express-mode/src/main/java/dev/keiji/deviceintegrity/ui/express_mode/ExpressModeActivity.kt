@@ -21,7 +21,16 @@ class ExpressModeActivity : ComponentActivity() {
                     navController = navController,
                     startDestination = EXPRESS_MODE_ROUTE
                 ) {
-                    expressModeScreen()
+                    expressModeScreen(
+                        onNavigateUp = {
+                            if (!navController.popBackStack()) {
+                                finish()
+                            }
+                        },
+                        onExitApp = {
+                            finishAffinity()
+                        }
+                    )
                 }
             }
         }
