@@ -2,14 +2,6 @@
     <string name="app_screen_key_attestation_label" translatable="false">Key Attestation</string>
     <string name="app_screen_menu_label" translatable="false">Menu</string>
 
-    <string name="settings_title_app_version">App Version</string>
-    <string name="settings_title_device_name">Device Name</string>
-    <string name="settings_title_os_version">OS Version</string>
-    <string name="settings_title_security_patch">Security Patch</string>
-    <string name="settings_title_privacy_policy">Privacy Policy</string>
-    <string name="settings_title_oss_licenses">Open Source Licenses</string>
-    <string name="settings_title_support_site">Support Site</string>
-
     <string name="startup_action_check_immediately">Check immediately</string>
     <string name="startup_action_configure_details">Configure details</string>
     <string name="startup_action_exit_app">Exit app</string>

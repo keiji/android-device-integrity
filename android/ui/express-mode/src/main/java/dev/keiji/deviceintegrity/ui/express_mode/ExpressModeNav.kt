@@ -16,6 +16,7 @@ fun NavGraphBuilder.expressModeScreen(
     navController: NavController,
     onCopyClick: () -> Unit = {},
     onShareClick: () -> Unit = {},
+    onNavigateToOssLicenses: () -> Unit = {},
     onNavigateUp: () -> Unit = {},
     onExitApp: () -> Unit = {},
 ) {
@@ -52,6 +53,7 @@ fun NavGraphBuilder.expressModeScreen(
                 uiState = uiState,
                 onCopyClick = onCopyClick,
                 onShareClick = onShareClick,
+                onNavigateToOssLicenses = onNavigateToOssLicenses,
                 onExitApp = onExitApp
             )
         }

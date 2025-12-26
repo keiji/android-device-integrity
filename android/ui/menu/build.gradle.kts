@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "dev.keiji.deviceintegrity.ui.express_mode"
+    namespace = "dev.keiji.deviceintegrity.ui.menu"
     compileSdk = libs.versions.androidCompileSdk.get().toInt()
 
     defaultConfig {
@@ -45,8 +45,6 @@ dependencies {
     implementation(project(":provider:contract"))
     implementation(project(":api"))
     implementation(project(":crypto:contract"))
-    implementation(project(":ui:menu"))
-    implementation(project(":ui:nav:contract"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -58,7 +56,6 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation(libs.androidx.material.icons.extended)
 
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)

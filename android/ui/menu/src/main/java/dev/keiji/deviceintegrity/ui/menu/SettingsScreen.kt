@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.main.settings
+package dev.keiji.deviceintegrity.ui.menu
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,10 +26,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.keiji.deviceintegrity.ui.main.R
 
 @Composable
 fun SettingsScreen(
+    modifier: Modifier = Modifier,
     uiState: SettingsUiState,
     onNavigateToOssLicenses: () -> Unit = {},
     onNavigateToApiSettings: () -> Unit = {},
@@ -40,7 +40,7 @@ fun SettingsScreen(
     val scrollState = rememberScrollState()
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
             .padding(vertical = 8.dp)
