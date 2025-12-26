@@ -1,12 +1,4 @@
 <resources>
-    <string name="settings_title_app_version">アプリのバージョン</string>
-    <string name="settings_title_device_name">端末名</string>
-    <string name="settings_title_os_version">OSバージョン</string>
-    <string name="settings_title_security_patch">セキュリティパッチ</string>
-    <string name="settings_title_privacy_policy">プライバシーポリシー</string>
-    <string name="settings_title_oss_licenses">オープンソースライセンス</string>
-    <string name="settings_title_support_site">サポートサイト</string>
-
     <string name="startup_action_check_immediately">すぐにチェックする</string>
     <string name="startup_action_configure_details">詳細を設定する</string>
     <string name="startup_action_exit_app">アプリを終了</string>
