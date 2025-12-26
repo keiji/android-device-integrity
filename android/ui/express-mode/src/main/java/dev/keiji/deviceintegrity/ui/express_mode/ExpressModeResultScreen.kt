@@ -51,7 +51,6 @@ fun ExpressModeResultScreen(
     onExitApp: () -> Unit = {},
 ) {
     var selectedTabIndex by remember { mutableStateOf(0) }
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     BackHandler {
         onExitApp()
@@ -59,22 +58,7 @@ fun ExpressModeResultScreen(
 
     Scaffold(
         modifier = Modifier
-            .fillMaxSize()
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { },
-                navigationIcon = {
-                    IconButton(onClick = { onExitApp() }) {
-                        Icon(
-                            imageVector = Icons.Filled.Close,
-                            contentDescription = "Close"
-                        )
-                    }
-                },
-                scrollBehavior = scrollBehavior
-            )
-        },
+            .fillMaxSize(),
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(
