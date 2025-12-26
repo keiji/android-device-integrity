@@ -116,15 +116,20 @@ class TestAttestationParser(unittest.TestCase):
         parsed = parse_authorization_list(auth_list_obj, attestation_version=400)
         self.assertEqual(parsed, {})
 
-    @unittest.skip("Skipping due to pyasn1 tag incompatibility when using setComponentByName with explicitly tagged schema fields.")
     def test_parse_authorization_list_with_items(self):
         auth_list_obj = AuthorizationList()
-        # The following lines cause "tag-incompatible" error because univ.Integer(11)
-        # does not carry the explicit tag expected by the schema for 'osVersion'.
-        # To fix this, one would need to pass an already correctly tagged object,
-        # but the create_tagged_integer helper also showed issues with encoding.
-        auth_list_obj.setComponentByName('osVersion', univ.Integer(11))
-        auth_list_obj.setComponentByName('osPatchLevel', univ.Integer(20230305))
+
+        # Helper to set an integer field with the correct explicit tag from the schema
+        def set_int_field(name, value):
+            # Retrieve the component type definition from the schema
+            # Note: pyasn1 NamedTypes supports indexing by name
+            component_type = auth_list_obj.getComponentType()[name].getType()
+            # Clone the type with the new value; this preserves the tag info
+            val = component_type.clone(value)
+            auth_list_obj.setComponentByName(name, val)
+
+        set_int_field('osVersion', 11)
+        set_int_field('osPatchLevel', 20230305)
 
         parsed = parse_authorization_list(auth_list_obj, attestation_version=400)
         self.assertEqual(parsed.get('os_version'), 11)
