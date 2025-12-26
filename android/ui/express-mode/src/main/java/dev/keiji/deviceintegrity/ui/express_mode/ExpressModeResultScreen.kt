@@ -3,25 +3,21 @@ package dev.keiji.deviceintegrity.ui.express_mode
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.VpnKey
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -29,8 +25,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -41,6 +38,30 @@ import dev.keiji.deviceintegrity.ui.menu.SettingsUiEvent
 import dev.keiji.deviceintegrity.ui.menu.SettingsViewModel
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
 
+private sealed class ExpressModeTab(
+    @StringRes val labelResId: Int,
+    val icon: ImageVector,
+    val description: String
+) {
+    data object PlayIntegrity : ExpressModeTab(
+        R.string.result_screen_tab_play_integrity,
+        Icons.Filled.Security,
+        "Play Integrity"
+    )
+
+    data object KeyAttestation : ExpressModeTab(
+        R.string.result_screen_tab_key_attestation,
+        Icons.Filled.VpnKey,
+        "Key Attestation"
+    )
+
+    data object Menu : ExpressModeTab(
+        R.string.result_screen_tab_menu,
+        Icons.Filled.Menu,
+        "Menu"
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpressModeResultScreen(
@@ -50,7 +71,12 @@ fun ExpressModeResultScreen(
     onNavigateToOssLicenses: () -> Unit = {},
     onExitApp: () -> Unit = {},
 ) {
-    var selectedTabIndex by remember { mutableStateOf(0) }
+    var selectedTab by remember { mutableStateOf<ExpressModeTab>(ExpressModeTab.PlayIntegrity) }
+    val tabs = listOf(
+        ExpressModeTab.PlayIntegrity,
+        ExpressModeTab.KeyAttestation,
+        ExpressModeTab.Menu
+    )
 
     BackHandler {
         onExitApp()
@@ -61,44 +87,24 @@ fun ExpressModeResultScreen(
             .fillMaxSize(),
         bottomBar = {
             NavigationBar {
-                NavigationBarItem(
-                    selected = selectedTabIndex == 0,
-                    onClick = { selectedTabIndex = 0 },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Filled.Security,
-                            contentDescription = "Play Integrity"
-                        )
-                    },
-                    label = { Text("Play Integrity") }
-                )
-                NavigationBarItem(
-                    selected = selectedTabIndex == 1,
-                    onClick = { selectedTabIndex = 1 },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Filled.VpnKey,
-                            contentDescription = "Key Attestation"
-                        )
-                    },
-                    label = { Text("Key Attestation") }
-                )
-                NavigationBarItem(
-                    selected = selectedTabIndex == 2,
-                    onClick = { selectedTabIndex = 2 },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Filled.Menu,
-                            contentDescription = "Menu"
-                        )
-                    },
-                    label = { Text("Menu") }
-                )
+                tabs.forEach { tab ->
+                    NavigationBarItem(
+                        selected = selectedTab == tab,
+                        onClick = { selectedTab = tab },
+                        icon = {
+                            Icon(
+                                imageVector = tab.icon,
+                                contentDescription = tab.description
+                            )
+                        },
+                        label = { Text(stringResource(id = tab.labelResId)) }
+                    )
+                }
             }
         }
     ) { innerPadding ->
-        when (selectedTabIndex) {
-            0 -> {
+        when (selectedTab) {
+            ExpressModeTab.PlayIntegrity -> {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize(),
@@ -107,7 +113,7 @@ fun ExpressModeResultScreen(
                     item {
                         if (uiState.playIntegrityInfoItems.isNotEmpty()) {
                             InfoItemContent(
-                                status = "Play Integrity",
+                                status = stringResource(id = R.string.result_screen_tab_play_integrity),
                                 isVerifiedSuccessfully = uiState.isPlayIntegritySuccess,
                                 infoItems = uiState.playIntegrityInfoItems,
                                 showStatus = false,
@@ -122,7 +128,7 @@ fun ExpressModeResultScreen(
                 }
             }
 
-            1 -> {
+            ExpressModeTab.KeyAttestation -> {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize(),
@@ -131,7 +137,7 @@ fun ExpressModeResultScreen(
                     item {
                         if (uiState.keyAttestationInfoItems.isNotEmpty()) {
                             InfoItemContent(
-                                status = "Key Attestation",
+                                status = stringResource(id = R.string.result_screen_tab_key_attestation),
                                 isVerifiedSuccessfully = uiState.isKeyAttestationSuccess,
                                 infoItems = uiState.keyAttestationInfoItems,
                                 showStatus = false,
@@ -146,7 +152,7 @@ fun ExpressModeResultScreen(
                 }
             }
 
-            2 -> {
+            ExpressModeTab.Menu -> {
                 // Menu (Settings)
                 val viewModel: SettingsViewModel = hiltViewModel()
                 val settingsUiState by viewModel.uiState.collectAsStateWithLifecycle()
