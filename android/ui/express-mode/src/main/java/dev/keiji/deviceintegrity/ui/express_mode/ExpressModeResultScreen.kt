@@ -179,20 +179,13 @@ fun ExpressModeResultScreen(
                     }
                 }
 
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    contentPadding = innerPadding
-                ) {
-                    item {
-                        SettingsScreen(
-                            uiState = settingsUiState,
-                            onNavigateToOssLicenses = onNavigateToOssLicenses,
-                            onNavigateToDeveloperInfo = { viewModel.openSupportSiteUrl() },
-                            onNavigateToPrivacyPolicy = { viewModel.openPrivacyPolicyUrl() }
-                        )
-                    }
-                }
+                SettingsScreen(
+                    modifier = Modifier.padding(innerPadding),
+                    uiState = settingsUiState,
+                    onNavigateToOssLicenses = onNavigateToOssLicenses,
+                    onNavigateToDeveloperInfo = { viewModel.openSupportSiteUrl() },
+                    onNavigateToPrivacyPolicy = { viewModel.openPrivacyPolicyUrl() }
+                )
             }
         }
     }

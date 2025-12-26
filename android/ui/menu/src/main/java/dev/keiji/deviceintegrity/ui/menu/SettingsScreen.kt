@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun SettingsScreen(
+    modifier: Modifier = Modifier,
     uiState: SettingsUiState,
     onNavigateToOssLicenses: () -> Unit = {},
     onNavigateToApiSettings: () -> Unit = {},
@@ -39,7 +40,7 @@ fun SettingsScreen(
     val scrollState = rememberScrollState()
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
             .padding(vertical = 8.dp)
