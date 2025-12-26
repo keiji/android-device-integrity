@@ -1,6 +1,7 @@
 package dev.keiji.deviceintegrity.ui.express_mode
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
@@ -24,7 +25,9 @@ fun NavGraphBuilder.expressModeScreen(
         composable(EXPRESS_MODE_ROUTE) { backStackEntry ->
             // Scope the ViewModel to the navigation graph to share it between screens
             val viewModel: ExpressModeViewModel = hiltViewModel(
-                navController.getBackStackEntry(EXPRESS_MODE_GRAPH_ROUTE)
+                remember(backStackEntry) {
+                    navController.getBackStackEntry(EXPRESS_MODE_GRAPH_ROUTE)
+                }
             )
             val uiState by viewModel.uiState.collectAsState()
 
@@ -45,7 +48,9 @@ fun NavGraphBuilder.expressModeScreen(
         composable(EXPRESS_MODE_RESULT_ROUTE) { backStackEntry ->
             // Retrieve the shared ViewModel from the graph scope
             val viewModel: ExpressModeViewModel = hiltViewModel(
-                navController.getBackStackEntry(EXPRESS_MODE_GRAPH_ROUTE)
+                remember(backStackEntry) {
+                    navController.getBackStackEntry(EXPRESS_MODE_GRAPH_ROUTE)
+                }
             )
             val uiState by viewModel.uiState.collectAsState()
 
