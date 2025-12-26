@@ -2,6 +2,7 @@
     <string name="agreement_screen_title">Integrity Check Tool</string>
     <string name="agreement_screen_description">プライバリーポリシーを確認して利用を開始してください</string>
     <string name="agreement_screen_privacy_policy_link">プライバリーポリシー</string>
-    <string name="agreement_screen_agree_button">利用を開始する</string>
+    <string name="agreement_screen_agree_button">詳細を設定する</string>
+    <string name="agreement_screen_check_immediately">すぐにチェックする</string>
     <string name="agreement_screen_disagree_button">アプリを終了</string>
 </resources>

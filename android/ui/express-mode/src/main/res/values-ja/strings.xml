@@ -1,0 +1,12 @@
+<resources>
+    <string name="title_checking_integrity">デバイスの完全性</string>
+    <string name="status_preparing">検証の準備をしています</string>
+    <string name="status_play_integrity">Play Integrity APIで検証しています</string>
+    <string name="status_key_attestation">Key Attestationで検証しています</string>
+    <string name="status_complete">検証が完了しました</string>
+    <string name="status_retry_without_id_attestation">ID構成証明に対応していません。ID構成証明を無効で再試行します</string>
+
+    <string name="dialog_title_stop_verification">検証を中止してアプリを終了します</string>
+    <string name="action_exit">終了</string>
+    <string name="action_continue_verification">検証を続ける</string>
+</resources>

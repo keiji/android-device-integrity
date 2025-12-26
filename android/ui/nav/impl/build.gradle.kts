@@ -33,6 +33,8 @@ dependencies {
     api(project(":ui:nav:contract"))
     implementation(project(":ui:agreement")) // Added
     implementation(project(":ui:license")) // For LicenseActivity
+    implementation(project(":ui:express-mode"))
+    implementation(project(":ui:main"))
     implementation(libs.javax.inject) // For @Inject
 
     implementation(libs.androidx.activity.ktx)
