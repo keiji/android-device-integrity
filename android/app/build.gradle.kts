@@ -173,6 +173,14 @@ android {
         buildConfig = true
 
     }
+
+    packaging {
+        resources {
+            pickFirst("licenses/licenses.json")
+            pickFirst("licenses/licenses-incomplete.json")
+            pickFirst("licenses/licenses-ext.json")
+        }
+    }
 }
 
 mavenLicenseGenerator {
