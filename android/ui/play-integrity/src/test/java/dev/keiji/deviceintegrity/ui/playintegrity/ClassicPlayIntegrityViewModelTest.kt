@@ -34,6 +34,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import android.content.Context
 import java.io.IOException
 
 @Config(application = dagger.hilt.android.testing.HiltTestApplication::class)
@@ -104,8 +105,11 @@ class ClassicPlayIntegrityViewModelTest {
         // ... mock other DeviceSecurityStateProvider properties
         whenever(mockAppInfoProvider.isDebugBuild).thenReturn(false)
 
+        val context: Context = mock()
+        whenever(context.getString(any())).thenReturn("Mocked Waiting")
 
         viewModel = ClassicPlayIntegrityViewModel(
+            context,
             mockClassicPlayIntegrityTokenRepository,
             mockPlayIntegrityRepository,
             mockDeviceInfoProvider,

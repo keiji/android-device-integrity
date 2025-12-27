@@ -18,4 +18,6 @@
     <string name="standard_pi_title_step3">Step 3. Verify Token</string>
     <string name="standard_pi_button_request_verify_token" translatable="false">Request Verify Token</string>
     <string name="standard_pi_label_error" translatable="false">Error: %s</string>
+
+    <string name="status_waiting_for_preparation">Preparing verification...</string>
 </resources>

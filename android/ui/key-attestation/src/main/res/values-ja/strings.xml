@@ -18,4 +18,6 @@
     <string name="key_attestation_title_step4">Step 4. キーペアと構成証明を検証</string>
     <string name="key_attestation_button_request_verify_key_attestation">構成証明を検証</string>
     <string name="key_attestation_unsupported">この端末はKey Attestation（構成証明）をサポートしていません</string>
+
+    <string name="status_waiting_for_preparation">検証の準備をしています</string>
 </resources>

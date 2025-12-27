@@ -1,9 +1,11 @@
 package dev.keiji.deviceintegrity.ui.express_mode
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.keiji.deviceintegrity.api.DeviceInfo
 import dev.keiji.deviceintegrity.api.SecurityInfo
 import dev.keiji.deviceintegrity.api.keyattestation.AuthorizationList
@@ -39,6 +41,7 @@ import kotlin.io.encoding.Base64
 
 @HiltViewModel
 class ExpressModeViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val standardPlayIntegrityTokenRepository: StandardPlayIntegrityTokenRepository,
     private val playIntegrityRepository: PlayIntegrityRepository,
     private val keyPairRepository: KeyPairRepository,
@@ -182,7 +185,7 @@ class ExpressModeViewModel @Inject constructor(
         } catch (e: Exception) {
             Log.e("ExpressModeViewModel", "Error in Play Integrity Check", e)
             return false to listOf(
-                InfoItem("Play Integrity Check Failed", e.message ?: "Unknown Error", isHeader = true)
+                InfoItem(context.getString(R.string.result_label_result), "Failed: " + (e.message ?: "Unknown Error"), isHeader = true)
             )
         }
     }
@@ -278,7 +281,7 @@ class ExpressModeViewModel @Inject constructor(
         } catch (e: Exception) {
             Log.e("ExpressModeViewModel", "Error in Key Attestation Check", e)
              return false to listOf(
-                InfoItem("Key Attestation Check Failed", e.message ?: "Unknown Error", isHeader = true)
+                InfoItem(context.getString(R.string.result_label_result), "Failed: " + (e.message ?: "Unknown Error"), isHeader = true)
             )
         }
     }
@@ -291,11 +294,11 @@ class ExpressModeViewModel @Inject constructor(
         val items = mutableListOf<InfoItem>()
         if (payload == null) return items
 
-        items.add(InfoItem("Session ID (Current)", currentSessionId, indentLevel = 0))
+        items.add(InfoItem(context.getString(R.string.header_session_id) + " (Current)", currentSessionId, indentLevel = 0))
         if (requestHashValue.isNotEmpty()) {
             items.add(
                 InfoItem(
-                    "Request Hash (Calculated by Client)",
+                    context.getString(R.string.header_request_hash) + " (Calculated by Client)",
                     requestHashValue,
                     indentLevel = 0
                 )
@@ -305,7 +308,7 @@ class ExpressModeViewModel @Inject constructor(
         payload.playIntegrityResponse.tokenPayloadExternal.let { token ->
             items.add(
                 InfoItem(
-                    "Play Integrity API Response",
+                    context.getString(R.string.header_play_integrity_api_response),
                     "",
                     isHeader = true,
                     indentLevel = 0
@@ -313,25 +316,25 @@ class ExpressModeViewModel @Inject constructor(
             )
 
             token.requestDetails?.let { rd ->
-                items.add(InfoItem("Request Details", "", isHeader = true, indentLevel = 1))
+                items.add(InfoItem(context.getString(R.string.header_request_details), "", isHeader = true, indentLevel = 1))
                 items.add(
                     InfoItem(
-                        "Request Package Name",
+                        context.getString(R.string.item_label_request_package_name),
                         rd.requestPackageName ?: "N/A",
                         indentLevel = 2
                     )
                 )
-                rd.nonce?.let { items.add(InfoItem("Nonce", it, indentLevel = 2)) }
+                rd.nonce?.let { items.add(InfoItem(context.getString(R.string.item_label_nonce), it, indentLevel = 2)) }
                 items.add(
                     InfoItem(
-                        "Request Hash (from Server Response)",
+                        context.getString(R.string.item_label_request_hash_server),
                         rd.requestHash ?: "N/A",
                         indentLevel = 2
                     )
                 )
                 items.add(
                     InfoItem(
-                        "Timestamp",
+                        context.getString(R.string.item_label_timestamp),
                         DateFormatUtil.formatEpochMilliToISO8601(rd.timestampMillis),
                         indentLevel = 2
                     )
@@ -339,31 +342,31 @@ class ExpressModeViewModel @Inject constructor(
             }
 
             token.appIntegrity?.let { ai ->
-                items.add(InfoItem("App Integrity", "", isHeader = true, indentLevel = 1))
+                items.add(InfoItem(context.getString(R.string.header_app_integrity), "", isHeader = true, indentLevel = 1))
                 items.add(
                     InfoItem(
-                        "App Recognition Verdict",
+                        context.getString(R.string.item_label_app_recognition_verdict),
                         ai.appRecognitionVerdict ?: "N/A",
                         indentLevel = 2
                     )
                 )
                 items.add(
                     InfoItem(
-                        "Package Name",
+                        context.getString(R.string.item_label_package_name),
                         ai.packageName ?: "N/A",
                         indentLevel = 2
                     )
                 )
                 items.add(
                     InfoItem(
-                        "Certificate SHA256",
+                        context.getString(R.string.item_label_certificate_sha256),
                         ai.certificateSha256Digest?.joinToString() ?: "N/A",
                         indentLevel = 2
                     )
                 )
                 items.add(
                     InfoItem(
-                        "Version Code",
+                        context.getString(R.string.item_label_version_code),
                         ai.versionCode?.toString() ?: "N/A",
                         indentLevel = 2
                     )
@@ -371,24 +374,24 @@ class ExpressModeViewModel @Inject constructor(
             }
 
             token.deviceIntegrity?.let { di ->
-                items.add(InfoItem("Device Integrity", "", isHeader = true, indentLevel = 1))
+                items.add(InfoItem(context.getString(R.string.header_device_integrity), "", isHeader = true, indentLevel = 1))
                 items.add(
                     InfoItem(
-                        "Recognition Verdict",
+                        context.getString(R.string.item_label_recognition_verdict),
                         di.deviceRecognitionVerdict?.joinToString() ?: "N/A",
                         indentLevel = 2
                     )
                 )
                 items.add(
                     InfoItem(
-                        "SDK Version",
+                        context.getString(R.string.item_label_sdk_version),
                         di.deviceAttributes?.sdkVersion?.toString() ?: "N/A",
                         indentLevel = 2
                     )
                 )
                 items.add(
                     InfoItem(
-                        "Recent Device Activity",
+                        context.getString(R.string.item_label_recent_device_activity),
                         di.recentDeviceActivity?.deviceActivityLevel ?: "N/A",
                         indentLevel = 2
                     )
@@ -396,10 +399,10 @@ class ExpressModeViewModel @Inject constructor(
             }
 
             token.accountDetails?.let { ad ->
-                items.add(InfoItem("Account Details", "", isHeader = true, indentLevel = 1))
+                items.add(InfoItem(context.getString(R.string.header_account_details), "", isHeader = true, indentLevel = 1))
                 items.add(
                     InfoItem(
-                        "App Licensing Verdict",
+                        context.getString(R.string.item_label_app_licensing_verdict),
                         ad.appLicensingVerdict ?: "N/A",
                         indentLevel = 2
                     )
@@ -407,17 +410,17 @@ class ExpressModeViewModel @Inject constructor(
             }
 
             token.environmentDetails?.let { ed ->
-                items.add(InfoItem("Environment Details", "", isHeader = true, indentLevel = 1))
+                items.add(InfoItem(context.getString(R.string.header_environment_details), "", isHeader = true, indentLevel = 1))
                 items.add(
                     InfoItem(
-                        "App Access Risk Verdict",
+                        context.getString(R.string.item_label_app_access_risk_verdict),
                         ed.appAccessRiskVerdict?.appsDetected?.joinToString() ?: "N/A",
                         indentLevel = 2
                     )
                 )
                 items.add(
                     InfoItem(
-                        "Play Protect Verdict",
+                        context.getString(R.string.item_label_play_protect_verdict),
                         ed.playProtectVerdict ?: "N/A",
                         indentLevel = 2
                     )
@@ -428,30 +431,30 @@ class ExpressModeViewModel @Inject constructor(
         payload.deviceInfo.let { di ->
             items.add(
                 InfoItem(
-                    "Device Info (Reported by Client)",
+                    context.getString(R.string.header_device_info),
                     "",
                     isHeader = true,
                     indentLevel = 0
                 )
             )
-            items.add(InfoItem("Brand", di.brand ?: "N/A", indentLevel = 1))
-            items.add(InfoItem("Model", di.model ?: "N/A", indentLevel = 1))
-            items.add(InfoItem("Device", di.device ?: "N/A", indentLevel = 1))
-            items.add(InfoItem("Product", di.product ?: "N/A", indentLevel = 1))
-            items.add(InfoItem("Manufacturer", di.manufacturer ?: "N/A", indentLevel = 1))
-            items.add(InfoItem("Hardware", di.hardware ?: "N/A", indentLevel = 1))
-            items.add(InfoItem("Board", di.board ?: "N/A", indentLevel = 1))
-            items.add(InfoItem("Bootloader", di.bootloader ?: "N/A", indentLevel = 1))
-            items.add(InfoItem("Version Release", di.versionRelease ?: "N/A", indentLevel = 1))
-            items.add(InfoItem("SDK Int", di.sdkInt?.toString() ?: "N/A", indentLevel = 1))
-            items.add(InfoItem("Fingerprint", di.fingerprint ?: "N/A", indentLevel = 1))
-            items.add(InfoItem("Security Patch", di.securityPatch ?: "N/A", indentLevel = 1))
+            items.add(InfoItem(context.getString(R.string.item_label_brand), di.brand ?: "N/A", indentLevel = 1))
+            items.add(InfoItem(context.getString(R.string.item_label_model), di.model ?: "N/A", indentLevel = 1))
+            items.add(InfoItem(context.getString(R.string.item_label_device), di.device ?: "N/A", indentLevel = 1))
+            items.add(InfoItem(context.getString(R.string.item_label_product), di.product ?: "N/A", indentLevel = 1))
+            items.add(InfoItem(context.getString(R.string.item_label_manufacturer), di.manufacturer ?: "N/A", indentLevel = 1))
+            items.add(InfoItem(context.getString(R.string.item_label_hardware), di.hardware ?: "N/A", indentLevel = 1))
+            items.add(InfoItem(context.getString(R.string.item_label_board), di.board ?: "N/A", indentLevel = 1))
+            items.add(InfoItem(context.getString(R.string.item_label_bootloader), di.bootloader ?: "N/A", indentLevel = 1))
+            items.add(InfoItem(context.getString(R.string.item_label_version_release), di.versionRelease ?: "N/A", indentLevel = 1))
+            items.add(InfoItem(context.getString(R.string.item_label_sdk_int), di.sdkInt?.toString() ?: "N/A", indentLevel = 1))
+            items.add(InfoItem(context.getString(R.string.item_label_fingerprint), di.fingerprint ?: "N/A", indentLevel = 1))
+            items.add(InfoItem(context.getString(R.string.item_label_security_patch), di.securityPatch ?: "N/A", indentLevel = 1))
         }
 
         payload.securityInfo.let { si ->
             items.add(
                 InfoItem(
-                    "Security Info (Reported by Client)",
+                    context.getString(R.string.header_security_info),
                     "",
                     isHeader = true,
                     indentLevel = 0
@@ -459,28 +462,28 @@ class ExpressModeViewModel @Inject constructor(
             )
             items.add(
                 InfoItem(
-                    "Device Lock Enabled",
+                    context.getString(R.string.item_label_device_lock_enabled),
                     si.isDeviceLockEnabled?.toString() ?: "N/A",
                     indentLevel = 1
                 )
             )
             items.add(
                 InfoItem(
-                    "Biometrics Enabled",
+                    context.getString(R.string.item_label_biometrics_enabled),
                     si.isBiometricsEnabled?.toString() ?: "N/A",
                     indentLevel = 1
                 )
             )
             items.add(
                 InfoItem(
-                    "Class 3 Authenticator",
+                    context.getString(R.string.item_label_class_3_authenticator),
                     si.hasClass3Authenticator?.toString() ?: "N/A",
                     indentLevel = 1
                 )
             )
             items.add(
                 InfoItem(
-                    "StrongBox",
+                    context.getString(R.string.item_label_strongbox),
                     si.hasStrongbox?.toString() ?: "N/A",
                     indentLevel = 1
                 )
@@ -490,7 +493,7 @@ class ExpressModeViewModel @Inject constructor(
         payload.googlePlayDeveloperServiceInfo?.let { gps ->
             items.add(
                 InfoItem(
-                    "Google Play Developer Service Info (Client)",
+                    context.getString(R.string.header_google_play_service_info),
                     "",
                     isHeader = true,
                     indentLevel = 0
@@ -498,14 +501,14 @@ class ExpressModeViewModel @Inject constructor(
             )
             items.add(
                 InfoItem(
-                    "Google Play Services Version Code",
+                    context.getString(R.string.item_label_google_play_services_version_code),
                     gps.versionCode.toString(),
                     indentLevel = 1
                 )
             )
             items.add(
                 InfoItem(
-                    "Google Play Services Version Name",
+                    context.getString(R.string.item_label_google_play_services_version_name),
                     gps.versionName,
                     indentLevel = 1
                 )
@@ -517,38 +520,38 @@ class ExpressModeViewModel @Inject constructor(
     private fun buildVerificationResultList(response: VerifySignatureResponse): MutableList<InfoItem> {
         val items = mutableListOf<InfoItem>()
 
-        items.add(InfoItem("Session ID", response.sessionId))
-        items.add(InfoItem("Verified", response.isVerified.toString()))
+        items.add(InfoItem(context.getString(R.string.header_session_id), response.sessionId))
+        items.add(InfoItem(context.getString(R.string.result_label_verified), response.isVerified.toString()))
         response.reason?.let {
-            items.add(InfoItem("Reason", it))
+            items.add(InfoItem(context.getString(R.string.result_label_reason), it))
             items.add(InfoItem.DIVIDER)
         }
 
         response.attestationInfo?.let { attestationInfo ->
-            items.add(InfoItem("Attestation Version", attestationInfo.attestationVersion.toString()))
+            items.add(InfoItem(context.getString(R.string.result_label_attestation_version), attestationInfo.attestationVersion.toString()))
             items.add(
                 InfoItem(
-                    "Attestation Security Level",
+                    context.getString(R.string.result_label_attestation_security_level),
                     LocalValueConverter.convertSecurityLevelToString(attestationInfo.attestationSecurityLevel)
                 )
             )
-            items.add(InfoItem("KeyMint Version", attestationInfo.keymintVersion.toString()))
+            items.add(InfoItem(context.getString(R.string.result_label_keymint_version), attestationInfo.keymintVersion.toString()))
             items.add(
                 InfoItem(
-                    "KeyMint Security Level",
+                    context.getString(R.string.result_label_keymint_security_level),
                     LocalValueConverter.convertSecurityLevelToString(attestationInfo.keymintSecurityLevel)
                 )
             )
-            items.add(InfoItem("Attestation Challenge", attestationInfo.attestationChallenge))
+            items.add(InfoItem(context.getString(R.string.result_label_attestation_challenge), attestationInfo.attestationChallenge))
 
             addAuthorizationListItems(
                 items,
-                "Software Enforced Properties",
+                context.getString(R.string.header_software_enforced),
                 attestationInfo.softwareEnforcedProperties
             )
             addAuthorizationListItems(
                 items,
-                "Hardware Enforced Properties",
+                context.getString(R.string.header_hardware_enforced),
                 attestationInfo.hardwareEnforcedProperties
             )
         }
@@ -788,7 +791,7 @@ class ExpressModeViewModel @Inject constructor(
         }
 
         props.rootOfTrust?.let { rot ->
-            items.add(InfoItem("Root of Trust", "", indentLevel = 1, isHeader = true))
+            items.add(InfoItem(context.getString(R.string.header_root_of_trust), "", indentLevel = 1, isHeader = true))
             rot.deviceLocked?.let {
                 items.add(
                     InfoItem(
@@ -951,7 +954,7 @@ class ExpressModeViewModel @Inject constructor(
         items: MutableList<InfoItem>,
         certificateChain: List<CertificateDetails>
     ) {
-        items.add(InfoItem("Certificate Chain", "", isHeader = true, indentLevel = 0))
+        items.add(InfoItem(context.getString(R.string.header_certificate_chain), "", isHeader = true, indentLevel = 0))
         certificateChain.forEachIndexed { index, certDetails ->
             items.add(
                 InfoItem(
@@ -1081,24 +1084,24 @@ class ExpressModeViewModel @Inject constructor(
         val items = mutableListOf<InfoItem>()
         items.add(
             InfoItem(
-                "Device Info (Reported by Client)",
+                context.getString(R.string.header_device_info),
                 "",
                 isHeader = true,
                 indentLevel = 0
             )
         )
-        items.add(InfoItem("Brand", deviceInfo.brand, indentLevel = 1))
-        items.add(InfoItem("Model", deviceInfo.model, indentLevel = 1))
-        items.add(InfoItem("Device", deviceInfo.device, indentLevel = 1))
-        items.add(InfoItem("Product", deviceInfo.product, indentLevel = 1))
-        items.add(InfoItem("Manufacturer", deviceInfo.manufacturer, indentLevel = 1))
-        items.add(InfoItem("Hardware", deviceInfo.hardware, indentLevel = 1))
-        items.add(InfoItem("Board", deviceInfo.board, indentLevel = 1))
-        items.add(InfoItem("Bootloader", deviceInfo.bootloader, indentLevel = 1))
-        items.add(InfoItem("Version Release", deviceInfo.versionRelease, indentLevel = 1))
-        items.add(InfoItem("SDK Int", deviceInfo.sdkInt.toString(), indentLevel = 1))
-        items.add(InfoItem("Fingerprint", deviceInfo.fingerprint, indentLevel = 1))
-        items.add(InfoItem("Security Patch", deviceInfo.securityPatch, indentLevel = 1))
+        items.add(InfoItem(context.getString(R.string.item_label_brand), deviceInfo.brand, indentLevel = 1))
+        items.add(InfoItem(context.getString(R.string.item_label_model), deviceInfo.model, indentLevel = 1))
+        items.add(InfoItem(context.getString(R.string.item_label_device), deviceInfo.device, indentLevel = 1))
+        items.add(InfoItem(context.getString(R.string.item_label_product), deviceInfo.product, indentLevel = 1))
+        items.add(InfoItem(context.getString(R.string.item_label_manufacturer), deviceInfo.manufacturer, indentLevel = 1))
+        items.add(InfoItem(context.getString(R.string.item_label_hardware), deviceInfo.hardware, indentLevel = 1))
+        items.add(InfoItem(context.getString(R.string.item_label_board), deviceInfo.board, indentLevel = 1))
+        items.add(InfoItem(context.getString(R.string.item_label_bootloader), deviceInfo.bootloader, indentLevel = 1))
+        items.add(InfoItem(context.getString(R.string.item_label_version_release), deviceInfo.versionRelease, indentLevel = 1))
+        items.add(InfoItem(context.getString(R.string.item_label_sdk_int), deviceInfo.sdkInt.toString(), indentLevel = 1))
+        items.add(InfoItem(context.getString(R.string.item_label_fingerprint), deviceInfo.fingerprint, indentLevel = 1))
+        items.add(InfoItem(context.getString(R.string.item_label_security_patch), deviceInfo.securityPatch, indentLevel = 1))
         return items
     }
 
@@ -1107,7 +1110,7 @@ class ExpressModeViewModel @Inject constructor(
         val items = mutableListOf<InfoItem>()
         items.add(
             InfoItem(
-                "Security Info (Reported by Client)",
+                context.getString(R.string.header_security_info),
                 "",
                 isHeader = true,
                 indentLevel = 0
@@ -1115,28 +1118,28 @@ class ExpressModeViewModel @Inject constructor(
         )
         items.add(
             InfoItem(
-                "Device Lock Enabled",
+                context.getString(R.string.item_label_device_lock_enabled),
                 securityInfo.isDeviceLockEnabled.toString(),
                 indentLevel = 1
             )
         )
         items.add(
             InfoItem(
-                "Biometrics Enabled",
+                context.getString(R.string.item_label_biometrics_enabled),
                 securityInfo.isBiometricsEnabled.toString(),
                 indentLevel = 1
             )
         )
         items.add(
             InfoItem(
-                "Class 3 Authenticator",
+                context.getString(R.string.item_label_class_3_authenticator),
                 securityInfo.hasClass3Authenticator.toString(),
                 indentLevel = 1
             )
         )
         items.add(
             InfoItem(
-                "StrongBox",
+                context.getString(R.string.item_label_strongbox),
                 securityInfo.hasStrongbox.toString(),
                 indentLevel = 1
             )
@@ -1146,7 +1149,6 @@ class ExpressModeViewModel @Inject constructor(
 }
 
 private object LocalValueConverter {
-
     fun convertSecurityLevelToString(value: Int): String {
         return when (value) {
             0 -> "Software(0)"
