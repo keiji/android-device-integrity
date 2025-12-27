@@ -11,35 +11,11 @@
     <string name="action_continue_verification">検証を続ける</string>
 
     <string name="header_device_info">デバイス情報 (Reported by Client)</string>
-    <string name="item_label_brand">Brand</string>
-    <string name="item_label_model">Model</string>
-    <string name="item_label_device">Device</string>
-    <string name="item_label_product">Product</string>
-    <string name="item_label_manufacturer">Manufacturer</string>
-    <string name="item_label_hardware">Hardware</string>
-    <string name="item_label_board">Board</string>
-    <string name="item_label_bootloader">Bootloader</string>
-    <string name="item_label_version_release">Version Release</string>
-    <string name="item_label_sdk_int">SDK Int</string>
-    <string name="item_label_fingerprint">Fingerprint</string>
-    <string name="item_label_security_patch">Security Patch</string>
 
     <string name="header_security_info">セキュリティ情報 (Reported by Client)</string>
-    <string name="item_label_device_lock_enabled">画面ロック</string>
-    <string name="item_label_biometrics_enabled">生体認証</string>
-    <string name="item_label_class_3_authenticator">Class 3 Authenticator</string>
-    <string name="item_label_strongbox">StrongBox</string>
 
-    <string name="result_label_result">検証結果</string>
     <string name="result_value_success">成功</string>
-    <string name="result_label_verified">検証済み</string>
 
-    <string name="result_label_reason">理由</string>
-    <string name="result_label_attestation_version">構成証明バージョン</string>
-    <string name="result_label_attestation_security_level">構成証明セキュリティレベル</string>
-    <string name="result_label_keymint_version">KeyMintバージョン</string>
-    <string name="result_label_keymint_security_level">KeyMintセキュリティレベル</string>
-    <string name="result_label_attestation_challenge">構成証明チャレンジ</string>
     <string name="header_software_enforced">ソフトウェア強制プロパティ</string>
     <string name="header_hardware_enforced">ハードウェア強制プロパティ</string>
     <string name="header_root_of_trust">Root of Trust</string>
@@ -54,21 +30,4 @@
     <string name="header_account_details">アカウント詳細</string>
     <string name="header_environment_details">環境詳細</string>
     <string name="header_google_play_service_info">Google Play開発者サービス情報 (クライアント)</string>
-
-    <string name="item_label_request_package_name">リクエスト パッケージ名</string>
-    <string name="item_label_nonce">Nonce</string>
-    <string name="item_label_request_hash_server">リクエストハッシュ (サーバー応答)</string>
-    <string name="item_label_timestamp">タイムスタンプ</string>
-    <string name="item_label_app_recognition_verdict">アプリ認識判定</string>
-    <string name="item_label_package_name">パッケージ名</string>
-    <string name="item_label_certificate_sha256">証明書 SHA256</string>
-    <string name="item_label_version_code">バージョンコード</string>
-    <string name="item_label_recognition_verdict">認識判定</string>
-    <string name="item_label_sdk_version">SDKバージョン</string>
-    <string name="item_label_recent_device_activity">最近のデバイスアクティビティ</string>
-    <string name="item_label_app_licensing_verdict">アプリライセンス判定</string>
-    <string name="item_label_app_access_risk_verdict">アプリアクセスリスク判定</string>
-    <string name="item_label_play_protect_verdict">Play Protect 判定</string>
-    <string name="item_label_google_play_services_version_code">Google Play開発者サービス バージョンコード</string>
-    <string name="item_label_google_play_services_version_name">Google Play開発者サービス バージョン名</string>
 </resources>

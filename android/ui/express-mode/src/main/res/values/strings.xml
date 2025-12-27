@@ -15,35 +15,35 @@
     <string name="result_screen_tab_menu" translatable="false">Menu</string>
 
     <string name="header_device_info">Device Info (Reported by Client)</string>
-    <string name="item_label_brand">Brand</string>
-    <string name="item_label_model">Model</string>
-    <string name="item_label_device">Device</string>
-    <string name="item_label_product">Product</string>
-    <string name="item_label_manufacturer">Manufacturer</string>
-    <string name="item_label_hardware">Hardware</string>
-    <string name="item_label_board">Board</string>
-    <string name="item_label_bootloader">Bootloader</string>
-    <string name="item_label_version_release">Version Release</string>
-    <string name="item_label_sdk_int">SDK Int</string>
-    <string name="item_label_fingerprint">Fingerprint</string>
-    <string name="item_label_security_patch">Security Patch</string>
+    <string name="item_label_brand" translatable="false">Brand</string>
+    <string name="item_label_model" translatable="false">Model</string>
+    <string name="item_label_device" translatable="false">Device</string>
+    <string name="item_label_product" translatable="false">Product</string>
+    <string name="item_label_manufacturer" translatable="false">Manufacturer</string>
+    <string name="item_label_hardware" translatable="false">Hardware</string>
+    <string name="item_label_board" translatable="false">Board</string>
+    <string name="item_label_bootloader" translatable="false">Bootloader</string>
+    <string name="item_label_version_release" translatable="false">Version Release</string>
+    <string name="item_label_sdk_int" translatable="false">SDK Int</string>
+    <string name="item_label_fingerprint" translatable="false">Fingerprint</string>
+    <string name="item_label_security_patch" translatable="false">Security Patch</string>
 
     <string name="header_security_info">Security Info (Reported by Client)</string>
-    <string name="item_label_device_lock_enabled">Device Lock Enabled</string>
-    <string name="item_label_biometrics_enabled">Biometrics Enabled</string>
-    <string name="item_label_class_3_authenticator">Class 3 Authenticator</string>
-    <string name="item_label_strongbox">StrongBox</string>
+    <string name="item_label_device_lock_enabled" translatable="false">Device Lock Enabled</string>
+    <string name="item_label_biometrics_enabled" translatable="false">Biometrics Enabled</string>
+    <string name="item_label_class_3_authenticator" translatable="false">Class 3 Authenticator</string>
+    <string name="item_label_strongbox" translatable="false">StrongBox</string>
 
-    <string name="result_label_result">Result</string>
+    <string name="result_label_result" translatable="false">Result</string>
     <string name="result_value_success">Success</string>
-    <string name="result_label_verified">Verified</string>
+    <string name="result_label_verified" translatable="false">Verified</string>
 
-    <string name="result_label_reason">Reason</string>
-    <string name="result_label_attestation_version">Attestation Version</string>
-    <string name="result_label_attestation_security_level">Attestation Security Level</string>
-    <string name="result_label_keymint_version">KeyMint Version</string>
-    <string name="result_label_keymint_security_level">KeyMint Security Level</string>
-    <string name="result_label_attestation_challenge">Attestation Challenge</string>
+    <string name="result_label_reason" translatable="false">Reason</string>
+    <string name="result_label_attestation_version" translatable="false">Attestation Version</string>
+    <string name="result_label_attestation_security_level" translatable="false">Attestation Security Level</string>
+    <string name="result_label_keymint_version" translatable="false">KeyMint Version</string>
+    <string name="result_label_keymint_security_level" translatable="false">KeyMint Security Level</string>
+    <string name="result_label_attestation_challenge" translatable="false">Attestation Challenge</string>
     <string name="header_software_enforced">Software Enforced Properties</string>
     <string name="header_hardware_enforced">Hardware Enforced Properties</string>
     <string name="header_root_of_trust">Root of Trust</string>
@@ -59,20 +59,20 @@
     <string name="header_environment_details">Environment Details</string>
     <string name="header_google_play_service_info">Google Play Developer Service Info (Client)</string>
 
-    <string name="item_label_request_package_name">Request Package Name</string>
-    <string name="item_label_nonce">Nonce</string>
-    <string name="item_label_request_hash_server">Request Hash (from Server Response)</string>
-    <string name="item_label_timestamp">Timestamp</string>
-    <string name="item_label_app_recognition_verdict">App Recognition Verdict</string>
-    <string name="item_label_package_name">Package Name</string>
-    <string name="item_label_certificate_sha256">Certificate SHA256</string>
-    <string name="item_label_version_code">Version Code</string>
-    <string name="item_label_recognition_verdict">Recognition Verdict</string>
-    <string name="item_label_sdk_version">SDK Version</string>
-    <string name="item_label_recent_device_activity">Recent Device Activity</string>
-    <string name="item_label_app_licensing_verdict">App Licensing Verdict</string>
-    <string name="item_label_app_access_risk_verdict">App Access Risk Verdict</string>
-    <string name="item_label_play_protect_verdict">Play Protect Verdict</string>
-    <string name="item_label_google_play_services_version_code">Google Play Services Version Code</string>
-    <string name="item_label_google_play_services_version_name">Google Play Services Version Name</string>
+    <string name="item_label_request_package_name" translatable="false">Request Package Name</string>
+    <string name="item_label_nonce" translatable="false">Nonce</string>
+    <string name="item_label_request_hash_server" translatable="false">Request Hash (from Server Response)</string>
+    <string name="item_label_timestamp" translatable="false">Timestamp</string>
+    <string name="item_label_app_recognition_verdict" translatable="false">App Recognition Verdict</string>
+    <string name="item_label_package_name" translatable="false">Package Name</string>
+    <string name="item_label_certificate_sha256" translatable="false">Certificate SHA256</string>
+    <string name="item_label_version_code" translatable="false">Version Code</string>
+    <string name="item_label_recognition_verdict" translatable="false">Recognition Verdict</string>
+    <string name="item_label_sdk_version" translatable="false">SDK Version</string>
+    <string name="item_label_recent_device_activity" translatable="false">Recent Device Activity</string>
+    <string name="item_label_app_licensing_verdict" translatable="false">App Licensing Verdict</string>
+    <string name="item_label_app_access_risk_verdict" translatable="false">App Access Risk Verdict</string>
+    <string name="item_label_play_protect_verdict" translatable="false">Play Protect Verdict</string>
+    <string name="item_label_google_play_services_version_code" translatable="false">Google Play Services Version Code</string>
+    <string name="item_label_google_play_services_version_name" translatable="false">Google Play Services Version Name</string>
 </resources>
