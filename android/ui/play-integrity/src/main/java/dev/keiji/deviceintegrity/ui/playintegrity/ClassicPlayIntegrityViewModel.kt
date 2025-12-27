@@ -26,11 +26,14 @@ import kotlinx.coroutines.launch
 import java.io.IOException
 import java.util.UUID
 import javax.inject.Inject
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 
 // ProgressConstants will be imported from the new common file
 
 @HiltViewModel
 class ClassicPlayIntegrityViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val classicPlayIntegrityTokenRepository: ClassicPlayIntegrityTokenRepository,
     private val playIntegrityRepository: PlayIntegrityRepository,
     private val deviceInfoProvider: DeviceInfoProvider,
@@ -283,7 +286,7 @@ class ClassicPlayIntegrityViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         progressValue = ProgressConstants.FULL_PROGRESS,
-                        status = "Waiting for ${delayMs / 1000} sec..."
+                        status = context.getString(R.string.status_waiting_for_preparation)
                     )
                 }
                 while (currentStep < totalSteps) {
