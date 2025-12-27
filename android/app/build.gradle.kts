@@ -230,6 +230,8 @@ dependencies {
     implementation(libs.timber)
     implementation(libs.retrofit.core)
     implementation(libs.retrofit.converter.kotlinx.serialization)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging.interceptor)
 
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 

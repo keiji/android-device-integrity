@@ -1,6 +1,5 @@
 package dev.keiji.deviceintegrity.di
 
-import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
