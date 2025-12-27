@@ -1,5 +1,7 @@
 # Android Device Integrity
 
+[![Android CI](https://github.com/keiji/android-device-integrity/actions/workflows/android_ci.yml/badge.svg)](https://github.com/keiji/android-device-integrity/actions/workflows/android_ci.yml)
+
 This project provides a demonstration of how to verify Android device integrity. It includes an Android client application and a backend server component. The primary goal is to ensure that interactions are occurring on genuine Android devices with unmodified software.
 
 ## System Architecture
