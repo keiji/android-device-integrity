@@ -15,6 +15,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import dev.keiji.deviceintegrity.ui.R
 import dev.keiji.deviceintegrity.ui.nav.contract.AppScreen
+import androidx.compose.ui.res.stringResource
 
 fun NavGraphBuilder.keyAttestationScreen(
 ) {
@@ -35,18 +36,20 @@ fun NavGraphBuilder.keyAttestationScreen(
             }
         }
 
+        val clipLabel = stringResource(dev.keiji.deviceintegrity.ui.keyattestation.R.string.key_attestation_result_label)
+        val clipToastMessage = stringResource(R.string.copied_to_clipboard)
         LaunchedEffect(keyAttestationViewModel.copyEventFlow) {
             keyAttestationViewModel.copyEventFlow.collect { textToCopy ->
                 val clipboard =
                     currentContext.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = ClipData.newPlainText(
-                    currentContext.getString(dev.keiji.deviceintegrity.ui.keyattestation.R.string.key_attestation_result_label),
+                    clipLabel,
                     textToCopy
                 )
                 clipboard.setPrimaryClip(clip)
                 Toast.makeText(
                     currentContext,
-                    currentContext.getString(R.string.copied_to_clipboard),
+                    clipToastMessage,
                     Toast.LENGTH_SHORT
                 ).show()
             }
