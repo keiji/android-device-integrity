@@ -174,13 +174,6 @@ android {
 
     }
 
-    packaging {
-        resources {
-            pickFirst("licenses/licenses.json")
-            pickFirst("licenses/licenses-incomplete.json")
-            pickFirst("licenses/licenses-ext.json")
-        }
-    }
 }
 
 // Ensure the license generator task is not automatically hooked into standard build tasks
