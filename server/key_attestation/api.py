@@ -19,7 +19,6 @@ from .cryptographic_utils import (
     derive_shared_key,
     decrypt_data,
     extract_certificate_details,
-    base64url_decode as crypto_base64url_decode # Renamed to avoid conflict if utils.base64url_decode is different
 )
 from .datastore_utils import (
     store_key_attestation_session,

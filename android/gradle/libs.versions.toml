@@ -1,6 +1,5 @@
 [versions]
 agp = "8.13.2"
-datastoreVersion = "1.2.0"
 desugar_jdk_libs = "2.1.5"
 kotlin = "2.3.0"
 coreKtx = "1.17.0"
@@ -11,20 +10,20 @@ lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.12.2"
 activityKtx = "1.12.2"
 composeBom = "2025.12.01"
-navigationCompose = "2.9.6" # Previous plan's version, will keep for now
+navigationCompose = "2.9.6"
 lifecycleRuntimeCompose = "2.10.0"
 lifecycleViewmodel = "2.10.0"
 hiltNavigationCompose = "1.3.0"
 playServicesBase = "18.9.0"
 playIntegrity = "1.6.0"
 kotlinxCoroutines = "1.10.2"
-datastore = "1.2.0" # Added DataStore
-protobuf = "4.33.2" # Added Protocol Buffers
-protobufPlugin = "0.9.6" # Added Protocol Buffers
-mockitoKotlin = "5.4.0" # Added Mockito-Kotlin
-retrofit = "3.0.0"
+datastore = "1.2.0"
+protobuf = "4.33.2"
+protobufPlugin = "0.9.6"
+mockito = "5.12.0"
+mockitoKotlin = "5.4.0"
+retrofit = "2.11.0"
 kotlinSerialization = "1.9.0" # kotlinx-serialization-json
-retrofitKotlinxSerializationJson = "1.0.0" # retrofit2-kotlinx-serialization-converter
 androidxBiometric = "1.4.0-alpha02"
 javaxInject = "1"
 testCoreKtx = "1.7.0"
@@ -35,6 +34,8 @@ ksp = "2.3.4"
 licenseGenerator = "0.0.5"
 
 timber = "5.0.1"
+
+okhttp = "4.12.0"
 
 robolectric = "4.16"
 
@@ -76,12 +77,12 @@ play-integrity = { group = "com.google.android.play", name = "integrity", versio
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "kotlinxCoroutines" }
-kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" } # Added coroutines test
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlinTest" }
 
 # DataStore
 androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastore" }
-androidx-datastore = { module = "androidx.datastore:datastore", version.ref = "datastoreVersion" }
+androidx-datastore = { module = "androidx.datastore:datastore", version.ref = "datastore" }
 
 # Protocol Buffers
 protobuf-kotlin-lite = { group = "com.google.protobuf", name = "protobuf-kotlin-lite", version.ref = "protobuf" }
@@ -89,7 +90,7 @@ protobuf-protoc = { group = "com.google.protobuf", name = "protoc", version.ref 
 
 # Mockito
 mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockitoKotlin" }
-mockito-android = { group = "org.mockito", name = "mockito-android", version.ref = "mockitoKotlin" }
+mockito-android = { group = "org.mockito", name = "mockito-android", version.ref = "mockito" }
 
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 
@@ -97,10 +98,13 @@ hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
 hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testing", version.ref = "hilt" }
 
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
+
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 
 retrofit-core = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
-retrofit-converter-kotlinx-serialization = { group = "com.jakewharton.retrofit", name = "retrofit2-kotlinx-serialization-converter", version.ref = "retrofitKotlinxSerializationJson" }
+retrofit-converter-kotlinx-serialization = { group = "com.squareup.retrofit2", name = "converter-kotlinx-serialization", version.ref = "retrofit" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinSerialization" }
 kotlin-metadata-jvm = { group = "org.jetbrains.kotlin", name = "kotlin-metadata-jvm", version.ref = "kotlin" }
 
