@@ -1,7 +1,0 @@
-<resources>
-    <string name="title_checking_integrity">Checking device integrity</string>
-    <string name="status_preparing">Preparing verification...</string>
-    <string name="status_play_integrity">Verifying with Play Integrity API...</string>
-    <string name="status_key_attestation">Verifying with Key Attestation...</string>
-    <string name="status_complete">Verification Complete</string>
-</resources>

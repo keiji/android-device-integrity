@@ -18,10 +18,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -41,9 +37,10 @@ import dev.keiji.deviceintegrity.ui.keyattestation.keyAttestationScreen
 import dev.keiji.deviceintegrity.ui.playintegrity.ClassicPlayIntegrityViewModel
 import dev.keiji.deviceintegrity.ui.playintegrity.PlayIntegrityScreen
 import dev.keiji.deviceintegrity.ui.playintegrity.StandardPlayIntegrityViewModel
-import dev.keiji.deviceintegrity.ui.menu.SettingsScreen
-import dev.keiji.deviceintegrity.ui.menu.SettingsUiEvent
-import dev.keiji.deviceintegrity.ui.menu.SettingsViewModel
+import dev.keiji.deviceintegrity.ui.main.settings.SettingsScreen
+import dev.keiji.deviceintegrity.ui.main.settings.SettingsUiEvent
+import dev.keiji.deviceintegrity.ui.main.settings.SettingsViewModel
+import dev.keiji.deviceintegrity.ui.nav.contract.AgreementNavigator
 import dev.keiji.deviceintegrity.ui.nav.contract.AppScreen
 import dev.keiji.deviceintegrity.ui.nav.contract.LicenseNavigator
 import dev.keiji.deviceintegrity.ui.theme.DeviceIntegrityTheme
@@ -55,6 +52,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var licenseNavigator: LicenseNavigator
+
+    @Inject
+    lateinit var agreementNavigator: AgreementNavigator
 
     @Inject
     lateinit var appInfoProvider: AppInfoProvider
@@ -70,6 +70,7 @@ class MainActivity : ComponentActivity() {
             DeviceIntegrityApp(
                 mainViewModel = mainViewModel,
                 licenseNavigator = licenseNavigator,
+                agreementNavigator = agreementNavigator,
                 onFinishActivity = { finish() }
             )
         }
@@ -80,12 +81,31 @@ class MainActivity : ComponentActivity() {
 fun DeviceIntegrityApp(
     mainViewModel: MainViewModel,
     licenseNavigator: LicenseNavigator,
+    agreementNavigator: AgreementNavigator,
     onFinishActivity: () -> Unit
 ) {
     DeviceIntegrityTheme {
         val navController = rememberNavController()
         val context = LocalContext.current
+        val isAgreed by mainViewModel.isAgreed.collectAsStateWithLifecycle()
         val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
+
+        val agreementLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode == android.app.Activity.RESULT_OK) {
+                mainViewModel.setAgreed(true)
+            } else {
+                onFinishActivity()
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            if (!mainViewModel.isAgreed.value) {
+                val intent = agreementNavigator.newIntent(context)
+                agreementLauncher.launch(intent)
+            }
+        }
 
         Scaffold(
             modifier = Modifier.fillMaxSize(),

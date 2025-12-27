@@ -1,4 +1,4 @@
-package dev.keiji.deviceintegrity.ui.menu
+package dev.keiji.deviceintegrity.ui.main.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

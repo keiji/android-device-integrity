@@ -2,7 +2,6 @@
     <string name="agreement_screen_title">Integrity Check Tool</string>
     <string name="agreement_screen_description">Please review the privacy policy and start using the app.</string>
     <string name="agreement_screen_privacy_policy_link">Privacy Policy</string>
-    <string name="agreement_screen_agree_button">Configure Details</string>
-    <string name="agreement_screen_check_immediately">Check Immediately</string>
+    <string name="agreement_screen_agree_button">Start using</string>
     <string name="agreement_screen_disagree_button">Exit app</string>
 </resources>
