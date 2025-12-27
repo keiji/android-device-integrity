@@ -1,0 +1,16 @@
+<resources>
+    <string name="title_checking_integrity">Device Integrity</string>
+    <string name="status_preparing">Preparing verification...</string>
+    <string name="status_play_integrity">Verifying with Play Integrity API...</string>
+    <string name="status_key_attestation">Verifying with Key Attestation...</string>
+    <string name="status_complete">Verification Complete</string>
+    <string name="status_retry_without_id_attestation">ID Attestation is not supported. Retrying without ID Attestation.</string>
+
+    <string name="dialog_title_stop_verification">Stop verification and exit app?</string>
+    <string name="action_exit">Exit</string>
+    <string name="action_continue_verification">Continue verification</string>
+
+    <string name="result_screen_tab_play_integrity" translatable="false">Play Integrity</string>
+    <string name="result_screen_tab_key_attestation" translatable="false">Key Attestation</string>
+    <string name="result_screen_tab_menu" translatable="false">Menu</string>
+</resources>
