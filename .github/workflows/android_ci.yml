@@ -73,7 +73,7 @@ jobs:
       - name: Remove license-generator directory
         # Remove license-generator directory to avoid conflict with assets/licenses/licenses.json
         # This conflict only occurs in the CI environment.
-        run: rm -rf android/license_generator
+        run: rm -rf android/license_generator/*
 
       # Build with Gradle
       - name: Build with Gradle
