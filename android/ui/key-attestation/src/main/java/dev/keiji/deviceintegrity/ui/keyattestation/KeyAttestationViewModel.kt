@@ -39,9 +39,12 @@ import java.security.SecureRandom
 import java.util.UUID
 import javax.inject.Inject
 import kotlin.io.encoding.Base64
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 
 @HiltViewModel
 class KeyAttestationViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val keyPairRepository: KeyPairRepository,
     private val keyAttestationRepository: KeyAttestationRepository,
     private val deviceInfoProvider: DeviceInfoProvider,
@@ -206,7 +209,7 @@ class KeyAttestationViewModel @Inject constructor(
 
             _uiState.update {
                 it.copy(
-                    status = "Waiting for ${delayMs / 1000} sec..."
+                    status = context.getString(R.string.status_waiting_for_preparation)
                 )
             }
 

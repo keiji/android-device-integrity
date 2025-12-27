@@ -19,4 +19,6 @@
 
     <string name="key_attestation_result_label">Key Attestation Results</string>
     <string name="key_attestation_unsupported">Key Attestation is not supported on this device.</string>
+
+    <string name="status_waiting_for_preparation">Preparing verification...</string>
 </resources>

@@ -38,12 +38,14 @@ import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import android.content.Context
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ExpressModeViewModelTest {
 
     private val dispatcher = StandardTestDispatcher()
 
+    private val context: Context = mock()
     private val standardPlayIntegrityTokenRepository: StandardPlayIntegrityTokenRepository = mock()
     private val playIntegrityRepository: PlayIntegrityRepository = mock()
     private val keyPairRepository: KeyPairRepository = mock()
@@ -57,6 +59,8 @@ class ExpressModeViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher)
+
+        whenever(context.getString(any())).thenReturn("Mocked String")
 
         whenever(deviceInfoProvider.BRAND).thenReturn("TestBrand")
         whenever(deviceInfoProvider.MODEL).thenReturn("TestModel")
@@ -142,6 +146,7 @@ class ExpressModeViewModelTest {
 
         // Create ViewModel
         val viewModel = ExpressModeViewModel(
+            context,
             standardPlayIntegrityTokenRepository,
             playIntegrityRepository,
             keyPairRepository,
