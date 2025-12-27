@@ -174,6 +174,24 @@ android {
 
     }
 
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            pickFirsts += "**/licenses.json"
+            pickFirsts += "**/licenses-incomplete.json"
+        }
+    }
+}
+
+// To prevent DuplicateFileException between committed assets and the generator plugin
+afterEvaluate {
+    val assets = android.sourceSets.getByName("main").assets
+    val assetDirs = assets.srcDirs.filter { !it.absolutePath.contains("license_generator") }
+    assets.setSrcDirs(assetDirs)
+
+    val resources = android.sourceSets.getByName("main").resources
+    val resDirs = resources.srcDirs.filter { !it.absolutePath.contains("license_generator") }
+    resources.setSrcDirs(resDirs)
 }
 
 mavenLicenseGenerator {
