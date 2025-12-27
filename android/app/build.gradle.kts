@@ -173,13 +173,6 @@ android {
         buildConfig = true
 
     }
-    packaging {
-        resources {
-            pickFirsts.add("licenses/licenses.json")
-            pickFirsts.add("licenses/licenses-incomplete.json")
-            pickFirsts.add("licenses/licenses-ext.json")
-        }
-    }
 }
 
 mavenLicenseGenerator {
@@ -203,12 +196,12 @@ mavenLicenseGenerator {
 
     outputSettings {
         create("complete") {
-            path = rootProject.layout.projectDirectory.file("licenses/licenses.json").asFile
+            path = layout.projectDirectory.file("src/main/assets/licenses/licenses.json").asFile
             includeSettings = false
             prettyPrintEnabled = false
         }
         create("incomplete") {
-            path = rootProject.layout.projectDirectory.file("licenses/licenses-incomplete.json").asFile
+            path = layout.projectDirectory.file("src/main/assets/licenses/licenses-incomplete.json").asFile
             includeSettings = false
             prettyPrintEnabled = true
         }

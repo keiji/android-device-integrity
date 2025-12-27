@@ -19,10 +19,7 @@
                     "url": null
                 }
             ],
-            "organization": {
-                "name": "The Android Open Source Project",
-                "url": null
-            },
+            "organization": null,
             "dependencies": [
             ],
             "depth": 2
@@ -41,7 +38,10 @@
             ],
             "developers": [
             ],
-            "organization": null,
+            "organization": {
+                "name": "Google, Inc.",
+                "url": "https://www.google.com"
+            },
             "dependencies": [
             ],
             "depth": 2
@@ -81,10 +81,6 @@
                 }
             ],
             "developers": [
-                {
-                    "name": "The 3-Clause BSD License",
-                    "url": "https://github.com/protocolbuffers/protobuf/blob/main/LICENSE"
-                }
             ],
             "organization": null,
             "dependencies": [
@@ -180,10 +176,6 @@
             "name": "Protocol Buffers [Lite]",
             "url": null,
             "licenses": [
-                {
-                    "name": "The 3-Clause BSD License",
-                    "url": "https://github.com/protocolbuffers/protobuf/blob/main/LICENSE"
-                }
             ],
             "developers": [
             ],
@@ -225,10 +217,11 @@
             ],
             "developers": [
             ],
-            "organization": {
+            "organization":                 {
                 "name": "Square, Inc.",
                 "url": null
-            },
+            }
+        ,
             "dependencies": [
             ],
             "depth": 6
@@ -253,16 +246,15 @@
             "artifact_id": "listenablefuture",
             "version": "1.0",
             "name": "Guava ListenableFuture only",
-            "url": "https://mvnrepository.com/artifact/com.google.guava/listenablefuture/1.0",
+            "url": null,
             "licenses": [
-                {
-                    "name": "The Apache Software License, Version 2.0",
-                    "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-                }
             ],
             "developers": [
             ],
-            "organization": null,
+            "organization": {
+                "name": "Google, Inc.",
+                "url": "https://www.google.com"
+            },
             "dependencies": [
             ],
             "depth": 7
@@ -275,8 +267,7 @@
             "url": "http://nexus.sonatype.org/oss-repository-hosting.html",
             "licenses": [
             ],
-            "developers": [
-            ],
+            "developers": [],
             "organization": null,
             "dependencies": [
             ],
