@@ -14,7 +14,7 @@
     <string name="result_screen_tab_key_attestation" translatable="false">Key Attestation</string>
     <string name="result_screen_tab_menu" translatable="false">Menu</string>
 
-    <string name="header_device_info">Device Info (Reported by Client)</string>
+    <string name="header_device_info" translatable="false">Device Info (Reported by Client)</string>
     <string name="item_label_brand" translatable="false">Brand</string>
     <string name="item_label_model" translatable="false">Model</string>
     <string name="item_label_device" translatable="false">Device</string>
@@ -28,7 +28,7 @@
     <string name="item_label_fingerprint" translatable="false">Fingerprint</string>
     <string name="item_label_security_patch" translatable="false">Security Patch</string>
 
-    <string name="header_security_info">Security Info (Reported by Client)</string>
+    <string name="header_security_info" translatable="false">Security Info (Reported by Client)</string>
     <string name="item_label_device_lock_enabled" translatable="false">Device Lock Enabled</string>
     <string name="item_label_biometrics_enabled" translatable="false">Biometrics Enabled</string>
     <string name="item_label_class_3_authenticator" translatable="false">Class 3 Authenticator</string>
@@ -44,20 +44,20 @@
     <string name="result_label_keymint_version" translatable="false">KeyMint Version</string>
     <string name="result_label_keymint_security_level" translatable="false">KeyMint Security Level</string>
     <string name="result_label_attestation_challenge" translatable="false">Attestation Challenge</string>
-    <string name="header_software_enforced">Software Enforced Properties</string>
-    <string name="header_hardware_enforced">Hardware Enforced Properties</string>
-    <string name="header_root_of_trust">Root of Trust</string>
-    <string name="header_certificate_chain">Certificate Chain</string>
+    <string name="header_software_enforced" translatable="false">Software Enforced Properties</string>
+    <string name="header_hardware_enforced" translatable="false">Hardware Enforced Properties</string>
+    <string name="header_root_of_trust" translatable="false">Root of Trust</string>
+    <string name="header_certificate_chain" translatable="false">Certificate Chain</string>
 
-    <string name="header_session_id">Session ID</string>
-    <string name="header_request_hash">Request Hash</string>
-    <string name="header_play_integrity_api_response">Play Integrity API Response</string>
-    <string name="header_request_details">Request Details</string>
-    <string name="header_app_integrity">App Integrity</string>
-    <string name="header_device_integrity">Device Integrity</string>
-    <string name="header_account_details">Account Details</string>
-    <string name="header_environment_details">Environment Details</string>
-    <string name="header_google_play_service_info">Google Play Developer Service Info (Client)</string>
+    <string name="header_session_id" translatable="false">Session ID</string>
+    <string name="header_request_hash" translatable="false">Request Hash</string>
+    <string name="header_play_integrity_api_response" translatable="false">Play Integrity API Response</string>
+    <string name="header_request_details" translatable="false">Request Details</string>
+    <string name="header_app_integrity" translatable="false">App Integrity</string>
+    <string name="header_device_integrity" translatable="false">Device Integrity</string>
+    <string name="header_account_details" translatable="false">Account Details</string>
+    <string name="header_environment_details" translatable="false">Environment Details</string>
+    <string name="header_google_play_service_info" translatable="false">Google Play Developer Service Info (Client)</string>
 
     <string name="item_label_request_package_name" translatable="false">Request Package Name</string>
     <string name="item_label_nonce" translatable="false">Nonce</string>

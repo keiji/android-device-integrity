@@ -10,24 +10,5 @@
     <string name="action_exit">終了</string>
     <string name="action_continue_verification">検証を続ける</string>
 
-    <string name="header_device_info">デバイス情報 (Reported by Client)</string>
-
-    <string name="header_security_info">セキュリティ情報 (Reported by Client)</string>
-
     <string name="result_value_success">成功</string>
-
-    <string name="header_software_enforced">ソフトウェア強制プロパティ</string>
-    <string name="header_hardware_enforced">ハードウェア強制プロパティ</string>
-    <string name="header_root_of_trust">Root of Trust</string>
-    <string name="header_certificate_chain">証明書チェーン</string>
-
-    <string name="header_session_id">セッションID</string>
-    <string name="header_request_hash">リクエストハッシュ</string>
-    <string name="header_play_integrity_api_response">Play Integrity API レスポンス</string>
-    <string name="header_request_details">リクエスト詳細</string>
-    <string name="header_app_integrity">アプリの完全性</string>
-    <string name="header_device_integrity">デバイスの完全性</string>
-    <string name="header_account_details">アカウント詳細</string>
-    <string name="header_environment_details">環境詳細</string>
-    <string name="header_google_play_service_info">Google Play開発者サービス情報 (クライアント)</string>
 </resources>
