@@ -173,7 +173,11 @@ android {
         buildConfig = true
 
     }
+
 }
+
+// Ensure the license generator task is not automatically hooked into standard build tasks
+gradle.startParameter.excludedTaskNames += "generateLicense"
 
 mavenLicenseGenerator {
     workingDir = rootProject.layout.buildDirectory.dir("maven-license-generator").get().asFile
