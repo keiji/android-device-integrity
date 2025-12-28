@@ -104,6 +104,23 @@
             "depth": 4
         },
         {
+            "group_id": "com.google.android.play",
+            "artifact_id": "core-common",
+            "version": "2.0.4",
+            "name": "core-common",
+            "url": null,
+            "licenses": [
+                {
+                    "name": "Play Core Software Development Kit Terms of Service",
+                    "url": "https://developer.android.com/guide/playcore/license"
+                }
+            ],
+            "developers": [],
+            "organization": null,
+            "dependencies": [],
+            "depth": 4
+        },
+        {
             "group_id": "com.google.code.findbugs",
             "artifact_id": "jsr305",
             "version": "3.0.2",
