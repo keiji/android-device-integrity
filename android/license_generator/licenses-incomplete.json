@@ -19,6 +19,23 @@
             "depth": 2
         },
         {
+            "group_id": "androidx.compose",
+            "artifact_id": "compose-bom",
+            "version": "2025.12.01",
+            "name": "Jetpack Compose Libraries BOM",
+            "url": "https://developer.android.com/jetpack",
+            "licenses": [
+                {
+                    "name": "The Apache Software License, Version 2.0",
+                    "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                }
+            ],
+            "developers": [],
+            "organization": null,
+            "dependencies": [],
+            "depth": 3
+        },
+        {
             "group_id": "com.google.android.play",
             "artifact_id": "integrity",
             "version": "1.6.0",
@@ -33,19 +50,7 @@
             "developers": [],
             "organization": null,
             "dependencies": [],
-            "depth": 2
-        },
-        {
-            "group_id": "com.google.protobuf",
-            "artifact_id": "protobuf-kotlin-lite",
-            "version": "4.33.2",
-            "name": "Protocol Buffers [Kotlin-Lite]",
-            "url": null,
-            "licenses": [],
-            "developers": [],
-            "organization": null,
-            "dependencies": [],
-            "depth": 2
+            "depth": 3
         },
         {
             "group_id": "javax.inject",
@@ -53,23 +58,6 @@
             "version": "1",
             "name": "javax.inject",
             "url": "http://code.google.com/p/atinject/",
-            "licenses": [
-                {
-                    "name": "The Apache Software License, Version 2.0",
-                    "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-                }
-            ],
-            "developers": [],
-            "organization": null,
-            "dependencies": [],
-            "depth": 2
-        },
-        {
-            "group_id": "androidx.compose",
-            "artifact_id": "compose-bom",
-            "version": "2025.12.01",
-            "name": "Jetpack Compose Libraries BOM",
-            "url": "https://developer.android.com/jetpack",
             "licenses": [
                 {
                     "name": "The Apache Software License, Version 2.0",
@@ -96,7 +84,7 @@
             "developers": [],
             "organization": null,
             "dependencies": [],
-            "depth": 3
+            "depth": 4
         },
         {
             "group_id": "com.google.android.gms",
@@ -113,7 +101,7 @@
             "developers": [],
             "organization": null,
             "dependencies": [],
-            "depth": 3
+            "depth": 4
         },
         {
             "group_id": "com.google.code.findbugs",
@@ -127,47 +115,6 @@
                     "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
                 }
             ],
-            "developers": [],
-            "organization": null,
-            "dependencies": [],
-            "depth": 3
-        },
-        {
-            "group_id": "com.google.protobuf",
-            "artifact_id": "protobuf-javalite",
-            "version": "4.33.2",
-            "name": "Protocol Buffers [Lite]",
-            "url": null,
-            "licenses": [],
-            "developers": [],
-            "organization": null,
-            "dependencies": [],
-            "depth": 3
-        },
-        {
-            "group_id": "com.google.android.play",
-            "artifact_id": "core-common",
-            "version": "2.0.4",
-            "name": "core-common",
-            "url": null,
-            "licenses": [
-                {
-                    "name": "Play Core Software Development Kit Terms of Service",
-                    "url": "https://developer.android.com/guide/playcore/license"
-                }
-            ],
-            "developers": [],
-            "organization": null,
-            "dependencies": [],
-            "depth": 4
-        },
-        {
-            "group_id": "com.google.guava",
-            "artifact_id": "listenablefuture",
-            "version": "1.0",
-            "name": "Guava ListenableFuture only",
-            "url": null,
-            "licenses": [],
             "developers": [],
             "organization": null,
             "dependencies": [],
@@ -193,7 +140,7 @@
         {
             "group_id": "org.sonatype.oss",
             "artifact_id": "oss-parent",
-            "version": "7",
+            "version": "9",
             "name": "Sonatype OSS Parent",
             "url": "http://nexus.sonatype.org/oss-repository-hosting.html",
             "licenses": [],
