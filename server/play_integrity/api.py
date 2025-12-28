@@ -5,7 +5,6 @@ import logging
 import uuid
 from flask import Flask, request, jsonify
 from google.cloud import datastore
-from google.cloud.datastore.query import Or
 import google.auth
 from google.api_core.exceptions import Conflict
 from .datastore_utils import (
