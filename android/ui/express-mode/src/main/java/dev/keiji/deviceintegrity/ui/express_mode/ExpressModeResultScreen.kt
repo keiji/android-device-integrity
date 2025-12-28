@@ -69,6 +69,7 @@ private sealed class ExpressModeTab(
 @Composable
 fun ExpressModeResultScreen(
     uiState: ExpressModeUiState,
+    onShareClick: (String) -> Unit = {},
     onNavigateToOssLicenses: () -> Unit = {},
     onExitApp: () -> Unit = {},
 ) {
@@ -79,7 +80,6 @@ fun ExpressModeResultScreen(
         ExpressModeTab.Menu
     )
     val clipboardManager = LocalClipboardManager.current
-    val context = LocalContext.current
 
     BackHandler {
         onExitApp()
@@ -128,13 +128,7 @@ fun ExpressModeResultScreen(
                                 onShareClick = {
                                     val textToShare =
                                         InfoItemFormatter.formatInfoItems(uiState.playIntegrityInfoItems)
-                                    val sendIntent: Intent = Intent().apply {
-                                        action = Intent.ACTION_SEND
-                                        putExtra(Intent.EXTRA_TEXT, textToShare)
-                                        type = "text/plain"
-                                    }
-                                    val shareIntent = Intent.createChooser(sendIntent, null)
-                                    context.startActivity(shareIntent)
+                                    onShareClick(textToShare)
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -166,13 +160,7 @@ fun ExpressModeResultScreen(
                                 onShareClick = {
                                     val textToShare =
                                         InfoItemFormatter.formatInfoItems(uiState.keyAttestationInfoItems)
-                                    val sendIntent: Intent = Intent().apply {
-                                        action = Intent.ACTION_SEND
-                                        putExtra(Intent.EXTRA_TEXT, textToShare)
-                                        type = "text/plain"
-                                    }
-                                    val shareIntent = Intent.createChooser(sendIntent, null)
-                                    context.startActivity(shareIntent)
+                                    onShareClick(textToShare)
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
