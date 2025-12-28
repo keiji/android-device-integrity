@@ -2,29 +2,6 @@
     "settings": null,
     "pom_list": [
         {
-            "group_id": "androidx.compose",
-            "artifact_id": "compose-bom",
-            "version": "2025.07.00",
-            "name": "Jetpack Compose Libraries BOM",
-            "url": "https://developer.android.com/jetpack",
-            "licenses": [
-                {
-                    "name": "The Apache Software License, Version 2.0",
-                    "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-                }
-            ],
-            "developers": [
-                {
-                    "name": "The Android Open Source Project",
-                    "url": null
-                }
-            ],
-            "organization": null,
-            "dependencies": [
-            ],
-            "depth": 2
-        },
-        {
             "group_id": "com.google.android.gms",
             "artifact_id": "play-services-base",
             "version": "18.9.0",
@@ -47,6 +24,23 @@
             "depth": 2
         },
         {
+            "group_id": "androidx.compose",
+            "artifact_id": "compose-bom",
+            "version": "2025.12.01",
+            "name": "Jetpack Compose Libraries BOM",
+            "url": "https://developer.android.com/jetpack",
+            "licenses": [
+                {
+                    "name": "The Apache Software License, Version 2.0",
+                    "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                }
+            ],
+            "developers": [],
+            "organization": null,
+            "dependencies": [],
+            "depth": 3
+        },
+        {
             "group_id": "com.google.android.play",
             "artifact_id": "integrity",
             "version": "1.6.0",
@@ -66,26 +60,7 @@
             },
             "dependencies": [
             ],
-            "depth": 2
-        },
-        {
-            "group_id": "com.google.protobuf",
-            "artifact_id": "protobuf-kotlin-lite",
-            "version": "4.33.1",
-            "name": "Protocol Buffers [Kotlin-Lite]",
-            "url": null,
-            "licenses": [
-                {
-                    "name": "The 3-Clause BSD License",
-                    "url": "https://github.com/protocolbuffers/protobuf/blob/main/LICENSE"
-                }
-            ],
-            "developers": [
-            ],
-            "organization": null,
-            "dependencies": [
-            ],
-            "depth": 2
+            "depth": 3
         },
         {
             "group_id": "javax.inject",
@@ -104,7 +79,7 @@
             "organization": null,
             "dependencies": [
             ],
-            "depth": 2
+            "depth": 3
         },
         {
             "group_id": "com.google.android.gms",
@@ -126,7 +101,7 @@
             },
             "dependencies": [
             ],
-            "depth": 3
+            "depth": 4
         },
         {
             "group_id": "com.google.android.gms",
@@ -148,7 +123,24 @@
             },
             "dependencies": [
             ],
-            "depth": 3
+            "depth": 4
+        },
+        {
+            "group_id": "com.google.android.play",
+            "artifact_id": "core-common",
+            "version": "2.0.4",
+            "name": "core-common",
+            "url": null,
+            "licenses": [
+                {
+                    "name": "Play Core Software Development Kit Terms of Service",
+                    "url": "https://developer.android.com/guide/playcore/license"
+                }
+            ],
+            "developers": [],
+            "organization": null,
+            "dependencies": [],
+            "depth": 4
         },
         {
             "group_id": "com.google.code.findbugs",
@@ -167,41 +159,7 @@
             "organization": null,
             "dependencies": [
             ],
-            "depth": 3
-        },
-        {
-            "group_id": "com.google.protobuf",
-            "artifact_id": "protobuf-javalite",
-            "version": "4.33.1",
-            "name": "Protocol Buffers [Lite]",
-            "url": null,
-            "licenses": [
-            ],
-            "developers": [
-            ],
-            "organization": null,
-            "dependencies": [
-            ],
-            "depth": 3
-        },
-        {
-            "group_id": "com.google.android.play",
-            "artifact_id": "core-common",
-            "version": "2.0.4",
-            "name": "core-common",
-            "url": null,
-            "licenses": [
-                {
-                    "name": "Play Core Software Development Kit Terms of Service",
-                    "url": "https://developer.android.com/guide/playcore/license"
-                }
-            ],
-            "developers": [
-            ],
-            "organization": null,
-            "dependencies": [
-            ],
-            "depth": 4
+            "depth": 5
         },
         {
             "group_id": "com.squareup.okhttp3",
@@ -215,49 +173,10 @@
                     "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
                 }
             ],
-            "developers": [
-            ],
-            "organization":                 {
-                "name": "Square, Inc.",
-                "url": null
-            }
-        ,
-            "dependencies": [
-            ],
-            "depth": 6
-        },
-        {
-            "group_id": "org.codehaus.mojo",
-            "artifact_id": "animal-sniffer-annotations",
-            "version": "1.17",
-            "name": "Animal Sniffer Annotations",
-            "url": null,
-            "licenses": [
-            ],
-            "developers": [
-            ],
+            "developers": [],
             "organization": null,
-            "dependencies": [
-            ],
+            "dependencies": [],
             "depth": 6
-        },
-        {
-            "group_id": "com.google.guava",
-            "artifact_id": "listenablefuture",
-            "version": "1.0",
-            "name": "Guava ListenableFuture only",
-            "url": null,
-            "licenses": [
-            ],
-            "developers": [
-            ],
-            "organization": {
-                "name": "Google, Inc.",
-                "url": "https://www.google.com"
-            },
-            "dependencies": [
-            ],
-            "depth": 7
         },
         {
             "group_id": "org.sonatype.oss",

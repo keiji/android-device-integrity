@@ -31,7 +31,7 @@ kotlinTest = "2.3.0"
 
 hilt = "2.57.2"
 ksp = "2.3.4"
-licenseGenerator = "0.0.5"
+licenseGenerator = "0.0.6"
 
 timber = "5.0.1"
 
