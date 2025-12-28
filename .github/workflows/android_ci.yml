@@ -57,7 +57,7 @@ jobs:
             gradle-${{ hashFiles('**/*.gradle*') }}-
             gradle-
 
-      # 時間がかかりすぎて課題が多いのでワークフローに含めない
+      # Exclude Android Instrumentation tests because they take too long and have many issues.
       # - name: Enable KVM group perms
       #   run: |
       #     echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -76,7 +76,7 @@ jobs:
         env:
             GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4096m"
 
-      # 時間がかかりすぎて課題が多いのでワークフローに含めない
+      # Exclude Android Instrumentation tests because they take too long and have many issues.
       # - name: Run tests on emulator
       #   uses: reactivecircus/android-emulator-runner@v2
       #   timeout-minutes: 60
