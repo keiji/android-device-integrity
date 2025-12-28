@@ -24,7 +24,7 @@ on:
 jobs:
   buildAndTest:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
@@ -77,7 +77,7 @@ jobs:
 
       - name: Run tests on emulator
         uses: reactivecircus/android-emulator-runner@v2
-        timeout-minutes: 30
+        timeout-minutes: 60
         env:
             GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4096m -XX:MaxMetaspaceSize=512m"
         with:

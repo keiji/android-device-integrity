@@ -15,8 +15,7 @@ const val EXPRESS_MODE_GRAPH_ROUTE = "express_mode_graph"
 
 fun NavGraphBuilder.expressModeScreen(
     navController: NavController,
-    onCopyClick: () -> Unit = {},
-    onShareClick: () -> Unit = {},
+    onShareClick: (String) -> Unit = {},
     onNavigateToOssLicenses: () -> Unit = {},
     onNavigateUp: () -> Unit = {},
     onExitApp: () -> Unit = {},
@@ -56,7 +55,6 @@ fun NavGraphBuilder.expressModeScreen(
 
             ExpressModeResultScreen(
                 uiState = uiState,
-                onCopyClick = onCopyClick,
                 onShareClick = onShareClick,
                 onNavigateToOssLicenses = onNavigateToOssLicenses,
                 onExitApp = onExitApp

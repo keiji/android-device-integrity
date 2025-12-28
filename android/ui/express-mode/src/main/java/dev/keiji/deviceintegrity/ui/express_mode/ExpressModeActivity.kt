@@ -1,5 +1,6 @@
 package dev.keiji.deviceintegrity.ui.express_mode
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -31,6 +32,15 @@ class ExpressModeActivity : ComponentActivity() {
                 ) {
                     expressModeScreen(
                         navController = navController,
+                        onShareClick = { textToShare ->
+                            val sendIntent: Intent = Intent().apply {
+                                action = Intent.ACTION_SEND
+                                putExtra(Intent.EXTRA_TEXT, textToShare)
+                                type = "text/plain"
+                            }
+                            val shareIntent = Intent.createChooser(sendIntent, null)
+                            startActivity(shareIntent)
+                        },
                         onNavigateToOssLicenses = {
                             startActivity(licenseNavigator.newIntent(context))
                         },
