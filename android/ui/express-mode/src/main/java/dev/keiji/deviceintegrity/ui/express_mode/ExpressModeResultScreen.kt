@@ -26,13 +26,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.keiji.deviceintegrity.ui.common.InfoItemContent
+import dev.keiji.deviceintegrity.ui.common.InfoItemFormatter
 import dev.keiji.deviceintegrity.ui.menu.SettingsScreen
 import dev.keiji.deviceintegrity.ui.menu.SettingsUiEvent
 import dev.keiji.deviceintegrity.ui.menu.SettingsViewModel
@@ -66,8 +69,6 @@ private sealed class ExpressModeTab(
 @Composable
 fun ExpressModeResultScreen(
     uiState: ExpressModeUiState,
-    onCopyClick: () -> Unit = {},
-    onShareClick: () -> Unit = {},
     onNavigateToOssLicenses: () -> Unit = {},
     onExitApp: () -> Unit = {},
 ) {
@@ -77,6 +78,8 @@ fun ExpressModeResultScreen(
         ExpressModeTab.KeyAttestation,
         ExpressModeTab.Menu
     )
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
 
     BackHandler {
         onExitApp()
@@ -117,8 +120,22 @@ fun ExpressModeResultScreen(
                                 isVerifiedSuccessfully = uiState.isPlayIntegritySuccess,
                                 infoItems = uiState.playIntegrityInfoItems,
                                 showStatus = false,
-                                onCopyClick = onCopyClick,
-                                onShareClick = onShareClick,
+                                onCopyClick = {
+                                    val textToCopy =
+                                        InfoItemFormatter.formatInfoItems(uiState.playIntegrityInfoItems)
+                                    clipboardManager.setText(AnnotatedString(textToCopy))
+                                },
+                                onShareClick = {
+                                    val textToShare =
+                                        InfoItemFormatter.formatInfoItems(uiState.playIntegrityInfoItems)
+                                    val sendIntent: Intent = Intent().apply {
+                                        action = Intent.ACTION_SEND
+                                        putExtra(Intent.EXTRA_TEXT, textToShare)
+                                        type = "text/plain"
+                                    }
+                                    val shareIntent = Intent.createChooser(sendIntent, null)
+                                    context.startActivity(shareIntent)
+                                },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp)
@@ -141,8 +158,22 @@ fun ExpressModeResultScreen(
                                 isVerifiedSuccessfully = uiState.isKeyAttestationSuccess,
                                 infoItems = uiState.keyAttestationInfoItems,
                                 showStatus = false,
-                                onCopyClick = onCopyClick,
-                                onShareClick = onShareClick,
+                                onCopyClick = {
+                                    val textToCopy =
+                                        InfoItemFormatter.formatInfoItems(uiState.keyAttestationInfoItems)
+                                    clipboardManager.setText(AnnotatedString(textToCopy))
+                                },
+                                onShareClick = {
+                                    val textToShare =
+                                        InfoItemFormatter.formatInfoItems(uiState.keyAttestationInfoItems)
+                                    val sendIntent: Intent = Intent().apply {
+                                        action = Intent.ACTION_SEND
+                                        putExtra(Intent.EXTRA_TEXT, textToShare)
+                                        type = "text/plain"
+                                    }
+                                    val shareIntent = Intent.createChooser(sendIntent, null)
+                                    context.startActivity(shareIntent)
+                                },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp)
