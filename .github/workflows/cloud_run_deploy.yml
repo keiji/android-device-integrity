@@ -41,7 +41,7 @@ jobs:
           credentials_json: ${{ env.GCP_SA_KEY }}
 
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@v3
 
       - name: Configure Docker
         run: gcloud auth configure-docker ${{ env.IMAGE_REGISTRY_HOST }} --quiet
@@ -82,7 +82,7 @@ jobs:
           credentials_json: ${{ env.GCP_SA_KEY }}
 
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@v3
 
       - name: Configure Docker
         run: gcloud auth configure-docker ${{ env.IMAGE_REGISTRY_HOST }} --quiet
