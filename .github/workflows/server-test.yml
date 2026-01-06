@@ -23,7 +23,7 @@ jobs:
       play_integrity: ${{ steps.filter.outputs.play_integrity }}
     steps:
     - uses: actions/checkout@v3
-    - uses: dorny/paths-filter@v2
+    - uses: dorny/paths-filter@v3
       id: filter
       with:
         filters: |
