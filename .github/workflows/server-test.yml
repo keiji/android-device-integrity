@@ -22,7 +22,7 @@ jobs:
       key_attestation: ${{ steps.filter.outputs.key_attestation }}
       play_integrity: ${{ steps.filter.outputs.play_integrity }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v6
     - uses: dorny/paths-filter@v3
       id: filter
       with:
@@ -37,7 +37,7 @@ jobs:
     if: needs.filters.outputs.key_attestation == 'true'
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v6
 
     - name: Set up Python
       uses: actions/setup-python@v3
@@ -55,7 +55,7 @@ jobs:
     if: needs.filters.outputs.play_integrity == 'true'
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v6
 
     - name: Set up Python
       uses: actions/setup-python@v3
