@@ -1,5 +1,5 @@
 [versions]
-agp = "8.13.2"
+agp = "9.0.0"
 desugar_jdk_libs = "2.1.5"
 kotlin = "2.3.0"
 coreKtx = "1.17.0"
@@ -29,7 +29,7 @@ javaxInject = "1"
 testCoreKtx = "1.7.0"
 kotlinTest = "2.3.0"
 
-hilt = "2.58"
+hilt = "2.59"
 ksp = "2.3.4"
 licenseGenerator = "0.0.6"
 
@@ -111,7 +111,6 @@ kotlin-metadata-jvm = { group = "org.jetbrains.kotlin", name = "kotlin-metadata-
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 
