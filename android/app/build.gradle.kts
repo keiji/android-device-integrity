@@ -41,21 +41,18 @@ android {
             keyPassword = "android"
         }
         create("release") {
-            val keystorePropertiesFile = rootProject.file("keystore.properties")
-            if (keystorePropertiesFile.exists()) {
-                println("Info: Using keystore.properties for release signing.")
+            val keystorePropertiesPath = System.getenv("KEYSTORE_PROPERTIES_PATH")
+            val keystorePropertiesFile = keystorePropertiesPath?.let { file(it) }
+
+            if (keystorePropertiesFile?.exists() == true) {
+                println("Info: Using keystore.properties from environment variable KEYSTORE_PROPERTIES_PATH.")
                 val keystoreProperties = GUtil.loadProperties(keystorePropertiesFile)
                 storeFile = file(keystoreProperties.getProperty("storeFile"))
                 storePassword = keystoreProperties.getProperty("storePassword")
                 keyAlias = keystoreProperties.getProperty("keyAlias")
                 keyPassword = keystoreProperties.getProperty("keyPassword")
             } else {
-                println("Warning: keystore.properties not found. Falling back to debug.keystore for release build.")
-                // Fallback to debug keystore if keystore.properties is not found
-                storeFile = signingConfigs.getByName("debug").storeFile
-                storePassword = signingConfigs.getByName("debug").storePassword
-                keyAlias = signingConfigs.getByName("debug").keyAlias
-                keyPassword = signingConfigs.getByName("debug").keyPassword
+                println("Error: No keystore.properties file found.")
             }
         }
     }
@@ -88,12 +85,22 @@ android {
             buildConfigField(
                 "String",
                 "PLAY_INTEGRITY_BASE_URL",
-                "\"${serverEndpointProps.getProperty("PRODUCT_PLAY_INTEGRITY_BASE_URL", "https://playintegrity.googleapis.com/")}\""
+                "\"${
+                    serverEndpointProps.getProperty(
+                        "PRODUCT_PLAY_INTEGRITY_BASE_URL",
+                        "https://playintegrity.googleapis.com/"
+                    )
+                }\""
             )
             buildConfigField(
                 "String",
                 "KEY_ATTESTATION_BASE_URL",
-                "\"${serverEndpointProps.getProperty("PRODUCT_KEY_ATTESTATION_BASE_URL", "https://keyattestation.googleapis.com/")}\""
+                "\"${
+                    serverEndpointProps.getProperty(
+                        "PRODUCT_KEY_ATTESTATION_BASE_URL",
+                        "https://keyattestation.googleapis.com/"
+                    )
+                }\""
             )
         }
         create("develop") {
@@ -196,12 +203,14 @@ mavenLicenseGenerator {
 
     outputSettings {
         create("complete") {
-            path = rootProject.layout.projectDirectory.file("license_generator/licenses.json").asFile
+            path =
+                rootProject.layout.projectDirectory.file("license_generator/licenses.json").asFile
             includeSettings = false
             prettyPrintEnabled = false
         }
         create("incomplete") {
-            path = rootProject.layout.projectDirectory.file("license_generator/licenses-incomplete.json").asFile
+            path =
+                rootProject.layout.projectDirectory.file("license_generator/licenses-incomplete.json").asFile
             includeSettings = false
             prettyPrintEnabled = true
         }
