@@ -63,11 +63,8 @@ jobs:
         working-directory: ./
 
       # Create debug keystore and properties for CI
-      - name: Create debug keystore and properties for CI
+      - name: Create dummy keystore.properties
         run: |
-          # Create a debug keystore at the root of the android project
-          keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-
           # Create keystore.properties
           # The path for storeFile must be an absolute path
           echo "storeFile=$(pwd)/debug.keystore" > keystore.properties
