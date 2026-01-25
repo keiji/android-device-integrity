@@ -41,5 +41,5 @@ To create a release build (including `bundleRelease`), you must provide a signin
 
    ```bash
    export KEYSTORE_PROPERTIES_PATH=/path/to/your/keystore.properties \
-      ./gradlew :app:bundleRelease
-   ```
+export KEYSTORE_PROPERTIES_PATH=/path/to/your/keystore.properties
+./gradlew :app:bundleRelease
