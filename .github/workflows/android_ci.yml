@@ -69,6 +69,20 @@ jobs:
         run: chmod +x android/gradlew
         working-directory: ./
 
+      # Create debug keystore and properties for CI
+      - name: Create dummy keystore.properties
+        run: |
+          # Create keystore.properties
+          # The path for storeFile must be an absolute path
+          echo "storeFile=$(pwd)/debug.keystore" > keystore.properties
+          echo "storePassword=android" >> keystore.properties
+          echo "keyAlias=androiddebugkey" >> keystore.properties
+          echo "keyPassword=android" >> keystore.properties
+
+          # Set the environment variable for the build
+          echo "KEYSTORE_PROPERTIES_PATH=$(pwd)/keystore.properties" >> $GITHUB_ENV
+        working-directory: ./android
+
       # Build with Gradle
       - name: Build with Gradle
         run: ./gradlew build --no-daemon
