@@ -5,6 +5,7 @@ import com.google.android.play.core.integrity.StandardIntegrityManager
 import dev.keiji.deviceintegrity.provider.contract.StandardIntegrityTokenProviderProvider
 import dev.keiji.deviceintegrity.repository.contract.StandardPlayIntegrityTokenRepository
 import kotlinx.coroutines.tasks.await
+import timber.log.Timber
 import java.security.MessageDigest
 import javax.inject.Inject
 
@@ -17,7 +18,7 @@ class StandardPlayIntegrityTokenRepositoryImpl @Inject constructor(
 
     override suspend fun getToken(requestHash: String?): String {
         // Obtain StandardIntegrityManager via the provider.
-        val integrityManager = standardIntegrityTokenProviderProvider.get()
+        var integrityManager = standardIntegrityTokenProviderProvider.get()
 
         // Prepare the token request builder.
         val requestBuilder = StandardIntegrityManager.StandardIntegrityTokenRequest.builder()
@@ -35,11 +36,24 @@ class StandardPlayIntegrityTokenRepositoryImpl @Inject constructor(
             requestBuilder.setRequestHash(requestHash)
         }
 
-        // Request the integrity token.
-        val tokenResponse = integrityManager.request(
-            requestBuilder.build()
-        ).await()
+        try {
+            // Request the integrity token.
+            val tokenResponse = integrityManager.request(
+                requestBuilder.build()
+            ).await()
 
-        return tokenResponse.token() ?: throw IllegalStateException("Integrity token (standard) was null")
+            return tokenResponse.token() ?: throw IllegalStateException("Integrity token (standard) was null")
+        } catch (e: Exception) {
+            Timber.w(e, "StandardIntegrityTokenProvider: Request failed. Retrying with a new provider.")
+            standardIntegrityTokenProviderProvider.invalidate()
+            integrityManager = standardIntegrityTokenProviderProvider.get()
+
+            // Request the integrity token.
+            val tokenResponse = integrityManager.request(
+                requestBuilder.build()
+            ).await()
+
+            return tokenResponse.token() ?: throw IllegalStateException("Integrity token (standard) was null")
+        }
     }
 }
