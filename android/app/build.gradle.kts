@@ -41,7 +41,7 @@ android {
             keyPassword = "android"
         }
         create("release") {
-            val keystorePropertiesPath = System.getenv("KEYSTORE_PROPERTIES_PATH")
+            val keystorePropertiesPath = providers.environmentVariable("KEYSTORE_PROPERTIES_PATH").orNull
             val keystorePropertiesFile = keystorePropertiesPath?.let { file(it) }
 
             if (keystorePropertiesFile?.exists() == true) {
