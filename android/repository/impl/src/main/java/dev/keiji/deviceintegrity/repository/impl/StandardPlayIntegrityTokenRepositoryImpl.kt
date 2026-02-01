@@ -36,24 +36,23 @@ class StandardPlayIntegrityTokenRepositoryImpl @Inject constructor(
             requestBuilder.setRequestHash(requestHash)
         }
 
-        try {
+        val performRequest = suspend {
             // Request the integrity token.
             val tokenResponse = integrityManager.request(
                 requestBuilder.build()
             ).await()
 
-            return tokenResponse.token() ?: throw IllegalStateException("Integrity token (standard) was null")
+            tokenResponse.token() ?: throw IllegalStateException("Integrity token (standard) was null")
+        }
+
+        try {
+            return performRequest()
         } catch (e: Exception) {
             Timber.w(e, "StandardIntegrityTokenProvider: Request failed. Retrying with a new provider.")
             standardIntegrityTokenProviderProvider.invalidate()
             integrityManager = standardIntegrityTokenProviderProvider.get()
 
-            // Request the integrity token.
-            val tokenResponse = integrityManager.request(
-                requestBuilder.build()
-            ).await()
-
-            return tokenResponse.token() ?: throw IllegalStateException("Integrity token (standard) was null")
+            return performRequest()
         }
     }
 }

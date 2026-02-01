@@ -72,4 +72,26 @@ class StandardPlayIntegrityTokenRepositoryImplTest {
         // Verify request() was called twice
         verify(mockTokenProvider, times(2)).request(any())
     }
+
+    @Test
+    fun `getToken_whenRetryAlsoFails_shouldThrowException`() = runTest {
+        // Arrange
+        val requestHash = "requestHash"
+        val exceptionTask = Tasks.forException<StandardIntegrityManager.StandardIntegrityToken>(RuntimeException("Expired"))
+
+        whenever(mockProviderProvider.get()).thenReturn(mockTokenProvider)
+        whenever(mockTokenProvider.request(any())).thenReturn(exceptionTask)
+
+        // Act & Assert
+        try {
+            repository.getToken(requestHash)
+            org.junit.Assert.fail("Expected an exception to be thrown")
+        } catch (e: RuntimeException) {
+            // Expected
+        }
+
+        verify(mockProviderProvider).invalidate()
+        verify(mockProviderProvider, times(2)).get()
+        verify(mockTokenProvider, times(2)).request(any())
+    }
 }
