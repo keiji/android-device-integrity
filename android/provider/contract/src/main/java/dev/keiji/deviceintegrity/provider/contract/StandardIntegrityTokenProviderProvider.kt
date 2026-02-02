@@ -14,4 +14,10 @@ interface StandardIntegrityTokenProviderProvider {
      * @return A StandardIntegrityTokenProvider instance.
      */
     suspend fun get(): StandardIntegrityManager.StandardIntegrityTokenProvider
+
+    /**
+     * Invalidates the cached StandardIntegrityTokenProvider instance.
+     * The next call to get() will trigger a new warm-up.
+     */
+    fun invalidate()
 }

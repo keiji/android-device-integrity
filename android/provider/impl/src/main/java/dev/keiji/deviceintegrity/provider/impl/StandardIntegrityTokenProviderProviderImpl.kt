@@ -63,4 +63,8 @@ class StandardIntegrityTokenProviderProviderImpl @Inject constructor(
             }
         }
     }
+
+    override fun invalidate() {
+        instance = null
+    }
 }
