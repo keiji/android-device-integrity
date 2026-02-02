@@ -1,7 +1,9 @@
 package dev.keiji.deviceintegrity.repository.impl
 
 import com.google.android.gms.tasks.Tasks
+import com.google.android.play.core.integrity.StandardIntegrityException
 import com.google.android.play.core.integrity.StandardIntegrityManager
+import com.google.android.play.core.integrity.model.StandardIntegrityErrorCode
 import dev.keiji.deviceintegrity.provider.contract.StandardIntegrityTokenProviderProvider
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -47,7 +49,9 @@ class StandardPlayIntegrityTokenRepositoryImplTest {
 
         // Mock request() failures and success
         // First call throws Exception (wrapped in Task)
-        val exceptionTask = Tasks.forException<StandardIntegrityManager.StandardIntegrityToken>(RuntimeException("Expired"))
+        val exception = mock(StandardIntegrityException::class.java)
+        whenever(exception.errorCode).thenReturn(StandardIntegrityErrorCode.INTEGRITY_TOKEN_PROVIDER_INVALID)
+        val exceptionTask = Tasks.forException<StandardIntegrityManager.StandardIntegrityToken>(exception)
         val successTask = Tasks.forResult(mockTokenResponse)
 
         // We need to return different tasks on consecutive calls
@@ -77,7 +81,9 @@ class StandardPlayIntegrityTokenRepositoryImplTest {
     fun `getToken_whenRetryAlsoFails_shouldThrowException`() = runTest {
         // Arrange
         val requestHash = "requestHash"
-        val exceptionTask = Tasks.forException<StandardIntegrityManager.StandardIntegrityToken>(RuntimeException("Expired"))
+        val exception = mock(StandardIntegrityException::class.java)
+        whenever(exception.errorCode).thenReturn(StandardIntegrityErrorCode.INTEGRITY_TOKEN_PROVIDER_INVALID)
+        val exceptionTask = Tasks.forException<StandardIntegrityManager.StandardIntegrityToken>(exception)
 
         whenever(mockProviderProvider.get()).thenReturn(mockTokenProvider)
         whenever(mockTokenProvider.request(any())).thenReturn(exceptionTask)
@@ -86,8 +92,8 @@ class StandardPlayIntegrityTokenRepositoryImplTest {
         try {
             repository.getToken(requestHash)
             org.junit.Assert.fail("Expected an exception to be thrown")
-        } catch (e: RuntimeException) {
-            // Expected
+        } catch (e: StandardIntegrityException) {
+            assertEquals(StandardIntegrityErrorCode.INTEGRITY_TOKEN_PROVIDER_INVALID, e.errorCode)
         }
 
         verify(mockProviderProvider).invalidate()

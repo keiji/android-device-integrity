@@ -1,7 +1,9 @@
 package dev.keiji.deviceintegrity.repository.impl
 
 import android.util.Base64
+import com.google.android.play.core.integrity.StandardIntegrityException
 import com.google.android.play.core.integrity.StandardIntegrityManager
+import com.google.android.play.core.integrity.model.StandardIntegrityErrorCode
 import dev.keiji.deviceintegrity.provider.contract.StandardIntegrityTokenProviderProvider
 import dev.keiji.deviceintegrity.repository.contract.StandardPlayIntegrityTokenRepository
 import kotlinx.coroutines.tasks.await
@@ -47,7 +49,12 @@ class StandardPlayIntegrityTokenRepositoryImpl @Inject constructor(
 
         try {
             return performRequest()
-        } catch (e: Exception) {
+        } catch (e: StandardIntegrityException) {
+            val errorCode = e.errorCode
+            if (errorCode != StandardIntegrityErrorCode.INTEGRITY_TOKEN_PROVIDER_INVALID) {
+                throw e
+            }
+
             Timber.w(e, "StandardIntegrityTokenProvider: Request failed. Retrying with a new provider.")
             standardIntegrityTokenProviderProvider.invalidate()
             integrityManager = standardIntegrityTokenProviderProvider.get()
