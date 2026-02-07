@@ -4,7 +4,7 @@
         {
             "group_id": "com.google.android.gms",
             "artifact_id": "play-services-base",
-            "version": "18.9.0",
+            "version": "18.10.0",
             "name": "play-services-base",
             "url": null,
             "licenses": [
@@ -26,7 +26,7 @@
         {
             "group_id": "androidx.compose",
             "artifact_id": "compose-bom",
-            "version": "2025.12.01",
+            "version": "2026.01.01",
             "name": "Jetpack Compose Libraries BOM",
             "url": "https://developer.android.com/jetpack",
             "licenses": [
@@ -106,7 +106,7 @@
         {
             "group_id": "com.google.android.gms",
             "artifact_id": "play-services-tasks",
-            "version": "18.4.0",
+            "version": "18.4.1",
             "name": "play-services-tasks",
             "url": null,
             "licenses": [
@@ -143,42 +143,6 @@
             "depth": 4
         },
         {
-            "group_id": "com.google.code.findbugs",
-            "artifact_id": "jsr305",
-            "version": "3.0.2",
-            "name": "FindBugs-jsr305",
-            "url": "http://findbugs.sourceforge.net/",
-            "licenses": [
-                {
-                    "name": "The Apache Software License, Version 2.0",
-                    "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-                }
-            ],
-            "developers": [
-            ],
-            "organization": null,
-            "dependencies": [
-            ],
-            "depth": 5
-        },
-        {
-            "group_id": "com.squareup.okhttp3",
-            "artifact_id": "parent",
-            "version": "3.14.9",
-            "name": "OkHttp (Parent)",
-            "url": "https://github.com/square/okhttp",
-            "licenses": [
-                {
-                    "name": "Apache 2.0",
-                    "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-                }
-            ],
-            "developers": [],
-            "organization": null,
-            "dependencies": [],
-            "depth": 6
-        },
-        {
             "group_id": "org.sonatype.oss",
             "artifact_id": "oss-parent",
             "version": "7",
@@ -190,7 +154,24 @@
             "organization": null,
             "dependencies": [
             ],
-            "depth": 7
+            "depth": 4
+        },
+        {
+            "group_id": "com.google.code.findbugs",
+            "artifact_id": "jsr305",
+            "version": "3.0.2",
+            "name": "FindBugs-jsr305",
+            "url": "http://findbugs.sourceforge.net/",
+            "licenses": [
+                {
+                    "name": "The Apache Software License, Version 2.0",
+                    "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                }
+            ],
+            "developers": [],
+            "organization": null,
+            "dependencies": [],
+            "depth": 5
         }
     ]
 }
