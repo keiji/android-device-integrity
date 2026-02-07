@@ -27,7 +27,7 @@ kotlinSerialization = "1.10.0" # kotlinx-serialization-json
 androidxBiometric = "1.4.0-alpha02"
 javaxInject = "1"
 testCoreKtx = "1.7.0"
-kotlinTest = "2.3.0"
+kotlinTest = "2.3.10"
 
 hilt = "2.59.1"
 ksp = "2.3.5"
