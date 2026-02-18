@@ -30,7 +30,7 @@ testCoreKtx = "1.7.0"
 kotlinTest = "2.3.10"
 
 hilt = "2.59.1"
-ksp = "2.3.5"
+ksp = "2.3.6"
 licenseGenerator = "0.0.6"
 
 timber = "5.0.1"
