@@ -1,5 +1,5 @@
 [versions]
-agp = "9.2.0"
+agp = "9.2.1"
 desugar_jdk_libs = "2.1.5"
 kotlin = "2.3.21"
 coreKtx = "1.18.0"
