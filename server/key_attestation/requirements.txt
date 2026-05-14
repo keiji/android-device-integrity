@@ -5,4 +5,4 @@ google-api-python-client>=2.194.0,<3.0.0 # For calling Google APIs, including Pl
 google-auth>=2.52.0,<3.0.0 # For authentication with Google Cloud services
 cryptography>=48.0.0,<49.0.0 # For X.509 certificate parsing and signature verification
 pyasn1>=0.6.3,<0.7.0 # For parsing ASN.1 structures
-requests>=2.33.1,<3.0.0 # For making HTTP requests to download CRL
+requests>=2.34.1,<3.0.0 # For making HTTP requests to download CRL
