@@ -24,8 +24,8 @@ The system consists of two main parts:
 - **Key Attestation Service**:
     - Provides endpoints for verifying hardware-backed key attestations (details specific to its implementation).
 - **Play Integrity Service**:
-    - **Nonce Generation**: Offers an endpoint (`/play-integrity/classic/nonce`) to generate secure nonces for the client to use with the Play Integrity API.
-    - **Token Verification**: Provides an endpoint (`/play-integrity/classic/verify`) to receive an integrity token from the client, verify it with Google's Play Integrity API, and check the nonce.
+    - **Nonce Generation**: Offers endpoints (`/play-integrity/classic/v1/nonce` (POST), `/play-integrity/classic/v2/nonce` (GET)) to generate secure nonces for the client to use with the Play Integrity API.
+    - **Token Verification**: Provides endpoints (`/play-integrity/classic/v1/verify`, `/play-integrity/standard/v1/verify`) to receive an integrity token from the client, verify it with Google Play Integrity API, and check the nonce.
 
 ## Setup and Usage
 
@@ -50,7 +50,7 @@ The backend server components (Key Attestation and Play Integrity) are located i
 
 -   **Detailed Instructions**: Full setup, deployment, and local execution instructions are available in `server/README.md`.
 -   **Deployment (Cloud Run)**:
-    -   **Automated**: The project supports automated deployment to Google Cloud Run via GitHub Actions, triggered by pushes to the `deploy/cloudrun` branch. See `server/README.md` for required GitHub secrets (`GCP_PROJECT_ID`, `GCP_CLOUD_RUN_REGION`, `GCP_SA_KEY`).
+    -   **Automated**: The project provides GitHub Actions workflows (`cloud_run_deploy.yml` / `cloud_run_deploy_develop.yml`) to deploy both services to Google Cloud Run, triggered manually (workflow_dispatch). See `server/README.md` for required GitHub secrets (`GCP_PROJECT_ID`, `GCP_CLOUD_RUN_REGION`, `GCP_SA_KEY`).
     -   **Manual**: Instructions for building Docker images and deploying manually to Cloud Run are also provided in `server/README.md`.
         -   Key Attestation service name: `key-attestation-verify`
         -   Play Integrity service name: `play-integrity-verify`
@@ -62,10 +62,10 @@ The backend server components (Key Attestation and Play Integrity) are located i
 The backend server exposes several API endpoints. For detailed information on request/response schemas, please refer to `server/README.md` and the OpenAPI specification mentioned below.
 
 ### Play Integrity Service
--   **`/play-integrity/classic/nonce` (POST)**:
-    -   Generates a nonce for the client app to use with the Play Integrity API.
--   **`/play-integrity/classic/verify` (POST)**:
-    -   Verifies an integrity token received from the client app. This involves calling Google's Play Integrity API and checking the nonce.
+-   **`/play-integrity/classic/v1/nonce` (POST)** and **`/play-integrity/classic/v2/nonce` (GET)**:
+    -   Generate a nonce for the client app to use with the Play Integrity API.
+-   **`/play-integrity/classic/v1/verify` (POST)** and **`/play-integrity/standard/v1/verify` (POST)**:
+    -   Verify an integrity token received from the client app. This involves calling Google's Play Integrity API and checking the nonce.
 
 ### Key Attestation Service
 -   Endpoints for key attestation are defined within `server/key_attestation/openapi.yaml`. Refer to this file and `server/README.md` for details.
@@ -89,7 +89,7 @@ When contributing to this project or making modifications:
 ## License
 
 ```
-Copyright 2025 ARIYAMA Keiji C-LIS CO., LTD.
+Copyright 2025 - 2026 ARIYAMA Keiji C-LIS CO., LTD.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
