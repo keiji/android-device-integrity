@@ -280,8 +280,11 @@ class ExpressModeViewModel @Inject constructor(
 
         } catch (e: Exception) {
             Log.e("ExpressModeViewModel", "Error in Key Attestation Check", e)
-             return false to listOf(
-                InfoItem(context.getString(R.string.result_label_result), "Failed: " + (e.message ?: "Unknown Error"), isHeader = true)
+            return false to listOf(
+                InfoItem(
+                    context.getString(R.string.result_label_result),
+                    "Failed: ${e.javaClass.simpleName}: ${e.message ?: "Unknown Error"}",
+                )
             )
         }
     }

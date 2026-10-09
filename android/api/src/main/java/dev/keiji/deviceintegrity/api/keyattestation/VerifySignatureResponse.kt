@@ -35,7 +35,7 @@ data class AuthorizationList(
     val algorithm: Int? = null,
     @SerialName("key_size")
     val keySize: Int? = null,
-    @SerialName("digest")
+    @SerialName("digests")
     val digest: List<Int>? = null,
     @SerialName("padding")
     val padding: List<Int>? = null,
