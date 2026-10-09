@@ -29,7 +29,7 @@ javaxInject = "1"
 testCoreKtx = "1.7.0"
 kotlinTest = "2.3.21"
 
-hilt = "2.59.2"
+hilt = "2.60.1"
 ksp = "2.3.8"
 licenseGenerator = "0.0.6"
 
