@@ -53,7 +53,7 @@ Both services can be deployed to Google Cloud Run automatically via GitHub Actio
 
 *   Google Cloud SDK (`gcloud`)
 *   Docker
-*   Python 3.9+
+*   Python 3.10+
 *   `pip`
 
 ### Automated Deployment (GitHub Actions)
