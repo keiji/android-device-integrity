@@ -19,6 +19,13 @@ ROOTS_FILENAME_PATTERN = re.compile(r'roots-(\d+)\.json')
 # refresh at most 24 hours later.
 DEFAULT_CACHE_MAX_AGE_SECONDS = 86400
 
+# Subject SerialNumber of the Google Hardware Attestation Root. Certificates
+# that chain to this root are generated from factory keys and remain trusted
+# regardless of their validity period (unless revoked), per the official
+# key attestation documentation. Remote Key Provisioning (RKP) chains use
+# other roots and keep strict validity checks.
+GOOGLE_FACTORY_KEY_ROOT_SERIAL_NUMBER = 'f92009e853b6b045'
+
 # Baked-in fallback root certificates, used only when the remote list has
 # never been fetched successfully (e.g. no network at cold start).
 ROOT_CERTIFICATES = [

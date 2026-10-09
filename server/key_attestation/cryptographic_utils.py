@@ -7,7 +7,8 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.exceptions import InvalidSignature, InvalidTag
 from cryptography.hazmat.backends import default_backend
-from .root_certificates import get_root_certificates
+from cryptography.x509.oid import NameOID
+from .root_certificates import get_root_certificates, GOOGLE_FACTORY_KEY_ROOT_SERIAL_NUMBER
 from . import crl_utils
 
 logger = logging.getLogger(__name__)
@@ -308,19 +309,38 @@ def verify_certificate_chain(certificates: list[x509.Certificate]) -> bool:
     from datetime import datetime, timezone
     current_time_utc = datetime.now(timezone.utc)
 
-    for cert in certificates:
-        if not (cert.not_valid_before_utc <= current_time_utc <= cert.not_valid_after_utc):
-            serial_number_str = cert.serial_number
-            valid_from_str = cert.not_valid_before_utc.isoformat()
-            valid_to_str = cert.not_valid_after_utc.isoformat()
-            logger.warning(
-                f"Certificate with serial number {serial_number_str} is outside its validity period. "
-                f"Valid from: {valid_from_str}, Valid to: {valid_to_str}."
-            )
-            raise ValueError(
-                f"Certificate with serial number {serial_number_str} is outside its validity period."
-            )
-    logger.info("All certificates are within their validity periods.")
+    serial_number_attributes = root_cert.subject.get_attributes_for_oid(
+        NameOID.SERIAL_NUMBER
+    )
+    root_subject_serial_number = (
+        serial_number_attributes[0].value if serial_number_attributes else None
+    )
+    if root_subject_serial_number == GOOGLE_FACTORY_KEY_ROOT_SERIAL_NUMBER:
+        # Per the official key attestation documentation, certificates that
+        # chain to the SERIALNUMBER=f92009e853b6b045 root are issued from
+        # factory keys and remain trusted regardless of their validity period
+        # (unless revoked). The CRL check below provides the compensating
+        # control. RKP chains (which use other roots) keep strict checks.
+        logger.info(
+            'Chain is rooted at the Google Hardware Attestation Root '
+            f'({GOOGLE_FACTORY_KEY_ROOT_SERIAL_NUMBER}). Skipping certificate '
+            'validity period checks; expired factory keys remain trusted '
+            'unless revoked.'
+        )
+    else:
+        for cert in certificates:
+            if not (cert.not_valid_before_utc <= current_time_utc <= cert.not_valid_after_utc):
+                serial_number_str = cert.serial_number
+                valid_from_str = cert.not_valid_before_utc.isoformat()
+                valid_to_str = cert.not_valid_after_utc.isoformat()
+                logger.warning(
+                    f"Certificate with serial number {serial_number_str} is outside its validity period. "
+                    f"Valid from: {valid_from_str}, Valid to: {valid_to_str}."
+                )
+                raise ValueError(
+                    f"Certificate with serial number {serial_number_str} is outside its validity period."
+                )
+        logger.info("All certificates are within their validity periods.")
 
     # CRL check
     crl_data = crl_utils.get_crl()

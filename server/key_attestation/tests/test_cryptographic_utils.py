@@ -1,7 +1,7 @@
 import unittest
 import base64
 import datetime
-from unittest.mock import PropertyMock, patch
+from unittest.mock import patch
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
@@ -89,12 +89,17 @@ class TestCryptographicUtils(unittest.TestCase):
         self.assertEqual(cert4_details['authority_key_identifier'], '3661e1007c880509518b446c47ff1a4cc9ea4f12')
 
 
-def _generate_self_signed_root(common_name):
+def _generate_self_signed_root(common_name, serial_number_attribute=None):
     private_key = ec.generate_private_key(ec.SECP256R1())
     now = datetime.datetime.now(datetime.timezone.utc)
-    subject = x509.Name([
+    subject_attributes = [
         x509.NameAttribute(NameOID.COMMON_NAME, common_name),
-    ])
+    ]
+    if serial_number_attribute is not None:
+        subject_attributes.append(
+            x509.NameAttribute(NameOID.SERIAL_NUMBER, serial_number_attribute)
+        )
+    subject = x509.Name(subject_attributes)
     cert = (
         x509.CertificateBuilder()
         .subject_name(subject)
@@ -112,7 +117,8 @@ def _generate_self_signed_root(common_name):
     return private_key, cert
 
 
-def _generate_leaf_cert(common_name, issuer_private_key, issuer_cert):
+def _generate_leaf_cert(common_name, issuer_private_key, issuer_cert,
+                        not_valid_before=None, not_valid_after=None):
     private_key = ec.generate_private_key(ec.SECP256R1())
     now = datetime.datetime.now(datetime.timezone.utc)
     subject = x509.Name([
@@ -124,8 +130,8 @@ def _generate_leaf_cert(common_name, issuer_private_key, issuer_cert):
         .issuer_name(issuer_cert.subject)
         .public_key(private_key.public_key())
         .serial_number(x509.random_serial_number())
-        .not_valid_before(now - datetime.timedelta(days=1))
-        .not_valid_after(now + datetime.timedelta(days=365))
+        .not_valid_before(not_valid_before or now - datetime.timedelta(days=1))
+        .not_valid_after(not_valid_after or now + datetime.timedelta(days=365))
         .sign(issuer_private_key, hashes.SHA256())
     )
     return private_key, cert
@@ -149,20 +155,14 @@ class VerifyCertificateChainTest(unittest.TestCase):
 
         certificates = decode_certificate_chain(certificate_chain_b64)
 
-        # The intermediate certificates of this real-world chain are already
-        # expired; freeze the validity-period check to test the root trust
-        # logic (SPKI matching) and the signature verification against the
-        # 2022 classic root certificate entry.
-        now = datetime.datetime.now(datetime.timezone.utc)
+        # The root certificate of this chain (serial D50FF25BA3F2D6B3, issued 2019)
+        # carries the same public key as the current classic root certificate
+        # (serial F1C172A699EAF51D, issued 2022). Its intermediate certificates
+        # are already expired; they must still be accepted per the official
+        # guidance for chains rooted at the factory attestation root.
+        classic_root_pem = root_certificates.ROOT_CERTIFICATES[0]
+
         with patch(
-            'cryptography.x509.Certificate.not_valid_before_utc',
-            new_callable=PropertyMock,
-            return_value=now - datetime.timedelta(days=1),
-        ), patch(
-            'cryptography.x509.Certificate.not_valid_after_utc',
-            new_callable=PropertyMock,
-            return_value=now + datetime.timedelta(days=3650),
-        ), patch(
             'server.key_attestation.cryptographic_utils.get_root_certificates',
             return_value=[classic_root_pem],
         ):
@@ -210,6 +210,48 @@ class VerifyCertificateChainTest(unittest.TestCase):
         ):
             with self.assertRaises(ValueError):
                 verify_certificate_chain([leaf_cert, other_root_cert])
+
+    def test_rkp_rooted_chain_rejects_expired_certificate(self, mock_get_crl):
+        issuer_private_key, issuer_cert = _generate_self_signed_root('RKP-Style CA')
+        issuer_pem_text = issuer_cert.public_bytes(serialization.Encoding.PEM).decode('utf-8')
+        now = datetime.datetime.now(datetime.timezone.utc)
+        _, expired_leaf_cert = _generate_leaf_cert(
+            'Expired Leaf',
+            issuer_private_key,
+            issuer_cert,
+            not_valid_before=now - datetime.timedelta(days=2),
+            not_valid_after=now - datetime.timedelta(days=1),
+        )
+
+        with patch(
+            'server.key_attestation.cryptographic_utils.get_root_certificates',
+            return_value=[issuer_pem_text],
+        ):
+            with self.assertRaisesRegex(
+                ValueError, r'outside its validity period'
+            ):
+                verify_certificate_chain([expired_leaf_cert, issuer_cert])
+
+    def test_factory_key_rooted_chain_accepts_expired_certificate(self, mock_get_crl):
+        issuer_private_key, issuer_cert = _generate_self_signed_root(
+            'Factory-Key Root',
+            serial_number_attribute=root_certificates.GOOGLE_FACTORY_KEY_ROOT_SERIAL_NUMBER,
+        )
+        issuer_pem_text = issuer_cert.public_bytes(serialization.Encoding.PEM).decode('utf-8')
+        now = datetime.datetime.now(datetime.timezone.utc)
+        _, expired_leaf_cert = _generate_leaf_cert(
+            'Expired Factory Key Leaf',
+            issuer_private_key,
+            issuer_cert,
+            not_valid_before=now - datetime.timedelta(days=2),
+            not_valid_after=now - datetime.timedelta(days=1),
+        )
+
+        with patch(
+            'server.key_attestation.cryptographic_utils.get_root_certificates',
+            return_value=[issuer_pem_text],
+        ):
+            self.assertTrue(verify_certificate_chain([expired_leaf_cert, issuer_cert]))
 
 
 if __name__ == '__main__':
