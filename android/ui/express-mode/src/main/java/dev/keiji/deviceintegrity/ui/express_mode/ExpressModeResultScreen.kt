@@ -141,7 +141,6 @@ fun ExpressModeResultScreen(
             }
 
             ExpressModeTab.KeyAttestation -> {
-                val context = LocalContext.current
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize(),
@@ -151,7 +150,7 @@ fun ExpressModeResultScreen(
                         val keyAttestationItems = uiState.keyAttestationInfoItems.ifEmpty {
                             listOf(
                                 InfoItem(
-                                    context.getString(R.string.key_attestation_error_no_result),
+                                    stringResource(id = R.string.key_attestation_error_no_result),
                                     ""
                                 )
                             )
