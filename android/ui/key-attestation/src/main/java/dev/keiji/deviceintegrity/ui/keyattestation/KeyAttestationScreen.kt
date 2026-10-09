@@ -233,8 +233,7 @@ fun KeyAttestationScreen(
             status = uiState.status,
             isVerifiedSuccessfully = uiState.infoItems.isNotEmpty() &&
                     (uiState.status.contains("Verification successful", ignoreCase = true) ||
-                            // Add other conditions that signify success if necessary
-                            uiState.infoItems.any { it.label.equals("Is Verified", ignoreCase = true) && it.value.equals("true", ignoreCase = true) }),
+                            uiState.infoItems.any { it.label.equals("Verified", ignoreCase = true) && it.value.equals("true", ignoreCase = true) }),
             infoItems = uiState.infoItems,
             onCopyClick = onClickCopy,
             onShareClick = onClickShare,
@@ -249,7 +248,7 @@ fun KeyAttestationScreen(
 private fun KeyAttestationScreenPreview() {
     val previewItems = listOf(
         InfoItem("Session ID", "preview-session-id"),
-        InfoItem("Is Verified", "true"),
+        InfoItem("Verified", "true"),
         InfoItem("Attestation Version", "4"),
         InfoItem("Attestation Security Level", "1"),
         InfoItem("KeyMint Version", "1"),

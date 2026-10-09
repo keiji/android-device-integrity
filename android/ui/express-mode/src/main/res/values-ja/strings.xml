@@ -5,6 +5,7 @@
     <string name="status_key_attestation">Key Attestationで検証しています</string>
     <string name="status_complete">検証が完了しました</string>
     <string name="status_retry_without_id_attestation">ID構成証明に対応していません。ID構成証明を無効で再試行します</string>
+    <string name="key_attestation_error_no_result">Key Attestationの検証中にエラーが発生しました。詳細はありません</string>
 
     <string name="dialog_title_stop_verification">検証を中止してアプリを終了します</string>
     <string name="action_exit">終了</string>

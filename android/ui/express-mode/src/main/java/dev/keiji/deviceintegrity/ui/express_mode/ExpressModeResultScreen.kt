@@ -34,6 +34,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.keiji.deviceintegrity.ui.common.InfoItem
 import dev.keiji.deviceintegrity.ui.common.InfoItemContent
 import dev.keiji.deviceintegrity.ui.common.InfoItemFormatter
 import dev.keiji.deviceintegrity.ui.menu.SettingsScreen
@@ -140,37 +141,43 @@ fun ExpressModeResultScreen(
             }
 
             ExpressModeTab.KeyAttestation -> {
+                val context = LocalContext.current
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize(),
                     contentPadding = innerPadding
                 ) {
                     item {
-                        if (uiState.keyAttestationInfoItems.isNotEmpty()) {
-                            InfoItemContent(
-                                status = stringResource(id = R.string.result_screen_tab_key_attestation),
-                                isVerifiedSuccessfully = uiState.isKeyAttestationSuccess,
-                                infoItems = uiState.keyAttestationInfoItems,
-                                showStatus = false,
-                                onCopyClick = {
-                                    val textToCopy =
-                                        InfoItemFormatter.formatInfoItems(uiState.keyAttestationInfoItems)
-                                    clipboardManager.setText(AnnotatedString(textToCopy))
-                                },
-                                onShareClick = {
-                                    val textToShare =
-                                        InfoItemFormatter.formatInfoItems(uiState.keyAttestationInfoItems)
-                                    onShareClick(textToShare)
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
+                        val keyAttestationItems = uiState.keyAttestationInfoItems.ifEmpty {
+                            listOf(
+                                InfoItem(
+                                    context.getString(R.string.key_attestation_error_no_result),
+                                    ""
+                                )
                             )
                         }
+                        InfoItemContent(
+                            status = stringResource(id = R.string.result_screen_tab_key_attestation),
+                            isVerifiedSuccessfully = uiState.isKeyAttestationSuccess,
+                            infoItems = keyAttestationItems,
+                            showStatus = false,
+                            onCopyClick = {
+                                val textToCopy =
+                                    InfoItemFormatter.formatInfoItems(keyAttestationItems)
+                                clipboardManager.setText(AnnotatedString(textToCopy))
+                            },
+                            onShareClick = {
+                                val textToShare =
+                                    InfoItemFormatter.formatInfoItems(keyAttestationItems)
+                                onShareClick(textToShare)
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        )
                     }
                 }
             }
-
             ExpressModeTab.Menu -> {
                 // Menu (Settings)
                 val viewModel: SettingsViewModel = hiltViewModel()

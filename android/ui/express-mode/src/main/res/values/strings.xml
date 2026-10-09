@@ -5,6 +5,7 @@
     <string name="status_key_attestation">Verifying with Key Attestation...</string>
     <string name="status_complete">Verification Complete</string>
     <string name="status_retry_without_id_attestation">ID Attestation is not supported. Retrying without ID Attestation.</string>
+    <string name="key_attestation_error_no_result">An error occurred during Key Attestation verification. No details are available.</string>
 
     <string name="dialog_title_stop_verification">Stop verification and exit app?</string>
     <string name="action_exit">Exit</string>
