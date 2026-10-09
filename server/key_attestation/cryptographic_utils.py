@@ -7,7 +7,7 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.exceptions import InvalidSignature, InvalidTag
 from cryptography.hazmat.backends import default_backend
-from .root_certificates import ROOT_CERTIFICATES
+from .root_certificates import get_root_certificates
 from . import crl_utils
 
 logger = logging.getLogger(__name__)
@@ -266,30 +266,40 @@ def verify_certificate_chain(certificates: list[x509.Certificate]) -> bool:
     # Verify the root of the provided chain
     root_cert = certificates[-1]
     try:
-        # Try to serialize as a public key first
-        try:
-            root_public_key = root_cert.public_key()
-            root_cert_pem = root_public_key.public_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PublicFormat.SubjectPublicKeyInfo
-            ).decode('utf-8')
-        except Exception:
-            # If that fails, try to serialize as a full certificate
-            root_cert_pem = root_cert.public_bytes(
-                encoding=serialization.Encoding.PEM
-            ).decode('utf-8')
+        root_public_key = root_cert.public_key()
+        root_cert_pem = root_public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        ).decode('utf-8')
     except Exception as e:
-        logger.error(f"Could not serialize the root certificate to PEM: {e}")
+        logger.error(f"Could not serialize the root certificate public key to PEM: {e}")
         raise ValueError("Failed to serialize the provided root certificate for verification.")
 
     normalized_root_cert = _prepare_certificate_for_comparison(root_cert_pem)
 
-    normalized_known_roots = [
-        _prepare_certificate_for_comparison(cert) for cert in ROOT_CERTIFICATES
-    ]
+    normalized_trusted_root_keys = set()
+    for trusted_certificate in get_root_certificates():
+        try:
+            if '-----BEGIN CERTIFICATE-----' in trusted_certificate:
+                trusted_cert = x509.load_pem_x509_certificate(
+                    trusted_certificate.encode('utf-8')
+                )
+                trusted_certificate = trusted_cert.public_key().public_bytes(
+                    encoding=serialization.Encoding.PEM,
+                    format=serialization.PublicFormat.SubjectPublicKeyInfo
+                ).decode('utf-8')
+            normalized_trusted_root_keys.add(_prepare_certificate_for_comparison(trusted_certificate))
+        except Exception as e:
+            logger.warning(f"Skipping malformed trusted root certificate entry: {e}")
 
-    if normalized_root_cert not in normalized_known_roots:
-        logger.warning("The root certificate of the chain is not in the list of trusted root certificates.")
+    if normalized_root_cert not in normalized_trusted_root_keys:
+        fingerprint = root_cert.fingerprint(hashes.SHA256()).hex()
+        logger.warning(
+            "Untrusted root certificate. "
+            f"Subject: {root_cert.subject.rfc4514_string()}, "
+            f"Serial: {root_cert.serial_number:x}, "
+            f"SHA-256 fingerprint: {fingerprint}"
+        )
         raise ValueError("Untrusted root certificate.")
 
     logger.info("Root certificate is trusted.")
