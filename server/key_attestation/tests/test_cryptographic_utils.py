@@ -1,7 +1,19 @@
 import unittest
 import base64
+import datetime
+from unittest.mock import patch
+
 from cryptography import x509
-from server.key_attestation.cryptographic_utils import extract_certificate_details, decode_certificate_chain
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.x509.oid import NameOID
+
+from server.key_attestation import root_certificates
+from server.key_attestation.cryptographic_utils import (
+    decode_certificate_chain,
+    extract_certificate_details,
+    verify_certificate_chain,
+)
 
 class TestCryptographicUtils(unittest.TestCase):
 
@@ -75,6 +87,172 @@ class TestCryptographicUtils(unittest.TestCase):
         self.assertEqual(cert4_details['subject_key_identifier'], '3661e1007c880509518b446c47ff1a4cc9ea4f12')
         self.assertIsNotNone(cert4_details['authority_key_identifier'])
         self.assertEqual(cert4_details['authority_key_identifier'], '3661e1007c880509518b446c47ff1a4cc9ea4f12')
+
+
+def _generate_self_signed_root(common_name, serial_number_attribute=None):
+    private_key = ec.generate_private_key(ec.SECP256R1())
+    now = datetime.datetime.now(datetime.timezone.utc)
+    subject_attributes = [
+        x509.NameAttribute(NameOID.COMMON_NAME, common_name),
+    ]
+    if serial_number_attribute is not None:
+        subject_attributes.append(
+            x509.NameAttribute(NameOID.SERIAL_NUMBER, serial_number_attribute)
+        )
+    subject = x509.Name(subject_attributes)
+    cert = (
+        x509.CertificateBuilder()
+        .subject_name(subject)
+        .issuer_name(subject)
+        .public_key(private_key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(now - datetime.timedelta(days=1))
+        .not_valid_after(now + datetime.timedelta(days=365))
+        .add_extension(
+            x509.BasicConstraints(ca=True, path_length=None),
+            critical=True,
+        )
+        .sign(private_key, hashes.SHA256())
+    )
+    return private_key, cert
+
+
+def _generate_leaf_cert(common_name, issuer_private_key, issuer_cert,
+                        not_valid_before=None, not_valid_after=None):
+    private_key = ec.generate_private_key(ec.SECP256R1())
+    now = datetime.datetime.now(datetime.timezone.utc)
+    subject = x509.Name([
+        x509.NameAttribute(NameOID.COMMON_NAME, common_name),
+    ])
+    cert = (
+        x509.CertificateBuilder()
+        .subject_name(subject)
+        .issuer_name(issuer_cert.subject)
+        .public_key(private_key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(not_valid_before or now - datetime.timedelta(days=1))
+        .not_valid_after(not_valid_after or now + datetime.timedelta(days=365))
+        .sign(issuer_private_key, hashes.SHA256())
+    )
+    return private_key, cert
+
+
+@patch('server.key_attestation.crl_utils.get_crl', return_value={'entries': {}})
+class VerifyCertificateChainTest(unittest.TestCase):
+
+    def test_real_world_chain_with_classic_root(self, mock_get_crl):
+        certificate_chain_b64 = [
+            "MIICuDCCAl6gAwIBAgIBATAKBggqhkjOPQQDAjA/MSkwJwYDVQQDEyA3Yjk1YWUzYzJkMTViN2E2NDI1NWI4ZjFjMGVhYzEyODESMBAGA1UEChMJU3Ryb25nQm94MB4XDTcwMDEwMTAwMDAwMFoXDTQ4MDEwMTAwMDAwMFowHzEdMBsGA1UEAxMUQW5kcm9pZCBLZXlzdG9yZSBLZXkwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAARnJScVKYj0IH8vLWDDKvDEn2Jp5RmMq3kLdUAbtlFnqMo9mQdLw/JbddsNjvQ9xcC9wnNzA4rb+mTMZDnpfdtgo4IBaTCCAWUwDgYDVR0PAQH/BAQDAgeAMIIBUQYKKwYBBAHWeQIBEQSCAUEwggE9AgIBLAoBAgICASwKAQIEILPAaZ7QtVT59KshtwM83itJow2dLhEbs0a6byj9wj+6BAAwYr+FPQgCBgGYA1k8Er+FRVIEUDBOMSgwJgQhZGV2LmtlaWppLmRldmljZWludGVncml0eS5kZXZlbG9wAgEOMSIEIISDu2yCZhpSmv5cvScPvN6GTJP9ogBdyDIfjhu0hpkfMIGkoQgxBgIBAgIBA6IDAgEDowQCAgEApQUxAwIBBKoDAgEBv4N3AgUAv4U+AwIBAL+FQEwwSgQgAD8a3p1HbmErAPKYPmrX3NFeaoDMLbsAjafWg57XOo8BAf8KAQAEIO3XkCYubsG+8Fe4p3F60OK+xfex1uSamksTcGQCmFePv4VBBQIDAknwv4VCBQIDAxcJv4VOBgIEATT/ib+FTwYCBAE0/4kwCgYIKoZIzj0EAwIDSAAwRQIgBzyMPsjHOSuC2JHudqqBI6tAh9dAaKHZQ4AZi1u7N3oCIQDChnJty3cExcF+nUiw9bMpahaSgg8D38cOdtl4vu0+Pw==",
+            "MIIB5DCCAYqgAwIBAgIQe5WuPC0Vt6ZCVbjxwOrBKDAKBggqhkjOPQQDAjApMRMwEQYDVQQKEwpHb29nbGUgTExDMRIwEAYDVQQDEwlEcm9pZCBDQTMwHhcNMjUwNzAyMTY1ODQ4WhcNMjUwNzMxMDEyNDMzWjA/MSkwJwYDVQQDEyA3Yjk1YWUzYzJkMTViN2E2NDI1NWI4ZjFjMGVhYzEyODESMBAGA1UEChMJU3Ryb25nQm94MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEDr7KlsI6SFK6YXsFofnbPozNFkjSFyr2rmG5T1eWAVeZK7ZXkeCDkGfDbTdB1JZjPurIgdTptHTNKrY5G/js+aN+MHwwHQYDVR0OBBYEFK2Gll9a3w8B+hNNL35+3Ai6d1I1MB8GA1UdIwQYMBaAFLtIgLaLL9rqePsMKfxIs2SLbspBMA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgIEMBkGCisGAQQB1nkCAR4EC6IBEANmR29vZ2xlMAoGCCqGSM49BAMCA0gAMEUCIQCRoKPj0rSzJ2gaj1pNkpGI+OonSnoxQI9h+ijlGc+E9wIgW6IeD4whV0tD39NscVqJG9lfFJEuAQ6pn/6rbYmzTnc=",
+            "MIIB1jCCAVygAwIBAgITeWdTkkUIDrpMB8RUY+9knRX69zAKBggqhkjOPQQDAzApMRMwEQYDVQQKEwpHb29nbGUgTExDMRIwEAYDVQQDEwlEcm9pZCBDQTIwHhcNMjUwNzAxMDI0MjU2WhcNMjUwOTA5MDI0MjU1WjApMRMwEQYDVQQKEwpHb29nbGUgTExDMRIwEAYDVQQDEwlEcm9pZCBDQTMwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAARP9SUIPFWSu8JViBmO+PI7Y9VhiI0xaBBzh85LXwE6Ai4bDpxHNMjFB9SF5bVMSdxZzKuXMRphK54o0fR/PgRVo2MwYTAOBgNVHQ8BAf8EBAMCAgQwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUu0iAtosv2up4+wwp/EizZItuykEwHwYDVR0jBBgwFoAUOZgHBjozEp71FAY6gEEMcYDOGq0wCgYIKoZIzj0EAwMDaAAwZQIxAJA961fFb96La23AQh7X9xDxUfuHGThpW9ZWAnTBf/dhzvXkexa19RGKp7H1IdHjgwIwFVmwVB99bTpZksvUVZxwHAuIzq5hRI6jlhY8evZcH30oon7IImF7aR/KQ8TDV/bd",
+            "MIIDgDCCAWigAwIBAgIKA4gmZ2BliZaGDzANBgkqhkiG9w0BAQsFADAbMRkwFwYDVQQFExBmOTIwMDllODUzYjZiMDQ1MB4XDTIyMDEyNjIyNTAyMFoXDTM3MDEyMjIyNTAyMFowKTETMBEGA1UEChMKR29vZ2xlIExMQzESMBAGA1UEAxMJRHJvaWQgQ0EyMHYwEAYHKoZIzj0CAQYFK4EEACIDYgAE/t+4AI454D8pM32ZUEpuaS0ewLjFP9EBOnCF4Kkz2jqcDECp0fjy34AaTCgJnpGdCLIU3u/WXBs3pEECgMuS9RVSKqj584wdbpcxiJahZWSzHqPK1Nn5LZYdQIpLJ9cUo2YwZDAdBgNVHQ4EFgQUOZgHBjozEp71FAY6gEEMcYDOGq0wHwYDVR0jBBgwFoAUNmHhAHyIBQlRi0RsR/8aTMnqTxIwEgYDVR0TAQH/BAgwBgEB/wIBAjAOBgNVHQ8BAf8EBAMCAQYwDQYJKoZIhvcNAQELBQADggIBAD0FO58gwWQb6ROp4c7hkOwQiWiCTG2Ud9Nww5cKlsMU8YlZOk8nXn5OwAfuFT01Kgcbau1CNDECX7qA1vJyQ9HBsoqa7fmi0cf1j/RRBvvAuGvg3zRy0+OckwI2832399l/81FMShS+GczTWfhLJY/ObkVBFkanRCpDhE/SxNHL/5nJzYaH8OdjAKufnD9mcFyYvzjixbcPEO5melGwk7KfCx9miSpVuB6mN1NdoCsSi96ZYQGBlZsE8oLdazckCygTvp2s77GtIswywOHf3HEa39OQm8B8g2cHcy4u5kKoFeSPI9zo6jx+WDb1Er8gKZT1u7lrwCW+JUQquYbGHLzSDIsRfGh0sTjoRH/s4pD371OYAkkPMHVguBZE8iv5uv0j4IBwN/eLyoQb1jmBv/dEUU9ceXd/s8b5+8k7PYhYcDMA0oyFQcvrhLoWbqy7BrY25iWEY5xH6EsHFre5vp1su17Rdmxby3nt7mXz1NxBQdA3rM+kcZlfcK9sHTNVTI290Wy9IS+8/xalrtalo4PA6EwofyXy18XI9AddNs754KPf8/yAMbVc/2aClm1RF7/7vB0fx3eQmLE4WS01SsqsWnCsHCSbyjdIaIyKBFQhABtIIxLNYLFw+0nnA7DBU/M1e9gWBLh8dz1xHFo+Tn5edYaY1bYyhlGBKUKG4M8l",
+            "MIIFHDCCAwSgAwIBAgIJANUP8luj8tazMA0GCSqGSIb3DQEBCwUAMBsxGTAXBgNVBAUTEGY5MjAwOWU4NTNiNmIwNDUwHhcNMTkxMTIyMjAzNzU4WhcNMzQxMTE4MjAzNzU4WjAbMRkwFwYDVQQFExBmOTIwMDllODUzYjZiMDQ1MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAr7bHgiuxpwHsK7Qui8xUFmOr75gvMsd/dTEDDJdSSxtf6An7xyqpRR90PL2abxM1dEqlXnf2tqw1Ne4Xwl5jlRfdnJLmN0pTy/4lj4/7tv0Sk3iiKkypnEUtR6WfMgH0QZfKHM1+di+y9TFRtv6y//0rb+T+W8a9nsNL/ggjnar86461qO0rOs2cXjp3kOG1FEJ5MVmFmBGtnrKpa73XpXyTqRxB/M0n1n/W9nGqC4FSYa04T6N5RIZGBN2z2MT5IKGbFlbC8UrW0DxW7AYImQQcHtGl/m00QLVWutHQoVJYnFPlXTcHYvASLu+RhhsbDmxMgJJ0mcDpvsC4PjvB+TxywElgS70vE0XmLD+OJtvsBslHZvPBKCOdT0MS+tgSOIfga+z1Z1g7+DVagf7quvmag8jfPioyKvxnK/EgsTUVi2ghzq8wm27ud/mIM7AY2qEORR8Go3TVB4HzWQgpZrt3i5MIlCaY504LzSRiigHCzAPlHws+W0rB5N+er5/2pJKnfBSDiCiFAVtCLOZ7gLiMm0jhO2B6tUXHI/+MRPjy02i59lINMRRev56GKtcd9qO/0kUJWdZTdA2XoS82ixPvZtXQpUpuL12ab+9EaDK8Z4RHJYYfCT3Q5vNAXaiWQ+8PTWm2QgBR/bkwSWc+NpUFgNPN9PvQi8WEg5UmAGMCAwEAAaNjMGEwHQYDVR0OBBYEFDZh4QB8iAUJUYtEbEf/GkzJ6k8SMB8GA1UdIwQYMBaAFDZh4QB8iAUJUYtEbEf/GkzJ6k8SMA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgIEMA0GCSqGSIb3DQEBCwUAA4ICAQBOMaBc8oumXb2voc7XCWnuXKhBBK3e2KMGz39t7lA3XXRe2ZLLAkLM5y3J7tURkf5a1SutfdOyXAmeE6SRo83Uh6WszodmMkxK5GM4JGrnt4pBisu5igXEydaW7qq2CdC6DOGjG+mEkN8/TA6p3cnoL/sPyz6evdjLlSeJ8rFBH6xWyIZCbrcpYEJzXaUOEaxxXxgYz5/cTiVKN2M1G2okQBUIYSY6bjEL4aUN5cfo7ogP3UvliEo3Eo0YgwuzR2v0KR6C1cZqZJSTnghIC/vAD32KdNQ+c3N+vl2OTsUVMC1GiWkngNx1OO1+kXW+YTnnTUOtOIswUP/Vqd5SYgAImMAfY8U9/iIgkQj6T2W6FsScy94IN9fFhE1UtzmLoBIuUFsVXJMTz+Jucth+IqoWFua9v1R93/k98p41pjtFX+H8DslVgfP097vju4KDlqN64xV1grw3ZLl4CiOe/A91oeLm2UHOq6wn3esB4r2EIQKb6jTVGu5sYCcdWpXr0AUVqcABPdgL+H7qJguBw09ojm6xNIrw2OocrDKsudk/okr/AwqEyPKw9WnMlQgLIKw1rODG2NvU9oR3GVGdMkUBZutL8VuFkERQGt6vQ2OCw0sV47VMkuYbacK/xyZFiRcrPJPb41zgbQj9XAEyLKCHex0SdDrx+tWUDqG8At2JHA=="
+        ]
+        # The root certificate of this chain (serial D50FF25BA3F2D6B3, issued 2019)
+        # carries the same public key as the current classic root certificate
+        # (serial F1C172A699EAF51D, issued 2022).
+        classic_root_pem = root_certificates.ROOT_CERTIFICATES[0]
+
+        certificates = decode_certificate_chain(certificate_chain_b64)
+
+        # The root certificate of this chain (serial D50FF25BA3F2D6B3, issued 2019)
+        # carries the same public key as the current classic root certificate
+        # (serial F1C172A699EAF51D, issued 2022). Its intermediate certificates
+        # are already expired; they must still be accepted per the official
+        # guidance for chains rooted at the factory attestation root.
+        classic_root_pem = root_certificates.ROOT_CERTIFICATES[0]
+
+        with patch(
+            'server.key_attestation.cryptographic_utils.get_root_certificates',
+            return_value=[classic_root_pem],
+        ):
+            self.assertTrue(verify_certificate_chain(certificates))
+
+    def test_chain_rooted_at_key_attestation_ca1(self, mock_get_crl):
+        ca1_pem = root_certificates.ROOT_CERTIFICATES[1]
+        ca1_cert = x509.load_pem_x509_certificate(ca1_pem.encode('utf-8'))
+
+        with patch(
+            'server.key_attestation.cryptographic_utils.get_root_certificates',
+            return_value=root_certificates.ROOT_CERTIFICATES,
+        ):
+            self.assertTrue(verify_certificate_chain([ca1_cert]))
+
+    def test_untrusted_root(self, mock_get_crl):
+        _, root_cert = _generate_self_signed_root('Untrusted Test CA')
+
+        with patch(
+            'server.key_attestation.cryptographic_utils.get_root_certificates',
+            return_value=root_certificates.ROOT_CERTIFICATES,
+        ):
+            with self.assertRaisesRegex(ValueError, 'Untrusted root certificate.'):
+                verify_certificate_chain([root_cert])
+
+    def test_certificate_entry_normalization(self, mock_get_crl):
+        issuer_private_key, issuer_cert = _generate_self_signed_root('Test CA')
+
+        issuer_pem_text = issuer_cert.public_bytes(serialization.Encoding.PEM).decode('utf-8')
+        _, leaf_cert = _generate_leaf_cert('Test Leaf', issuer_private_key, issuer_cert)
+
+        with patch(
+            'server.key_attestation.cryptographic_utils.get_root_certificates',
+            return_value=[issuer_pem_text],
+        ):
+            self.assertTrue(verify_certificate_chain([leaf_cert, issuer_cert]))
+
+    def test_untrusted_leaf_chain_with_unknown_root(self, mock_get_crl):
+        other_private_key, other_root_cert = _generate_self_signed_root('Other CA')
+        _, leaf_cert = _generate_leaf_cert('Other Leaf', other_private_key, other_root_cert)
+
+        with patch(
+            'server.key_attestation.cryptographic_utils.get_root_certificates',
+            return_value=root_certificates.ROOT_CERTIFICATES,
+        ):
+            with self.assertRaises(ValueError):
+                verify_certificate_chain([leaf_cert, other_root_cert])
+
+    def test_rkp_rooted_chain_rejects_expired_certificate(self, mock_get_crl):
+        issuer_private_key, issuer_cert = _generate_self_signed_root('RKP-Style CA')
+        issuer_pem_text = issuer_cert.public_bytes(serialization.Encoding.PEM).decode('utf-8')
+        now = datetime.datetime.now(datetime.timezone.utc)
+        _, expired_leaf_cert = _generate_leaf_cert(
+            'Expired Leaf',
+            issuer_private_key,
+            issuer_cert,
+            not_valid_before=now - datetime.timedelta(days=2),
+            not_valid_after=now - datetime.timedelta(days=1),
+        )
+
+        with patch(
+            'server.key_attestation.cryptographic_utils.get_root_certificates',
+            return_value=[issuer_pem_text],
+        ):
+            with self.assertRaisesRegex(
+                ValueError, r'outside its validity period'
+            ):
+                verify_certificate_chain([expired_leaf_cert, issuer_cert])
+
+    def test_factory_key_rooted_chain_accepts_expired_certificate(self, mock_get_crl):
+        issuer_private_key, issuer_cert = _generate_self_signed_root(
+            'Factory-Key Root',
+            serial_number_attribute=root_certificates.GOOGLE_FACTORY_KEY_ROOT_SERIAL_NUMBER,
+        )
+        issuer_pem_text = issuer_cert.public_bytes(serialization.Encoding.PEM).decode('utf-8')
+        now = datetime.datetime.now(datetime.timezone.utc)
+        _, expired_leaf_cert = _generate_leaf_cert(
+            'Expired Factory Key Leaf',
+            issuer_private_key,
+            issuer_cert,
+            not_valid_before=now - datetime.timedelta(days=2),
+            not_valid_after=now - datetime.timedelta(days=1),
+        )
+
+        with patch(
+            'server.key_attestation.cryptographic_utils.get_root_certificates',
+            return_value=[issuer_pem_text],
+        ):
+            self.assertTrue(verify_certificate_chain([expired_leaf_cert, issuer_cert]))
+
 
 if __name__ == '__main__':
     unittest.main()

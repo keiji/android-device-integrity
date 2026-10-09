@@ -1,112 +1,34 @@
 # -*- coding: utf-8 -*-
 
-# Base64 encoded root certificates.
+import json
+import logging
+import os
+import re
+import threading
+import time
+
+import requests
+
+logger = logging.getLogger(__name__)
+
+ROOT_CERTIFICATES_URL = 'https://android.googleapis.com/attestation/root'
+ROOTS_CACHE_DIR = '/tmp/attestation_roots'
+ROOTS_FILENAME_PATTERN = re.compile(r'roots-(\d+)\.json')
+# Google serves both the attestation root list and the CRL with
+# "Cache-Control: public, max-age=86400". When the header is missing,
+# refresh at most 24 hours later.
+DEFAULT_CACHE_MAX_AGE_SECONDS = 86400
+
+# Subject SerialNumber of the Google Hardware Attestation Root. Certificates
+# that chain to this root are generated from factory keys and remain trusted
+# regardless of their validity period (unless revoked), per the official
+# key attestation documentation. Remote Key Provisioning (RKP) chains use
+# other roots and keep strict validity checks.
+GOOGLE_FACTORY_KEY_ROOT_SERIAL_NUMBER = 'f92009e853b6b045'
+
+# Baked-in fallback root certificates, used only when the remote list has
+# never been fetched successfully (e.g. no network at cold start).
 ROOT_CERTIFICATES = [
-    """-----BEGIN PUBLIC KEY-----
-MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAr7bHgiuxpwHsK7Qui8xU
-FmOr75gvMsd/dTEDDJdSSxtf6An7xyqpRR90PL2abxM1dEqlXnf2tqw1Ne4Xwl5j
-lRfdnJLmN0pTy/4lj4/7tv0Sk3iiKkypnEUtR6WfMgH0QZfKHM1+di+y9TFRtv6y
-//0rb+T+W8a9nsNL/ggjnar86461qO0rOs2cXjp3kOG1FEJ5MVmFmBGtnrKpa73X
-pXyTqRxB/M0n1n/W9nGqC4FSYa04T6N5RIZGBN2z2MT5IKGbFlbC8UrW0DxW7AYI
-mQQcHtGl/m00QLVWutHQoVJYnFPlXTcHYvASLu+RhhsbDmxMgJJ0mcDpvsC4PjvB
-+TxywElgS70vE0XmLD+OJtvsBslHZvPBKCOdT0MS+tgSOIfga+z1Z1g7+DVagf7q
-uvmag8jfPioyKvxnK/EgsTUVi2ghzq8wm27ud/mIM7AY2qEORR8Go3TVB4HzWQgp
-Zrt3i5MIlCaY504LzSRiigHCzAPlHws+W0rB5N+er5/2pJKnfBSDiCiFAVtCLOZ7
-gLiMm0jhO2B6tUXHI/+MRPjy02i59lINMRRev56GKtcd9qO/0kUJWdZTdA2XoS82
-ixPvZtXQpUpuL12ab+9EaDK8Z4RHJYYfCT3Q5vNAXaiWQ+8PTWm2QgBR/bkwSWc+
-NpUFgNPN9PvQi8WEg5UmAGMCAwEAAQ==
------END PUBLIC KEY-----""",
-    """-----BEGIN CERTIFICATE-----
-MIIFYDCCA0igAwIBAgIJAOj6GWMU0voYMA0GCSqGSIb3DQEBCwUAMBsxGTAXBgNV
-BAUTEGY5MjAwOWU4NTNiNmIwNDUwHhcNMTYwNTI2MTYyODUyWhcNMjYwNTI0MTYy
-ODUyWjAbMRkwFwYDVQQFExBmOTIwMDllODUzYjZiMDQ1MIICIjANBgkqhkiG9w0B
-AQEFAAOCAg8AMIICCgKCAgEAr7bHgiuxpwHsK7Qui8xUFmOr75gvMsd/dTEDDJdS
-Sxtf6An7xyqpRR90PL2abxM1dEqlXnf2tqw1Ne4Xwl5jlRfdnJLmN0pTy/4lj4/7
-tv0Sk3iiKkypnEUtR6WfMgH0QZfKHM1+di+y9TFRtv6y//0rb+T+W8a9nsNL/ggj
-nar86461qO0rOs2cXjp3kOG1FEJ5MVmFmBGtnrKpa73XpXyTqRxB/M0n1n/W9nGq
-C4FSYa04T6N5RIZGBN2z2MT5IKGbFlbC8UrW0DxW7AYImQQcHtGl/m00QLVWutHQ
-oVJYnFPlXTcHYvASLu+RhhsbDmxMgJJ0mcDpvsC4PjvB+TxywElgS70vE0XmLD+O
-JtvsBslHZvPBKCOdT0MS+tgSOIfga+z1Z1g7+DVagf7quvmag8jfPioyKvxnK/Eg
-sTUVi2ghzq8wm27ud/mIM7AY2qEORR8Go3TVB4HzWQgpZrt3i5MIlCaY504LzSRi
-igHCzAPlHws+W0rB5N+er5/2pJKnfBSDiCiFAVtCLOZ7gLiMm0jhO2B6tUXHI/+M
-RPjy02i59lINMRRev56GKtcd9qO/0kUJWdZTdA2XoS82ixPvZtXQpUpuL12ab+9E
-aDK8Z4RHJYYfCT3Q5vNAXaiWQ+8PTWm2QgBR/bkwSWc+NpUFgNPN9PvQi8WEg5Um
-AGMCAwEAAaOBpjCBozAdBgNVHQ4EFgQUNmHhAHyIBQlRi0RsR/8aTMnqTxIwHwYD
-VR0jBBgwFoAUNmHhAHyIBQlRi0RsR/8aTMnqTxIwDwYDVR0TAQH/BAUwAwEB/zAO
-BgNVHQ8BAf8EBAMCAYYwQAYDVR0fBDkwNzA1oDOgMYYvaHR0cHM6Ly9hbmRyb2lk
-Lmdvb2dsZWFwaXMuY29tL2F0dGVzdGF0aW9uL2NybC8wDQYJKoZIhvcNAQELBQAD
-ggIBACDIw41L3KlXG0aMiS//cqrG+EShHUGo8HNsw30W1kJtjn6UBwRM6jnmiwfB
-Pb8VA91chb2vssAtX2zbTvqBJ9+LBPGCdw/E53Rbf86qhxKaiAHOjpvAy5Y3m00m
-qC0w/Zwvju1twb4vhLaJ5NkUJYsUS7rmJKHHBnETLi8GFqiEsqTWpG/6ibYCv7rY
-DBJDcR9W62BW9jfIoBQcxUCUJouMPH25lLNcDc1ssqvC2v7iUgI9LeoM1sNovqPm
-QUiG9rHli1vXxzCyaMTjwftkJLkf6724DFhuKug2jITV0QkXvaJWF4nUaHOTNA4u
-JU9WDvZLI1j83A+/xnAJUucIv/zGJ1AMH2boHqF8CY16LpsYgBt6tKxxWH00XcyD
-CdW2KlBCeqbQPcsFmWyWugxdcekhYsAWyoSf818NUsZdBWBaR/OukXrNLfkQ79Iy
-ZohZbvabO/X+MVT3rriAoKc8oE2Uws6DF+60PV7/WIPjNvXySdqspImSN78mflxD
-qwLqRBYkA3I75qppLGG9rp7UCdRjxMl8ZDBld+7yvHVgtcVzJx9xnyGCC23Uaic
-MDSXYrB4I4WHXPGjxhZuCuPBLTdOLU8YRvMYdEvYebWHMpvwGCF6bAx3JBpIeOQ1
-wDB5y0USicV3YgYGmi+NZfhA4URSh77Yd6uuJOJENRaNVTzk
------END CERTIFICATE-----""",
-    """-----BEGIN CERTIFICATE-----
-MIIFHDCCAwSgAwIBAgIJANUP8luj8tazMA0GCSqGSIb3DQEBCwUAMBsxGTAXBgNV
-BAUTEGY5MjAwOWU4NTNiNmIwNDUwHhcNMTkxMTIyMjAzNzU4WhcNMzQxMTE4MjAz
-NzU4WjAbMRkwFwYDVQQFExBmOTIwMDllODUzYjZiMDQ1MIICIjANBgkqhkiG9w0B
-AQEFAAOCAg8AMIICCgKCAgEAr7bHgiuxpwHsK7Qui8xUFmOr75gvMsd/dTEDDJdS
-Sxtf6An7xyqpRR90PL2abxM1dEqlXnf2tqw1Ne4Xwl5jlRfdnJLmN0pTy/4lj4/7
-tv0Sk3iiKkypnEUtR6WfMgH0QZfKHM1+di+y9TFRtv6y//0rb+T+W8a9nsNL/ggj
-nar86461qO0rOs2cXjp3kOG1FEJ5MVmFmBGtnrKpa73XpXyTqRxB/M0n1n/W9nGq
-C4FSYa04T6N5RIZGBN2z2MT5IKGbFlbC8UrW0DxW7AYImQQcHtGl/m00QLVWutHQ
-oVJYnFPlXTcHYvASLu+RhhsbDmxMgJJ0mcDpvsC4PjvB+TxywElgS70vE0XmLD+O
-JtvsBslHZvPBKCOdT0MS+tgSOIfga+z1Z1g7+DVagf7quvmag8jfPioyKvxnK/Eg
-sTUVi2ghzq8wm27ud/mIM7AY2qEORR8Go3TVB4HzWQgpZrt3i5MIlCaY504LzSRi
-igHCzAPlHws+W0rB5N+er5/2pJKnfBSDiCiFAVtCLOZ7gLiMm0jhO2B6tUXHI/+M
-RPjy02i59lINMRRev56GKtcd9qO/0kUJWdZTdA2XoS82ixPvZtXQpUpuL12ab+9E
-aDK8Z4RHJYYfCT3Q5vNAXaiWQ+8PTWm2QgBR/bkwSWc+NpUFgNPN9PvQi8WEg5Um
-AGMCAwEAAaNjMGEwHQYDVR0OBBYEFDZh4QB8iAUJUYtEbEf/GkzJ6k8SMB8GA1Ud
-IwQYMBaAFDZh4QB8iAUJUYtEbEf/GkzJ6k8SMA8GA1UdEwEB/wQFMAMBAf8wDgYD
-VR0PAQH/BAQDAgIEMA0GCSqGSIb3DQEBCwUAA4ICAQBOMaBc8oumXb2voc7XCWnu
-XKhBBK3e2KMGz39t7lA3XXRe2ZLLAkLM5y3J7tURkf5a1SutfdOyXAmeE6SRo83U
-h6WszodmMkxK5GM4JGrnt4pBisu5igXEydaW7qq2CdC6DOGjG+mEkN8/TA6p3cno
-L/sPyz6evdjLlSeJ8rFBH6xWyIZCbrcpYEJzXaUOEaxxXxgYz5/cTiVKN2M1G2ok
-QBUIYSY6bjEL4aUN5cfo7ogP3UvliEo3Eo0YgwuzR2v0KR6C1cZqZJSTnghIC/vA
-D32KdNQ+c3N+vl2OTsUVMC1GiWkngNx1OO1+kXW+YTnnTUOtOIswUP/Vqd5SYgAI
-mMAfY8U9/iIgkQj6T2W6FsScy94IN9fFhE1UtzmLoBIuUFsVXJMTz+Jucth+IqoW
-Fua9v1R93/k98p41pjtFX+H8DslVgfP097vju4KDlqN64xV1grw3ZLl4CiOe/A91
-oeLm2UHOq6wn3esB4r2EIQKb6jTVGu5sYCcdWpXr0AUVqcABPdgL+H7qJguBw09o
-jm6xNIrw2OocrDKsudk/okr/AwqEyPKw9WnMlQgLIKw1rODG2NvU9oR3GVGdMkUB
-ZutL8VuFkERQGt6vQ2OCw0sV47VMkuYbacK/xyZFiRcrPJPb41zgbQj9XAEyLKCH
-ex0SdDrx+tWUDqG8At2JHA==
------END CERTIFICATE-----""",
-    """-----BEGIN CERTIFICATE-----
-MIIFHDCCAwSgAwIBAgIJAMNrfES5rhgxMA0GCSqGSIb3DQEBCwUAMBsxGTAXBgNV
-BAUTEGY5MjAwOWU4NTNiNmIwNDUwHhcNMjExMTE3MjMxMDQyWhcNMzYxMTEzMjMx
-MDQyWjAbMRkwFwYDVQQFExBmOTIwMDllODUzYjZiMDQ1MIICIjANBgkqhkiG9w0B
-AQEFAAOCAg8AMIICCgKCAgEAr7bHgiuxpwHsK7Qui8xUFmOr75gvMsd/dTEDDJdS
-Sxtf6An7xyqpRR90PL2abxM1dEqlXnf2tqw1Ne4Xwl5jlRfdnJLmN0pTy/4lj4/7
-tv0Sk3iiKkypnEUtR6WfMgH0QZfKHM1+di+y9TFRtv6y//0rb+T+W8a9nsNL/ggj
-nar86461qO0rOs2cXjp3kOG1FEJ5MVmFmBGtnrKpa73XpXyTqRxB/M0n1n/W9nGq
-C4FSYa04T6N5RIZGBN2z2MT5IKGbFlbC8UrW0DxW7AYImQQcHtGl/m00QLVWutHQ
-oVJYnFPlXTcHYvASLu+RhhsbDmxMgJJ0mcDpvsC4PjvB+TxywElgS70vE0XmLD+O
-JtvsBslHZvPBKCOdT0MS+tgSOIfga+z1Z1g7+DVagf7quvmag8jfPioyKvxnK/Eg
-sTUVi2ghzq8wm27ud/mIM7AY2qEORR8Go3TVB4HzWQgpZrt3i5MIlCaY504LzSRi
-igHCzAPlHws+W0rB5N+er5/2pJKnfBSDiCiFAVtCLOZ7gLiMm0jhO2B6tUXHI/+M
-RPjy02i59lINMRRev56GKtcd9qO/0kUJWdZTdA2XoS82ixPvZtXQpUpuL12ab+9E
-aDK8Z4RHJYYfCT3Q5vNAXaiWQ+8PTWm2QgBR/bkwSWc+NpUFgNPN9PvQi8WEg5Um
-AGMCAwEAAaNjMGEwHQYDVR0OBBYEFDZh4QB8iAUJUYtEbEf/GkzJ6k8SMB8GA1Ud
-IwQYMBaAFDZh4QB8iAUJUYtEbEf/GkzJ6k8SMA8GA1UdEwEB/wQFMAMBAf8wDgYD
-VR0PAQH/BAQDAgIEMA0GCSqGSIb3DQEBCwUAA4ICAQBTNNZe5cuf8oiq+jV0itTG
-zWVhSTjOBEk2FQvh11J3o3lna0o7rd8RFHnN00q4hi6TapFhh4qaw/iG6Xg+xOan
-63niLWIC5GOPFgPeYXM9+nBb3zZzC8ABypYuCusWCmt6Tn3+Pjbz3MTVhRGXuT/T
-QH4KGFY4PhvzAyXwdjTOCXID+aHud4RLcSySr0Fq/L+R8TWalvM1wJJPhyRjqRCJ
-erGtfBagiALzvhnmY7U1qFcS0NCnKjoO7oFedKdWlZz0YAfu3aGCJd4KHT0MsGiL
-Zez9WP81xYSrKMNEsDK+zK5fVzw6jA7cxmpXcARTnmAuGUeI7VVDhDzKeVOctf3a
-0qQLwC+d0+xrETZ4r2fRGNw2YEs2W8Qj6oDcfPvq9JySe7pJ6wcHnl5EZ0lwc4xH
-7Y4Dx9RA1JlfooLMw3tOdJZH0enxPXaydfAD3YifeZpFaUzicHeLzVJLt9dvGB0b
-HQLE4+EqKFgOZv2EoP686DQqbVS1u+9k0p2xbMA105TBIk7npraa8VM0fnrRKi7w
-lZKwdH+aNAyhbXRW9xsnODJ+g8eF452zvbiKKngEKirK5LGieoXBX7tZ9D1GNBH2
-Ob3bKOwwIWdEFle/YF/h6zWgdeoaNGDqVBrLr2+0DtWoiB1aDEjLWl9FmyIUyUm7
-mD/vFDkzF+wm7cyWpQpCVQ==
------END CERTIFICATE-----""",
     """-----BEGIN CERTIFICATE-----
 MIIFHDCCAwSgAwIBAgIJAPHBcqaZ6vUdMA0GCSqGSIb3DQEBCwUAMBsxGTAXBgNV
 BAUTEGY5MjAwOWU4NTNiNmIwNDUwHhcNMjIwMzIwMTgwNzQ4WhcNNDIwMzE1MTgw
@@ -136,5 +58,255 @@ n6yYD/yacNJBlwpddla8eaVMjsF6nBnIgQOf9zKSe06nSTqvgwUHosgOECZJZ1Eu
 zbH4yswbt02tKtKEFhx+v+OTge/06V+jGsqTWLsfrOCNLuA8H++z+pUENmpqnnHo
 vaI47gC+TNpkgYGkkBT6B/m/U01BuOBBTzhIlMEZq9qkDWuM2cA5kW5V3FJUcfHn
 w1IdYIg2Wxg7yHcQZemFQg==
------END CERTIFICATE-----"""
+-----END CERTIFICATE-----""",
+    """-----BEGIN CERTIFICATE-----
+MIICIjCCAaigAwIBAgIRAISp0Cl7DrWK5/8OgN52BgUwCgYIKoZIzj0EAwMwUjEc
+MBoGA1UEAwwTS2V5IEF0dGVzdGF0aW9uIENBMTEQMA4GA1UECwwHQW5kcm9pZDET
+MBEGA1UECgwKR29vZ2xlIExMQzELMAkGA1UEBhMCVVMwHhcNMjUwNzE3MjIzMjE4
+WhcNMzUwNzE1MjIzMjE4WjBSMRwwGgYDVQQDDBNLZXkgQXR0ZXN0YXRpb24gQ0Ex
+MRAwDgYDVQQLDAdBbmRyb2lkMRMwEQYDVQQKDApHb29nbGUgTExDMQswCQYDVQQG
+EwJVUzB2MBAGByqGSM49AgEGBSuBBAAiA2IABCPaI3FO3z5bBQo8cuiEas4HjqCt
+G/mLFfRT0MsIssPBEEU5Cfbt6sH5yOAxqEi5QagpU1yX4HwnGb7OtBYpDTB57uH5
+Eczm34A5FNijV3s0/f0UPl7zbJcTx6xwqMIRq6NCMEAwDwYDVR0TAQH/BAUwAwEB
+/zAOBgNVHQ8BAf8EBAMCAQYwHQYDVR0OBBYEFFIyuyz7RkOb3NaBqQ5lZuA0QepA
+MAoGCCqGSM49BAMDA2gAMGUCMETfjPO/HwqReR2CS7p0ZWoD/LHs6hDi422opifH
+EUaYLxwGlT9SLdjkVpz0UUOR5wIxAIoGyxGKRHVTpqpGRFiJtQEOOTp/+s1GcxeY
+uR2zh/80lQyu9vAFCj6E4AXc+osmRg==
+-----END CERTIFICATE-----""",
 ]
+
+
+def _get_cached_roots():
+    """
+    Checks for cached root certificate lists on disk and returns the content
+    if it is still valid.
+    Returns (roots, expire_epoch). expire_epoch is None if the cache does not expire.
+    """
+    if not os.path.exists(ROOTS_CACHE_DIR):
+        logger.info(f"Root cache directory '{ROOTS_CACHE_DIR}' does not exist.")
+        return None, None
+
+    roots_file_path = os.path.join(ROOTS_CACHE_DIR, 'roots.json')
+    if os.path.exists(roots_file_path):
+        logger.info(f"Found non-expiring root cache file at '{roots_file_path}'.")
+        with open(roots_file_path, 'r') as f:
+            return json.load(f), None
+
+    current_time = int(time.time())
+    for filename in os.listdir(ROOTS_CACHE_DIR):
+        if not (filename.startswith('roots-') and filename.endswith('.json')):
+            continue
+        match = ROOTS_FILENAME_PATTERN.match(filename)
+        if not match:
+            logger.warning(f"File '{filename}' looks like a root cache file but failed to parse.")
+            continue
+        expire_epoch = int(match.group(1))
+        file_path = os.path.join(ROOTS_CACHE_DIR, filename)
+        if current_time < expire_epoch:
+            logger.info(f"Root cache '{filename}' is not expired (expire={expire_epoch}). Using it.")
+            with open(file_path, 'r') as f:
+                return json.load(f), expire_epoch
+        logger.info(f"Root cache '{filename}' is expired. Deleting it.")
+        try:
+            os.remove(file_path)
+        except FileNotFoundError:
+            pass  # Race condition handling
+    logger.info("No valid cached root certificate list found.")
+    return None, None
+
+
+def _validate_roots_payload(payload):
+    """
+    Validates that the downloaded payload is a list of PEM strings.
+    """
+    if not isinstance(payload, list):
+        return False, 'payload is not a list'
+    if not payload:
+        return False, 'payload is empty'
+    for i, pem in enumerate(payload):
+        if not isinstance(pem, str):
+            return False, f'entry {i} is not a string'
+        if not pem.startswith('-----BEGIN CERTIFICATE-----'):
+            return False, f'entry {i} is not a PEM certificate'
+    return True, None
+
+
+def _cache_roots(roots, cache_control_header):
+    """
+    Caches the root certificate list based on the Cache-Control header.
+    Returns expire_epoch or None (indefinite).
+    """
+    if not os.path.exists(ROOTS_CACHE_DIR):
+        os.makedirs(ROOTS_CACHE_DIR, exist_ok=True)
+
+    _expire_epoch = None
+    if cache_control_header:
+        logger.info(f"Received Cache-Control header: '{cache_control_header}'")
+        max_age_match = re.search(r'max-age=(\d+)', cache_control_header)
+        if max_age_match:
+            max_age_seconds = int(max_age_match.group(1))
+            if max_age_seconds > 0:
+                _expire_epoch = int(time.time()) + max_age_seconds
+        elif 'no-store' in cache_control_header or 'no-cache' in cache_control_header:
+            logger.info('Cache-Control specifies no-store or no-cache. Roots will not be stored.')
+            return 0
+    if _expire_epoch is None:
+        _expire_epoch = int(time.time()) + DEFAULT_CACHE_MAX_AGE_SECONDS
+        logger.info(
+            'Cache-Control does not specify max-age. '
+            f'Using default cache duration of {DEFAULT_CACHE_MAX_AGE_SECONDS} seconds.'
+        )
+
+    filename = f'roots-{_expire_epoch}.json'
+    logger.info(f'Caching roots with expiration at {_expire_epoch} in \'{filename}\'.')
+
+    temp_filename = f'{filename}.tmp'
+    temp_path = os.path.join(ROOTS_CACHE_DIR, temp_filename)
+    final_path = os.path.join(ROOTS_CACHE_DIR, filename)
+
+    with open(temp_path, 'w') as f:
+        json.dump(roots, f)
+    os.rename(temp_path, final_path)
+
+    return _expire_epoch
+
+
+def _download_roots():
+    """
+    Downloads the root certificate list from ROOT_CERTIFICATES_URL.
+    Returns (roots, expire_epoch).
+    """
+    logger.info(f'Downloading root certificate list from {ROOT_CERTIFICATES_URL}')
+    try:
+        response = requests.get(ROOT_CERTIFICATES_URL, timeout=10)
+        response.raise_for_status()
+
+        payload = response.json()
+        is_valid, reason = _validate_roots_payload(payload)
+        if not is_valid:
+            logger.error(f'Received invalid root certificate list payload: {reason}')
+            return None, None
+
+        expire_epoch = _cache_roots(payload, response.headers.get('Cache-Control'))
+        return payload, expire_epoch
+    except requests.exceptions.RequestException as e:
+        logger.error(f'Failed to download root certificate list: {e}')
+        return None, None
+    except json.JSONDecodeError as e:
+        logger.error(f'Failed to parse root certificate list JSON: {e}')
+        return None, None
+
+
+class RootCertificatesUpdater:
+    def __init__(self):
+        self._roots = None
+        self._next_update = 0
+        self._lock = threading.Lock()
+        self._ready_event = threading.Event()
+        self._stop_event = threading.Event()
+        self._thread = None
+        self._started = False
+
+    def start(self):
+        with self._lock:
+            if not self._started:
+                self._thread = threading.Thread(target=self._update_loop, daemon=True)
+                self._thread.start()
+                self._started = True
+
+    def get_roots(self):
+        # Lazy start of the background thread
+        if not self._started:
+            self.start()
+
+        # Try to return cached data immediately
+        with self._lock:
+            if self._roots:
+                return self._roots
+
+        # If no data, wait for the initial download (up to 10s)
+        if not self._ready_event.is_set():
+            logger.info('Waiting for initial root certificate list download...')
+            self._ready_event.wait(timeout=12)  # Slightly longer than request timeout
+
+        with self._lock:
+            return self._roots
+
+    def _update_loop(self):
+        logger.info('Starting root certificates updater loop')
+        while not self._stop_event.is_set():
+            try:
+                cached_roots, expiry = _get_cached_roots()
+
+                current_time = time.time()
+                if not self._roots and cached_roots:
+                    with self._lock:
+                        self._roots = cached_roots
+                        self._next_update = expiry or current_time + DEFAULT_CACHE_MAX_AGE_SECONDS
+                    self._ready_event.set()
+
+                should_download = False
+                if not cached_roots:
+                    should_download = True
+                else:
+                    # Refresh if close to expiration (e.g., within 1 hour)
+                    if current_time > (expiry - 3600):
+                        should_download = True
+
+                if should_download:
+                    logger.info('Initiating root certificate list download in background thread.')
+                    new_roots, new_expiry = _download_roots()
+                    if new_roots:
+                        cached_roots = new_roots
+                        expiry = new_expiry
+                        with self._lock:
+                            self._roots = cached_roots
+                            self._next_update = expiry or current_time + DEFAULT_CACHE_MAX_AGE_SECONDS
+                        self._ready_event.set()
+                    else:
+                        # Keep serving the previously fetched list (even if expired)
+                        # rather than having no trust anchors at all.
+                        if self._roots:
+                            logger.warning('Failed to refresh root certificate list. Using the existing cached list.')
+                        else:
+                            logger.warning('Failed to obtain root certificate list.')
+
+                with self._lock:
+                    target_time = self._next_update
+
+                # Wake up 1 hour before expiration to refresh
+                wake_up_time = target_time - 3600
+                sleep_seconds = wake_up_time - time.time()
+
+                if sleep_seconds < 60:
+                    sleep_seconds = 60  # Minimum sleep 1 minute
+
+                logger.debug(f'Root certificates updater sleeping for {sleep_seconds} seconds')
+                if self._stop_event.wait(timeout=sleep_seconds):
+                    break
+
+            except Exception as e:
+                logger.error(f'Error in root certificates updater loop: {e}', exc_info=True)
+                time.sleep(60)  # Retry delay on error
+
+
+_updater = RootCertificatesUpdater()
+
+
+def get_root_certificates() -> list[str]:
+    """
+    Returns the trusted attestation root certificates.
+
+    Prefers the list fetched from ROOT_CERTIFICATES_URL (subject to
+    Cache-Control). If the list has never been fetched successfully, falls
+    back to the baked-in ROOT_CERTIFICATES.
+    """
+    roots = _updater.get_roots()
+    if roots:
+        return roots
+
+    logger.warning(
+        'Root certificate list has never been fetched successfully. '
+        'Falling back to the baked-in list.'
+    )
+    return ROOT_CERTIFICATES
